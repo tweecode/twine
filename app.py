@@ -56,6 +56,8 @@ class App (wx.App):
                                wx.OPEN | wx.FD_CHANGE_DIR)                                        
         if dialog.ShowModal() == wx.ID_OK:
             opened = True
+            self.app.config.Write('savePath', os.getcwd())
+            self.app.addRecentFile(self.saveDestination)
             self.open(dialog.GetPath())
                     
         dialog.Destroy()
