@@ -20,6 +20,8 @@ class PassageFrame (wx.Frame):
         self.app = app
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
+        self.syncTimer = None
+        self.Bind(wx.EVT_TIMER, self.syncParent)
         
         # Passage menu
         
@@ -164,8 +166,19 @@ class PassageFrame (wx.Frame):
             if tag != '': self.widget.passage.tags.append(tag)
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        
+        # reset sync timer
+
+        if (self.syncTimer): self.syncTimer.Stop()
+        self.syncTimer = wx.Timer(self)        
+        self.syncTimer.Start(PassageFrame.PARENT_SYNC_DELAY, wx.TIMER_ONE_SHOT)
+        
+    def syncParent (self, event = None):
+        """Sends a repaint message to our parent StoryFrame."""
+        print "syncing parent frame"
         self.widget.parent.Refresh()
         self.widget.parent.parent.setDirty(True)
+        self.syncTimer = None
     
     def openFullscreen (self, event = None):
         """Opens a FullscreenEditFrame for this passage's body text."""
@@ -358,7 +371,11 @@ class PassageFrame (wx.Frame):
     
     def __repr__ (self):
         return "<PassageFrame '" + self.passage.title + "'>"
-        
+    
+    # timing constants
+    
+    PARENT_SYNC_DELAY = 500
+    
     # control constants
     
     DEFAULT_SIZE = (550, 600)
