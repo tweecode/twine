@@ -57,8 +57,8 @@ class App (wx.App):
                                                 
         if dialog.ShowModal() == wx.ID_OK:
             opened = True
-            self.app.config.Write('savePath', os.getcwd())
-            self.app.addRecentFile(self.saveDestination)
+            self.config.Write('savePath', os.getcwd())
+            self.addRecentFile(dialog.GetPath())
             self.open(dialog.GetPath())
                     
         dialog.Destroy()
