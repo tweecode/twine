@@ -321,17 +321,22 @@ class StoryPanel (wx.ScrolledWindow):
     def followMarquee (self, event):
         """Follows the mouse during a marquee selection."""
         if event.LeftIsDown():
+            # dragRect is what is drawn onscreen
+            # it is in unscrolled coordinates
+            
             self.oldDirtyRect = self.dragRect
             self.dragCurrent = event.GetPosition()
             self.dragRect = rectmath.pointsToRect(self.dragOrigin, self.dragCurrent)
-             
+                         
             # select all enclosed widgets
             
-            logicalOrigin = self.toLogical((self.dragRect.x, self.dragRect.y))
+            logicalOrigin = self.toLogical(self.CalcUnscrolledPosition(self.dragRect.x, self.dragRect.y), scaleOnly = True)
             logicalSize = self.toLogical((self.dragRect.width, self.dragRect.height), scaleOnly = True)
             logicalRect = wx.Rect(logicalOrigin[0], logicalOrigin[1], logicalSize[0], logicalSize[1])
+            print "logicalRect is ", logicalRect
                         
             for widget in self.widgets:
+                print "checking against ", widget.getLogicalRect()
                 widget.setSelected(widget.intersects(logicalRect), False)
             
             self.oldDirtyRect.Inflate(2, 2)   # don't know exactly why, but sometimes we're off by 1
@@ -500,7 +505,7 @@ class StoryPanel (wx.ScrolledWindow):
         Converts a tuple of pixel coordinates to logical coordinates. If you need to do just
         a straight conversion without worrying about where the scrollbar is, then call with
         scaleOnly set to True.
-        """
+        """        
         converted = (pixels[0] / self.scale, pixels[1] / self.scale)
         if not scaleOnly: converted = self.CalcUnscrolledPosition(converted)
         return converted
