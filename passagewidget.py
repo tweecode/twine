@@ -166,7 +166,7 @@ class PassageWidget:
         selfRect = self.getLogicalRect()
         
         if isinstance(other, PassageWidget):
-            other = wx.Rect(other.pos[0], other.pos[1], PassageWidget.SIZE, PassageWidget.SIZE)
+            other = other.getLogicalRect()
         return selfRect.Intersects(other)
     
     def applyPrefs (self):
