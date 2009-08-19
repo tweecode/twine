@@ -17,6 +17,17 @@ class App (wx.App):
         locale.setlocale(locale.LC_ALL, '')
         self.stories = []
         self.loadPrefs()
+
+        # try to load our app icon under win32
+        # if it doesn't work, we continue anyway
+
+        self.icon = wx.EmptyIcon()
+        
+        if sys.platform == 'win32':
+            try:
+                self.icon = wx.Icon('icons' + os.sep + 'app.ico', wx.BITMAP_TYPE_ICO)
+            except:
+                pass
         
         # recent files
         # each of our StoryFrames shares the same menu
@@ -27,18 +38,7 @@ class App (wx.App):
         # restore save location
 
         os.chdir(self.config.Read('savePath'))
-        
-        # try to load our app icon under win32
-        # if it doesn't work, we continue anyway
-
-        self.icon = wx.EmptyIcon()
-        
-        if sys.platform == 'win32':
-            try:
-                self.icon = wx.Icon('icons' + os.sep + 'app.ico', wx.BITMAP_TYPE_ICO)
-            except:
-                pass    
-           
+                   
         self.newStory()
         
     def newStory (self, event = None):
