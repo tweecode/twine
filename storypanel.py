@@ -89,7 +89,7 @@ class StoryPanel (wx.ScrolledWindow):
         if self.snapping:
             pos = list(widget.pos)
             
-            for coord in range(0, 1):
+            for coord in range(2):
                 distance = pos[coord] % StoryPanel.GRID_SPACING
                 if (distance > StoryPanel.GRID_SPACING / 2):
                     pos[coord] += StoryPanel.GRID_SPACING - distance
