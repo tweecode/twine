@@ -3,8 +3,8 @@
 
 ; NOTE: this .NSI script is designed for NSIS v1.8+
 
-Name "Twine 1.0"
-OutFile "twine_10_windows.exe"
+Name "Twine 1.1"
+OutFile "twine-1.1-windows.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
@@ -34,14 +34,14 @@ File /r "icons"
 
 ; add Start Menu entries
 
-CreateDirectory "$SMPROGRAMS\Twine 1.0\"
-CreateShortCut "$SMPROGRAMS\Twine 1.0\Twine.lnk" "$INSTDIR\twine.exe"
-CreateShortCut "$SMPROGRAMS\Twine 1.0\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
+CreateDirectory "$SMPROGRAMS\Twine 1.1\"
+CreateShortCut "$SMPROGRAMS\Twine 1.1\Twine.lnk" "$INSTDIR\twine.exe"
+CreateShortCut "$SMPROGRAMS\Twine 1.1\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
 
 ; add uninstall entry in Add/Remove Programs
 
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Twine" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.0 (remove only)"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.1 (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "UninstallString" '"$INSTDIR\uninstalltwine.exe"'
 
 ; write out uninstaller
@@ -52,7 +52,7 @@ SectionEnd ; end of default section
 
 ; begin uninstall settings/section
 
-UninstallText "This will uninstall Twine 1.0 from your system."
+UninstallText "This will uninstall Twine 1.1 from your system."
 
 Section Uninstall
 
@@ -61,7 +61,7 @@ Section Uninstall
 Delete "$INSTDIR\uninstalltwine.exe"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Twine"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Twine"
-RMDir /r "$SMPROGRAMS\Twine 1.0"
+RMDir /r "$SMPROGRAMS\Twine 1.1"
 RMDir /r "$INSTDIR"
 SectionEnd ; end of uninstall section
 
