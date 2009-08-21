@@ -175,7 +175,6 @@ class PassageFrame (wx.Frame):
         
     def syncParent (self, event = None):
         """Sends a repaint message to our parent StoryFrame."""
-        print "syncing parent frame"
         self.widget.parent.Refresh()
         self.widget.parent.parent.setDirty(True)
         self.syncTimer = None
