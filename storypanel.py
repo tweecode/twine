@@ -333,10 +333,8 @@ class StoryPanel (wx.ScrolledWindow):
             logicalOrigin = self.toLogical(self.CalcUnscrolledPosition(self.dragRect.x, self.dragRect.y), scaleOnly = True)
             logicalSize = self.toLogical((self.dragRect.width, self.dragRect.height), scaleOnly = True)
             logicalRect = wx.Rect(logicalOrigin[0], logicalOrigin[1], logicalSize[0], logicalSize[1])
-            print "logicalRect is ", logicalRect
                         
             for widget in self.widgets:
-                print "checking against ", widget.getLogicalRect()
                 widget.setSelected(widget.intersects(logicalRect), False)
             
             self.oldDirtyRect.Inflate(2, 2)   # don't know exactly why, but sometimes we're off by 1
