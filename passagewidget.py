@@ -80,9 +80,7 @@ class PassageWidget:
                 self.pos[0] = 10
                 self.pos[1] += self.parent.GRID_SPACING
 
-    def containsRegexp (self, regexp, flags):
-        print "Checking ", self.passage.title, " for ", regexp
-        
+    def containsRegexp (self, regexp, flags):        
         return (re.search(regexp, self.passage.title, flags) != None \
                 or re.search(regexp, self.passage.text, flags) != None)
       

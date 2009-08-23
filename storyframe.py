@@ -123,7 +123,8 @@ class StoryFrame (wx.Frame):
         editMenu.Append(wx.ID_FIND, 'Find...\tCtrl-F')
         self.Bind(wx.EVT_MENU, self.showFind, id = wx.ID_FIND)
 
-        # editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
+        editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.findWidgetRegexp(), id = StoryFrame.EDIT_FIND_NEXT)
         
         # editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-R')
 
@@ -546,6 +547,9 @@ class StoryFrame (wx.Frame):
         deleteItem.Enable(hasSelection)      
         pasteItem = self.menus.FindItemById(wx.ID_PASTE)
         pasteItem.Enable(canPaste)
+        
+        findAgainItem = self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT)
+        findAgainItem.Enable(self.storyPanel.lastSearchRegexp != None)
         
         # View menu
         

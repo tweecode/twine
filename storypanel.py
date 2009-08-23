@@ -35,7 +35,9 @@ class StoryPanel (wx.ScrolledWindow):
         self.scrolling = False
         self.undoStack = []
         self.undoPointer = -1
-        
+        self.lastSearchRegexp = None
+        self.lastSearchFlags = None
+       
         if (state):
             self.scale = state['scale']
             for widget in state['widgets']:
@@ -177,12 +179,20 @@ class StoryPanel (wx.ScrolledWindow):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
         
-    def findWidgetRegexp (self, regexp, flags):
+    def findWidgetRegexp (self, regexp = None, flags = None):
         """
         Finds the next PassageWidget that matches the regexp passed.
-        It begins its search from the current selection.
+        You may leave off the regexp, in which case it uses the last
+        search performed. This begins its search from the current selection.
         If nothing is found, then an error alert is shown.
         """
+        
+        if regexp == None:
+            regexp = self.lastSearchRegexp
+            flags = self.lastSearchFlags
+            
+        self.lastSearchRegexp = regexp
+        self.lastSearchFlags = flags
         
         # find the current selection
         # if there are multiple selections, we just use the first
@@ -194,10 +204,7 @@ class StoryPanel (wx.ScrolledWindow):
             i += 1
             if widget.selected: break    
             
-        print i    
-        
         while i <= len(self.widgets):
-            print "searching widget at index ", i
             if self.widgets[i % len(self.widgets)].containsRegexp(regexp, flags):
                 self.widgets[i % len(self.widgets)].setSelected(True)
                 # FIXME: scroll so it is visible
