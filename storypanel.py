@@ -177,6 +177,39 @@ class StoryPanel (wx.ScrolledWindow):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
         
+    def findWidgetRegexp (self, regexp, flags):
+        """
+        Finds the next PassageWidget that matches the regexp passed.
+        It begins its search from the current selection.
+        If nothing is found, then an error alert is shown.
+        """
+        
+        # find the current selection
+        # if there are multiple selections, we just use the first
+        
+        widget = self.widgets[0]
+        i = 0
+        
+        for widget in self.widgets:
+            i += 1
+            if widget.selected: break    
+            
+        print i    
+        
+        while i <= len(self.widgets):
+            print "searching widget at index ", i
+            if self.widgets[i % len(self.widgets)].containsRegexp(regexp, flags):
+                self.widgets[i % len(self.widgets)].setSelected(True)
+                # FIXME: scroll so it is visible
+                return
+            i += 1
+            
+        # fallthrough: text not found
+        
+        dialog = wx.MessageDialog(self, 'The text you entered could not be found in your story.', \
+                                  'Not Found', wx.ICON_INFORMATION | wx.OK)
+        dialog.ShowModal()
+
     def pushUndo (self, action):
         """
         Pushes the current state onto the undo stack. The name parameter describes

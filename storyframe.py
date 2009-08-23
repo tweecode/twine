@@ -10,6 +10,7 @@ import wx, os, urllib, pickle
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from statisticsdialog import StatisticsDialog
+from storyfindframe import StoryFindFrame
 
 class StoryFrame (wx.Frame):
     
@@ -117,6 +118,15 @@ class StoryFrame (wx.Frame):
         editMenu.Append(wx.ID_SELECTALL, 'Select &All\tCtrl-A')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachWidget(lambda i: i.setSelected(True, exclusive = False)), id = wx.ID_SELECTALL)
         
+        editMenu.AppendSeparator()
+        
+        editMenu.Append(wx.ID_FIND, 'Find...\tCtrl-F')
+        self.Bind(wx.EVT_MENU, self.showFind, id = wx.ID_FIND)
+
+        # editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
+        
+        # editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-R')
+
         editMenu.AppendSeparator()
         
         editMenu.Append(wx.ID_PREFERENCES, 'Preferences...\tCtrl-,')
@@ -432,6 +442,21 @@ class StoryFrame (wx.Frame):
         statFrame = StatisticsDialog(parent = self, storyPanel = self.storyPanel, app = self.app)
         statFrame.ShowModal()
 
+    def showFind (self, event = None):
+        """
+        Shows a StoryFindFrame for this frame.
+        """
+
+        if (not hasattr(self, 'findFrame')):
+            self.findFrame = StoryFindFrame(self.storyPanel, self.app)
+        else:
+            try:
+                self.findFrame.Raise()
+            except wx._core.PyDeadObjectError:
+                # user closed the frame, so we need to recreate it
+                delattr(self, 'findFrame')
+                self.showFind(event)
+
     def proof (self, event = None):
         """
         Builds an RTF version of the story. Pass whether to open the destination file afterwards.
@@ -600,6 +625,8 @@ class StoryFrame (wx.Frame):
     FILE_IMPORT_SOURCE = 103
     FILE_EXPORT_PROOF = 104
     FILE_EXPORT_SOURCE = 105
+    
+    EDIT_FIND_NEXT = 201
         
     VIEW_SNAP = 301
     VIEW_CLEANUP = 302

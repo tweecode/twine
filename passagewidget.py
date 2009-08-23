@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import os, math, wx, wx.lib.wordwrap, storypanel, tiddlywiki
+import os, math, re, wx, wx.lib.wordwrap, storypanel, tiddlywiki
 from passageframe import PassageFrame
 
 class PassageWidget:
@@ -79,7 +79,13 @@ class PassageWidget:
             if rightEdge > maxWidth:
                 self.pos[0] = 10
                 self.pos[1] += self.parent.GRID_SPACING
+
+    def containsRegexp (self, regexp, flags):
+        print "Checking ", self.passage.title, " for ", regexp
         
+        return (re.search(regexp, self.passage.title, flags) != None \
+                or re.search(regexp, self.passage.text, flags) != None)
+      
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""
         brokens = []
