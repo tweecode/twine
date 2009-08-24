@@ -71,7 +71,9 @@ class App (wx.App):
         """Opens a specific story file."""
         try:            
             openedFile = open(path, 'r')
-            self.stories.append(StoryFrame(None, app = self, state = pickle.load(openedFile)))
+            newStory = StoryFrame(None, app = self, state = pickle.load(openedFile))
+            newStory.saveDestination = path
+            self.stories.append(newStory)
             self.addRecentFile(path)
             openedFile.close()
             
