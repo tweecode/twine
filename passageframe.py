@@ -376,7 +376,7 @@ class PassageFrame (wx.Frame):
     
     # timing constants
     
-    PARENT_SYNC_DELAY = 500
+    PARENT_SYNC_DELAY = 250
     
     # control constants
     
