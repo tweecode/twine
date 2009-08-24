@@ -167,7 +167,11 @@ class PassageFrame (wx.Frame):
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
         
-        # reset sync timer
+        # immediately mark the story dirty
+        
+        self.widget.parent.parent.setDirty(True)
+        
+        # reset redraw timer
 
         if (self.syncTimer): self.syncTimer.Stop()
         self.syncTimer = wx.Timer(self)        
@@ -176,7 +180,6 @@ class PassageFrame (wx.Frame):
     def syncParent (self, event = None):
         """Sends a repaint message to our parent StoryFrame."""
         self.widget.parent.Refresh()
-        self.widget.parent.parent.setDirty(True)
         self.syncTimer = None
     
     def openFullscreen (self, event = None):
