@@ -127,7 +127,7 @@ class StoryFrame (wx.Frame):
         editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.findWidgetRegexp(), id = StoryFrame.EDIT_FIND_NEXT)
         
-        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-R')
+        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-H')
         self.Bind(wx.EVT_MENU, self.showReplace, id = wx.ID_REPLACE)
 
         editMenu.AppendSeparator()
