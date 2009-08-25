@@ -24,10 +24,10 @@ class StoryFindFrame (wx.Frame):
         
         findSizer = wx.BoxSizer(wx.HORIZONTAL)
         
-        findSizer.Add(wx.StaticText(panel, label = 'Find'), flag = wx.ALL, \
+        findSizer.Add(wx.StaticText(panel, label = 'Find'), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, \
                       border = StoryFindFrame.SPACING, proportion = 0)
         self.findField = wx.TextCtrl(panel, id = wx.ID_ANY)
-        findSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, \
+        findSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND, \
                       border = StoryFindFrame.SPACING)
         panelSizer.Add(findSizer, flag = wx.EXPAND)
         
