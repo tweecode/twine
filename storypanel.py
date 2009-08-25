@@ -217,6 +217,35 @@ class StoryPanel (wx.ScrolledWindow):
                                   'Not Found', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 
+    def replaceRegexpInWidgets (self, findRegexp, replacementRegexp, flags):
+        """
+        Performs a string replace on all widgets in this StoryPanel.
+        It shows an alert once done to tell the user how many replacements were
+        made.
+        """
+    
+        replacements = 0
+        
+        for widget in self.widgets:
+            replacements += widget.replaceRegexp(findRegexp, replacementRegexp, flags)
+        
+        # fixme: undo doesn't work, I think because it only tracks
+        # widget state, not the passages attached to it
+        
+        if replacements > 0:
+            self.Refresh()
+            self.parent.setDirty(True, action = 'Replace Across Entire Story')
+            
+        message = '%d replacement' % replacements 
+        if replacements != 1:
+            message += 's were '
+        else:
+            message += ' was '
+        message += 'made in your story.'
+        
+        dialog = wx.MessageDialog(self, message, 'Replace Complete', wx.ICON_INFORMATION | wx.OK)
+        dialog.ShowModal()
+
     def pushUndo (self, action):
         """
         Pushes the current state onto the undo stack. The name parameter describes

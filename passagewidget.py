@@ -80,9 +80,30 @@ class PassageWidget:
                 self.pos[0] = 10
                 self.pos[1] += self.parent.GRID_SPACING
 
-    def containsRegexp (self, regexp, flags):        
+    def containsRegexp (self, regexp, flags):
+        """
+        Returns whether this widget's passage contains a regexp.
+        """
         return (re.search(regexp, self.passage.title, flags) != None \
                 or re.search(regexp, self.passage.text, flags) != None)
+        
+    def replaceRegexp (self, findRegexp, replaceRegexp, flags):
+        """
+        Performs a regexp replace in this widget's passage title and
+        body text. Returns the number of replacements actually made.
+        """
+        
+        replacements = 0
+        
+        if re.search(findRegexp, self.passage.title, flags) != None:
+            self.passage.title = re.sub(findRegexp, replaceRegexp, self.passage.title, flags)
+            replacements += 1
+        
+        if re.search(findRegexp, self.passage.text, flags) != None:
+            self.passage.text = re.sub(findRegexp, replaceRegexp, self.passage.text, flags)
+            replacements += 1
+            
+        return replacements
       
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""

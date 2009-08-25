@@ -11,6 +11,7 @@ from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from statisticsdialog import StatisticsDialog
 from storyfindframe import StoryFindFrame
+from storyreplaceframe import StoryReplaceFrame
 
 class StoryFrame (wx.Frame):
     
@@ -126,7 +127,8 @@ class StoryFrame (wx.Frame):
         editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.findWidgetRegexp(), id = StoryFrame.EDIT_FIND_NEXT)
         
-        # editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-R')
+        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-R')
+        self.Bind(wx.EVT_MENU, self.showReplace, id = wx.ID_REPLACE)
 
         editMenu.AppendSeparator()
         
@@ -457,6 +459,20 @@ class StoryFrame (wx.Frame):
                 # user closed the frame, so we need to recreate it
                 delattr(self, 'findFrame')
                 self.showFind(event)
+
+    def showReplace (self, event = None):
+        """
+        Shows a StoryReplaceFrame for this frame.
+        """
+        if (not hasattr(self, 'replaceFrame')):
+            self.replaceFrame = StoryReplaceFrame(self.storyPanel, self.app)
+        else:
+            try:
+                self.replaceFrame.Raise()
+            except wx._core.PyDeadObjectError:
+                # user closed the frame, so we need to recreate it
+                delattr(self, 'replaceFrame')
+                self.showReplace(event)
 
     def proof (self, event = None):
         """
