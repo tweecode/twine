@@ -39,13 +39,21 @@ class PreferenceFrame (wx.Frame):
         self.fsBgColor.Bind(wx.EVT_COLOURPICKER_CHANGED, lambda e: self.savePref('fsBgColor', \
                               self.fsBgColor.GetColour()))
 
-        panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+        panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), \
+                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+                       border = PreferenceFrame.SPACING)
         panelSizer.Add(self.editorFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), \
+                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+                       border = PreferenceFrame.SPACING)
         panelSizer.Add(self.fsFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), \
+                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+                       border = PreferenceFrame.SPACING)
         panelSizer.Add(self.fsTextColor, flag = wx.ALL, border = PreferenceFrame.SPACING)
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Background Color'), flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Background Color'), \
+                       flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+                       border = PreferenceFrame.SPACING)
         
         panelSizer.Add(self.fsBgColor, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
 
