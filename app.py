@@ -150,6 +150,8 @@ class App (wx.App):
             self.config.Write('fsFontFace', monoFont.GetFaceName())
         if not self.config.HasEntry('fsFontSize'):
             self.config.WriteInt('fsFontSize', 16)
+        if not self.config.HasEntry('fsLineHeight'):
+            self.config.WriteInt('fsLineHeight', 120)
         if not self.config.HasEntry('windowedFontFace'):
             self.config.Write('windowedFontFace', monoFont.GetFaceName())
         if not self.config.HasEntry('windowedFontSize'):

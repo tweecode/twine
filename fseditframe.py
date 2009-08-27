@@ -90,6 +90,7 @@ class FullscreenEditFrame (wx.Frame):
                            wx.FONTSTYLE_NORMAL, wx.NORMAL, False, self.app.config.Read('fsFontFace'))
         bgColor = self.app.config.Read('fsBgColor')
         textColor = self.app.config.Read('fsTextColor')
+        lineHeight = self.app.config.ReadInt('fslineHeight') / float(100)
         
         self.panel.SetBackgroundColour(bgColor)
         self.marginPanel.SetBackgroundColour(bgColor)        
@@ -106,7 +107,10 @@ class FullscreenEditFrame (wx.Frame):
         self.editCtrl.StyleSetBackground(defaultStyle, bgColor)      
         self.editCtrl.StyleSetFont(defaultStyle, editFont)
 
-        editFont.SetPointSize(editFont.GetPointSize() * FullscreenEditFrame.LINE_SPACING)
+        # we stuff a larger font into a style def we never use
+        # to force line spacing
+
+        editFont.SetPointSize(editFont.GetPointSize() * lineHeight)
         self.editCtrl.StyleSetFont(wx.stc.STC_STYLE_BRACELIGHT, editFont)
 
         self.directions.SetForegroundColour(textColor)
@@ -143,4 +147,3 @@ class FullscreenEditFrame (wx.Frame):
         
     DIRECTIONS = 'Press Escape to close this passage, F12 to leave fullscreen.'
     LABEL_FONT_SIZE = 10
-    LINE_SPACING = 1.4
