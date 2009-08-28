@@ -207,7 +207,7 @@ class StoryPanel (wx.ScrolledWindow):
         while i <= len(self.widgets):
             if self.widgets[i % len(self.widgets)].containsRegexp(regexp, flags):
                 self.widgets[i % len(self.widgets)].setSelected(True)
-                # FIXME: scroll so it is visible
+                self.scrollToWidget(self.widgets[i % len(self.widgets)])
                 return
             i += 1
             
@@ -245,6 +245,13 @@ class StoryPanel (wx.ScrolledWindow):
         
         dialog = wx.MessageDialog(self, message, 'Replace Complete', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
+
+    def scrollToWidget (self, widget):
+        """
+        Scrolls so that the widget passed is visible.
+        """
+        widgetRect = widget.getPixelRect()
+        self.Scroll(max(widgetRect.x - 20, 0), max(widgetRect.y - 20, 0))
 
     def pushUndo (self, action):
         """
