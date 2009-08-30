@@ -21,6 +21,7 @@ class PassageFrame (wx.Frame):
         self.app = app
         self.syncTimer = None
         self.lastFindRegexp = None
+        self.lastFindFlags = None
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
@@ -83,7 +84,13 @@ class PassageFrame (wx.Frame):
         editMenu.AppendSeparator()
 
         editMenu.Append(wx.ID_FIND, '&Find...\tCtrl-F')
-        self.Bind(wx.EVT_MENU, lambda e: PassageSearchFrame(None, self, self.app), id = wx.ID_FIND)
+        self.Bind(wx.EVT_MENU, lambda e: self.showSearchFrame(PassageSearchFrame.FIND_TAB), id = wx.ID_FIND)
+
+        editMenu.Append(PassageFrame.EDIT_FIND_NEXT, 'Find &Next\tCtrl-G')
+        self.Bind(wx.EVT_MENU, self.findNextRegexp, id = PassageFrame.EDIT_FIND_NEXT)
+        
+        editMenu.Append(wx.ID_REPLACE, '&Replace...\tCtrl-H')
+        self.Bind(wx.EVT_MENU, lambda e: self.showSearchFrame(PassageSearchFrame.REPLACE_TAB), id = wx.ID_REPLACE)
 
         # menus
         
@@ -233,6 +240,22 @@ class PassageFrame (wx.Frame):
             editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.pos)
        
         editingWidget.openEditor()
+
+    def showSearchFrame (self, type):
+        """
+        Shows a PassageSearchFrame for this frame, creating it if need be.
+        The type parameter should be one of the constants defined in 
+        PassageSearchFrame, e.g. FIND_TAB or REPLACE_TAB.
+        """
+        if (not hasattr(self, 'searchFrame')):
+            self.searchFrame = PassageSearchFrame(self, self, self.app, type)
+        else:
+            try:
+                self.searchFrame.Raise()
+            except wx._core.PyDeadObjectError:
+                # user closed the frame, so we need to recreate it
+                delattr(self, 'searchFrame')
+                self.showSearchFrame(type)
  
     def setBodyText (self, text):
         """Changes the body text field directly."""
@@ -290,7 +313,8 @@ class PassageFrame (wx.Frame):
         """
         Selects a regexp in the body text.
         """
-        print 'findRegexp'
+        self.lastFindRegexp = regexp
+        self.lastFindFlags = flags
         
         # find the beginning of our search
         
@@ -312,6 +336,12 @@ class PassageFrame (wx.Frame):
                 dialog = wx.MessageDialog(self, 'The text you entered was not found in this passage.', \
                                           'Not Found', wx.ICON_INFORMATION | wx.OK)
                 dialog.ShowModal()
+
+    def findNextRegexp (self, event = None):
+        """
+        Performs a search for the last regexp that was searched for.
+        """
+        self.findRegexp(self.lastFindRegexp, self.lastFindFlags)
 
     def replaceOneRegexp (self, findRegexp, flags, replaceRegexp):
         """
@@ -375,6 +405,11 @@ class PassageFrame (wx.Frame):
         
         pasteItem = self.menus.FindItemById(wx.ID_PASTE)
         pasteItem.Enable(self.bodyInput.CanPaste())
+        
+        # find/replace
+        
+        findNextItem = self.menus.FindItemById(PassageFrame.EDIT_FIND_NEXT)
+        findNextItem.Enable(self.lastFindRegexp != None)
         
         # link selected text menu item
         
@@ -477,6 +512,8 @@ class PassageFrame (wx.Frame):
     TAGS_LABEL = 'Tags (separate with spaces)'
         
     # menu constants (not defined by wx)
+ 
+    EDIT_FIND_NEXT = 2001
     
     PASSAGE_FULLSCREEN = 1001
     PASSAGE_EDIT_SELECTION = 1002
