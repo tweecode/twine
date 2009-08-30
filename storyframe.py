@@ -10,8 +10,7 @@ import wx, os, urllib, pickle
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from statisticsdialog import StatisticsDialog
-from storyfindframe import StoryFindFrame
-from storyreplaceframe import StoryReplaceFrame
+from storysearchframes import StoryFindFrame, StoryReplaceFrame
 
 class StoryFrame (wx.Frame):
     

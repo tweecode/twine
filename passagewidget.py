@@ -92,18 +92,13 @@ class PassageWidget:
         Performs a regexp replace in this widget's passage title and
         body text. Returns the number of replacements actually made.
         """
+        compiledRegexp = re.compile(findRegexp, flags)
+        titleReps = textReps = 0
         
-        replacements = 0
-        
-        if re.search(findRegexp, self.passage.title, flags) != None:
-            self.passage.title = re.sub(findRegexp, replaceRegexp, self.passage.title, flags)
-            replacements += 1
-        
-        if re.search(findRegexp, self.passage.text, flags) != None:
-            self.passage.text = re.sub(findRegexp, replaceRegexp, self.passage.text, flags)
-            replacements += 1
+        self.passage.title, titleReps = re.subn(compiledRegexp, replaceRegexp, self.passage.title)
+        self.passage.text, textReps = re.subn(compiledRegexp, replaceRegexp, self.passage.text)
             
-        return replacements
+        return titleReps + textReps
       
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""

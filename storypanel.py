@@ -213,7 +213,7 @@ class StoryPanel (wx.ScrolledWindow):
             
         # fallthrough: text not found
         
-        dialog = wx.MessageDialog(self, 'The text you entered could not be found in your story.', \
+        dialog = wx.MessageDialog(self, 'The text you entered was not found in your story.', \
                                   'Not Found', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 

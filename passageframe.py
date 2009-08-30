@@ -11,6 +11,7 @@
 #
 
 import os, re, wx, wx.stc
+from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
 
 class PassageFrame (wx.Frame):
@@ -18,9 +19,11 @@ class PassageFrame (wx.Frame):
     def __init__ (self, parent, widget, app):
         self.widget = widget
         self.app = app
+        self.syncTimer = None
+        self.lastFindRegexp = None
+        
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
-        self.syncTimer = None
         self.Bind(wx.EVT_TIMER, self.syncParent)
         
         # Passage menu
@@ -76,6 +79,11 @@ class PassageFrame (wx.Frame):
 
         editMenu.Append(wx.ID_SELECTALL, 'Select &All\tCtrl-A')
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.SelectAll(), id = wx.ID_SELECTALL)
+
+        editMenu.AppendSeparator()
+
+        editMenu.Append(wx.ID_FIND, '&Find...\tCtrl-F')
+        self.Bind(wx.EVT_MENU, lambda e: PassageSearchFrame(None, self, self.app), id = wx.ID_FIND)
 
         # menus
         
@@ -225,7 +233,7 @@ class PassageFrame (wx.Frame):
             editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.pos)
        
         editingWidget.openEditor()
-       
+ 
     def setBodyText (self, text):
         """Changes the body text field directly."""
         self.bodyInput.SetText(text)
@@ -239,6 +247,24 @@ class PassageFrame (wx.Frame):
         """
         event.SetDragAllowMove(False)
         self.widget.parent.textDragSource = self
+
+    def getSelection (self):
+        """
+        Returns the beginning and end of the selection as a tuple.
+        """
+        return self.bodyInput.GetSelection()
+        
+    def getSelectedText (self):
+        """
+        Returns the text currently selected. 
+        """
+        return self.bodyInput.GetSelectedText()
+
+    def setSelection (self, range):
+        """
+        Changes the current selection to the range passed.
+        """
+        self.bodyInput.SetSelection(range[0], range[1])
         
     def editSelection (self, event = None):
         """
@@ -259,7 +285,72 @@ class PassageFrame (wx.Frame):
         self.bodyInput.InsertText(selStart, '[[')
         self.bodyInput.InsertText(selEnd + 2, ']]')
         self.bodyInput.SetSelection(selStart, selEnd + 4)
-    
+
+    def findRegexp (self, regexp, flags):
+        """
+        Selects a regexp in the body text.
+        """
+        print 'findRegexp'
+        
+        # find the beginning of our search
+        
+        text = self.bodyInput.GetText()
+        oldSelection = self.bodyInput.GetSelection()
+        
+        # try past the selection
+        
+        match = re.search(regexp, text[oldSelection[1]:], flags)
+        if match:
+            self.bodyInput.SetSelection(match.start() + oldSelection[1], match.end() + oldSelection[1])
+        else:
+            # try before the selection
+            match = re.search(regexp, text[:oldSelection[1]], flags)
+            if match:
+                self.bodyInput.SetSelection(match.start(), match.end())
+            else:
+                # give up
+                dialog = wx.MessageDialog(self, 'The text you entered was not found in this passage.', \
+                                          'Not Found', wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+
+    def replaceOneRegexp (self, findRegexp, flags, replaceRegexp):
+        """
+        If the current selection matches the search regexp, a replacement
+        is made. Otherwise, it calls findRegexp().
+        """
+        selectedText = self.bodyInput.GetSelectedText()
+        match = re.match(findRegexp, selectedText, flags)
+        
+        # FIXME: needs to unescape any regexp escapes in the replacement
+        
+        if match and match.endpos == len(selectedText):
+            self.bodyInput.ReplaceSelection(replaceRegexp)
+        else:
+            # look for the next instance
+            self.findRegexp(findRegexp, flags)
+
+    def replaceAllRegexps (self, findRegexp, flags, replaceRegexp):
+        """
+        Replaces all instances of text in the body text and
+        shows the user an alert about how many replacements 
+        were made.
+        """
+        replacements = 0
+        compiledRegexp = re.compile(findRegexp, flags)
+        
+        newText, replacements = re.subn(compiledRegexp, replaceRegexp, self.bodyInput.GetText())
+        if replacements > 0: self.bodyInput.SetText(newText)
+ 
+        message = '%d replacement' % replacements 
+        if replacements != 1:
+            message += 's were '
+        else:
+            message += ' was '
+        message += 'made in this passage.'
+        
+        dialog = wx.MessageDialog(self, message, 'Replace Complete', wx.ICON_INFORMATION | wx.OK)
+        dialog.ShowModal()
+
     def stripCrud (self, text):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
@@ -372,11 +463,11 @@ class PassageFrame (wx.Frame):
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
     
     def __repr__ (self):
-        return "<PassageFrame '" + self.passage.title + "'>"
+        return "<PassageFrame '" + self.widget.passage.title + "'>"
     
     # timing constants
     
-    PARENT_SYNC_DELAY = 250
+    PARENT_SYNC_DELAY = 200
     
     # control constants
     
