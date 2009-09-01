@@ -178,6 +178,7 @@ class StoryPanel (wx.ScrolledWindow):
         if len(toDelete):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
+        self.Refresh()
         
     def findWidgetRegexp (self, regexp = None, flags = None):
         """
