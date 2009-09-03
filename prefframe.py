@@ -7,6 +7,7 @@
 #
 
 import wx
+import metrics
 
 class PreferenceFrame (wx.Frame):
     
@@ -16,7 +17,7 @@ class PreferenceFrame (wx.Frame):
                           style = wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CAPTION | wx.SYSTEM_MENU)
         
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
-        panelSizer = wx.FlexGridSizer(5, 2, PreferenceFrame.SPACING, PreferenceFrame.SPACING)
+        panelSizer = wx.FlexGridSizer(5, 2, metrics.size('windowBorder'), metrics.size('windowBorder'))
         panel.SetSizer(panelSizer)
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -48,30 +49,30 @@ class PreferenceFrame (wx.Frame):
         self.fsLineHeight.SetValue(str(self.app.config.ReadInt('fslineHeight')))
         
         fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.TOP | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
         fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.TOP | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
 
         panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), \
                        flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
-        panelSizer.Add(self.editorFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
+        panelSizer.Add(self.editorFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), \
                        flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
-        panelSizer.Add(self.fsFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
+        panelSizer.Add(self.fsFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), \
                        flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
-        panelSizer.Add(self.fsTextColor, flag = wx.ALL, border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
+        panelSizer.Add(self.fsTextColor, flag = wx.ALL, border = metrics.size('controlSpace'))
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Background Color'), \
                        flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
-        panelSizer.Add(self.fsBgColor, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
+        panelSizer.Add(self.fsBgColor, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), \
-                       flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = PreferenceFrame.SPACING)
+                       flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = metrics.size('controlSpace'))
         panelSizer.Add(fsLineHeightPanel, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = PreferenceFrame.SPACING)
+                       border = metrics.size('controlSpace'))
 
         panelSizer.Fit(self)
         self.SetIcon(self.app.icon)
@@ -107,5 +108,3 @@ class PreferenceFrame (wx.Frame):
         self.app.config.Write(key + 'FontFace', font.GetFaceName())
         self.app.config.WriteInt(key + 'FontSize', font.GetPointSize())
         self.app.applyPrefs()
-
-    SPACING = 6

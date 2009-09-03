@@ -9,6 +9,7 @@
 #
 
 import wx, re, locale
+import metrics
 
 class StatisticsDialog (wx.Dialog):
     
@@ -25,7 +26,7 @@ class StatisticsDialog (wx.Dialog):
         # count controls
         
         countPanel = wx.Panel(parent = panel)
-        countPanelSizer = wx.FlexGridSizer(5, 2, StatisticsDialog.SPACING, StatisticsDialog.SPACING)
+        countPanelSizer = wx.FlexGridSizer(5, 2, metrics.size('controlSpace'), metrics.size('controlSpace'))
         countPanel.SetSizer(countPanelSizer)
         
         self.characters = wx.StaticText(countPanel)
@@ -48,11 +49,11 @@ class StatisticsDialog (wx.Dialog):
         countPanelSizer.Add(self.brokenLinks, flag = wx.ALIGN_RIGHT)
         countPanelSizer.Add(wx.StaticText(countPanel, label = 'Broken Links'))
 
-        panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = 6)
+        panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('controlSpace'))
         
         okButton = wx.Button(parent = panel, label = 'OK')
         okButton.Bind(wx.EVT_BUTTON, lambda e: self.Close())
-        panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = 12)
+        panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('controlSpace'))
         
         panelSizer.Fit(self)
         
@@ -93,6 +94,4 @@ class StatisticsDialog (wx.Dialog):
         self.links.SetLabel(str(counts['links']))
         self.brokenLinks.SetLabel(str(counts['brokenLinks']))
 
-
-    SPACING = 6
     MIN_WIDTH = 200     # total guesstimate

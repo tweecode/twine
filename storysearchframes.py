@@ -19,6 +19,7 @@ class StoryFindFrame (wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
         findPanel = FindPanel(parent = self, onFind = self.onFind, onClose = self.onClose)
+        findPanel.focus()
         sizer.Add(findPanel)
         sizer.Fit(self)
         self.SetIcon(self.app.icon)
@@ -51,6 +52,8 @@ class StoryReplaceFrame (wx.Frame):
         replacePanel = ReplacePanel(self, allowIncremental = False, \
                                     onReplaceAll = self.onReplaceAll, onClose = self.onClose)
         sizer.Add(replacePanel)
+        replacePanel.focus()
+        
 
         sizer.Fit(self)
         self.SetIcon(self.app.icon)

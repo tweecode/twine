@@ -30,7 +30,12 @@ class PassageSearchFrame (wx.Frame):
         self.notebook.AddPage(self.findPanel, 'Find')
         self.notebook.AddPage(self.replacePanel, 'Replace')
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeTab)
+        
         self.notebook.ChangeSelection(initialState)
+        if initialState == PassageSearchFrame.FIND_TAB:
+            self.findPanel.focus()
+        else:
+            self.replacePanel.focus()
         
         panelSizer.Add(self.notebook, 1, wx.EXPAND)
         panelSizer.Fit(self)
@@ -38,7 +43,14 @@ class PassageSearchFrame (wx.Frame):
         self.Show()
         
     def onChangeTab (self, event):
-        pass
+        if event.GetSelection() == PassageSearchFrame.FIND_TAB:
+            self.findPanel.focus()
+        else:
+            self.replacePanel.focus()
+
+        # for some reason, we have to manually propagate the event from here
+        
+        event.Skip(True)
     
     FIND_TAB = 0
     REPLACE_TAB = 1

@@ -11,6 +11,7 @@
 #
 
 import os, re, wx, wx.stc
+import metrics
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
 
@@ -108,7 +109,7 @@ class PassageFrame (wx.Frame):
         # title/tag controls
         
         self.topControls = wx.Panel(self.panel)
-        topSizer = wx.FlexGridSizer(3, 2, PassageFrame.SPACING, PassageFrame.SPACING)
+        topSizer = wx.FlexGridSizer(3, 2, metrics.size('controlSpace'), metrics.size('controlSpace'))
         
         titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
@@ -132,9 +133,9 @@ class PassageFrame (wx.Frame):
                 
         # final layout
         
-        allSizer.Add(self.topControls, flag = wx.ALL | wx.EXPAND, border = PassageFrame.SPACING)
+        allSizer.Add(self.topControls, flag = wx.ALL | wx.EXPAND, border = metrics.size('windowBorder'))
         allSizer.Add(self.bodyInput, proportion = 1, flag = wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, \
-                     border = PassageFrame.SPACING)
+                     border = metrics.size('windowBorder'))
         self.applyPrefs()
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()
@@ -507,7 +508,6 @@ class PassageFrame (wx.Frame):
     # control constants
     
     DEFAULT_SIZE = (550, 600)
-    SPACING = 6
     TITLE_LABEL = 'Title'
     TAGS_LABEL = 'Tags (separate with spaces)'
         
