@@ -80,7 +80,8 @@ class FullscreenEditFrame (wx.Frame):
 
     def close (self):
         self.callback(self.editCtrl.GetText())
-        self.Destroy()
+        self.ShowFullScreen(False)
+        self.Close()
         
     def applyPrefs (self):
         """

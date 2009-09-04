@@ -6,6 +6,7 @@
 #
 
 import sys, os, locale, re, pickle, wx
+import metrics
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
 
@@ -147,15 +148,15 @@ class App (wx.App):
         if not self.config.HasEntry('fsBgColor'):
             self.config.Write('fsBgColor', '#100088')
         if not self.config.HasEntry('fsFontFace'):
-            self.config.Write('fsFontFace', monoFont.GetFaceName())
+            self.config.Write('fsFontFace', metrics.face('mono'))
         if not self.config.HasEntry('fsFontSize'):
-            self.config.WriteInt('fsFontSize', 16)
+            self.config.WriteInt('fsFontSize', metrics.size('fsEditorBody'))
         if not self.config.HasEntry('fsLineHeight'):
             self.config.WriteInt('fsLineHeight', 120)
         if not self.config.HasEntry('windowedFontFace'):
-            self.config.Write('windowedFontFace', monoFont.GetFaceName())
+            self.config.Write('windowedFontFace', metrics.face('mono'))
         if not self.config.HasEntry('windowedFontSize'):
-            self.config.WriteInt('windowedFontSize', 10)
+            self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
             
     def applyPrefs (self):
         """Asks all of our stories to update themselves based on a preference change."""

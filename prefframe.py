@@ -17,8 +17,10 @@ class PreferenceFrame (wx.Frame):
                           style = wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CAPTION | wx.SYSTEM_MENU)
         
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
-        panelSizer = wx.FlexGridSizer(5, 2, metrics.size('windowBorder'), metrics.size('windowBorder'))
-        panel.SetSizer(panelSizer)
+        borderSizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(borderSizer)
+        panelSizer = wx.FlexGridSizer(5, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
         self.editorFont.SetSelectedFont(self.getPrefFont('windowed'))
@@ -48,33 +50,23 @@ class PreferenceFrame (wx.Frame):
         self.fsLineHeight.Bind(wx.EVT_TEXT, lambda e: self.savePref('fsLineHeight', int(self.fsLineHeight.GetValue())))
         self.fsLineHeight.SetValue(str(self.app.config.ReadInt('fslineHeight')))
         
-        fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.TOP | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
-        fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.TOP | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
+        fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.ALIGN_CENTER_VERTICAL)
+        fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.ALIGN_CENTER_VERTICAL)
 
-        panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), \
-                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
-        panelSizer.Add(self.editorFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), \
-                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
-        panelSizer.Add(self.fsFont, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), \
-                       flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
-        panelSizer.Add(self.fsTextColor, flag = wx.ALL, border = metrics.size('controlSpace'))
+        panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.editorFont)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.fsFont)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.fsTextColor)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Background Color'), \
-                       flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
-        panelSizer.Add(self.fsBgColor, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = metrics.size('controlSpace'))
-        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), \
-                       flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border = metrics.size('controlSpace'))
-        panelSizer.Add(fsLineHeightPanel, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
+                       flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.fsBgColor)
+        panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
 
         panelSizer.Fit(self)
+        borderSizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
         

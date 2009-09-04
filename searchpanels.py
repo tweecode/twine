@@ -31,9 +31,9 @@ class FindPanel (wx.Panel):
         findSizer = wx.BoxSizer(wx.HORIZONTAL)
         
         findSizer.Add(wx.StaticText(self, label = 'Find'), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, \
-                      border = metrics.size('controlSpace'), proportion = 0)
+                      border = metrics.size('relatedControls'), proportion = 0)
         self.findField = wx.TextCtrl(self)
-        findSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND, border = metrics.size('controlSpace'))
+        findSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND, border = metrics.size('relatedControls'))
         sizer.Add(findSizer, flag = wx.EXPAND)
         
         # option checkboxes
@@ -44,9 +44,9 @@ class FindPanel (wx.Panel):
         self.wholeWordCheckbox = wx.CheckBox(self, label = 'Whole Word')
         self.regexpCheckbox = wx.CheckBox(self, label = 'Regular Expression')
         
-        optionSizer.Add(self.caseCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
-        optionSizer.Add(self.wholeWordCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
-        optionSizer.Add(self.regexpCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
+        optionSizer.Add(self.caseCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
+        optionSizer.Add(self.wholeWordCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
+        optionSizer.Add(self.regexpCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
         sizer.Add(optionSizer)
         
         # find and close buttons
@@ -59,8 +59,8 @@ class FindPanel (wx.Panel):
         self.findButton = wx.Button(self, label = 'Find Next')
         self.findButton.Bind(wx.EVT_BUTTON, self.onFind)
 
-        buttonSizer.Add(self.closeButton, flag = wx.ALL, border = metrics.size('controlSpace'))        
-        buttonSizer.Add(self.findButton, flag = wx.ALL, border = metrics.size('controlSpace'))
+        buttonSizer.Add(self.closeButton, flag = wx.ALL, border = metrics.size('relatedControls'))        
+        buttonSizer.Add(self.findButton, flag = wx.ALL, border = metrics.size('relatedControls'))
         sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT)
         sizer.Fit(self)
         
@@ -142,17 +142,17 @@ class ReplacePanel (wx.Panel):
         # find text and label
         
         fieldSizer.Add(wx.StaticText(self, label = 'Find'), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'), proportion = 0)
+                       border = metrics.size('relatedControls'), proportion = 0)
         self.findField = wx.TextCtrl(self)
-        fieldSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND, border = metrics.size('controlSpace'))
+        fieldSizer.Add(self.findField, proportion = 1, flag = wx.ALL | wx.EXPAND, border = metrics.size('relatedControls'))
 
         # replace text and label
         
         fieldSizer.Add(wx.StaticText(self, label = 'Replace With'), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'), proportion = 0)
+                       border = metrics.size('relatedControls'), proportion = 0)
         self.replaceField = wx.TextCtrl(self)
         fieldSizer.Add(self.replaceField, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, \
-                       border = metrics.size('controlSpace'))
+                       border = metrics.size('relatedControls'))
         
         sizer.Add(fieldSizer, flag = wx.EXPAND)
         
@@ -164,9 +164,9 @@ class ReplacePanel (wx.Panel):
         self.wholeWordCheckbox = wx.CheckBox(self, label = 'Whole Word')
         self.regexpCheckbox = wx.CheckBox(self, label = 'Regular Expression')
         
-        optionSizer.Add(self.caseCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
-        optionSizer.Add(self.wholeWordCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
-        optionSizer.Add(self.regexpCheckbox, flag = wx.ALL, border = metrics.size('controlSpace'))
+        optionSizer.Add(self.caseCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
+        optionSizer.Add(self.wholeWordCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
+        optionSizer.Add(self.regexpCheckbox, flag = wx.ALL, border = metrics.size('relatedControls'))
         sizer.Add(optionSizer)
                 
         # find and close buttons
@@ -175,20 +175,20 @@ class ReplacePanel (wx.Panel):
         
         self.closeButton = wx.Button(self, label = 'Close')
         self.closeButton.Bind(wx.EVT_BUTTON, self.onClose)
-        buttonSizer.Add(self.closeButton, flag = wx.ALL, border = metrics.size('controlSpace'))        
+        buttonSizer.Add(self.closeButton, flag = wx.ALL, border = metrics.size('relatedControls'))        
       
         if allowIncremental:
             buttonSizer.Add(wx.Panel(self))
             self.findButton = wx.Button(self, label = 'Find Next')
             self.findButton.Bind(wx.EVT_BUTTON, self.onFind)
-            buttonSizer.Add(self.findButton, flag = wx.ALL, border = metrics.size('controlSpace'))
+            buttonSizer.Add(self.findButton, flag = wx.ALL, border = metrics.size('relatedControls'))
             self.replaceButton = wx.Button(self, label = 'Replace')
             self.replaceButton.Bind(wx.EVT_BUTTON, self.onReplace)
-            buttonSizer.Add(self.replaceButton, flag = wx.ALL, border = metrics.size('controlSpace'))
+            buttonSizer.Add(self.replaceButton, flag = wx.ALL, border = metrics.size('relatedControls'))
             
         self.replaceAllButton = wx.Button(self, label = 'Replace All')
         self.replaceAllButton.Bind(wx.EVT_BUTTON, self.onReplaceAll)
-        buttonSizer.Add(self.replaceAllButton, flag = wx.ALL, border = metrics.size('controlSpace'))        
+        buttonSizer.Add(self.replaceAllButton, flag = wx.ALL, border = metrics.size('relatedControls'))        
         
         sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT)
         sizer.Fit(self)

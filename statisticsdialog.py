@@ -26,7 +26,7 @@ class StatisticsDialog (wx.Dialog):
         # count controls
         
         countPanel = wx.Panel(parent = panel)
-        countPanelSizer = wx.FlexGridSizer(5, 2, metrics.size('controlSpace'), metrics.size('controlSpace'))
+        countPanelSizer = wx.FlexGridSizer(5, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         countPanel.SetSizer(countPanelSizer)
         
         self.characters = wx.StaticText(countPanel)
@@ -49,11 +49,11 @@ class StatisticsDialog (wx.Dialog):
         countPanelSizer.Add(self.brokenLinks, flag = wx.ALIGN_RIGHT)
         countPanelSizer.Add(wx.StaticText(countPanel, label = 'Broken Links'))
 
-        panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('controlSpace'))
+        panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
         
         okButton = wx.Button(parent = panel, label = 'OK')
         okButton.Bind(wx.EVT_BUTTON, lambda e: self.Close())
-        panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('controlSpace'))
+        panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
         
         panelSizer.Fit(self)
         

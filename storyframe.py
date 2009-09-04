@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import wx, os, urllib, pickle
+import sys, os, urllib, pickle, wx
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from statisticsdialog import StatisticsDialog
@@ -126,7 +126,12 @@ class StoryFrame (wx.Frame):
         editMenu.Append(StoryFrame.EDIT_FIND_NEXT, 'Find Next\tCtrl-G')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.findWidgetRegexp(), id = StoryFrame.EDIT_FIND_NEXT)
         
-        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\tCtrl-H')
+        if sys.platform == 'darwin':
+            shortcut = 'Ctrl-Shift-H'
+        else:
+            shortcut = 'Ctrl-H'
+        
+        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\t' + shortcut)
         self.Bind(wx.EVT_MENU, self.showReplace, id = wx.ID_REPLACE)
 
         editMenu.AppendSeparator()
@@ -289,7 +294,9 @@ class StoryFrame (wx.Frame):
     def revert (self, event = None):
         """Reverts to the last saved version of the story file."""
         bits = os.path.splitext(self.saveDestination)
-        title = os.path.basename(bits[0])
+        title = '"' + os.path.basename(bits[0]) + '"'
+        if title == '""': title = 'your story'
+        
         message = 'Revert to the last version of ' + title + ' you saved?'
         dialog = wx.MessageDialog(self, message, 'Revert to Saved', wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
         
@@ -304,10 +311,11 @@ class StoryFrame (wx.Frame):
                 
         if (self.dirty):
             bits = os.path.splitext(self.saveDestination)
-            title = os.path.basename(bits[0])
+            title = '"' + os.path.basename(bits[0]) + '"'
+            if title == '""': title = 'your story' 
 
-            message = 'Close ' + title + ' without saving changes?'
-            dialog = wx.MessageDialog(self, message, 'Save Changes', \
+            message = 'Are you sure you want to close ' + title + ' without saving changes?'
+            dialog = wx.MessageDialog(self, message, 'Unsaved Changes', \
                                       wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
             if (dialog.ShowModal() == wx.ID_NO):
                 event.Veto()

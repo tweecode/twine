@@ -15,6 +15,7 @@
 #
 
 import os, math, re, wx, wx.lib.wordwrap, storypanel, tiddlywiki
+import metrics
 from passageframe import PassageFrame
 
 class PassageWidget:
@@ -269,11 +270,11 @@ class PassageWidget:
         # text font sizes
         # wxWindows works with points, so we need to doublecheck on actual pixels
 
-        titleFontSize = self.parent.toPixels((PassageWidget.TITLE_SIZE, -1), scaleOnly = True)[0]
-        titleFontSize = min(titleFontSize, PassageWidget.MAX_TITLE_SIZE)
-        titleFontSize = max(titleFontSize, PassageWidget.MIN_TITLE_SIZE)
-        excerptFontSize = min(titleFontSize * 0.9, PassageWidget.MAX_EXCERPT_SIZE)
-        excerptFontSize = max(excerptFontSize, PassageWidget.MIN_EXCERPT_SIZE)
+        titleFontSize = self.parent.toPixels((metrics.size('widgetTitle'), -1), scaleOnly = True)[0]
+        titleFontSize = min(titleFontSize, metrics.size('fontMax'))
+        titleFontSize = max(titleFontSize, metrics.size('fontMin'))
+        excerptFontSize = min(titleFontSize * 0.9, metrics.size('fontMax'))
+        excerptFontSize = max(excerptFontSize, metrics.size('fontMin'))
         titleFont = wx.Font(titleFontSize, wx.SWISS, wx.NORMAL, wx.BOLD, False, 'Arial')
         excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
@@ -394,11 +395,6 @@ class PassageWidget:
                'titleText': (255, 255, 255), \
                'excerptText': (0, 0, 0) }
     DIMMED_ALPHA = 0.25
-    TITLE_SIZE = 9
-    MIN_TITLE_SIZE = 8
-    MAX_TITLE_SIZE = 18
-    MIN_EXCERPT_SIZE = 9
-    MAX_EXCERPT_SIZE = 12
     LINE_SPACING = 1.2
     
 # contextual menu

@@ -10,7 +10,7 @@
 # they are automatically updated everywhere.
 #
 
-import os, re, wx, wx.stc
+import sys, os, re, wx, wx.stc
 import metrics
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
@@ -90,7 +90,12 @@ class PassageFrame (wx.Frame):
         editMenu.Append(PassageFrame.EDIT_FIND_NEXT, 'Find &Next\tCtrl-G')
         self.Bind(wx.EVT_MENU, self.findNextRegexp, id = PassageFrame.EDIT_FIND_NEXT)
         
-        editMenu.Append(wx.ID_REPLACE, '&Replace...\tCtrl-H')
+        if sys.platform == 'darwin':
+            shortcut = 'Ctrl-Shift-H'
+        else:
+            shortcut = 'Ctrl-H'
+        
+        editMenu.Append(wx.ID_REPLACE, '&Replace...\t' + shortcut)
         self.Bind(wx.EVT_MENU, lambda e: self.showSearchFrame(PassageSearchFrame.REPLACE_TAB), id = wx.ID_REPLACE)
 
         # menus
@@ -109,23 +114,24 @@ class PassageFrame (wx.Frame):
         # title/tag controls
         
         self.topControls = wx.Panel(self.panel)
-        topSizer = wx.FlexGridSizer(3, 2, metrics.size('controlSpace'), metrics.size('controlSpace'))
+        topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         
         titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
         tagsLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TAGS_LABEL)
         self.tagsInput = wx.TextCtrl(self.topControls)
-        topSizer.Add(titleLabel)
-        topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL)
-        topSizer.Add(tagsLabel)
-        topSizer.Add(self.tagsInput, 1, flag = wx.EXPAND | wx.ALL)
+        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(tagsLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.tagsInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
         topSizer.AddGrowableCol(1, 1)
         self.topControls.SetSizer(topSizer)
         
         # body text
         
-        self.bodyInput = wx.stc.StyledTextCtrl(self.panel, style = wx.TE_MULTILINE | wx.TE_PROCESS_TAB)
-        self.bodyInput.SetMargins(4, 4)
+        self.bodyInput = wx.stc.StyledTextCtrl(self.panel, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+        self.bodyInput.SetUseHorizontalScrollBar(False)
+        self.bodyInput.SetMargins(8, 8)
         self.bodyInput.SetMarginWidth(1, 0)
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
@@ -133,9 +139,8 @@ class PassageFrame (wx.Frame):
                 
         # final layout
         
-        allSizer.Add(self.topControls, flag = wx.ALL | wx.EXPAND, border = metrics.size('windowBorder'))
-        allSizer.Add(self.bodyInput, proportion = 1, flag = wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, \
-                     border = metrics.size('windowBorder'))
+        allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
+        allSizer.Add(self.bodyInput, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
         self.applyPrefs()
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()
