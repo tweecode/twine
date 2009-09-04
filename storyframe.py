@@ -368,7 +368,7 @@ class StoryFrame (wx.Frame):
             try:
                 # have a TiddlyWiki object parse it for us
                 
-                source = open(dialog.GetPath(), 'r')
+                source = open(dialog.GetPath(), 'rb')
                 tw = TiddlyWiki()
                 tw.addTwee(source.read())
                 source.close()
@@ -395,7 +395,7 @@ class StoryFrame (wx.Frame):
             return
         
         try:
-            dest = open(self.saveDestination, 'w')
+            dest = open(self.saveDestination, 'wb')
             pickle.dump(self.serialize(), dest)
             dest.close()
             self.setDirty(False)
