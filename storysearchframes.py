@@ -54,7 +54,6 @@ class StoryReplaceFrame (wx.Frame):
         sizer.Add(replacePanel)
         replacePanel.focus()
         
-
         sizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
