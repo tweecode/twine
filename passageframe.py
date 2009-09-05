@@ -9,6 +9,12 @@
 # This doesn't require the user to save his changes -- as he makes changes,
 # they are automatically updated everywhere.
 #
+# nb: This does not make use of wx.stc's built-in find/replace functions.
+# This is partially for user interface reasons, as find/replace at the
+# StoryPanel level uses Python regexps, not Scintilla ones. It's also
+# because SearchPanel and ReplacePanel hand back regexps, so we wouldn't
+# know what flags to pass to wx.stc.
+#
 
 import sys, os, re, wx, wx.stc
 import metrics
@@ -354,13 +360,15 @@ class PassageFrame (wx.Frame):
         If the current selection matches the search regexp, a replacement
         is made. Otherwise, it calls findRegexp().
         """
+        compiledRegexp = re.compile(findRegexp, flags)
         selectedText = self.bodyInput.GetSelectedText()
         match = re.match(findRegexp, selectedText, flags)
         
-        # FIXME: needs to unescape any regexp escapes in the replacement
-        
         if match and match.endpos == len(selectedText):
-            self.bodyInput.ReplaceSelection(replaceRegexp)
+            oldStart = self.bodyInput.GetSelectionStart()
+            newText = re.sub(compiledRegexp, replaceRegexp, selectedText)
+            self.bodyInput.ReplaceSelection(newText)
+            self.bodyInput.SetSelection(oldStart, oldStart + len(newText))
         else:
             # look for the next instance
             self.findRegexp(findRegexp, flags)
