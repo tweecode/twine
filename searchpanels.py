@@ -33,7 +33,8 @@ class FindPanel (wx.Panel):
         findSizer.Add(wx.StaticText(self, label = 'Find'), flag = wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
                       border = metrics.size('relatedControls'), proportion = 0)
         self.findField = wx.TextCtrl(self)
-        findSizer.Add(self.findField, proportion = 1, flag = wx.BOTTOM | wx.EXPAND, border = metrics.size('relatedControls'))
+        findSizer.Add(self.findField, proportion = 1, flag = wx.BOTTOM | wx.EXPAND, \
+                      border = metrics.size('relatedControls'))
         sizer.Add(findSizer, flag = wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('windowBorder'))
         
         # option checkboxes
@@ -45,9 +46,12 @@ class FindPanel (wx.Panel):
         self.regexpCheckbox = wx.CheckBox(self, label = 'Regular Expression')
         
         optionSizer.Add(self.caseCheckbox, flag = wx.BOTTOM | wx.RIGHT, border = metrics.size('relatedControls'))
-        optionSizer.Add(self.wholeWordCheckbox, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, border = metrics.size('relatedControls'))
-        optionSizer.Add(self.regexpCheckbox, flag = wx.BOTTOM | wx.LEFT, border = metrics.size('relatedControls'))
-        sizer.Add(optionSizer, flag = wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('windowBorder'))
+        optionSizer.Add(self.wholeWordCheckbox, flag = wx.BOTTOM | wx.LEFT | wx.RIGHT, \
+                        border = metrics.size('relatedControls'))
+        optionSizer.Add(self.regexpCheckbox, flag = wx.BOTTOM | wx.LEFT, \
+                        border = metrics.size('relatedControls'))
+        sizer.Add(optionSizer, flag = wx.EXPAND | wx.TOP | wx.LEFT | wx.RIGHT, \
+                  border = metrics.size('windowBorder'))
         
         # find and close buttons
         
@@ -61,7 +65,8 @@ class FindPanel (wx.Panel):
 
         buttonSizer.Add(self.closeButton, flag = wx.TOP | wx.RIGHT, border = metrics.size('buttonSpace'))        
         buttonSizer.Add(self.findButton, flag = wx.TOP, border = metrics.size('buttonSpace'))
-        sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT, border = metrics.size('windowBorder'))
+        sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT | wx.BOTTOM | wx.LEFT | wx.RIGHT, \
+                  border = metrics.size('windowBorder'))
         sizer.Fit(self)
         
     def focus (self):
@@ -141,14 +146,17 @@ class ReplacePanel (wx.Panel):
 
         # find text and label
         
-        fieldSizer.Add(wx.StaticText(self, label = 'Find'), flag = wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+        fieldSizer.Add(wx.StaticText(self, label = 'Find'), \
+                       flag = wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
                        border = metrics.size('relatedControls'), proportion = 0)
         self.findField = wx.TextCtrl(self)
-        fieldSizer.Add(self.findField, proportion = 1, flag = wx.BOTTOM | wx.EXPAND, border = metrics.size('relatedControls'))
+        fieldSizer.Add(self.findField, proportion = 1, flag = wx.BOTTOM | wx.EXPAND, \
+                       border = metrics.size('relatedControls'))
 
         # replace text and label
         
-        fieldSizer.Add(wx.StaticText(self, label = 'Replace With'), flag = wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
+        fieldSizer.Add(wx.StaticText(self, label = 'Replace With'), \
+                       flag = wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, \
                        border = metrics.size('relatedControls'), proportion = 0)
         self.replaceField = wx.TextCtrl(self)
         fieldSizer.Add(self.replaceField, proportion = 1, flag = wx.BOTTOM | wx.EXPAND | wx.ALIGN_CENTER_VERTICAL, \
@@ -164,9 +172,12 @@ class ReplacePanel (wx.Panel):
         self.wholeWordCheckbox = wx.CheckBox(self, label = 'Whole Word')
         self.regexpCheckbox = wx.CheckBox(self, label = 'Regular Expression')
         
-        optionSizer.Add(self.caseCheckbox, flag = wx.BOTTOM | wx.TOP | wx.RIGHT, border = metrics.size('relatedControls'))
-        optionSizer.Add(self.wholeWordCheckbox, flag = wx.BOTTOM | wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('relatedControls'))
-        optionSizer.Add(self.regexpCheckbox, flag = wx.BOTTOM | wx.TOP | wx.LEFT, border = metrics.size('relatedControls'))
+        optionSizer.Add(self.caseCheckbox, flag = wx.BOTTOM | wx.TOP | wx.RIGHT, \
+                        border = metrics.size('relatedControls'))
+        optionSizer.Add(self.wholeWordCheckbox, flag = wx.BOTTOM | wx.TOP | wx.LEFT | wx.RIGHT, \
+                        border = metrics.size('relatedControls'))
+        optionSizer.Add(self.regexpCheckbox, flag = wx.BOTTOM | wx.TOP | wx.LEFT, \
+                        border = metrics.size('relatedControls'))
         sizer.Add(optionSizer, flag = wx.LEFT | wx.RIGHT, border = metrics.size('windowBorder'))
                 
         # find and close buttons
@@ -181,7 +192,8 @@ class ReplacePanel (wx.Panel):
             buttonSizer.Add(wx.Panel(self))
             self.findButton = wx.Button(self, label = 'Find Next')
             self.findButton.Bind(wx.EVT_BUTTON, self.onFind)
-            buttonSizer.Add(self.findButton, flag = wx.TOP | wx.LEFT | wx.RIGHT, border = metrics.size('buttonSpace'))
+            buttonSizer.Add(self.findButton, flag = wx.TOP | wx.LEFT | wx.RIGHT, \
+                            border = metrics.size('buttonSpace'))
             self.replaceButton = wx.Button(self, label = 'Replace')
             self.replaceButton.Bind(wx.EVT_BUTTON, self.onReplace)
             buttonSizer.Add(self.replaceButton, flag = wx.TOP | wx.RIGHT, border = metrics.size('buttonSpace'))
@@ -190,7 +202,8 @@ class ReplacePanel (wx.Panel):
         self.replaceAllButton.Bind(wx.EVT_BUTTON, self.onReplaceAll)
         buttonSizer.Add(self.replaceAllButton, flag = wx.TOP, border = metrics.size('buttonSpace'))        
         
-        sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM, border = metrics.size('windowBorder'))
+        sizer.Add(buttonSizer, flag = wx.ALIGN_RIGHT | wx.LEFT | wx.RIGHT | wx.BOTTOM, \
+                  border = metrics.size('windowBorder'))
         sizer.Fit(self)
         
     def focus (self):
