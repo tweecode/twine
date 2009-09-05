@@ -9,7 +9,7 @@
 # http://www.psychicorigami.com/2009/01/05/a-5k-python-fullscreen-text-editor/
 #
 
-import wx, wx.stc
+import sys, wx, wx.stc
 
 class FullscreenEditFrame (wx.Frame):
     
@@ -80,7 +80,7 @@ class FullscreenEditFrame (wx.Frame):
 
     def close (self):
         self.callback(self.editCtrl.GetText())
-        self.ShowFullScreen(False)
+        if sys.platform == 'darwin': self.ShowFullScreen(False)
         self.Close()
         
     def applyPrefs (self):
