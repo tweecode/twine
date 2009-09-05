@@ -157,6 +157,10 @@ class App (wx.App):
             self.config.Write('windowedFontFace', metrics.face('mono'))
         if not self.config.HasEntry('windowedFontSize'):
             self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
+        if not self.config.HasEntry('storyFrameToolbar'):
+            self.config.WriteBool('storyFrameToolbar', True)
+        if not self.config.HasEntry('storyPanelSnap'):
+            self.config.WriteBool('storyPanelSnap', False)
             
     def applyPrefs (self):
         """Asks all of our stories to update themselves based on a preference change."""

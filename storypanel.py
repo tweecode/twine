@@ -28,7 +28,7 @@ class StoryPanel (wx.ScrolledWindow):
         
         # inner state
         
-        self.snapping = False
+        self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
         self.draggingMarquee = False
         self.draggingWidgets = False

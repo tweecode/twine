@@ -287,8 +287,16 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_TOOL, lambda e: self.storyPanel.zoom(1.0), id = wx.ID_ZOOM_100)
 
         self.SetIcon(self.app.icon)
-        self.showToolbar = True
-        self.toolbar.Realize()
+        
+        if app.config.ReadBool('storyFrameToolbar'):
+            print 'showing toolbar'
+            self.showToolbar = True
+            self.toolbar.Realize()
+        else:
+            self.showToolbar = False
+            self.toolbar.Realize()
+            self.toolbar.Hide()
+            
         self.Show(True)
         
     def revert (self, event = None):
@@ -611,9 +619,11 @@ class StoryFrame (wx.Frame):
         if (self.showToolbar):
             self.showToolbar = False
             self.toolbar.Hide()
+            self.app.config.WriteBool('storyFrameToolbar', False)
         else:
             self.showToolbar = True
             self.toolbar.Show()
+            self.app.config.WriteBool('storyFrameToolbar', True)
         self.SendSizeEvent()
         
     def setDirty (self, value, action = None):
