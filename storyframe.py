@@ -252,6 +252,13 @@ class StoryFrame (wx.Frame):
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
 
+        # extra shortcuts
+        
+        self.SetAcceleratorTable(wx.AcceleratorTable([ \
+                                    (wx.ACCEL_NORMAL, wx.WXK_RETURN, wx.ID_EDIT), \
+                                    (wx.ACCEL_CTRL, wx.WXK_RETURN, StoryFrame.STORY_EDIT_FULLSCREEN) \
+                                                      ]))
+
         # add toolbar
 
         iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
@@ -289,7 +296,6 @@ class StoryFrame (wx.Frame):
         self.SetIcon(self.app.icon)
         
         if app.config.ReadBool('storyFrameToolbar'):
-            print 'showing toolbar'
             self.showToolbar = True
             self.toolbar.Realize()
         else:
