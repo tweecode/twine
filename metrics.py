@@ -48,14 +48,14 @@ def size (type):
         return 3
             
     if type == 'fontMin':
-        if sys.platform == 'win32': return 9
+        if sys.platform == 'win32': return 8
         if sys.platform == 'darwin': return 11
         
     if type == 'fontMax':
         return 24
     
     if type == 'widgetTitle':
-        if sys.platform == 'win32': return 11
+        if sys.platform == 'win32': return 9
         if sys.platform == 'darwin': return 13
         return 11
 

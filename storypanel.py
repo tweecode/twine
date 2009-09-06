@@ -16,7 +16,8 @@
 # coordinates as soon as possible.
 #
 
-import sys, wx, re, rectmath, pickle
+import sys, wx, re, pickle
+import geometry
 from passagewidget import PassageWidget
 
 class StoryPanel (wx.ScrolledWindow):
@@ -383,7 +384,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.draggingMarquee = True
             self.dragOrigin = event.GetPosition()
             self.dragCurrent = event.GetPosition()
-            self.dragRect = rectmath.pointsToRect(self.dragOrigin, self.dragOrigin)
+            self.dragRect = geometry.pointsToRect(self.dragOrigin, self.dragOrigin)
             
             # deselect everything
             
@@ -403,7 +404,7 @@ class StoryPanel (wx.ScrolledWindow):
             
             self.oldDirtyRect = self.dragRect
             self.dragCurrent = event.GetPosition()
-            self.dragRect = rectmath.pointsToRect(self.dragOrigin, self.dragCurrent)
+            self.dragRect = geometry.pointsToRect(self.dragOrigin, self.dragCurrent)
                          
             # select all enclosed widgets
             
@@ -661,12 +662,15 @@ class StoryPanel (wx.ScrolledWindow):
         # connectors
         
         gc.SetPen(wx.Pen(StoryPanel.CONNECTOR_COLOR))
-        for widget in self.widgets:            
+        for widget in self.widgets:
+            if widget.dimmed: continue
             start = self.toPixels(widget.getCenter())
             for link in widget.passage.links():
                 otherWidget = self.findWidget(link)
-                if otherWidget:
+                if otherWidget and not otherWidget.dimmed:
                     end = self.toPixels(otherWidget.getCenter())
+                    start, end = geometry.clipLineByRects([start, end], widget.getPixelRect(), \
+                                                          otherWidget.getPixelRect())
                     gc.StrokeLine(start[0], start[1], end[0], end[1])
         
         # widgets
