@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import os, math, re, wx, wx.lib.wordwrap, storypanel, tiddlywiki
+import os, copy, math, re, wx, wx.lib.wordwrap, storypanel, tiddlywiki
 import metrics
 from passageframe import PassageFrame
 
@@ -378,7 +378,7 @@ class PassageWidget:
         
     def serialize (self):
         """Returns a dictionary with state information suitable for pickling."""
-        return { 'selected': self.selected, 'pos': self.pos, 'passage': self.passage }
+        return { 'selected': self.selected, 'pos': self.pos, 'passage': copy.copy(self.passage) }
     
     def __repr__ (self):
         return "<PassageWidget '" + self.passage.title + "'>"
