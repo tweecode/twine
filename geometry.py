@@ -48,18 +48,6 @@ def endPointProjectedFrom(line, angle, distance):
 
     return wx.Point(x, y)
 
-    
-    if slope(line) != None:
-        # finite slope
-        x = line[1].x + distance * math.cos(math.pi / 2 - (math.atan(slope(line)) + angle))
-        y = line[1].y + distance * math.sin(math.pi / 2 - (math.atan(slope(line)) + angle))
-    else:
-        # infinite slope (e.g. vertical line)
-        return None
-        
-    print x, y
-    return wx.Point(x, y)
-
 def pointsToRect (p1, p2):
     """
     Returns the smallest wx.Rect that encloses two points.
