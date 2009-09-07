@@ -115,6 +115,7 @@ class StoryPanel (wx.ScrolledWindow):
     def toggleSnapping (self):
         """Toggles whether snapping is on."""
         self.snapping = self.snapping is not True
+        self.app.config.WriteBool('storyPanelSnap', self.snapping)
         
     def copyWidgets (self):
         """Copies selected widgets into the clipboard."""
