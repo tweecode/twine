@@ -264,6 +264,6 @@ class ReplacePanel (wx.Panel):
             result['flags'] = re.IGNORECASE
         
         if self.wholeWordCheckbox.GetValue():
-            result['find'] = r'\b' + regexp + r'\b'
+            result['find'] = r'\b' + result['find'] + r'\b'
     
         return result
