@@ -16,7 +16,7 @@
 # coordinates as soon as possible.
 #
 
-import sys, wx, re, pickle
+import sys, math, wx, re, pickle
 import geometry
 from passagewidget import PassageWidget
 
@@ -661,20 +661,34 @@ class StoryPanel (wx.ScrolledWindow):
                 
         # connectors
         
-        gc.SetPen(wx.Pen(StoryPanel.CONNECTOR_COLOR))
+        arrowheadLength = max(self.toPixels((StoryPanel.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], \
+                              StoryPanel.MIN_ARROWHEAD_LENGTH)
+        
+        gc.SetPen(wx.Pen(StoryPanel.CONNECTOR_COLOR, max(self.toPixels((StoryPanel.CONNECTOR_WIDTH, 0), \
+                                                                        scaleOnly = True)[0], 1)))
         for widget in self.widgets:
             if widget.dimmed: continue
             start = self.toPixels(widget.getCenter())
             for link in widget.passage.links():
                 otherWidget = self.findWidget(link)
                 if otherWidget and not otherWidget.dimmed:
+                    # connector line
+                    
                     end = self.toPixels(otherWidget.getCenter())
-                    start, end = geometry.clipLineByRects([start, end], widget.getPixelRect(), \
-                                                          otherWidget.getPixelRect())
+                    start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
                     gc.StrokeLine(start[0], start[1], end[0], end[1])
         
-        # widgets
+                    # arrowheads at end
         
+                    arrowhead = geometry.endPointProjectedFrom((start, end), angle = StoryPanel.ARROWHEAD_ANGLE, \
+                                                               distance = arrowheadLength)
+                    gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+                    arrowhead = geometry.endPointProjectedFrom((start, end), angle = 0 - StoryPanel.ARROWHEAD_ANGLE, \
+                                                               distance = arrowheadLength)
+                    gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])                    
+                
+        # widgets
+                
         for widget in self.widgets:
             if updateRect.Intersects(widget.getPixelRect()): widget.paint(gc)
         
@@ -715,9 +729,13 @@ class StoryPanel (wx.ScrolledWindow):
         return state
     
     INSET = (10, 10)
+    ARROWHEAD_LENGTH = 10
+    MIN_ARROWHEAD_LENGTH = 5
+    ARROWHEAD_ANGLE = math.pi / 6
     FIRST_TITLE = 'Start'
     FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'   
     BACKGROUND_COLOR = '#555753'
+    CONNECTOR_WIDTH = 2.0
     CONNECTOR_COLOR = '#babdb6'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25

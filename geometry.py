@@ -17,6 +17,7 @@ def clipLineByRects (line, *rects):
     
     # this is not as awful as it looks,
     # "for rectLine in rectLines" does it 4 times max
+    # so we're actually O(n)
         
     for rect in rects:
         rectLines = None
@@ -29,6 +30,32 @@ def clipLineByRects (line, *rects):
                         result[i] = intersection
                         break
     return result
+
+def endPointProjectedFrom(line, angle, distance):
+    """
+    Projects an endpoint from the second wx.Point of a line at
+    a given angle and distance. The angle should be given in radians.
+    """
+    lengthRatio = distance / lineLength(line)
+    
+    x = line[1].x - ((line[1].x - line[0].x) * math.cos(angle) - \
+                     (line[1].y - line[0].y) * math.sin(angle)) * lengthRatio
+    y = line[1].y - ((line[1].y - line[0].y) * math.cos(angle) + \
+                     (line[1].x - line[0].x) * math.sin(angle)) * lengthRatio
+
+    return wx.Point(x, y)
+
+    
+    if slope(line) != None:
+        # finite slope
+        x = line[1].x + distance * math.cos(math.pi / 2 - (math.atan(slope(line)) + angle))
+        y = line[1].y + distance * math.sin(math.pi / 2 - (math.atan(slope(line)) + angle))
+    else:
+        # infinite slope (e.g. vertical line)
+        return None
+        
+    print x, y
+    return wx.Point(x, y)
 
 def pointsToRect (p1, p2):
     """
@@ -56,6 +83,12 @@ def rectToLines (rect):
     bottomRight = rect.GetBottomRight()
     return (topLeft, topRight), (topLeft, bottomLeft), (topRight, bottomRight), \
            (bottomLeft, bottomRight)
+
+def lineLength (line):
+    """
+    Returns the length of a line.
+    """
+    return math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
 
 def lineIntersection (line1, line2):
     """
