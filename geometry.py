@@ -36,6 +36,9 @@ def endPointProjectedFrom(line, angle, distance):
     Projects an endpoint from the second wx.Point of a line at
     a given angle and distance. The angle should be given in radians.
     """
+    
+    # taken from http://mathforum.org/library/drmath/view/54146.html
+    
     lengthRatio = distance / lineLength(line)
     
     x = line[1].x - ((line[1].x - line[0].x) * math.cos(angle) - \
