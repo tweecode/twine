@@ -80,12 +80,9 @@ class PreferenceFrame (wx.Frame):
     def savePref (self, key, value):
         """
         Saves changes to a preference and sends an update message to the application.
-        """
-        print 'saving', key, value
-        
+        """        
         if isinstance(value, wx.Colour):
             self.app.config.Write(key, value.GetAsString(wx.C2S_HTML_SYNTAX))
-            print self.app.config.Read(key)
         elif type(value) is int:
             self.app.config.WriteInt(key, value)
         else:
