@@ -18,6 +18,7 @@
 
 import sys, os, re, wx, wx.stc
 import metrics
+from tweelexer import TweeLexer
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
 
@@ -142,11 +143,13 @@ class PassageFrame (wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
                 
         # final layout
         
         allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
         allSizer.Add(self.bodyInput, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
+        self.lexer = TweeLexer(self.bodyInput, self.app)
         self.applyPrefs()
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()
@@ -510,6 +513,7 @@ class PassageFrame (wx.Frame):
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         defaultStyle = self.bodyInput.GetStyleAt(0)
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
+        if hasattr(self, 'lexer'): self.lexer.initStyles()
     
     def __repr__ (self):
         return "<PassageFrame '" + self.widget.passage.title + "'>"
