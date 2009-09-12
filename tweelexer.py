@@ -27,12 +27,15 @@ class TweeLexer:
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
 
         self.ctrl.StyleSetFont(TweeLexer.GOOD_LINK, bodyFont)
+        self.ctrl.StyleSetBold(TweeLexer.GOOD_LINK, True)
         self.ctrl.StyleSetForeground(TweeLexer.GOOD_LINK, TweeLexer.GOOD_LINK_COLOR)
         self.ctrl.StyleSetFont(TweeLexer.BAD_LINK, bodyFont)
+        self.ctrl.StyleSetBold(TweeLexer.BAD_LINK, True)
         self.ctrl.StyleSetForeground(TweeLexer.BAD_LINK, TweeLexer.BAD_LINK_COLOR)
         self.ctrl.StyleSetFont(TweeLexer.MARKUP, bodyFont)
         self.ctrl.StyleSetForeground(TweeLexer.MARKUP, TweeLexer.MARKUP_COLOR)
         self.ctrl.StyleSetFont(TweeLexer.MACRO, bodyFont)
+        self.ctrl.StyleSetBold(TweeLexer.MACRO, True)
         self.ctrl.StyleSetForeground(TweeLexer.MACRO, TweeLexer.MACRO_COLOR)
     
     def lex (self, event):
@@ -40,7 +43,6 @@ class TweeLexer:
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
         """
-        print "lexing"
         pos = 0 #self.ctrl.GetEndStyled()
         end = event.GetPosition()
         text = self.ctrl.GetTextRange(pos, end)
@@ -103,13 +105,12 @@ class TweeLexer:
         """
         Applies a style to a certain range.
         """
-        print 'applying style', style, 'to', (start, end)
         self.ctrl.StartStyling(start, TweeLexer.TEXT_STYLES)
         self.ctrl.SetStyling(end, style)
 
     # markup constants
     
-    MARKUPS = ["''", "//", "=="]
+    MARKUPS = ["''", "//", "__", "^^", "~~", "=="]
 
     # style constants
     
@@ -121,9 +122,9 @@ class TweeLexer:
     
     # style colors
     
-    GOOD_LINK_COLOR = '#0000ff'
-    BAD_LINK_COLOR = '#ff00ff'
-    MARKUP_COLOR = '#00ff00'
-    MACRO_COLOR = '#ff00ff'
+    GOOD_LINK_COLOR = '#23648C'
+    BAD_LINK_COLOR = '#7f2020'
+    MARKUP_COLOR = '#29A339'
+    MACRO_COLOR = '#691A52'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
