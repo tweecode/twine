@@ -11,9 +11,10 @@ import re, wx, wx.stc
 
 class TweeLexer:
     
-    def __init__ (self, control, app):
+    def __init__ (self, control, frame):
         self.ctrl = control
-        self.app = app
+        self.frame = frame
+        self.app = frame.app
         self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, self.lex)
         self.initStyles()
         
@@ -43,7 +44,7 @@ class TweeLexer:
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
         """
-        pos = 0 #self.ctrl.GetEndStyled()
+        pos = 0 # should be self.ctrl.GetEndStyled(), but doesn't work
         end = event.GetPosition()
         text = self.ctrl.GetTextRange(pos, end)
         style = TweeLexer.DEFAULT
@@ -58,7 +59,8 @@ class TweeLexer:
 
             # start of markup
             
-            if not inMarkup and text[pos:pos + 2] in TweeLexer.MARKUPS:
+            if not inMarkup and (text[pos:pos + 2] in TweeLexer.MARKUPS \
+                                 or text[pos:pos + 6] == '<html>'):
                 styleChanged = True
                 inMarkup = True
                 self.applyStyle(styleStart, pos, style)
@@ -66,8 +68,9 @@ class TweeLexer:
                 
             # end of markup
 
-            if inMarkup and text[pos - 2:pos] in TweeLexer.MARKUPS \
-                and pos > styleStart + 2:
+            if inMarkup and ((text[pos - 2:pos] in TweeLexer.MARKUPS \
+                             and pos > styleStart + 2) \
+                             or text[pos - 7:pos] == '</html>'):
                 styleChanged = True
                 inMarkup = False
                 self.applyStyle(styleStart, pos, style)
@@ -80,26 +83,48 @@ class TweeLexer:
                 self.applyStyle(styleStart, pos, style)
                 style = TweeLexer.MACRO
 
-            # start of link
-            
-            if text[pos:pos + 2] == '[[':
-               styleChanged = True
-               self.applyStyle(styleStart, pos, style)
-               style = TweeLexer.GOOD_LINK
-           
-            # end of either macro or link
+            # end of macro
                 
-            if (text[pos - 2:pos] == '>>') \
-                or (text[pos - 2:pos] == ']]'):
+            if text[pos - 2:pos] == '>>':
                 styleChanged = True
                 self.applyStyle(styleStart, pos, style)
                 style = TweeLexer.DEFAULT
+
+            # start of link
             
+            if text[pos:pos + 2] == '[[':
+                print 'opening link'
+                styleChanged = True
+                self.applyStyle(styleStart, pos, style)
+                style = TweeLexer.GOOD_LINK
+ 
+            # end of link
+            
+            if text[pos - 2:pos] == ']]':
+                styleChanged = True
+                if not self.passageExists(text[styleStart + 2:pos - 2]):
+                    style = TweeLexer.BAD_LINK
+                
+                self.applyStyle(styleStart, pos, style)
+                style = TweeLexer.DEFAULT
+                       
             if styleChanged: styleStart = pos
             pos = pos + 1
             
         if styleStart != pos:
+            # one last link check
+            
+            if style == TweeLexer.GOOD_LINK and \
+                not self.passageExists(text[styleStart + 2:pos - 2]):
+                style = TweeLexer.BAD_LINK
+            
             self.applyStyle(styleStart, pos, style)
+
+    def passageExists (self, title):
+        """
+        Returns whether a given passage exists in the story.
+        """
+        return (self.frame.widget.parent.findWidget(title) != None)
 
     def applyStyle (self, start, end, style):
         """
