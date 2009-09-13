@@ -149,7 +149,7 @@ class PassageFrame (wx.Frame):
         
         allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
         allSizer.Add(self.bodyInput, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
-        self.lexer = TweeLexer(self.bodyInput, self.app)
+        self.lexer = TweeLexer(self.bodyInput, self)
         self.applyPrefs()
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()

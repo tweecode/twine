@@ -379,6 +379,20 @@ class PassageWidget:
     def serialize (self):
         """Returns a dictionary with state information suitable for pickling."""
         return { 'selected': self.selected, 'pos': self.pos, 'passage': copy.copy(self.passage) }
+
+    def sort (first, second):
+        """
+        Sorts PassageWidgets so that the results appear left to right,
+        top to bottom. A certain amount of slack is assumed here in
+        terms of positioning.
+        """
+        xDistance = first.pos[0] - second.pos[0]    
+        yDistance = first.pos[1] - second.pos[1]
+        
+        if abs(yDistance) > 5:
+            return yDistance
+        else:
+            return xDistance
     
     def __repr__ (self):
         return "<PassageWidget '" + self.passage.title + "'>"
@@ -396,7 +410,7 @@ class PassageWidget:
                'excerptText': (0, 0, 0) }
     DIMMED_ALPHA = 0.25
     LINE_SPACING = 1.2
-    
+        
 # contextual menu
 
 class PassageWidgetContext (wx.Menu):

@@ -35,17 +35,19 @@ class TiddlyWiki:
 				
 		return default
 		
-	def toTwee (self):
+	def toTwee (self, order = None):
 		"""Returns Twee source code for this TiddlyWiki."""
+		if not order: order = self.tiddlers.keys()		
 		output = ''
 		
-		for i in self.tiddlers:
+		for i in order:
 			output += self.tiddlers[i].toTwee()
 		
 		return output
 		
-	def toHtml (self, app, target = None):
+	def toHtml (self, app, target = None, order = None):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
+		if not order: order = self.tiddlers.keys()
 		output = ''
 		
 		if (target):
@@ -53,7 +55,7 @@ class TiddlyWiki:
 			output = header.read()
 			header.close()
 		
-		for i in self.tiddlers:
+		for i in order:
 			output += self.tiddlers[i].toHtml(self.author)
 		
 		if (target):
@@ -61,8 +63,9 @@ class TiddlyWiki:
 		
 		return output
 	
-	def toRtf (self):
+	def toRtf (self, order = None):
 		"""Returns RTF source code for this TiddlyWiki."""
+		if not order: order = self.tiddlers.keys()
 		
 		# preamble
 		
@@ -75,7 +78,7 @@ class TiddlyWiki:
 		
 		# content
 		
-		for i in self.tiddlers:
+		for i in order:
 			text = self.tiddlers[i].text
 			text = re.sub(r'\n', '\\\n', text) # newlines
 			text = re.sub(r'\[\[(.*?)\]\]', r'\ul \1\ulnone ', text) # links

@@ -365,8 +365,9 @@ class StoryFrame (wx.Frame):
                 tw = TiddlyWiki()
                 
                 for widget in self.storyPanel.widgets: tw.addTiddler(widget.passage)
-                dest = open(path, 'w')            
-                dest.write(tw.toTwee())
+                dest = open(path, 'w')
+                order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
+                dest.write(tw.toTwee(order))
                 dest.close()
             except:
                 self.app.displayError('exporting your source code')
@@ -431,18 +432,17 @@ class StoryFrame (wx.Frame):
     def rebuild (self, event = None, displayAfter = False):
         """
         Builds an HTML version of the story. Pass whether to open the destination file afterwards.
-        """
+        """        
         try:
             # open destination for writing
             
             dest = open(self.buildDestination, 'w')
     
             # assemble our tiddlywiki and write it out
-            
+
             tw = TiddlyWiki()
-            
             for widget in self.storyPanel.widgets:
-                tw.addTiddler(widget.passage)
+                    tw.addTiddler(widget.passage)
             
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
             dest.close()        
@@ -521,9 +521,11 @@ class StoryFrame (wx.Frame):
             # assemble our tiddlywiki and write it out
             
             tw = TiddlyWiki()
-            
-            self.storyPanel.eachWidget(lambda w: tw.addTiddler(w.passage))
-            dest.write(tw.toRtf())
+            for widget in self.storyPanel.sortedWidgets():
+                tw.addTiddler(widget.passage)
+
+            order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())            
+            dest.write(tw.toRtf(order))
             dest.close()
         except:
             self.app.displayError('building a proofing copy of your story')
