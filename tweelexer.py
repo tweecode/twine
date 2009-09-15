@@ -93,7 +93,6 @@ class TweeLexer:
             # start of link
             
             if text[pos:pos + 2] == '[[':
-                print 'opening link'
                 styleChanged = True
                 self.applyStyle(styleStart, pos, style)
                 style = TweeLexer.GOOD_LINK
