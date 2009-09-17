@@ -70,7 +70,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_RIGHT_UP, self.handleRightClick)
         self.Bind(wx.EVT_KEY_DOWN, self.handleKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.handleKeyUp)
-        self.Bind(wx.EVT_MIDDLE_UP, lambda e: self.newWidget(pos = e.GetPosition()))
+        self.Bind(wx.EVT_MIDDLE_UP, lambda e: self.newWidget(pos = self.toLogical(e.GetPosition()))) # FIXME
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
@@ -82,6 +82,7 @@ class StoryPanel (wx.ScrolledWindow):
 
         new = PassageWidget(self, self.app, title = title, text = text, pos = pos)
         self.widgets.append(new)
+        self.snapWidget(new)
         self.Refresh()
         self.resize()
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
