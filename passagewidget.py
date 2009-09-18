@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import os, copy, math, re, wx, wx.lib.wordwrap, storypanel, tiddlywiki
+import os, copy, math, re, wx, storypanel, tiddlywiki
 import metrics
 from passageframe import PassageFrame
 
