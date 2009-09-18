@@ -322,6 +322,7 @@ class PassageWidget:
             # (we use a library to determine breaks, but have to draw the lines ourselves)
     
             gc.ResetClip()
+            gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2))
             excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
             gc.SetFont(excerptFont, excerptTextColor)
             excerptLines = wordWrap(self.passage.text, pixSize[0] - (inset * 2), gc)
@@ -357,6 +358,8 @@ class PassageWidget:
                 gc.StrokeLine(pixPos[0] + inset, height, pixPos[0] + width, height)
                 height += PassageWidget.GREEK_HEIGHT * 2
 
+        gc.ResetClip()
+                
         # draw a broken link emblem in the bottom right if necessary
         # fixme: not sure how to do this with transparency
         
