@@ -38,8 +38,11 @@ class App (wx.App):
         
         # restore save location
 
-        os.chdir(self.config.Read('savePath'))
-                   
+        try:
+            os.chdir(self.config.Read('savePath'))
+        except:
+            os.chdir(os.path.expanduser('~'))
+               
         self.newStory()
         
     def newStory (self, event = None):
