@@ -646,7 +646,6 @@ class StoryPanel (wx.ScrolledWindow):
 
     def paint (self, event):
         """Paints marquee selection, widget connectors, and widgets onscreen."""
-        
         # do NOT call self.DoPrepareDC() no matter what the docs may say
         # we already take into account our scroll origin in our
         # toPixels() method
@@ -681,11 +680,23 @@ class StoryPanel (wx.ScrolledWindow):
                     # connector line
                     
                     end = self.toPixels(otherWidget.getCenter())
-                    start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
+                    
+                    # does it actually need to be drawn?
+                    
+                    if not geometry.lineRectIntersection([start, end], updateRect):
+                        continue
+                        
+                    # ok, really draw the line
+                    
+                    if self.scale > StoryPanel.ARROWHEAD_THRESHOLD:
+                        start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
                     gc.StrokeLine(start[0], start[1], end[0], end[1])
         
                     # arrowheads at end
         
+                    if self.scale < StoryPanel.ARROWHEAD_THRESHOLD:
+                        continue
+                        
                     arrowhead = geometry.endPointProjectedFrom((start, end), angle = StoryPanel.ARROWHEAD_ANGLE, \
                                                                distance = arrowheadLength)
                     gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
@@ -738,6 +749,7 @@ class StoryPanel (wx.ScrolledWindow):
     ARROWHEAD_LENGTH = 10
     MIN_ARROWHEAD_LENGTH = 5
     ARROWHEAD_ANGLE = math.pi / 6
+    ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
     FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'   
     BACKGROUND_COLOR = '#555753'

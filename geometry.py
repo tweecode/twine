@@ -14,21 +14,15 @@ def clipLineByRects (line, *rects):
     the first parameter, but you may pass any number of rects.
     """
     result = line
-    
-    # this is not as awful as it looks,
-    # "for rectLine in rectLines" does it 4 times max
-    # so we're actually O(n)
         
     for rect in rects:
         rectLines = None
         for i in range(2):
             if rect.Inside(result[i]):
-                if not rectLines: rectLines = rectToLines(rect)
-                for rectLine in rectLines:
-                    intersection = lineIntersection(result, rectLine)
-                    if intersection:
-                        result[i] = intersection
-                        break
+                intersection = lineRectIntersection(result, rect, excludeTrivial = True)
+                if intersection:
+                    result[i] = intersection
+                    break
     return result
 
 def endPointProjectedFrom(line, angle, distance):
@@ -80,6 +74,32 @@ def lineLength (line):
     Returns the length of a line.
     """
     return math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
+
+def lineRectIntersection (line, rect, excludeTrivial = False):
+    """
+    Returns a wx.Point corresponding to where a line and a
+    wx.Rect intersect. If they do not intersect, then None
+    is returned. This returns the first intersection it happens
+    to find, not all of them.
+    
+    By default, it will immediately return an endpoint if one of
+    them is inside the rectangle. The excludeTrivial prevents
+    this behavior.
+    """
+    
+    # check for trivial case, where one point is inside the rect
+    
+    if not excludeTrivial:
+        for i in range(2):
+            if rect.Inside(line[i]): return line[i]
+    
+    # check for intersection with borders
+    
+    rectLines = rectToLines(rect)
+    for rectLine in rectLines:
+        intersection = lineIntersection(line, rectLine)
+        if intersection: return intersection
+    return None
 
 def lineIntersection (line1, line2):
     """
