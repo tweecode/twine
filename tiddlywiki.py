@@ -320,7 +320,9 @@ class Tiddler:
 		
 		choices = re.findall(r'\<\<choice\s+[\'"](.*?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
 		
-		return links + displays + choices
+		# remove duplicates by converting to a set
+		
+		return list(set(links + displays + choices))
 
 #
 # Helper functions
