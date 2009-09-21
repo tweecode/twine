@@ -652,6 +652,7 @@ class StoryFrame (wx.Frame):
     def applyPrefs (self):
         """Passes on the apply message to child widgets."""
         self.storyPanel.eachWidget(lambda w: w.applyPrefs())
+        self.storyPanel.Refresh()
     
     def serialize (self):
         """Returns a dictionary of state suitable for pickling."""

@@ -225,7 +225,10 @@ class PassageWidget:
         return dirtyRect
 
     def paint (self, gc):
-        """Paints widget to the graphics context passed."""
+        """
+        Paints widget to the graphics context passed. You may give it
+        either a wx.GraphicsContext (anti-aliased drawing) or a wx.PaintDC.
+        """
 
         def wordWrap (text, lineWidth, gc):
             """
@@ -289,13 +292,20 @@ class PassageWidget:
         frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
         frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
                          dim(PassageWidget.COLORS['bodyEnd'], self.dimmed))
-        
-        gc.SetPen(wx.Pen(frameColor, 1))
-        gc.SetBrush(gc.CreateLinearGradientBrush(pixPos[0], pixPos[1], \
-                                                 pixPos[0], pixPos[1] + pixSize[1], \
-                                                 frameInterior[0], frameInterior[1]))     
-        gc.DrawRectangle(pixPos[0], pixPos[1], pixSize[0] - 1, pixSize[1] - 1)
 
+        gc.SetPen(wx.Pen(frameColor, 1))
+                
+        if isinstance(gc, wx.GraphicsContext):
+            gc.SetBrush(gc.CreateLinearGradientBrush(pixPos[0], pixPos[1], \
+                                                     pixPos[0], pixPos[1] + pixSize[1], \
+                                                     frameInterior[0], frameInterior[1]))     
+        else:
+            gc.GradientFillLinear(wx.Rect(pixPos[0], pixPos[1], pixSize[0] - 1, pixSize[1] - 1), \
+                            frameInterior[0], frameInterior[1], wx.SOUTH)
+            gc.SetBrush(wx.TRANSPARENT_BRUSH)
+
+        gc.DrawRectangle(pixPos[0], pixPos[1], pixSize[0] - 1, pixSize[1] - 1)
+        
         if pixSize[0] > PassageWidget.MIN_GREEKING_SIZE:
             # title bar
             
@@ -307,11 +317,22 @@ class PassageWidget:
 
             # draw title
             # we let clipping prevent writing over the frame
-            
-            gc.ResetClip()
-            gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), titleBarHeight - 2)
+
+            if isinstance(gc, wx.GraphicsContext):
+                gc.ResetClip()
+                gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), titleBarHeight - 2)
+            else:
+                gc.DestroyClippingRegion()
+                gc.SetClippingRect(wx.Rect(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), titleBarHeight - 2))
+                
             titleTextColor = dim(PassageWidget.COLORS['titleText'], self.dimmed)
-            gc.SetFont(titleFont, titleTextColor)
+            
+            if isinstance(gc, wx.GraphicsContext):
+                gc.SetFont(titleFont, titleTextColor)
+            else:
+                gc.SetFont(titleFont)
+                gc.SetTextForeground(titleTextColor)
+                
             gc.DrawText(self.passage.title, pixPos[0] + inset, pixPos[1] + inset)
             
             # draw excerpt
@@ -321,10 +342,21 @@ class PassageWidget:
             # we split the excerpt by line, then draw them in turn
             # (we use a library to determine breaks, but have to draw the lines ourselves)
     
-            gc.ResetClip()
-            gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2))
+            if isinstance(gc, wx.GraphicsContext):
+                gc.ResetClip()
+                gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2))
+            else:
+                gc.DestroyClippingRegion()
+                gc.SetClippingRect(wx.Rect(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2)))
+            
             excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
-            gc.SetFont(excerptFont, excerptTextColor)
+
+            if isinstance(gc, wx.GraphicsContext):
+                gc.SetFont(excerptFont, excerptTextColor)
+            else:
+                gc.SetFont(excerptFont)
+                gc.SetTextForeground(excerptTextColor)
+                
             excerptLines = wordWrap(self.passage.text, pixSize[0] - (inset * 2), gc)
             
             for line in excerptLines:
@@ -342,7 +374,12 @@ class PassageWidget:
             gc.SetPen(wx.Pen('#ffffff', PassageWidget.GREEK_HEIGHT))
             height = pixPos[1] + inset
             width = pixPos[0] + (pixSize[0] - inset ) / 2
-            gc.StrokeLine(pixPos[0] + inset, height, width, height)
+            
+            if isinstance(gc, wx.GraphicsContext):
+                gc.StrokeLine(pixPos[0] + inset, height, width, height)
+            else:
+                gc.DrawLine(pixPos[0] + inset, height, width, height)
+                
             height += PassageWidget.GREEK_HEIGHT * 3
             
             # greek body text
@@ -354,12 +391,19 @@ class PassageWidget:
                 
                 if height + (PassageWidget.GREEK_HEIGHT * 2) > (pixPos[1] + pixSize[1]) - inset:
                     width = width / 2
-                
-                gc.StrokeLine(pixPos[0] + inset, height, pixPos[0] + width, height)
+
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.StrokeLine(pixPos[0] + inset, height, pixPos[0] + width, height)
+                else:
+                    gc.DrawLine(pixPos[0] + inset, height, pixPos[0] + width, height)
+                    
                 height += PassageWidget.GREEK_HEIGHT * 2
 
-        gc.ResetClip()
-                
+        if isinstance(gc, wx.GraphicsContext):
+            gc.ResetClip()
+        else:
+            gc.DestroyClippingRegion()
+                                
         # draw a broken link emblem in the bottom right if necessary
         # fixme: not sure how to do this with transparency
         
@@ -367,16 +411,25 @@ class PassageWidget:
             emblemSize = self.brokenEmblem.GetSize()
             emblemPos = [ (pixPos[0] + pixSize[0]) - (emblemSize[0] + inset), \
                           (pixPos[1] + pixSize[1]) - (emblemSize[1] + inset) ]
-            gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
+            
+            if isinstance(gc, wx.GraphicsContext):
+                gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
+            else:
+                gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1])
             
         # finally, draw a selection over ourselves if we're selected
         
         if self.selected:
             color = dim(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT), self.dimmed)
             gc.SetPen(wx.Pen(color, 2))
-            r, g, b = color.Get()
-            color = wx.Color(r, g, b, 64)
-            gc.SetBrush(wx.Brush(color))
+            
+            if isinstance(gc, wx.GraphicsContext):
+                r, g, b = color.Get()
+                color = wx.Color(r, g, b, 64)
+                gc.SetBrush(wx.Brush(color))
+            else:
+                gc.SetBrush(wx.TRANSPARENT_BRUSH)
+ 
             gc.DrawRectangle(pixPos[0] + 1, pixPos[1] + 1, pixSize[0] - 2, pixSize[1] - 2)
         
     def serialize (self):

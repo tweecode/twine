@@ -74,7 +74,7 @@ class StoryPanel (wx.ScrolledWindow):
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
-                        
+        
         # defaults
         
         if not title: title = self.untitledName()
@@ -478,19 +478,29 @@ class StoryPanel (wx.ScrolledWindow):
                     goodDrag = False
                     break
 
-            self.eachSelectedWidget(lambda w: w.setDimmed(not goodDrag))
-                
-            if goodDrag:
-                self.SetCursor(self.dragCursor)
+            # in fast drawing, we dim passages
+            # to indicate no connectors should be drawn for them
+            # while dragging is occurring
+            #
+            # in slow drawing, we dim passages
+            # to indicate you're not allowed to drag there
+            
+            if self.app.config.ReadBool('fastStoryPanel'):
+                self.eachSelectedWidget(lambda w: w.setDimmed(True))
             else:
-                self.SetCursor(self.badDragCursor)
+                self.eachSelectedWidget(lambda w: w.setDimmed(not goodDrag))
+                
+            if goodDrag: self.SetCursor(self.dragCursor)
+            else: self.SetCursor(self.badDragCursor)
             
             # figure out our dirty rect
             
             dirtyRect = self.oldDirtyRect
             
             for widget in self.widgets:
-                if widget.selected: dirtyRect = dirtyRect.Union(widget.dirtyPixelRect())
+                if widget.selected:
+                    dirtyRect = dirtyRect.Union(widget.dirtyPixelRect())
+            
             self.oldDirtyRect = dirtyRect
                             
             self.Refresh(True, dirtyRect)
@@ -509,6 +519,7 @@ class StoryPanel (wx.ScrolledWindow):
                     
                 if goodDrag:
                     self.eachSelectedWidget(lambda w: self.snapWidget(w))
+                    self.eachSelectedWidget(lambda w: w.setDimmed(False))
                     self.parent.setDirty(True, action = 'Move')
                     self.resize()
                 else:
@@ -650,19 +661,25 @@ class StoryPanel (wx.ScrolledWindow):
         # we already take into account our scroll origin in our
         # toPixels() method
         
+        # in fast drawing, we ask for a standard paint context
+        # in slow drawing, we ask for a anti-aliased one
+        #
         # OS X already double buffers drawing for us; if we try to do it
         # ourselves, performance is horrendous
-        
+
         if (sys.platform == 'darwin'):
-            gc = wx.GraphicsContext.Create(wx.PaintDC(self))
+            gc = wx.PaintDC(self)
         else:
-            gc = wx.GraphicsContext.Create(wx.BufferedPaintDC(self))
+            gc = wx.BufferedPaintDC(self)
         
+        if not self.app.config.ReadBool('fastStoryPanel'):
+            gc = wx.GraphicsContext.Create(gc)            
+                       
         # background
         
         updateRect = self.GetUpdateRegion().GetBox()
         gc.SetBrush(wx.Brush(StoryPanel.BACKGROUND_COLOR))      
-        gc.DrawRectangle(updateRect.x, updateRect.y, updateRect.width, updateRect.height)
+        gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
                 
         # connectors
         
@@ -671,11 +688,19 @@ class StoryPanel (wx.ScrolledWindow):
         
         gc.SetPen(wx.Pen(StoryPanel.CONNECTOR_COLOR, max(self.toPixels((StoryPanel.CONNECTOR_WIDTH, 0), \
                                                                         scaleOnly = True)[0], 1)))
+        
+        # cache bad links so we don't have to keep doing worst-case lookups
+        
+        badLinks = []
+
         for widget in self.widgets:
             if widget.dimmed: continue
             start = self.toPixels(widget.getCenter())
             for link in widget.passage.links():
+                if link in badLinks: continue                
                 otherWidget = self.findWidget(link)
+                if not otherWidget: badLinks.append(link)
+                
                 if otherWidget and not otherWidget.dimmed:
                     # connector line
                     
@@ -690,34 +715,50 @@ class StoryPanel (wx.ScrolledWindow):
                     
                     if self.scale > StoryPanel.ARROWHEAD_THRESHOLD:
                         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
-                    gc.StrokeLine(start[0], start[1], end[0], end[1])
-        
+                    
+                    if isinstance(gc, wx.GraphicsContext):
+                        gc.StrokeLine(start[0], start[1], end[0], end[1])
+                    else:
+                        gc.DrawLine(start[0], start[1], end[0], end[1])
+                    
                     # arrowheads at end
         
-                    if self.scale < StoryPanel.ARROWHEAD_THRESHOLD:
-                        continue
+                    if self.scale < StoryPanel.ARROWHEAD_THRESHOLD: continue
                         
                     arrowhead = geometry.endPointProjectedFrom((start, end), angle = StoryPanel.ARROWHEAD_ANGLE, \
                                                                distance = arrowheadLength)
-                    gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+                    
+                    if isinstance(gc, wx.GraphicsContext):
+                        gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+                    else:
+                        gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
+                        
                     arrowhead = geometry.endPointProjectedFrom((start, end), angle = 0 - StoryPanel.ARROWHEAD_ANGLE, \
                                                                distance = arrowheadLength)
-                    gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])                    
-                
+
+                    if isinstance(gc, wx.GraphicsContext):
+                        gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+                    else:
+                        gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])                    
+                     
         # widgets
                 
         for widget in self.widgets:
             if updateRect.Intersects(widget.getPixelRect()): widget.paint(gc)
         
         # marquee selection
-        # use alpha blending for interior
+        # with slow drawing, use alpha blending for interior
         
         if self.draggingMarquee:
-            marqueeColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-            gc.SetPen(wx.Pen(marqueeColor))
-            r, g, b = marqueeColor.Get()
-            marqueeColor = wx.Color(r, g, b, StoryPanel.MARQUEE_ALPHA)            
-            gc.SetBrush(wx.Brush(marqueeColor))
+            if self.app.config.ReadBool('fastStoryPanel'):
+                gc.SetPen(wx.Pen('#ffffff', 1, wx.DOT))
+            else:
+                marqueeColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+                gc.SetPen(wx.Pen(marqueeColor))
+                r, g, b = marqueeColor.Get()
+                marqueeColor = wx.Color(r, g, b, StoryPanel.MARQUEE_ALPHA)            
+                gc.SetBrush(wx.Brush(marqueeColor))
+                
             gc.DrawRectangle(self.dragRect.x, self.dragRect.y, self.dragRect.width, self.dragRect.height)
             
     def resize (self, event = None):

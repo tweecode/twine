@@ -19,7 +19,7 @@ class PreferenceFrame (wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(5, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(6, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -53,6 +53,11 @@ class PreferenceFrame (wx.Frame):
         fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.ALIGN_CENTER_VERTICAL)
         fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.ALIGN_CENTER_VERTICAL)
 
+        self.fastStoryPanel = wx.CheckBox(panel, label = 'Faster but rougher story map display')
+        self.fastStoryPanel.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('fastStoryPanel', \
+                                                                          self.fastStoryPanel.GetValue()))
+        self.fastStoryPanel.SetValue(self.app.config.ReadBool('fastStoryPanel'))
+
         panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
@@ -64,6 +69,7 @@ class PreferenceFrame (wx.Frame):
         panelSizer.Add(self.fsBgColor)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.fastStoryPanel)
 
         panelSizer.Fit(self)
         borderSizer.Fit(self)
@@ -85,6 +91,8 @@ class PreferenceFrame (wx.Frame):
             self.app.config.Write(key, value.GetAsString(wx.C2S_HTML_SYNTAX))
         elif type(value) is int:
             self.app.config.WriteInt(key, value)
+        elif type(value) is bool:
+            self.app.config.WriteBool(key, value)
         else:
             self.app.config.Write(key, value)
         

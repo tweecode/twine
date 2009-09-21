@@ -164,6 +164,8 @@ class App (wx.App):
             self.config.WriteBool('storyFrameToolbar', True)
         if not self.config.HasEntry('storyPanelSnap'):
             self.config.WriteBool('storyPanelSnap', False)
+        if not self.config.HasEntry('fastStoryPanel'):
+            self.config.WriteBool('fastStoryPanel', False)
             
     def applyPrefs (self):
         """Asks all of our stories to update themselves based on a preference change."""
