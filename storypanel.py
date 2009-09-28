@@ -70,7 +70,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_RIGHT_UP, self.handleRightClick)
         self.Bind(wx.EVT_KEY_DOWN, self.handleKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.handleKeyUp)
-        self.Bind(wx.EVT_MIDDLE_UP, lambda e: self.newWidget(pos = self.toLogical(e.GetPosition()))) # FIXME
+        self.Bind(wx.EVT_MIDDLE_UP, lambda e: self.newWidget(pos = self.toLogical(e.GetPosition())))
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
@@ -812,7 +812,7 @@ class StoryPanelContext (wx.Menu):
         
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
-        self.Bind(wx.EVT_MENU, lambda e: self.parent.newWidget(pos = pos), id = newPassage.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.parent.newWidget(pos = self.parent.toLogical(pos)), id = newPassage.GetId())
         
 # drag and drop listener
 
