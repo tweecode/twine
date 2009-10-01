@@ -70,7 +70,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_RIGHT_UP, self.handleRightClick)
         self.Bind(wx.EVT_KEY_DOWN, self.handleKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.handleKeyUp)
-        self.Bind(wx.EVT_MIDDLE_UP, lambda e: self.newWidget(pos = self.toLogical(e.GetPosition())))
+        self.Bind(wx.EVT_MIDDLE_UP, self.handleMiddleClick)
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
@@ -343,6 +343,13 @@ class StoryPanel (wx.ScrolledWindow):
                 widget.openContextMenu(event)
                 return
         self.PopupMenu(StoryPanelContext(self, event.GetPosition()), event.GetPosition())
+        
+    def handleMiddleClick (self, event):
+        """Creates a new widget centered at the mouse position."""
+        pos = self.toLogical(event.GetPosition())
+        pos.x = pos.x - PassageWidget.SIZE / 2
+        pos.y = pos.y - PassageWidget.SIZE / 2
+        self.newWidget(pos = pos)
     
     def handleKeyDown (self, event):
         """Switches the cursor to a hand if the space bar is pressed."""
@@ -809,10 +816,17 @@ class StoryPanelContext (wx.Menu):
     def __init__ (self, parent, pos):
         wx.Menu.__init__(self)
         self.parent = parent
+        self.pos = pos
         
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
-        self.Bind(wx.EVT_MENU, lambda e: self.parent.newWidget(pos = self.parent.toLogical(pos)), id = newPassage.GetId())
+        self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
+
+    def newWidget (self, event):
+        pos = self.pos
+        pos.x = pos.x - PassageWidget.SIZE / 2
+        pos.y = pos.y - PassageWidget.SIZE / 2
+        self.parent.newWidget(pos = pos)
         
 # drag and drop listener
 
