@@ -146,9 +146,9 @@ class TweeLexer:
     
     # style colors
     
-    GOOD_LINK_COLOR = '#23648C'
-    BAD_LINK_COLOR = '#7f2020'
-    MARKUP_COLOR = '#29A339'
-    MACRO_COLOR = '#691A52'
+    GOOD_LINK_COLOR = '#0000ff'
+    BAD_LINK_COLOR = '#ff0000'
+    MARKUP_COLOR = '#3f7f7f'
+    MACRO_COLOR = '#a94286'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
