@@ -94,7 +94,9 @@ class App (wx.App):
         
     def exit (self, event = None):
         """Closes all open stories, implicitly quitting."""
-        map(lambda s: s.Close(), self.stories)
+        # need to make a copy of our stories list since
+        # stories removing themselves will alter the list midstream
+        map(lambda s: s.Close(), list(self.stories))
         
     def showPrefs (self, event = None):
         """Shows the preferences dialog."""
