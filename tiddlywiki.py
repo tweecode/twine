@@ -314,15 +314,22 @@ class Tiddler:
 
 		# <<display ''>>
 		
-		displays = re.findall(r'\<\<display\s+[\'"](.*?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
+		displays = re.findall(r'\<\<display\s+[\'"](.+?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
 		
 		# <<choice ''>>
 		
-		choices = re.findall(r'\<\<choice\s+[\'"](.*?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
+		choices = re.findall(r'\<\<choice\s+[\'"](.+?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
+
+		# <<actions ''>>
+		
+		actions = list()
+		actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text, re.IGNORECASE)
+		for block in actionBlocks:
+			actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
 		
 		# remove duplicates by converting to a set
 		
-		return list(set(links + displays + choices))
+		return list(set(links + displays + choices + actions))
 
 #
 # Helper functions
