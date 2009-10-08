@@ -44,6 +44,7 @@ class TweeLexer:
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
         """
+        
         pos = 0 # should be self.ctrl.GetEndStyled(), but doesn't work
         end = event.GetPosition()
         text = self.ctrl.GetTextRange(pos, end)
@@ -57,56 +58,64 @@ class TweeLexer:
         while pos < end:
             styleChanged = False
 
-            # start of markup
+            # important: all style ends must be handled before beginnings
+            # otherwise we start treading on each other in certain circumstances
             
-            if not inMarkup and (text[pos:pos + 2] in TweeLexer.MARKUPS \
-                                 or text[pos:pos + 6] == '<html>'):
-                styleChanged = True
-                inMarkup = True
-                self.applyStyle(styleStart, pos, style)
-                style = TweeLexer.MARKUP
-                
             # end of markup
 
             if inMarkup and ((text[pos - 2:pos] in TweeLexer.MARKUPS \
                              and pos > styleStart + 2) \
                              or text[pos - 7:pos] == '</html>'):
-                styleChanged = True
+                if not styleChanged:
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True                
                 inMarkup = False
-                self.applyStyle(styleStart, pos, style)
                 style = TweeLexer.DEFAULT                
-            
-            # start of macro
-            
-            if text[pos:pos + 2] == '<<':
-                styleChanged = True
-                self.applyStyle(styleStart, pos, style)
-                style = TweeLexer.MACRO
 
             # end of macro
                 
             if text[pos - 2:pos] == '>>':
-                styleChanged = True
-                self.applyStyle(styleStart, pos, style)
+                if not styleChanged:
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True
                 style = TweeLexer.DEFAULT
+
+            # end of link
+            
+            if text[pos - 2:pos] == ']]':
+                if not styleChanged:
+                    if not self.passageExists(text[styleStart + 2:pos - 2]):
+                        style = TweeLexer.BAD_LINK
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True
+                style = TweeLexer.DEFAULT
+
+            # start of markup
+            
+            if not inMarkup and (text[pos:pos + 2] in TweeLexer.MARKUPS \
+                                 or text[pos:pos + 6] == '<html>'):
+                if not styleChanged:
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True
+                inMarkup = True
+                style = TweeLexer.MARKUP
+                        
+            # start of macro
+            
+            if text[pos:pos + 2] == '<<':
+                if not styleChanged:
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True
+                style = TweeLexer.MACRO
 
             # start of link
             
             if text[pos:pos + 2] == '[[':
-                styleChanged = True
-                self.applyStyle(styleStart, pos, style)
+                if not styleChanged:
+                    self.applyStyle(styleStart, pos, style)
+                    styleChanged = True
                 style = TweeLexer.GOOD_LINK
- 
-            # end of link
-            
-            if text[pos - 2:pos] == ']]':
-                styleChanged = True
-                if not self.passageExists(text[styleStart + 2:pos - 2]):
-                    style = TweeLexer.BAD_LINK
-                
-                self.applyStyle(styleStart, pos, style)
-                style = TweeLexer.DEFAULT
-                       
+                        
             if styleChanged: styleStart = pos
             pos = pos + 1
             
