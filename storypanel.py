@@ -316,10 +316,11 @@ class StoryPanel (wx.ScrolledWindow):
         """
         
         # if the space bar is down, any click translates to a scroll
+        # (diked out)
         
-        if self.scrolling:
-            self.startScroll(event)
-            return
+        #if self.scrolling:
+        #    self.startScroll(event)
+        #    return
         
         # otherwise, start a drag if the user clicked a widget
         # or a marquee if they didn't
@@ -353,15 +354,20 @@ class StoryPanel (wx.ScrolledWindow):
     
     def handleKeyDown (self, event):
         """Switches the cursor to a hand if the space bar is pressed."""
-        if event.GetKeyCode() == wx.WXK_SPACE:
-            self.SetCursor(self.scrollCursor)
-            self.scrolling = True
+        # diked out, wxWidgets doesn't seem to let you scroll by pixels
+        # (instead, only scroll units)
+        #
+        #if event.GetKeyCode() == wx.WXK_SPACE:
+        #    self.SetCursor(self.scrollCursor)
+        #    self.scrolling = True
         event.Skip()
         
     def handleKeyUp (self, event):
-        if event.GetKeyCode() == wx.WXK_SPACE:
-            self.SetCursor(self.defaultCursor)
-            self.scrolling = False
+        # diked out
+        #
+        #if event.GetKeyCode() == wx.WXK_SPACE:
+        #    self.SetCursor(self.defaultCursor)
+        #    self.scrolling = False
         event.Skip()
     
     def startScroll (self, event):
