@@ -486,7 +486,7 @@ class PassageFrame (wx.Frame):
             
             if len(links):   
                 for link in links:
-                    item = menu.Append(wx.ID_ANY, link)
+                    item = menu.Append(-1, link)
                     self.Bind(wx.EVT_MENU, self.openOtherEditor, item)
             else:
                 item = menu.Append(wx.ID_ANY, '(None)')
