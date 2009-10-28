@@ -74,12 +74,13 @@ class StoryPanel (wx.ScrolledWindow):
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
-        
+                
         # defaults
         
         if not title: title = self.untitledName()
-        if not pos: pos = self.toLogical(StoryPanel.INSET)
-
+        if not pos: pos = StoryPanel.INSET
+        
+        pos = self.toLogical(pos)
         new = PassageWidget(self, self.app, title = title, text = text, pos = pos)
         self.widgets.append(new)
         self.snapWidget(new)
@@ -347,9 +348,10 @@ class StoryPanel (wx.ScrolledWindow):
         
     def handleMiddleClick (self, event):
         """Creates a new widget centered at the mouse position."""
-        pos = self.toLogical(event.GetPosition())
-        pos.x = pos.x - PassageWidget.SIZE / 2
-        pos.y = pos.y - PassageWidget.SIZE / 2
+        pos = event.GetPosition()
+        offset = self.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
+        pos.x = pos.x - offset[0]
+        pos.y = pos.y - offset[0]
         self.newWidget(pos = pos)
     
     def handleKeyDown (self, event):
@@ -486,6 +488,8 @@ class StoryPanel (wx.ScrolledWindow):
             
             goodDrag = True
             
+            # TODO: optimize this loop
+            
             for widget in self.widgets:
                 if widget.selected and widget.intersectsAny():
                     goodDrag = False
@@ -611,9 +615,16 @@ class StoryPanel (wx.ScrolledWindow):
         Converts a tuple of pixel coordinates to logical coordinates. If you need to do just
         a straight conversion without worrying about where the scrollbar is, then call with
         scaleOnly set to True.
-        """        
-        converted = (pixels[0] / self.scale, pixels[1] / self.scale)
-        if not scaleOnly: converted = self.CalcUnscrolledPosition(converted)
+        """
+        
+        # order of operations here is important, though I don't totally understand why
+                
+        if scaleOnly:
+            converted = pixels
+        else:
+            converted = self.CalcUnscrolledPosition(pixels)
+        
+        converted = (converted[0] / self.scale, converted[1] / self.scale)
         return converted
 
     def getSize (self):
@@ -830,8 +841,9 @@ class StoryPanelContext (wx.Menu):
 
     def newWidget (self, event):
         pos = self.pos
-        pos.x = pos.x - PassageWidget.SIZE / 2
-        pos.y = pos.y - PassageWidget.SIZE / 2
+        offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
+        pos.x = pos.x - offset[0]
+        pos.y = pos.y - offset[0]
         self.parent.newWidget(pos = pos)
         
 # drag and drop listener
