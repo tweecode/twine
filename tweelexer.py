@@ -84,7 +84,12 @@ class TweeLexer:
             
             if text[pos - 2:pos] == ']]':
                 if not styleChanged:
-                    if not self.passageExists(text[styleStart + 2:pos - 2]):
+                    # check for prettylinks
+                    
+                    link = text[styleStart + 2:pos - 2]                    
+                    link = re.sub('.*\|', '', link)
+                    
+                    if not self.passageExists(link):
                         style = TweeLexer.BAD_LINK
                     self.applyStyle(styleStart, pos, style)
                     styleChanged = True
