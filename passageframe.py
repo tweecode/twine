@@ -30,6 +30,7 @@ class PassageFrame (wx.Frame):
         self.syncTimer = None
         self.lastFindRegexp = None
         self.lastFindFlags = None
+        self.usingLexer = True
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
@@ -143,7 +144,6 @@ class PassageFrame (wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
-        self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
                 
         # final layout
         
@@ -154,6 +154,7 @@ class PassageFrame (wx.Frame):
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()
         self.updateSubmenus()
+        self.setLexer()
         
         # event bindings
         # we need to do this AFTER setting up initial values
@@ -206,6 +207,9 @@ class PassageFrame (wx.Frame):
         if (self.syncTimer): self.syncTimer.Stop()
         self.syncTimer = wx.Timer(self)        
         self.syncTimer.Start(PassageFrame.PARENT_SYNC_DELAY, wx.TIMER_ONE_SHOT)
+        
+        # change our lexer as necessary
+        self.setLexer()
         
     def syncParent (self, event = None):
         """Sends a repaint message to our parent StoryFrame."""
@@ -401,6 +405,26 @@ class PassageFrame (wx.Frame):
     def stripCrud (self, text):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
+    
+    def setLexer (self):
+        """
+        Sets our custom lexer for the body input so long as the passage
+        does not have the tag "stylesheet" or "script".
+        """
+        oldLexing = self.usingLexer
+        
+        if re.search(r'\bstylesheet\b', self.tagsInput.GetValue()) or \
+           re.search(r'\bscript\b', self.tagsInput.GetValue()):
+            self.usingLexer = False
+            self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
+        else:
+            self.usingLexer = True
+            self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
+
+        if oldLexing != self.usingLexer:
+            self.bodyInput.StartStyling(0, TweeLexer.TEXT_STYLES)
+            self.bodyInput.SetStyling(len(self.bodyInput.GetText()), TweeLexer.DEFAULT)
+            self.bodyInput.Colourise(0, 0)
     
     def updateUI (self, event):
         """Updates menus."""
