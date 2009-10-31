@@ -16,7 +16,7 @@
 # know what flags to pass to wx.stc.
 #
 
-import sys, os, re, wx, wx.stc
+import sys, os, re, threading, wx, wx.stc
 import metrics
 from tweelexer import TweeLexer
 from passagesearchframe import PassageSearchFrame
@@ -203,17 +203,25 @@ class PassageFrame (wx.Frame):
         self.widget.parent.parent.setDirty(True)
         
         # reset redraw timer
+        
+        def reallySync (self):
+            self.widget.parent.Refresh()
 
-        if (self.syncTimer): self.syncTimer.Stop()
-        self.syncTimer = wx.Timer(self)        
-        self.syncTimer.Start(PassageFrame.PARENT_SYNC_DELAY, wx.TIMER_ONE_SHOT)
+        if (self.syncTimer):
+            self.syncTimer.cancel()
+            
+        self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
+        self.syncTimer.start()
         
         # change our lexer as necessary
         self.setLexer()
         
     def syncParent (self, event = None):
         """Sends a repaint message to our parent StoryFrame."""
-        self.widget.parent.Refresh()
+        # do it in a separate thread
+
+        thread = threading.Thread(self.widget.parent.Refresh)
+        thread.start()
         self.syncTimer = None
     
     def openFullscreen (self, event = None):
@@ -544,7 +552,7 @@ class PassageFrame (wx.Frame):
     
     # timing constants
     
-    PARENT_SYNC_DELAY = 200
+    PARENT_SYNC_DELAY = 0.5
     
     # control constants
     
