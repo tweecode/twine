@@ -19,8 +19,9 @@
 import sys, math, wx, re, pickle
 import geometry
 from passagewidget import PassageWidget
+from manuallyscrolledwindow import ManuallyScrolledWindow
 
-class StoryPanel (wx.ScrolledWindow):
+class StoryPanel (ManuallyScrolledWindow):
 
     def __init__ (self, parent, app, id = wx.ID_ANY, state = None):
         wx.ScrolledWindow.__init__(self, parent, id)
@@ -228,7 +229,6 @@ class StoryPanel (wx.ScrolledWindow):
         It shows an alert once done to tell the user how many replacements were
         made.
         """
-    
         replacements = 0
         
         for widget in self.widgets:
@@ -414,13 +414,26 @@ class StoryPanel (wx.ScrolledWindow):
             self.Refresh()
 
     def followMarquee (self, event):
-        """Follows the mouse during a marquee selection."""
+        """
+        Follows the mouse during a marquee selection.
+        """
         if event.LeftIsDown():
+            # scroll and adjust coordinates
+            
+            offset = self.scrollWithMouse(event)
+            self.oldDirtyRect = self.dragRect.Inflate(2, 2)
+            self.oldDirtyRect.x -= offset[0]
+            self.oldDirtyRect.y -= offset[1]
+            
+            self.dragCurrent = event.GetPosition()
+            self.dragOrigin.x -= offset[0]
+            self.dragOrigin.y -= offset[1]
+            self.dragCurrent.x -= offset[0]
+            self.dragCurrent.y -= offset[1]
+            
             # dragRect is what is drawn onscreen
             # it is in unscrolled coordinates
             
-            self.oldDirtyRect = self.dragRect
-            self.dragCurrent = event.GetPosition()
             self.dragRect = geometry.pointsToRect(self.dragOrigin, self.dragCurrent)
                          
             # select all enclosed widgets
@@ -428,12 +441,11 @@ class StoryPanel (wx.ScrolledWindow):
             logicalOrigin = self.toLogical(self.CalcUnscrolledPosition(self.dragRect.x, self.dragRect.y), scaleOnly = True)
             logicalSize = self.toLogical((self.dragRect.width, self.dragRect.height), scaleOnly = True)
             logicalRect = wx.Rect(logicalOrigin[0], logicalOrigin[1], logicalSize[0], logicalSize[1])
-                        
+            
             for widget in self.widgets:
                 widget.setSelected(widget.intersects(logicalRect), False)
             
-            self.oldDirtyRect.Inflate(2, 2)   # don't know exactly why, but sometimes we're off by 1
-            self.Refresh(True, self.oldDirtyRect)
+            self.Refresh(True, self.oldDirtyRect.Union(self.dragRect))
         else:
             self.draggingMarquee = False
                         
@@ -471,10 +483,11 @@ class StoryPanel (wx.ScrolledWindow):
         """Follows mouse motions during a widget drag."""
         if event.LeftIsDown():
             self.actuallyDragged = True
+            pos = event.GetPosition()
             
             # find change in position
-            deltaX = event.GetPosition()[0] - self.dragCurrent[0]
-            deltaY = event.GetPosition()[1] - self.dragCurrent[1]
+            deltaX = pos[0] - self.dragCurrent[0]
+            deltaY = pos[1] - self.dragCurrent[1]
             
             deltaX = self.toLogical((deltaX, -1), scaleOnly = True)[0]
             deltaY = self.toLogical((deltaY, -1), scaleOnly = True)[0]
@@ -482,7 +495,7 @@ class StoryPanel (wx.ScrolledWindow):
             # offset selected passages
             
             self.eachSelectedWidget(lambda p: p.offset(deltaX, deltaY))
-            self.dragCurrent = event.GetPosition()
+            self.dragCurrent = pos
                         
             # if there any overlaps, then warn the user with a bad drag cursor
             
@@ -510,6 +523,12 @@ class StoryPanel (wx.ScrolledWindow):
             if goodDrag: self.SetCursor(self.dragCursor)
             else: self.SetCursor(self.badDragCursor)
             
+            # scroll in response to the mouse,
+            # and shift passages accordingly
+            
+            widgetScroll = self.toLogical(self.scrollWithMouse(event), scaleOnly = True)
+            self.eachSelectedWidget(lambda w: w.offset(widgetScroll[0], widgetScroll[1]))
+                
             # figure out our dirty rect
             
             dirtyRect = self.oldDirtyRect
@@ -519,7 +538,6 @@ class StoryPanel (wx.ScrolledWindow):
                     dirtyRect = dirtyRect.Union(widget.dirtyPixelRect())
             
             self.oldDirtyRect = dirtyRect
-                            
             self.Refresh(True, dirtyRect)
         else:
             self.draggingWidgets = False
@@ -554,6 +572,53 @@ class StoryPanel (wx.ScrolledWindow):
             self.Bind(wx.EVT_MOUSE_EVENTS, None)
             self.ReleaseMouse()        
             self.SetCursor(self.defaultCursor)
+    
+    def scrollWithMouse (self, event):
+        """
+        If the user has moved their mouse outside the window
+        bounds, this tries to scroll to keep up. This returns a tuple
+        of pixels of the scrolling; if none has happened, it returns (0, 0).
+        """
+        pos = event.GetPosition()          
+        size = self.GetSize()
+        scroll = [0, 0]
+        changed = False
+        
+        if pos.x < 0:
+            scroll[0] = -1
+            changed = True
+        else:
+            if pos.x > size[0]:
+                scroll[0] = 1
+                changed = True
+                
+        if pos.y < 0:
+            scroll[1] = -1
+            changed = True
+        else:
+            if pos.y > size[1]:
+                scroll[1] = 1
+                changed = True
+
+        pixScroll = [0, 0]
+        
+        if changed:
+            # scroll the window
+            
+            oldPos = self.GetViewStart()
+            self.Scroll(oldPos[0] + scroll[0], oldPos[1] + scroll[1])
+        
+            # return pixel change
+            # check to make sure we actually were able to scroll the direction we asked
+            
+            newPos = self.GetViewStart()
+            
+            if oldPos[0] != newPos[0]:
+                pixScroll[0] = scroll[0] * StoryPanel.SCROLL_SPEED
+            if oldPos[1] != newPos[1]:
+                pixScroll[1] = scroll[1] * StoryPanel.SCROLL_SPEED
+        
+        return pixScroll
         
     def untitledName (self):
         """Returns a string for an untitled PassageWidget."""
@@ -616,7 +681,6 @@ class StoryPanel (wx.ScrolledWindow):
         a straight conversion without worrying about where the scrollbar is, then call with
         scaleOnly set to True.
         """
-        
         # order of operations here is important, though I don't totally understand why
                 
         if scaleOnly:
