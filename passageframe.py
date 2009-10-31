@@ -34,7 +34,6 @@ class PassageFrame (wx.Frame):
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
-        self.Bind(wx.EVT_TIMER, self.syncParent)
         
         # Passage menu
         
@@ -214,16 +213,9 @@ class PassageFrame (wx.Frame):
         self.syncTimer.start()
         
         # change our lexer as necessary
-        self.setLexer()
         
-    def syncParent (self, event = None):
-        """Sends a repaint message to our parent StoryFrame."""
-        # do it in a separate thread
-
-        thread = threading.Thread(self.widget.parent.Refresh)
-        thread.start()
-        self.syncTimer = None
-    
+        self.setLexer()
+            
     def openFullscreen (self, event = None):
         """Opens a FullscreenEditFrame for this passage's body text."""
         self.Hide()
