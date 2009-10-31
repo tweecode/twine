@@ -785,7 +785,9 @@ class StoryPanel (ManuallyScrolledWindow):
             if widget.dimmed: continue
             start = self.toPixels(widget.getCenter())
             for link in widget.passage.links():
-                if link in badLinks: continue                
+                if link in badLinks: continue
+                if link == widget.passage.title: continue
+                         
                 otherWidget = self.findWidget(link)
                 if not otherWidget: badLinks.append(link)
                 
