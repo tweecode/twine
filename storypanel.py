@@ -770,13 +770,6 @@ class StoryPanel (ManuallyScrolledWindow):
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
                 
         # connectors
-        
-        arrowheadLength = max(self.toPixels((StoryPanel.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], \
-                              StoryPanel.MIN_ARROWHEAD_LENGTH)
-        
-        gc.SetPen(wx.Pen(StoryPanel.CONNECTOR_COLOR, max(self.toPixels((StoryPanel.CONNECTOR_WIDTH, 0), \
-                                                                        scaleOnly = True)[0], 1)))
-        
         # cache bad links so we don't have to keep doing worst-case lookups
         
         badLinks = []
@@ -786,51 +779,13 @@ class StoryPanel (ManuallyScrolledWindow):
             start = self.toPixels(widget.getCenter())
             for link in widget.passage.links():
                 if link in badLinks: continue
-                if link == widget.passage.title: continue
                          
                 otherWidget = self.findWidget(link)
                 if not otherWidget: badLinks.append(link)
                 
                 if otherWidget and not otherWidget.dimmed:
-                    # connector line
-                    
-                    end = self.toPixels(otherWidget.getCenter())
-                    
-                    # does it actually need to be drawn?
-                    
-                    if not geometry.lineRectIntersection([start, end], updateRect):
-                        continue
-                        
-                    # ok, really draw the line
-                    
-                    if self.scale > StoryPanel.ARROWHEAD_THRESHOLD:
-                        start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
-                    
-                    if isinstance(gc, wx.GraphicsContext):
-                        gc.StrokeLine(start[0], start[1], end[0], end[1])
-                    else:
-                        gc.DrawLine(start[0], start[1], end[0], end[1])
-                    
-                    # arrowheads at end
-        
-                    if self.scale < StoryPanel.ARROWHEAD_THRESHOLD: continue
-                        
-                    arrowhead = geometry.endPointProjectedFrom((start, end), angle = StoryPanel.ARROWHEAD_ANGLE, \
-                                                               distance = arrowheadLength)
-                    
-                    if isinstance(gc, wx.GraphicsContext):
-                        gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
-                    else:
-                        gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
-                        
-                    arrowhead = geometry.endPointProjectedFrom((start, end), angle = 0 - StoryPanel.ARROWHEAD_ANGLE, \
-                                                               distance = arrowheadLength)
-
-                    if isinstance(gc, wx.GraphicsContext):
-                        gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
-                    else:
-                        gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])                    
-                     
+                    widget.paintConnectorTo(otherWidget, (self.scale > StoryPanel.ARROWHEAD_THRESHOLD), gc)
+            
         # widgets
                 
         for widget in self.widgets:
@@ -877,15 +832,10 @@ class StoryPanel (ManuallyScrolledWindow):
         return state
     
     INSET = (10, 10)
-    ARROWHEAD_LENGTH = 10
-    MIN_ARROWHEAD_LENGTH = 5
-    ARROWHEAD_ANGLE = math.pi / 6
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
     FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'   
     BACKGROUND_COLOR = '#555753'
-    CONNECTOR_WIDTH = 2.0
-    CONNECTOR_COLOR = '#babdb6'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
     EXTRA_SPACE = 200

@@ -15,7 +15,7 @@
 #
 
 import os, copy, math, re, wx, storypanel, tiddlywiki
-import metrics
+import geometry, metrics
 from passageframe import PassageFrame
 
 class PassageWidget:
@@ -223,6 +223,55 @@ class PassageWidget:
         self.parent.eachWidget(addLinkingToRect)
 
         return dirtyRect
+    
+    def paintConnectorTo (self, otherWidget, arrowheads, gc):
+        """
+        Paints a connecting line between this widget and another,
+        with optional arrowheads. You may pass either a wx.GraphicsContext
+        (anti-aliased drawing) or a wx.PaintDC.
+        """
+        start = self.parent.toPixels(self.getCenter())
+        end = self.parent.toPixels(otherWidget.getCenter())
+        start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
+                    
+        # does it actually need to be drawn?
+        
+        #if not geometry.lineRectIntersection([start, end], updateRect):
+        #    return
+        
+        if otherWidget == self:
+            return
+            
+        # ok, really draw the line
+        
+        lineWidth = max(self.parent.toPixels((PassageWidget.CONNECTOR_WIDTH, 0), scaleOnly = True)[0], 1)
+        gc.SetPen(wx.Pen(PassageWidget.CONNECTOR_COLOR, lineWidth))
+        
+        if isinstance(gc, wx.GraphicsContext):
+            gc.StrokeLine(start[0], start[1], end[0], end[1])
+        else:
+            gc.DrawLine(start[0], start[1], end[0], end[1])
+        
+        # arrowheads at end
+
+        if not arrowheads: return
+         
+        arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
+        arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
+                                                   distance = arrowheadLength)
+        
+        if isinstance(gc, wx.GraphicsContext):
+            gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+        else:
+            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
+            
+        arrowhead = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
+                                                   distance = arrowheadLength)
+
+        if isinstance(gc, wx.GraphicsContext):
+            gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+        else:
+            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1]) 
 
     def paint (self, gc):
         """
@@ -466,6 +515,11 @@ class PassageWidget:
                'excerptText': (0, 0, 0) }
     DIMMED_ALPHA = 0.25
     LINE_SPACING = 1.2
+    CONNECTOR_WIDTH = 2.0
+    CONNECTOR_COLOR = '#babdb6'
+    ARROWHEAD_LENGTH = 10
+    MIN_ARROWHEAD_LENGTH = 5
+    ARROWHEAD_ANGLE = math.pi / 6
         
 # contextual menu
 
