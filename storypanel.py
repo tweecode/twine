@@ -770,21 +770,13 @@ class StoryPanel (ManuallyScrolledWindow):
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
                 
         # connectors
-        # cache bad links so we don't have to keep doing worst-case lookups
         
         badLinks = []
+        arrowheads = (self.scale > StoryPanel.ARROWHEAD_THRESHOLD)
 
         for widget in self.widgets:
             if widget.dimmed: continue
-            start = self.toPixels(widget.getCenter())
-            for link in widget.passage.links():
-                if link in badLinks: continue
-                         
-                otherWidget = self.findWidget(link)
-                if not otherWidget: badLinks.append(link)
-                
-                if otherWidget and not otherWidget.dimmed:
-                    widget.paintConnectorTo(otherWidget, (self.scale > StoryPanel.ARROWHEAD_THRESHOLD), gc)
+            badLinks = widget.paintConnectors(gc, arrowheads, badLinks)
             
         # widgets
                 

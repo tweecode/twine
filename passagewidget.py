@@ -273,6 +273,28 @@ class PassageWidget:
         else:
             gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1]) 
 
+    def paintConnectors (self, gc, arrowheads = True, dontDraw = []):
+        """
+        Paints all connectors originating from this widget. This accepts
+        a list of widget titles that will not be drawn to. It returns this
+        list, along with any other bad links this widget contains.
+        
+        As with other paint calls, you may pass either a wx.GraphicsContext
+        or wx.PaintDC.
+        """
+        for link in self.passage.links():
+            if link in dontDraw: continue
+                 
+            otherWidget = self.parent.findWidget(link)
+            if not otherWidget: dontDraw.append(link)
+        
+            if otherWidget and not otherWidget.dimmed:
+                self.paintConnectorTo(otherWidget, arrowheads, gc)
+        
+        return dontDraw
+
+        
+
     def paint (self, gc):
         """
         Paints widget to the graphics context passed. You may give it
