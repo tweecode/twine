@@ -513,13 +513,16 @@ class PassageWidget:
         top to bottom. A certain amount of slack is assumed here in
         terms of positioning.
         """
-        xDistance = first.pos[0] - second.pos[0]    
-        yDistance = first.pos[1] - second.pos[1]
-        
+        xDistance = int(first.pos[0] - second.pos[0])    
+        yDistance = int(first.pos[1] - second.pos[1])
+                
         if abs(yDistance) > 5:
             return yDistance
         else:
-            return xDistance
+            if xDistance != 0:
+                return xDistance
+            else:
+                return 1 # punt on ties
     
     def __repr__ (self):
         return "<PassageWidget '" + self.passage.title + "'>"
