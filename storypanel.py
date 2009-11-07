@@ -19,7 +19,6 @@
 import sys, math, wx, re, pickle
 import geometry
 from passagewidget import PassageWidget
-from manuallyscrolledwindow import ManuallyScrolledWindow
 
 class StoryPanel (ManuallyScrolledWindow):
 
