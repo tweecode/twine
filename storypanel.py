@@ -20,7 +20,7 @@ import sys, math, wx, re, pickle
 import geometry
 from passagewidget import PassageWidget
 
-class StoryPanel (ManuallyScrolledWindow):
+class StoryPanel (wx.ScrolledWindow):
 
     def __init__ (self, parent, app, id = wx.ID_ANY, state = None):
         wx.ScrolledWindow.__init__(self, parent, id)
