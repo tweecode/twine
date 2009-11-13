@@ -232,10 +232,7 @@ class StoryPanel (wx.ScrolledWindow):
         
         for widget in self.widgets:
             replacements += widget.replaceRegexp(findRegexp, replacementRegexp, flags)
-        
-        # fixme: undo doesn't work, I think because it only tracks
-        # widget state, not the passages attached to it
-        
+                
         if replacements > 0:
             self.Refresh()
             self.parent.setDirty(True, action = 'Replace Across Entire Story')
