@@ -27,6 +27,7 @@ class PassageWidget:
         self.app = app
         self.dimmed = False
         self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
+        self.paintBuffer = wx.MemoryDC()
         pos = list(pos)
         
         if state:
@@ -61,7 +62,34 @@ class PassageWidget:
         origin = self.parent.toPixels(self.pos)
         size = self.parent.toPixels((PassageWidget.SIZE, -1), scaleOnly = True)[0]
         return wx.Rect(origin[0], origin[1], size, size)
-     
+
+    def getDirtyPixelRect (self):
+        """
+        Returns a pixel rectangle of everything that needs to be redrawn for the widget
+        in its current position. This includes the widget itself as well as any
+        other widgets it links to.
+        """            
+        dirtyRect = self.getPixelRect()
+        
+        # first, passages we link to
+        
+        for link in self.passage.links():
+            widget = self.parent.findWidget(link)
+            if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
+        
+        # then, those that link to us
+        # Python closures are odd, require lists to affect things outside
+        
+        bridge = [ dirtyRect ]
+        
+        def addLinkingToRect (widget):
+            if self.passage.title in widget.passage.links():
+                dirtyRect = bridge[0].Union(widget.getPixelRect())
+        
+        self.parent.eachWidget(addLinkingToRect)
+
+        return dirtyRect
+    
     def offset (self, x = 0, y = 0):
         """Offsets this widget's position by logical coordinates."""
         self.pos = list(self.pos)
@@ -196,33 +224,6 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.fullscreen.applyPrefs()
         except: pass
-
-    def dirtyPixelRect (self):
-        """
-        Returns a pixel rectangle of everything that needs to be redrawn for the widget
-        in its current position. This includes the widget itself as well as any
-        other widgets it links to.
-        """            
-        dirtyRect = self.getPixelRect()
-        
-        # first, passages we link to
-        
-        for link in self.passage.links():
-            widget = self.parent.findWidget(link)
-            if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
-        
-        # then, those that link to us
-        # Python closures are odd, require lists to affect things outside
-        
-        bridge = [ dirtyRect ]
-        
-        def addLinkingToRect (widget):
-            if self.passage.title in widget.passage.links():
-                dirtyRect = bridge[0].Union(widget.getPixelRect())
-        
-        self.parent.eachWidget(addLinkingToRect)
-
-        return dirtyRect
     
     def paintConnectorTo (self, otherWidget, arrowheads, gc, updateRect = None):
         """
@@ -292,9 +293,7 @@ class PassageWidget:
                 self.paintConnectorTo(otherWidget, arrowheads, gc, updateRect)
         
         return dontDraw
-
-        
-
+    
     def paint (self, gc):
         """
         Paints widget to the graphics context passed. You may give it

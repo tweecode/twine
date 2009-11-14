@@ -480,7 +480,7 @@ class StoryPanel (wx.ScrolledWindow):
             
             for widget in self.widgets:
                 if widget.selected:
-                    dirtyRect = dirtyRect.Union(widget.dirtyPixelRect())
+                    dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
             
             self.oldDirtyRect = dirtyRect
             self.Refresh(True, dirtyRect)
