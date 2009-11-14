@@ -224,7 +224,7 @@ class PassageWidget:
 
         return dirtyRect
     
-    def paintConnectorTo (self, otherWidget, arrowheads, gc):
+    def paintConnectorTo (self, otherWidget, arrowheads, gc, updateRect = None):
         """
         Paints a connecting line between this widget and another,
         with optional arrowheads. You may pass either a wx.GraphicsContext
@@ -236,8 +236,8 @@ class PassageWidget:
                     
         # does it actually need to be drawn?
         
-        #if not geometry.lineRectIntersection([start, end], updateRect):
-        #    return
+        if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
+            return
         
         if otherWidget == self:
             return
@@ -273,7 +273,7 @@ class PassageWidget:
         else:
             gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1]) 
 
-    def paintConnectors (self, gc, arrowheads = True, dontDraw = []):
+    def paintConnectors (self, gc, arrowheads = True, dontDraw = [], updateRect = None):
         """
         Paints all connectors originating from this widget. This accepts
         a list of widget titles that will not be drawn to. It returns this
@@ -289,7 +289,7 @@ class PassageWidget:
             if not otherWidget: dontDraw.append(link)
         
             if otherWidget and not otherWidget.dimmed:
-                self.paintConnectorTo(otherWidget, arrowheads, gc)
+                self.paintConnectorTo(otherWidget, arrowheads, gc, updateRect)
         
         return dontDraw
 

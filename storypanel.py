@@ -761,7 +761,8 @@ class StoryPanel (wx.ScrolledWindow):
                        
         # background
         
-        updateRect = self.GetUpdateRegion().GetBox()
+        updateRegion = self.GetUpdateRegion()
+        updateRect = updateRegion.GetBox()
         gc.SetBrush(wx.Brush(StoryPanel.BACKGROUND_COLOR))      
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
                 
@@ -772,12 +773,12 @@ class StoryPanel (wx.ScrolledWindow):
 
         for widget in self.widgets:
             if widget.dimmed: continue
-            badLinks = widget.paintConnectors(gc, arrowheads, badLinks)
+            badLinks = widget.paintConnectors(gc, arrowheads, badLinks, updateRect)
             
         # widgets
-                
+        
         for widget in self.widgets:
-            if updateRect.Intersects(widget.getPixelRect()): widget.paint(gc)
+            if updateRegion.IntersectRect(widget.getPixelRect()): widget.paint(gc)
         
         # marquee selection
         # with slow drawing, use alpha blending for interior
