@@ -68,8 +68,6 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_LEFT_DOWN, self.handleClick)
         self.Bind(wx.EVT_LEFT_DCLICK, self.handleDoubleClick)
         self.Bind(wx.EVT_RIGHT_UP, self.handleRightClick)
-        self.Bind(wx.EVT_KEY_DOWN, self.handleKeyDown)
-        self.Bind(wx.EVT_KEY_UP, self.handleKeyUp)
         self.Bind(wx.EVT_MIDDLE_UP, self.handleMiddleClick)
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
@@ -311,15 +309,7 @@ class StoryPanel (wx.ScrolledWindow):
         Passes off execution to either startMarquee or startDrag,
         depending on whether the user clicked a widget.
         """
-        
-        # if the space bar is down, any click translates to a scroll
-        # (diked out)
-        
-        #if self.scrolling:
-        #    self.startScroll(event)
-        #    return
-        
-        # otherwise, start a drag if the user clicked a widget
+        # start a drag if the user clicked a widget
         # or a marquee if they didn't
                 
         for widget in self.widgets:
@@ -349,48 +339,7 @@ class StoryPanel (wx.ScrolledWindow):
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
         self.newWidget(pos = pos)
-    
-    def handleKeyDown (self, event):
-        """Switches the cursor to a hand if the space bar is pressed."""
-        # diked out, wxWidgets doesn't seem to let you scroll by pixels
-        # (instead, only scroll units)
-        #
-        #if event.GetKeyCode() == wx.WXK_SPACE:
-        #    self.SetCursor(self.scrollCursor)
-        #    self.scrolling = True
-        event.Skip()
         
-    def handleKeyUp (self, event):
-        # diked out
-        #
-        #if event.GetKeyCode() == wx.WXK_SPACE:
-        #    self.SetCursor(self.defaultCursor)
-        #    self.scrolling = False
-        event.Skip()
-    
-    def startScroll (self, event):
-        """Starts a scroll action."""
-        self.lastScroll = event.GetPosition()
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.followScroll)
-        self.CaptureMouse()
-        
-    def followScroll (self, event):
-        """
-        Follows the mouse during a scroll. If the user lets go of the space
-        bar, it occurs in a separate event, handled by handleKeyUp.
-        """
-        if event.LeftIsDown():
-            scrollPos = event.GetPosition()
-            scale = self.GetScrollPixelsPerUnit()
-            deltaX = (scrollPos.x - self.lastScroll.x) / scale[0]
-            deltaY = (scrollPos.y - self.lastScroll.y) / scale[1]
-            currentOrigin = self.GetViewStart()
-            self.Scroll(max(currentOrigin[0] - deltaX, 0), max(currentOrigin[1] - deltaY, 0))
-        else:
-            self.scrolling = False
-            self.Bind(wx.EVT_MOUSE_EVENTS, None)
-            self.ReleaseMouse()
-    
     def startMarquee (self, event):
         """Starts a marquee selection."""
         if not self.draggingMarquee:
