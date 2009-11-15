@@ -704,10 +704,7 @@ class StoryPanel (wx.ScrolledWindow):
             gc = wx.PaintDC(self)
         else:
             gc = wx.BufferedPaintDC(self)
-        
-        if not self.app.config.ReadBool('fastStoryPanel'):
-            gc = wx.GraphicsContext.Create(gc)            
-                       
+                               
         # background
         
         updateRegion = self.GetUpdateRegion()

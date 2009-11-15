@@ -28,6 +28,7 @@ class PassageWidget:
         self.dimmed = False
         self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
         self.paintBuffer = wx.MemoryDC()
+        self.paintBufferBounds = None
         pos = list(pos)
         
         if state:
@@ -144,13 +145,24 @@ class PassageWidget:
         if (exclusive):
             self.parent.eachWidget(lambda i: i.setSelected(False, False))
         
-        old = self.selected
+        old = self.selected            
         self.selected = value
-        if self.selected != old: self.parent.Refresh(True, self.getPixelRect())
+        if self.selected != old:
+            self.clearPaintCache()
+            self.parent.Refresh(True, self.getPixelRect())
         
     def setDimmed (self, value):
         """Sets whether this widget should be dimmed."""
+        old = self.dimmed
         self.dimmed = value
+        if self.selected != old:
+            self.clearPaintCache()
+
+    def clearPaintCache (self):
+        """
+        Forces the widget to be repainted from scratch.
+        """
+        self.paintBufferBounds = None
 
     def openContextMenu (self, event):
         """Opens a contextual menu at the event position given."""
@@ -282,7 +294,10 @@ class PassageWidget:
         
         As with other paint calls, you may pass either a wx.GraphicsContext
         or wx.PaintDC.
-        """
+        """        
+        if not self.app.config.ReadBool('fastStoryPanel'):
+            gc = wx.GraphicsContext.Create(gc)
+        
         for link in self.passage.links():
             if link in dontDraw: continue
                  
@@ -294,10 +309,25 @@ class PassageWidget:
         
         return dontDraw
     
-    def paint (self, gc):
+    def paint (self, dc):
         """
-        Paints widget to the graphics context passed. You may give it
-        either a wx.GraphicsContext (anti-aliased drawing) or a wx.PaintDC.
+        Handles paint events, either blitting our paint buffer or
+        manually redrawing.
+        """
+        pixPos = self.parent.toPixels(self.pos)
+        pixSize = self.parent.toPixels(self.getSize(), scaleOnly = True)
+        rect = wx.Rect(pixPos[0], pixPos[1], pixSize[0], pixSize[1])
+        
+        if (not self.paintBufferBounds) \
+            or (rect.width != self.paintBufferBounds.width \
+                or rect.height != self.paintBufferBounds.height):
+            self.cachePaint(wx.Size(rect.width, rect.height))
+        
+        dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
+    
+    def cachePaint (self, size):
+        """
+        Caches the widget so self.paintBuffer is up-to-date.
         """
 
         def wordWrap (text, lineWidth, gc):
@@ -336,10 +366,19 @@ class PassageWidget:
                 c.append(255)
             if dim: c[3] *= PassageWidget.DIMMED_ALPHA
             return wx.Color(c[0], c[1], c[2], c[3])
-        
-        pixPos = self.parent.toPixels(self.pos)
-        pixSize = self.parent.toPixels(self.getSize(), scaleOnly = True)
 
+        # set up our buffer
+
+        bitmap = wx.EmptyBitmap(size.width, size.height)
+        self.paintBuffer.SelectObject(bitmap)
+        
+        # switch to a GraphicsContext as necessary
+
+        if self.app.config.ReadBool('fastStoryPanel'):
+            gc = self.paintBuffer
+        else:
+            gc = wx.GraphicsContext.Create(self.paintBuffer)            
+        
         # text font sizes
         # wxWindows works with points, so we need to doublecheck on actual pixels
 
@@ -366,34 +405,33 @@ class PassageWidget:
         gc.SetPen(wx.Pen(frameColor, 1))
                 
         if isinstance(gc, wx.GraphicsContext):
-            gc.SetBrush(gc.CreateLinearGradientBrush(pixPos[0], pixPos[1], \
-                                                     pixPos[0], pixPos[1] + pixSize[1], \
+            gc.SetBrush(gc.CreateLinearGradientBrush(0, 0, 0, size.height, \
                                                      frameInterior[0], frameInterior[1]))     
         else:
-            gc.GradientFillLinear(wx.Rect(pixPos[0], pixPos[1], pixSize[0] - 1, pixSize[1] - 1), \
+            gc.GradientFillLinear(wx.Rect(0, 0, size.width - 1, size.height - 1), \
                             frameInterior[0], frameInterior[1], wx.SOUTH)
             gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-        gc.DrawRectangle(pixPos[0], pixPos[1], pixSize[0] - 1, pixSize[1] - 1)
+        gc.DrawRectangle(0, 0, size.width - 1, size.height - 1)
         
-        if pixSize[0] > PassageWidget.MIN_GREEKING_SIZE:
+        if size.width > PassageWidget.MIN_GREEKING_SIZE:
             # title bar
             
             titleBarHeight = titleFontHeight + (2 * inset)
             titleBarColor = dim(PassageWidget.COLORS['titleBar'], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
-            gc.DrawRectangle(pixPos[0] + 1, pixPos[1] + 1, pixSize[0] - 3, titleBarHeight)            
+            gc.DrawRectangle(1, 1, size.width - 3, titleBarHeight)            
 
             # draw title
             # we let clipping prevent writing over the frame
 
             if isinstance(gc, wx.GraphicsContext):
                 gc.ResetClip()
-                gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), titleBarHeight - 2)
+                gc.Clip(inset, inset, size.width - (inset * 2), titleBarHeight - 2)
             else:
                 gc.DestroyClippingRegion()
-                gc.SetClippingRect(wx.Rect(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), titleBarHeight - 2))
+                gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), titleBarHeight - 2))
                 
             titleTextColor = dim(PassageWidget.COLORS['titleText'], self.dimmed)
             
@@ -403,21 +441,21 @@ class PassageWidget:
                 gc.SetFont(titleFont)
                 gc.SetTextForeground(titleTextColor)
                 
-            gc.DrawText(self.passage.title, pixPos[0] + inset, pixPos[1] + inset)
+            gc.DrawText(self.passage.title, inset, inset)
             
             # draw excerpt
     
-            excerptTop = pixPos[1] + inset + titleBarHeight
+            excerptTop = inset + titleBarHeight
     
             # we split the excerpt by line, then draw them in turn
             # (we use a library to determine breaks, but have to draw the lines ourselves)
     
             if isinstance(gc, wx.GraphicsContext):
                 gc.ResetClip()
-                gc.Clip(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2))
+                gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2))
             else:
                 gc.DestroyClippingRegion()
-                gc.SetClippingRect(wx.Rect(pixPos[0] + inset, pixPos[1] + inset, pixSize[0] - (inset * 2), pixSize[1] - (inset * 2)))
+                gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
             
             excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
 
@@ -427,28 +465,28 @@ class PassageWidget:
                 gc.SetFont(excerptFont)
                 gc.SetTextForeground(excerptTextColor)
                 
-            excerptLines = wordWrap(self.passage.text, pixSize[0] - (inset * 2), gc)
+            excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
             
             for line in excerptLines:
-                gc.DrawText(line, pixPos[0] + inset, excerptTop)
+                gc.DrawText(line, inset, excerptTop)
                 excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING
-                if excerptTop + excerptFontHeight > (pixPos[1] + pixSize[1]) - inset: break
+                if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
             
             titleBarColor = dim(PassageWidget.COLORS['titleBar'], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
-            gc.DrawRectangle(pixPos[0] + 1, pixPos[1] + 1, pixSize[0] - 3, PassageWidget.GREEK_HEIGHT * 3)
+            gc.DrawRectangle(1, 1, size.width - 3, PassageWidget.GREEK_HEIGHT * 3)
             
             gc.SetPen(wx.Pen('#ffffff', PassageWidget.GREEK_HEIGHT))
-            height = pixPos[1] + inset
-            width = pixPos[0] + (pixSize[0] - inset ) / 2
+            height = inset
+            width = (size.width - inset) / 2
             
             if isinstance(gc, wx.GraphicsContext):
-                gc.StrokeLine(pixPos[0] + inset, height, width, height)
+                gc.StrokeLine(inset, height, width, height)
             else:
-                gc.DrawLine(pixPos[0] + inset, height, width, height)
+                gc.DrawLine(inset, height, width, height)
                 
             height += PassageWidget.GREEK_HEIGHT * 3
             
@@ -456,16 +494,16 @@ class PassageWidget:
             
             gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
             
-            while height < (pixPos[1] + pixSize[1]) - inset:
-                width = pixSize[0] - inset
+            while height < size.height - inset:
+                width = size.height - inset
                 
-                if height + (PassageWidget.GREEK_HEIGHT * 2) > (pixPos[1] + pixSize[1]) - inset:
+                if height + (PassageWidget.GREEK_HEIGHT * 2) > size.height - inset:
                     width = width / 2
 
                 if isinstance(gc, wx.GraphicsContext):
-                    gc.StrokeLine(pixPos[0] + inset, height, pixPos[0] + width, height)
+                    gc.StrokeLine(inset, height, width, height)
                 else:
-                    gc.DrawLine(pixPos[0] + inset, height, pixPos[0] + width, height)
+                    gc.DrawLine(inset, height, width, height)
                     
                 height += PassageWidget.GREEK_HEIGHT * 2
 
@@ -479,8 +517,8 @@ class PassageWidget:
         
         if len(self.getBrokenLinks()):
             emblemSize = self.brokenEmblem.GetSize()
-            emblemPos = [ (pixPos[0] + pixSize[0]) - (emblemSize[0] + inset), \
-                          (pixPos[1] + pixSize[1]) - (emblemSize[1] + inset) ]
+            emblemPos = [ size.width - (emblemSize[0] + inset), \
+                          size.height - (emblemSize[1] + inset) ]
             
             if isinstance(gc, wx.GraphicsContext):
                 gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
@@ -500,7 +538,9 @@ class PassageWidget:
             else:
                 gc.SetBrush(wx.TRANSPARENT_BRUSH)
  
-            gc.DrawRectangle(pixPos[0] + 1, pixPos[1] + 1, pixSize[0] - 2, pixSize[1] - 2)
+            gc.DrawRectangle(1, 1, size.width - 2, size.height - 2)
+            
+        self.paintBufferBounds = size
         
     def serialize (self):
         """Returns a dictionary with state information suitable for pickling."""

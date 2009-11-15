@@ -191,6 +191,7 @@ class PassageFrame (wx.Frame):
         self.widget.passage.title = self.titleInput.GetValue()
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.tags = []
+        self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
             if tag != '': self.widget.passage.tags.append(tag)
