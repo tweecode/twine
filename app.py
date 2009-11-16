@@ -42,8 +42,9 @@ class App (wx.App):
             os.chdir(self.config.Read('savePath'))
         except:
             os.chdir(os.path.expanduser('~'))
-               
-        self.newStory()
+
+        if not self.openOnStartup():
+            self.newStory()
         
     def newStory (self, event = None):
         """Opens a new, blank story."""
@@ -91,7 +92,20 @@ class App (wx.App):
                 
         except:
             self.displayError('opening your story')
+    
+    def openOnStartup (self):
+        """
+        Opens any files that were passed via argv[1:]. Returns
+        whether anything was opened.
+        """
+        if len(sys.argv) is 1:
+            return False
         
+        for file in sys.argv[1:]:
+            self.open(file)
+            
+        return True
+    
     def exit (self, event = None):
         """Closes all open stories, implicitly quitting."""
         # need to make a copy of our stories list since
