@@ -34,5 +34,5 @@ manifestVersion="1.0">
 # build the exe
 
 setup( windows = [{ 'script':'app.py', \
-                    'icon_resources': [(0x0004, 'icons\\app.ico')], \
+                    'icon_resources': [(0x0004, 'icons\\app.ico'), (0x0005, 'icons\\doc.ico')], \
                     'other_resources': [(24, 1, manifest)] }])
