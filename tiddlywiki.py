@@ -293,6 +293,9 @@ class Tiddler:
 		only returns internal links, but you can override it with the includeExternal
 		parameter.
 		"""
+		
+		if ('script' in self.tags) or ('stylesheet' in self.tags):
+			return []
 
 		# regular hyperlinks
 		
