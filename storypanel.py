@@ -704,7 +704,7 @@ class StoryPanel (wx.ScrolledWindow):
             gc = wx.PaintDC(self)
         else:
             gc = wx.BufferedPaintDC(self)
-                               
+           
         # background
         
         updateRegion = self.GetUpdateRegion()
@@ -733,6 +733,7 @@ class StoryPanel (wx.ScrolledWindow):
             if self.app.config.ReadBool('fastStoryPanel'):
                 gc.SetPen(wx.Pen('#ffffff', 1, wx.DOT))
             else:
+                gc = wx.GraphicsContext.Create(gc)
                 marqueeColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
                 gc.SetPen(wx.Pen(marqueeColor))
                 r, g, b = marqueeColor.Get()
