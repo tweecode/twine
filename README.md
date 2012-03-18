@@ -57,7 +57,7 @@ issue. Two common approaches are:
 
 ### force python to run in 32-bit mode
 
-Add an executable file named *python_32* to your/virtualenv/path/bin/ 
+Add an executable file named `python_32` to your/virtualenv/path/bin/ 
 containing:
 
 	#! /bin/bash
@@ -82,9 +82,8 @@ any of the other  [related projects](https://github.com/tweecode) -- the
 easiest way to contribute them back is as follows:
 
 * fork this repository (see link at top of the project page on github)
-* make your fixes and push them to your fork on github
+* make your fixes and push them to your own fork on github
 * make a pull request (see link at top of the github project page)
 
-To report bugs, issues or feature requests, use the 'issues' system on
-github, i.e. [https://github.com/tweecode/twine/issues](https://github.com/tweecode/twine/issues)
-
+To report bugs, issues or feature requests, use the 
+[github issues](https://github.com/tweecode/twine/issues) system.
