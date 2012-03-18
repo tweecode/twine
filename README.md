@@ -5,13 +5,9 @@ Introduction
 ------------
 
 A visual tool for creating interactive stories for the Web, based on the
-[Twee](https://github.com/tweecode/twee) story engine.
-
-Twine is written primarily in python and javascript, with UI widgets 
-provided by wxPython.
-
-Both Twine and Twee were written by Chris Klimas. Further information is
-available at:
+[Twee](https://github.com/tweecode/twee) story engine. Twine is written 
+primarily in python and javascript, with UI widgets provided by wxPython.
+Twine was written by Chris Klimas. Further information is 	available at:
 
 [http://gimcrackd.com/etc/src/](http://gimcrackd.com/etc/src/)
 
@@ -32,7 +28,7 @@ the project or if you want to run Twine on another platform (such as
 Linux).
 
 You may want to run your development environment in a
-[http://pypi.python.org/pypi/virtualenv](virtualenv):
+[virtualenv](http://pypi.python.org/pypi/virtualenv):
 
     virtualenv tweecode
     cd tweecode/
@@ -59,7 +55,7 @@ of wxPython. As of today, the stable version of wxPython (2.8.*) does not
 work in 64 bit mode on the Mac. There are several ways to work around this
 issue. Two common approaches are:
 
-1. force python to run in 32-bit mode
+### force python to run in 32-bit mode
 
 Add an executable file named *python_32* to your/virtualenv/path/bin/ 
 containing:
@@ -72,12 +68,11 @@ You should now be able to run Twine using a command like this:
 
 	python_32 app.py
 
-2. use a 64-bit compatible version of wxPthon and python 2.7
+### use a 64-bit compatible version of wxPthon and python 2.7
 
 The current development version of wxPython (2.9.*) includes support for 
 Cocoa, making it possible to run it in 64-bit mode. See the 
-[wxPython download page](http://www.wxpython.org/download.php) for 
-instructions on how to get this running.
+[wxPython download page](http://www.wxpython.org/download.php).
 
 Contributing to Twine development
 ---------------------------------
