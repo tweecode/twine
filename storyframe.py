@@ -21,6 +21,7 @@ class StoryFrame (wx.Frame):
         self.parent = parent
         self.pristine = True    # the user has not added any content to this at all
         self.dirty = False      # the user has not made unsaved changes
+        self.storyFormats = {}  # list of available story formats
 
         # inner state
         
@@ -204,21 +205,17 @@ class StoryFrame (wx.Frame):
         # Story Format submenu
         
         storyFormatMenu = wx.Menu()
-        
-        storyFormatMenu.Append(StoryFrame.STORY_FORMAT_SUGARCANE, '&Sugarcane', kind = wx.ITEM_CHECK)
-        self.Bind(wx.EVT_MENU, lambda e: self.setTarget('sugarcane'), id = StoryFrame.STORY_FORMAT_SUGARCANE) 
-        
-        storyFormatMenu.Append(StoryFrame.STORY_FORMAT_JONAH, '&Jonah', kind = wx.ITEM_CHECK)
-        self.Bind(wx.EVT_MENU, lambda e: self.setTarget('jonah'), id = StoryFrame.STORY_FORMAT_JONAH) 
-        
-        storyFormatMenu.Append(StoryFrame.STORY_FORMAT_TW2, 'TiddlyWiki &2', kind = wx.ITEM_CHECK)
-        self.Bind(wx.EVT_MENU, lambda e: self.setTarget('tw2'), id = StoryFrame.STORY_FORMAT_TW2) 
-        
-        storyFormatMenu.Append(StoryFrame.STORY_FORMAT_TW1, 'TiddlyWiki &1', kind = wx.ITEM_CHECK)
-        self.Bind(wx.EVT_MENU, lambda e: self.setTarget('tw'), id = StoryFrame.STORY_FORMAT_TW1) 
+        storyFormatCounter = StoryFrame.STORY_FORMAT_BASE
+        storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
+        for sfdir in os.listdir(storyFormatPath):
+            if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
+                storyFormatMenu.Append(storyFormatCounter, sfdir.title(), kind = wx.ITEM_CHECK)
+                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target.lower()), id = storyFormatCounter)
+                self.storyFormats[storyFormatCounter] = sfdir.lower();
+                storyFormatCounter = storyFormatCounter + 1
         
         storyFormatMenu.AppendSeparator()
-        
+       
         storyFormatMenu.Append(StoryFrame.STORY_FORMAT_HELP, '&About Story Formats')        
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
         
@@ -251,7 +248,7 @@ class StoryFrame (wx.Frame):
         self.menus.Append(storyMenu, '&Story')
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
-
+        
         # extra shortcuts
         
         self.SetAcceleratorTable(wx.AcceleratorTable([ \
@@ -529,9 +526,10 @@ class StoryFrame (wx.Frame):
             dest.close()
         except:
             self.app.displayError('building a proofing copy of your story')
-        
+    
     def setTarget (self, target):
-        self.target = target
+#        self.target = target
+        self.target = target.lower()
         
     def updateUI (self, event = None):
         """Adjusts menu items to reflect the current state."""
@@ -612,15 +610,9 @@ class StoryFrame (wx.Frame):
         viewLastItem.Enable(self.buildDestination != '')
         
         # Story format submenu
-        
-        formatItems = {}
-        formatItems['sugarcane'] = self.menus.FindItemById(StoryFrame.STORY_FORMAT_SUGARCANE)
-        formatItems['jonah'] = self.menus.FindItemById(StoryFrame.STORY_FORMAT_JONAH)
-        formatItems['tw'] = self.menus.FindItemById(StoryFrame.STORY_FORMAT_TW1)
-        formatItems['tw2'] = self.menus.FindItemById(StoryFrame.STORY_FORMAT_TW2)
-        
-        for key in formatItems:
-            formatItems[key].Check(self.target == key)
+
+        for key in self.storyFormats:
+            self.menus.FindItemById(key).Check(self.target == self.storyFormats[key])
         
     def toggleToolbar (self, event = None):
         """Toggles the toolbar onscreen."""
@@ -685,11 +677,8 @@ class StoryFrame (wx.Frame):
     STORY_VIEW_LAST = 405
     STORY_STATS = 406
     
-    STORY_FORMAT_SUGARCANE = 408
-    STORY_FORMAT_JONAH = 409
-    STORY_FORMAT_TW1 = 410
-    STORY_FORMAT_TW2 = 411
-    STORY_FORMAT_HELP = 412
+    STORY_FORMAT_HELP = 408
+    STORY_FORMAT_BASE = 409    
     
     HELP_MANUAL = 501
     HELP_GROUP = 502
