@@ -3,8 +3,8 @@
 
 ; NOTE: this .NSI script is designed for NSIS v1.8+
 
-Name "Twine 1.3.5"
-OutFile "twine-1.3.5-windows.exe"
+Name "Twine 1.3.5_test"
+OutFile "dist\twine-1.3.5-test-windows.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
@@ -13,6 +13,7 @@ OutFile "twine-1.3.5-windows.exe"
 ; AutoCloseWindow false ; (can be true for the window go away automatically at end)
 ; ShowInstDetails hide ; (can be show to have them shown, or nevershow to disable)
 ; SetDateSave off ; (can be on to have files restored to their orginal date)
+RequestExecutionLevel highest
 
 InstallDir "$PROGRAMFILES\Twine"
 InstallDirRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Twine" ""
@@ -23,25 +24,25 @@ Section "" ; (default section)
 SetOutPath "$INSTDIR"
 
 ; add files / whatever that need to be installed here.
+; see http://nsis.sourceforge.net/Docs/Chapter4.html#4.9.1.5
 
-File "*.pyd"
-File "*.zip"
-File "*.dll"
-File "twine.exe"
-File "w9xpopen.exe"
-File /r "targets"
-File /r "icons"
+File "dist\win32\*.pyd"
+File "dist\win32\*.zip"
+File "dist\win32\*.dll"
+File "dist\win32\twine.exe"
+File /r "dist\win32\targets"
+File /r "dist\win32\icons"
 
 ; add Start Menu entries
 
-CreateDirectory "$SMPROGRAMS\Twine 1.3.5\"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5\Twine.lnk" "$INSTDIR\twine.exe"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
+CreateDirectory "$SMPROGRAMS\Twine 1.3.5_test\"
+CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Twine.lnk" "$INSTDIR\twine.exe"
+CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
 
 ; add uninstall entry in Add/Remove Programs
 
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Twine" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.5 (remove only)"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.5_test (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "UninstallString" '"$INSTDIR\uninstalltwine.exe"'
 
 ; file association
@@ -64,7 +65,7 @@ SectionEnd ; end of default section
 
 ; begin uninstall settings/section
 
-UninstallText "This will uninstall Twine 1.3.5 from your system."
+UninstallText "This will uninstall Twine 1.3.5_test from your system."
 
 Section Uninstall
 
@@ -75,7 +76,7 @@ DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Twine"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Twine"
 DeleteRegKey HKCR ".tws"
 DeleteRegKey HKCR "Twine.Story"
-RMDir /r "$SMPROGRAMS\Twine 1.3.5"
+RMDir /r "$SMPROGRAMS\Twine 1.3.5_test"
 RMDir /r "$INSTDIR"
 SectionEnd ; end of uninstall section
 
