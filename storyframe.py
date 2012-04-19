@@ -53,14 +53,16 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_MENU, self.app.openDialog, id = wx.ID_OPEN)
         
         recentFilesMenu = wx.Menu()
-        self.app.recentFiles.UseMenu(recentFilesMenu)
-        self.app.recentFiles.AddFilesToThisMenu(recentFilesMenu)
+        self.recentFiles = wx.FileHistory(self.app.RECENT_FILES)
+        self.recentFiles.Load(self.app.config)
+        self.recentFiles.UseMenu(recentFilesMenu)
+        self.recentFiles.AddFilesToThisMenu(recentFilesMenu)
         fileMenu.AppendMenu(wx.ID_ANY, 'Open &Recent', recentFilesMenu)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(0), id = wx.ID_FILE1)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(1), id = wx.ID_FILE2)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(2), id = wx.ID_FILE3)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(3), id = wx.ID_FILE4)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(4), id = wx.ID_FILE5)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 0), id = wx.ID_FILE1)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 1), id = wx.ID_FILE2)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 2), id = wx.ID_FILE3)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 3), id = wx.ID_FILE4)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 4), id = wx.ID_FILE5)
         
         fileMenu.AppendSeparator()
         

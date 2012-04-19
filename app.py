@@ -30,11 +30,6 @@ class App (wx.App):
             except:
                 pass
         
-        # recent files
-        # each of our StoryFrames shares the same menu
-        
-        self.recentFiles = wx.FileHistory(App.RECENT_FILES)
-        self.recentFiles.Load(self.config)
         
         # restore save location
 
@@ -68,9 +63,9 @@ class App (wx.App):
                     
         dialog.Destroy()
 
-    def openRecent (self, index):
+    def openRecent (self, story, index):
         """Opens a recently-opened file."""
-        self.open(self.recentFiles.GetHistoryFile(index))
+        self.open(story.recentFiles.GetHistoryFile(index))
     
     def open (self, path):
         """Opens a specific story file."""
@@ -126,8 +121,10 @@ class App (wx.App):
     
     def addRecentFile (self, path):
         """Adds a path to the recent files history and updates the menus."""
-        self.recentFiles.AddFileToHistory(path)
-        self.recentFiles.Save(self.config)
+        for s in self.stories:
+            if(isinstance(s, StoryFrame)):
+                s.recentFiles.AddFileToHistory(path)
+                s.recentFiles.Save(self.config)
     
     def about (self, event = None):
         """Shows the about dialog."""
