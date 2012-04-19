@@ -9,6 +9,7 @@
 import sys, os, urllib, pickle, wx
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
+from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 
@@ -336,7 +337,10 @@ class StoryFrame (wx.Frame):
         
         # ask all our widgets to close any editor windows
         
-        map(lambda w: w.closeEditor(), self.storyPanel.widgets)
+        for w in list(self.storyPanel.widgets):
+            if isinstance(w, PassageWidget):
+                w.closeEditor()
+
         self.app.removeStory(self)
         event.Skip()
         
