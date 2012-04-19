@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-#
-# App
-# This bootstraps our application and keeps track of preferences, etc.
-#
-
 import sys, os, locale, re, pickle, wx
 import metrics
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
 
-class App (wx.App):
+class App (wx.App):    
+    """This bootstraps our application and keeps track of preferences, etc."""
+    
+    NAME = 'Twine'
+    VERSION = '1.3.5 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
+    RECENT_FILES = 5
 
     def __init__ (self, redirect = False):
         """Initializes the application."""
@@ -211,12 +211,8 @@ class App (wx.App):
         scriptPath = scriptPath.replace('\\library.zip', '')
         return scriptPath
     
-    NAME = 'Twine'
-    VERSION = '1.3.5'
-    RECENT_FILES = 5
 
-# start things up if we were called directly
-
+#We can run app.py directly.
 if __name__ == "__main__":
     app = App()
     app.MainLoop()
