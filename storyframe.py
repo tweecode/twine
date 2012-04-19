@@ -212,9 +212,19 @@ class StoryFrame (wx.Frame):
         storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
         for sfdir in os.listdir(storyFormatPath):
             if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                storyFormatMenu.Append(storyFormatCounter, sfdir.title(), kind = wx.ITEM_CHECK)
-                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target.lower()), id = storyFormatCounter)
-                self.storyFormats[storyFormatCounter] = sfdir.lower();
+                if sfdir == 'jonah':
+                    sfdirlabel = 'Jonah'
+                elif sfdir == 'sugarcane': 
+                    sfdirlabel = 'Sugarcane'
+                elif sfdir == 'tw':
+                    sfdirlabel = 'TW'
+                elif sfdir == 'tw2':
+                    sfdirlabel = 'TW2'
+                else: 
+                    sfdirlabel = sfdir 
+                storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
+                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                self.storyFormats[storyFormatCounter] = sfdir
                 storyFormatCounter = storyFormatCounter + 1
         
         storyFormatMenu.AppendSeparator()
@@ -534,8 +544,7 @@ class StoryFrame (wx.Frame):
             self.app.displayError('building a proofing copy of your story')
     
     def setTarget (self, target):
-#        self.target = target
-        self.target = target.lower()
+        self.target = target
         
     def updateUI (self, event = None):
         """Adjusts menu items to reflect the current state."""
