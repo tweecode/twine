@@ -105,7 +105,9 @@ class App (wx.App):
         """Closes all open stories, implicitly quitting."""
         # need to make a copy of our stories list since
         # stories removing themselves will alter the list midstream
-        map(lambda s: s.Close(), list(self.stories))
+        for s in list(self.stories):
+            if isinstance(s, StoryFrame):
+                s.Close()
         
     def showPrefs (self, event = None):
         """Shows the preferences dialog."""
@@ -122,7 +124,7 @@ class App (wx.App):
     def addRecentFile (self, path):
         """Adds a path to the recent files history and updates the menus."""
         for s in self.stories:
-            if(isinstance(s, StoryFrame)):
+            if isinstance(s, StoryFrame):
                 s.recentFiles.AddFileToHistory(path)
                 s.recentFiles.Save(self.config)
     
