@@ -46,8 +46,8 @@ class TweeLexer:
         """
         
         pos = 0 # should be self.ctrl.GetEndStyled(), but doesn't work
-        end = event.GetPosition()
-        text = self.ctrl.GetTextRange(pos, end)
+        end = self.ctrl.GetLength()
+        text = self.ctrl.GetTextRangeUTF8(pos, end)
         style = TweeLexer.DEFAULT
         styleStart = pos
         inMarkup = False
