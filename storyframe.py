@@ -455,6 +455,7 @@ class StoryFrame (wx.Frame):
 
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
+                if not any('Twine.private' in t for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
             
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
