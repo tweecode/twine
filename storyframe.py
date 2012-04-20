@@ -357,15 +357,25 @@ class StoryFrame (wx.Frame):
     def saveAs (self, event = None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
-                         "Twine Story (*.tws)|*.tws", \
+                         "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
                            wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
-            self.saveDestination = dialog.GetPath()
-            self.app.config.Write('savePath', os.getcwd())
-            self.app.addRecentFile(self.saveDestination)
-            self.save(None)
-        
+            if dialog.GetFilterIndex() == 0:
+                self.saveDestination = dialog.GetPath()
+                self.app.config.Write('savePath', os.getcwd())
+                self.app.addRecentFile(self.saveDestination)
+                self.save(None)
+            elif dialog.GetFilterIndex() == 1:
+                npsavedestination = dialog.GetPath()
+                try:
+                    dest = open(npsavedestination, 'wb')
+                    pickle.dump(self.serialize_noprivate(npsavedestination), dest)
+                    dest.close()
+                    self.app.addRecentFile(npsavedestination)
+                except:
+                    self.app.displayError('saving your story')
+                
         dialog.Destroy()
         
     def exportSource (self, event = None):
@@ -668,6 +678,12 @@ class StoryFrame (wx.Frame):
                  'saveDestination': self.saveDestination, \
                  'storyPanel': self.storyPanel.serialize() }
     
+    def serialize_noprivate (self, dest):
+        """Returns a dictionary of state suitable for pickling."""
+        return { 'target': self.target, 'buildDestination': '', \
+                 'saveDestination': dest, \
+                 'storyPanel': self.storyPanel.serialize_noprivate() }
+
     def __repr__ (self):
         return "<StoryFrame '" + self.saveDestination + "'>"
     

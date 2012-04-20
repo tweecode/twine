@@ -767,6 +767,16 @@ class StoryPanel (wx.ScrolledWindow):
             
         return state
     
+    def serialize_noprivate (self):
+        """Returns a dictionary of state suitable for pickling without passage marked with a Twine.private tag."""
+        state = { 'scale': self.scale, 'widgets': [] }
+                
+        for widget in self.widgets:
+            if not any('Twine.private' in t for t in widget.passage.tags):
+                state['widgets'].append(widget.serialize())
+            
+        return state
+
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
