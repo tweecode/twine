@@ -66,6 +66,14 @@ class TiddlyWiki:
 	def toRtf (self, order = None):
 		"""Returns RTF source code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()
+
+		def rtf_encode_char(unicodechar):
+			if ord(unicodechar) < 128:
+				return str(unicodechar)
+			return r'\u' + str(ord(unicodechar)) + r'?'
+
+		def rtf_encode(unicodestring):
+			return r''.join(rtf_encode_char(c) for c in unicodestring)
 		
 		# preamble
 		
@@ -79,13 +87,13 @@ class TiddlyWiki:
 		# content
 		
 		for i in order:
-			text = self.tiddlers[i].text
+			text = rtf_encode(self.tiddlers[i].text)
 			text = re.sub(r'\n', '\\\n', text) # newlines
 			text = re.sub(r'\[\[(.*?)\]\]', r'\ul \1\ulnone ', text) # links
 			text = re.sub(r'\/\/(.*?)\/\/', r'\i \1\i0 ', text) # italics
 			text = re.sub(r'(\<\<.*?\>\>)', r'\cf1 \i \1\i0 \cf0', text) # macros
 
-			output += r'\fs24\b1' + self.tiddlers[i].title + r'\b0\fs20' + '\\\n'
+			output += r'\fs24\b1' + rtf_encode(self.tiddlers[i].title) + r'\b0\fs20' + '\\\n'
 			output += text + '\\\n\\\n'
 		
 		output += '}'
