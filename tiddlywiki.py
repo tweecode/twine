@@ -38,7 +38,7 @@ class TiddlyWiki:
 	def toTwee (self, order = None):
 		"""Returns Twee source code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()		
-		output = ''
+		output = u''
 		
 		for i in order:
 			output += self.tiddlers[i].toTwee()
@@ -201,7 +201,7 @@ class Tiddler:
 				
 		# and then the body text
 		
-		self.text = ''
+		self.text = u''
 		
 		for line in lines[1:]:
 			self.text += line + "\n"
@@ -273,16 +273,16 @@ class Tiddler:
 		
 	def toTwee (self):
 		"""Returns a Twee representation of this tiddler."""
-		output = ':: ' + self.title
+		output = u':: ' + self.title
 		
 		if len(self.tags) > 0:
-			output += ' ['
+			output += u' ['
 			for tag in self.tags:
 				output += tag + ' '
 			output = output.strip()
-			output += ']'
+			output += u']'
 			
-		output += "\n" + self.text + "\n\n\n"
+		output += u"\n" + self.text + u"\n\n\n"
 		return output
 		
 		

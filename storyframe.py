@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, os, urllib, pickle, wx
+import sys, os, urllib, pickle, wx, codecs
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
@@ -388,7 +388,7 @@ class StoryFrame (wx.Frame):
                 tw = TiddlyWiki()
                 
                 for widget in self.storyPanel.widgets: tw.addTiddler(widget.passage)
-                dest = open(path, 'w')
+                dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
                 order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
                 dest.write(tw.toTwee(order))
                 dest.close()
@@ -406,10 +406,19 @@ class StoryFrame (wx.Frame):
             try:
                 # have a TiddlyWiki object parse it for us
                 
-                source = open(dialog.GetPath(), 'rb')
-                tw = TiddlyWiki()
-                tw.addTwee(source.read())
+                try:
+                    source = codecs.open(dialog.GetPath(), 'r', 'utf-8-sig', 'strict')
+                    w = source.read()
+                except UnicodeDecodeError:
+                    try:
+                        source = codecs.open(dialog.GetPath(), 'r', 'utf16', 'strict')
+                        w = source.read()
+                    except:
+                        source = open(dialog.GetPath(), 'rb')
+                        w = source.read()
                 source.close()
+                tw = TiddlyWiki()
+                tw.addTwee(w)
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
                 
