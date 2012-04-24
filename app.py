@@ -212,7 +212,7 @@ class App (wx.App):
     
     NAME = 'Twine'
     VERSION = '1.3.5'
-    RECENT_FILES = 5
+    RECENT_FILES = 10
 
 # start things up if we were called directly
 

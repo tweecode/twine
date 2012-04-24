@@ -64,6 +64,11 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 2), id = wx.ID_FILE3)
         self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 3), id = wx.ID_FILE4)
         self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 4), id = wx.ID_FILE5)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 5), id = wx.ID_FILE6)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 6), id = wx.ID_FILE7)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 7), id = wx.ID_FILE8)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 8), id = wx.ID_FILE9)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 9), id = wx.ID_FILE9 + 1)
         
         fileMenu.AppendSeparator()
         
