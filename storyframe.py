@@ -326,7 +326,9 @@ class StoryFrame (wx.Frame):
         
         if (dialog.ShowModal() == wx.ID_YES):
             self.Destroy()
-            self.open(self.saveDestination)
+            self.app.open(self.saveDestination)
+            self.dirty = False;
+            self.checkClose(None)
     
     def checkClose (self, event):
         """
@@ -352,7 +354,8 @@ class StoryFrame (wx.Frame):
                 w.closeEditor()
 
         self.app.removeStory(self)
-        event.Skip()
+        if event != None:
+            event.Skip()
         
     def saveAs (self, event = None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
