@@ -1,6 +1,7 @@
-#
+
 # This builds an .exe out of Tweebox for use with Windows.
-# Call this with this command line: buildexe.py py2exe
+# Call this with this command line: buildexe.py 
+# py2exe is inserted as a command line parameter automatically.
 
 import sys, os, py2exe
 from distutils.core import setup
@@ -32,11 +33,9 @@ manifest = '''
 
 
 # Force use of py2exe for building Win32.exe
-
 sys.argv.append('py2exe')
 
 # Clear out the dist/win32 directory
-
 for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
     for name in files:
         os.remove(os.path.join(root, name))
@@ -44,8 +43,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
         os.rmdir(os.path.join(root, name))
 
 
-# build the exe
-
+# Build the exe
 setup(
     name = 'Twine',
     description = 'Twine',

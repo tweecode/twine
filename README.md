@@ -6,8 +6,8 @@ Introduction
 
 A visual tool for creating interactive stories for the Web, based on the
 [Twee](https://github.com/tweecode/twee) story engine. Twine is written 
-primarily in python and javascript, with UI widgets provided by wxPython.
-Twine was written by Chris Klimas. Further information is 	available at:
+primarily in Python and Javascript, with UI widgets provided by wxPython.
+Twine was written by Chris Klimas. Further information is available at:
 
 [http://gimcrackd.com/etc/src/](http://gimcrackd.com/etc/src/)
 
@@ -38,7 +38,7 @@ Get the code:
 
 	git clone git@github.com:tweecode/twine.git
 
-Install required modules (i.e. wxPython):
+Install required modules (note, wxPython will need to be installed separately from the pip requirements):
 
 	cd twine/
 	pip install -r requirements.txt
