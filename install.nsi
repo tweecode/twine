@@ -3,8 +3,8 @@
 
 ; NOTE: this .NSI script is designed for NSIS v1.8+
 
-Name "Twine 1.3.5_test"
-OutFile "dist\twine-1.3.5-test-windows.exe"
+Name "Twine 1.3.5_alpha"
+OutFile "dist\twine-1.3.5-alpha-windows.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
@@ -35,14 +35,14 @@ File /r "dist\win32\icons"
 
 ; add Start Menu entries
 
-CreateDirectory "$SMPROGRAMS\Twine 1.3.5_test\"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Twine.lnk" "$INSTDIR\twine.exe"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
+CreateDirectory "$SMPROGRAMS\Twine 1.3.5_alpha\"
+CreateShortCut "$SMPROGRAMS\Twine 1.3.5_alpha\Twine.lnk" "$INSTDIR\twine.exe"
+CreateShortCut "$SMPROGRAMS\Twine 1.3.5_alpha\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
 
 ; add uninstall entry in Add/Remove Programs
 
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Twine" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.5_test (remove only)"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.5_alpha (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "UninstallString" '"$INSTDIR\uninstalltwine.exe"'
 
 ; file association
@@ -65,7 +65,7 @@ SectionEnd ; end of default section
 
 ; begin uninstall settings/section
 
-UninstallText "This will uninstall Twine 1.3.5_test from your system."
+UninstallText "This will uninstall Twine 1.3.5_alpha from your system."
 
 Section Uninstall
 
