@@ -65,7 +65,12 @@ class App (wx.App):
 
     def openRecent (self, story, index):
         """Opens a recently-opened file."""
-        self.open(story.recentFiles.GetHistoryFile(index))
+        filename = story.recentFiles.GetHistoryFile(index)
+        if not os.path.exists(filename):
+            self.removeRecentFile(story, index)
+        else:
+            self.open(filename)
+            self.addRecentFile(filename)
     
     def open (self, path):
         """Opens a specific story file."""
@@ -127,6 +132,40 @@ class App (wx.App):
             if isinstance(s, StoryFrame):
                 s.recentFiles.AddFileToHistory(path)
                 s.recentFiles.Save(self.config)
+
+    def removeRecentFile(self, story, index):
+        """Remove all missing files from the recent files history and update the menus."""
+        
+        def removeRecentFile_do(story, index, showdialog = True):
+            filename = story.recentFiles.GetHistoryFile(index)
+            story.recentFiles.RemoveFileFromHistory(index)
+            story.recentFiles.Save(self.config)
+            if showdialog:
+                text = 'The file ' + filename + ' no longer exists.\n' + \
+                       'This file has been removed from the Recent Files list.'
+                dlg = wx.MessageDialog(None, text, 'Information', wx.OK | wx.ICON_INFORMATION)
+                dlg.ShowModal()
+                dlg.Destroy()
+                return True
+            else:
+                return False
+        showdialog = True
+        for s in self.stories:
+            if s != story and isinstance(s, StoryFrame):
+                removeRecentFile_do(s, index, showdialog)
+                showdialog = False
+        removeRecentFile_do(story, index, showdialog)
+                
+    def verifyRecentFiles(self, story):
+        done = False
+        while done == False:
+            for index in range(story.recentFiles.GetCount()):
+                if not os.path.exists(story.recentFiles.GetHistoryFile(index)):
+                    self.removeRecentFile(story, index)
+                    done = False
+                    break
+            else:
+                done = True
     
     def about (self, event = None):
         """Shows the about dialog."""

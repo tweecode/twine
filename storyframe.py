@@ -56,6 +56,7 @@ class StoryFrame (wx.Frame):
         recentFilesMenu = wx.Menu()
         self.recentFiles = wx.FileHistory(self.app.RECENT_FILES)
         self.recentFiles.Load(self.app.config)
+        self.app.verifyRecentFiles(self)
         self.recentFiles.UseMenu(recentFilesMenu)
         self.recentFiles.AddFilesToThisMenu(recentFilesMenu)
         fileMenu.AppendMenu(wx.ID_ANY, 'Open &Recent', recentFilesMenu)
