@@ -59,7 +59,13 @@ class TiddlyWiki:
 			output += self.tiddlers[i].toHtml(self.author)
 		
 		if (target):
-			output += '</div></body></html>'
+			footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
+			if os.path.exists(footername):
+				footer = open(footername,'r')
+				output += footer.read()
+				footer.close()
+			else:
+				output += '</div></body></html>'
 		
 		return output
 	
