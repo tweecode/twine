@@ -43,7 +43,9 @@ class App (wx.App):
         
     def newStory (self, event = None):
         """Opens a new, blank story."""
-        self.stories.append(StoryFrame(parent = None, app = self))
+        s = StoryFrame(parent = None, app = self)
+        self.stories.append(s)
+        s.Show(True)
     
     def removeStory (self, story):
         """Removes a story from our collection. Should be called when it closes."""
@@ -79,6 +81,7 @@ class App (wx.App):
             newStory = StoryFrame(None, app = self, state = pickle.load(openedFile))
             newStory.saveDestination = path
             self.stories.append(newStory)
+            newStory.Show(True)
             self.addRecentFile(path)
             openedFile.close()
             

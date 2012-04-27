@@ -318,8 +318,6 @@ class StoryFrame (wx.Frame):
             self.showToolbar = False
             self.toolbar.Realize()
             self.toolbar.Hide()
-            
-        self.Show(True)
         
     def revert (self, event = None):
         """Reverts to the last saved version of the story file."""
@@ -482,8 +480,48 @@ class StoryFrame (wx.Frame):
             # assemble our tiddlywiki and write it out
 
             tw = TiddlyWiki()
+#            for widget in self.storyPanel.widgets:
+#                if not any('Twine.private' in t for t in widget.passage.tags):
+#                    tw.addTiddler(widget.passage)
             for widget in self.storyPanel.widgets:
-                if not any('Twine.private' in t for t in widget.passage.tags):
+                if widget.passage.title == 'StoryIncludes':
+                    lines = widget.passage.text.splitlines()
+                    lines.append('');
+                    # State 0: Look for a filename
+                    ## State 1: have filename, look for filename, EXCEPT, INCLUDE, ALIAS
+                    ## State 2: EXCEPT mode, look for INCLUDE 3, ALIAS 4 or blank line 0
+                    ## State 3: INCLUDE mode, look for EXCEPT 2, ALIAS 4 or blank line 0
+                    ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
+                    state = 0;
+                    state_filename = '';
+                    excludepassages = [ 'Start', 'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes' ]
+                    for line in lines:
+                        if state == 0:
+                            state_filename = line
+                            state = 1
+                            continue
+                        elif state == 1:
+                            try:
+                                if state_filename.strip() != '':
+                                    if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                        openedFile = urllib.urlopen(state_filename)
+                                    else:
+                                        openedFile = open(state_filename, 'r')
+                                    s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                                    openedFile.close()
+                                    for widget in s.storyPanel.widgets:
+                                        if not any(widget.passage.title in t for t in excludepassages) and not any('Twine.private' in t for t in widget.passage.tags):
+                                            tw.addTiddler(widget.passage)
+                                    s.Destroy()
+                            except:
+                                self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
+                            state_filename = line
+                            state = 1
+                            continue
+                    break
+
+            for widget in self.storyPanel.widgets:
+                if not any('Twine.private' in t for t in widget.passage.tags) and not widget.passage.title == 'StoryIncludes':
                     tw.addTiddler(widget.passage)
             
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
