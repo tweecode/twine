@@ -12,7 +12,7 @@
 # that translate between Twee and TiddlyWiki output seamlessly.
 #
 
-import re, datetime, time, os, sys
+import re, datetime, time, os, sys, tempfile, codecs
 import PyRSS2Gen as rss
 
 #
@@ -149,6 +149,20 @@ class TiddlyWiki:
 		if divs:
 			for div in divs.group(1).split('<div'):
 				self.addTiddler(Tiddler('<div' + div, 'html'))
+				
+	def addTweeFromFilename(self, filename):
+		try:
+			source = codecs.open(filename, 'r', 'utf-8-sig', 'strict')
+			w = source.read()
+		except UnicodeDecodeError:
+			try:
+				source = codecs.open(filename, 'r', 'utf16', 'strict')
+				w = source.read()
+			except:
+				source = open(filename, 'rb')
+				w = source.read()
+		source.close()
+		self.addTwee(w)
 
 	def addTiddler (self, tiddler):
 		"""Adds a Tiddler object to this TiddlyWiki."""

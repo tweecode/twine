@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, os, urllib, pickle, wx, codecs
+import sys, os, urllib, pickle, wx
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
@@ -421,20 +421,8 @@ class StoryFrame (wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 # have a TiddlyWiki object parse it for us
-                
-                try:
-                    source = codecs.open(dialog.GetPath(), 'r', 'utf-8-sig', 'strict')
-                    w = source.read()
-                except UnicodeDecodeError:
-                    try:
-                        source = codecs.open(dialog.GetPath(), 'r', 'utf16', 'strict')
-                        w = source.read()
-                    except:
-                        source = open(dialog.GetPath(), 'rb')
-                        w = source.read()
-                source.close()
                 tw = TiddlyWiki()
-                tw.addTwee(w)
+                tw.addTweeFromFilename(dialog.GetPath())
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
                 
@@ -489,9 +477,10 @@ class StoryFrame (wx.Frame):
             # assemble our tiddlywiki and write it out
 
             tw = TiddlyWiki()
-#            for widget in self.storyPanel.widgets:
-#                if not any('Twine.private' in t for t in widget.passage.tags):
-#                    tw.addTiddler(widget.passage)
+            for widget in self.storyPanel.widgets:
+                if not any('Twine.private' in t for t in widget.passage.tags) and not widget.passage.title == 'StoryIncludes':
+                    tw.addTiddler(widget.passage)
+
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
                     lines = widget.passage.text.splitlines()
@@ -512,26 +501,49 @@ class StoryFrame (wx.Frame):
                         elif state == 1:
                             try:
                                 if state_filename.strip() != '':
-                                    if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                                        openedFile = urllib.urlopen(state_filename)
+                                    extension = os.path.splitext(state_filename)[1] 
+                                    if extension == '.tws':
+                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                            openedFile = urllib.urlopen(state_filename)
+                                        else:
+                                            openedFile = open(state_filename, 'r')
+                                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                                        openedFile.close()
+                                        for widget in s.storyPanel.widgets:
+                                            if not any(widget.passage.title in t for t in excludepassages) and not any('Twine.private' in t for t in widget.passage.tags):
+                                                tw.addTiddler(widget.passage)
+                                        s.Destroy()
+                                    elif extension == '.tw' or extension == '.txt' or extension == '.twee':
+                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                            openedFile = urllib.urlopen(state_filename)
+                                            s = openedFile.read()
+                                            openedFile.close()
+                                            t = tempfile.NamedTemporaryFile(delete=False)
+                                            cleanuptempfile = True
+                                            t.write(s)
+                                            t.close()
+                                            filename = t.name
+                                        else:
+                                            filename = state_filename
+                                            cleanuptempfile = False
+                                            
+                                        tw1 = TiddlyWiki()
+                                        tw1.addTweeFromFilename(filename)
+                                        if cleanuptempfile: os.remove(filename)
+                                        tiddlerkeys = tw1.tiddlers.keys()
+                                        for tiddlerkey in tiddlerkeys:
+                                            passage = tw1.tiddlers[tiddlerkey]
+                                            if not any(passage.title == t for t in excludepassages) and \
+                                            not any('Twine.private' in t for t in passage.tags):
+                                                tw.addTiddler(passage)
                                     else:
-                                        openedFile = open(state_filename, 'r')
-                                    s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
-                                    openedFile.close()
-                                    for widget in s.storyPanel.widgets:
-                                        if not any(widget.passage.title in t for t in excludepassages) and not any('Twine.private' in t for t in widget.passage.tags):
-                                            tw.addTiddler(widget.passage)
-                                    s.Destroy()
+                                        raise 'File format not recognized'
                             except:
                                 self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
                             state_filename = line
                             state = 1
                             continue
                     break
-
-            for widget in self.storyPanel.widgets:
-                if not any('Twine.private' in t for t in widget.passage.tags) and not widget.passage.title == 'StoryIncludes':
-                    tw.addTiddler(widget.passage)
             
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
             dest.close()        
