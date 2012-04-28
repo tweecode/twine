@@ -96,7 +96,7 @@ class StoryFrame (wx.Frame):
         fileMenu.AppendSeparator()
         
         fileMenu.Append(wx.ID_CLOSE, '&Close Story\tCtrl-W')
-        self.Bind(wx.EVT_MENU, lambda e: self.Close(), id = wx.ID_CLOSE)
+        self.Bind(wx.EVT_MENU, self.checkCloseMenu, id = wx.ID_CLOSE)
         
         fileMenu.Append(wx.ID_EXIT, 'E&xit Twine\tCtrl-Q')
         self.Bind(wx.EVT_MENU, lambda e: self.app.exit(), id = wx.ID_EXIT)
@@ -335,6 +335,12 @@ class StoryFrame (wx.Frame):
             self.checkClose(None)
     
     def checkClose (self, event):
+        self.checkCloseDo(event,byMenu=False)
+    
+    def checkCloseMenu (self, event):
+        self.checkCloseDo(event,byMenu=True)
+        
+    def checkCloseDo (self, event, byMenu):
         """
         If this instance's dirty flag is set, asks the user to confirm that they don't want to save changes.
         """
@@ -350,6 +356,8 @@ class StoryFrame (wx.Frame):
             if (dialog.ShowModal() == wx.ID_NO):
                 event.Veto()
                 return
+            else:
+                self.dirty = False
         
         # ask all our widgets to close any editor windows
         
@@ -357,9 +365,10 @@ class StoryFrame (wx.Frame):
             if isinstance(w, PassageWidget):
                 w.closeEditor()
 
-        self.app.removeStory(self)
+        self.app.removeStory(self, byMenu)
         if event != None:
             event.Skip()
+        self.Destroy()
         
     def saveAs (self, event = None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""

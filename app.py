@@ -47,9 +47,20 @@ class App (wx.App):
         self.stories.append(s)
         s.Show(True)
     
-    def removeStory (self, story):
+    def removeStory (self, story, byMenu = False):
         """Removes a story from our collection. Should be called when it closes."""
-        self.stories.remove(story)
+        try:
+            self.stories.remove(story)
+            if byMenu:
+                counter = 0
+                for s in self.stories: 
+                    if isinstance(s, StoryFrame): 
+                        counter = counter + 1 
+                if counter == 0:
+                    self.newStory()
+
+        except ValueError:
+            None
         
     def openDialog (self, event = None):
         """Opens a story file of the user's choice."""
