@@ -480,7 +480,9 @@ class StoryFrame (wx.Frame):
 
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
-                if not any('Twine.' in t[0:6] for t in widget.passage.tags) and not widget.passage.title == 'StoryIncludes':
+                if widget.passage.title != 'StoryIncludes' and \
+                not any('Twine.private' in t for t in widget.passage.tags) and \
+                not any('Twine.system' in t for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
 
             for widget in self.storyPanel.widgets:
@@ -512,7 +514,9 @@ class StoryFrame (wx.Frame):
                                         s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
                                         openedFile.close()
                                         for widget in s.storyPanel.widgets:
-                                            if not any(widget.passage.title in t for t in excludepassages) and not any('Twine.' in t[0:6] for t in widget.passage.tags):
+                                            if not any(widget.passage.title in t for t in excludepassages) and \
+                                            not any('Twine.private' in t for t in widget.passage.tags) and \
+                                            not any('Twine.system' in t for t in widget.passage.tags):
                                                 tw.addTiddler(widget.passage)
                                         s.Destroy()
                                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -536,7 +540,8 @@ class StoryFrame (wx.Frame):
                                         for tiddlerkey in tiddlerkeys:
                                             passage = tw1.tiddlers[tiddlerkey]
                                             if not any(passage.title == t for t in excludepassages) and \
-                                            not any('Twine.' in t[0:6] for t in passage.tags):
+                                            not any('Twine.private' in t for t in passage.tags) and \
+                                            not any('Twine.system' in t for t in passage.tags):
                                                 tw.addTiddler(passage)
                                     else:
                                         raise 'File format not recognized'

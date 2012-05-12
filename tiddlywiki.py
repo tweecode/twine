@@ -56,7 +56,8 @@ class TiddlyWiki:
 			header.close()
 		
 		for i in order:
-			if not any('Twine.' in t[0:6] for t in self.tiddlers[i].tags) and not self.tiddlers[i].title == 'StoryIncludes':
+			if not any('Twine.private' in t for t in self.tiddlers[i].tags) and \
+			not any('Twine.system' in t for t in self.tiddlers[i].tags):
 				output += self.tiddlers[i].toHtml(self.author)
 		
 		if (target):
@@ -94,7 +95,6 @@ class TiddlyWiki:
 		# content
 		
 		for i in order:
-			
 			text = rtf_encode(self.tiddlers[i].text)
 			text = re.sub(r'\n', '\\\n', text) # newlines
 			text = re.sub(r'\[\[(.*?)\]\]', r'\ul \1\ulnone ', text) # links
