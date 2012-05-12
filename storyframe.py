@@ -471,7 +471,9 @@ class StoryFrame (wx.Frame):
         """        
         try:
             # open destination for writing
-            
+            cwd = os.getcwd()
+            docdir = os.path.dirname(self.buildDestination)
+            os.chdir(docdir)
             dest = open(self.buildDestination, 'w')
     
             # assemble our tiddlywiki and write it out
@@ -546,7 +548,8 @@ class StoryFrame (wx.Frame):
                     break
             
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
-            dest.close()        
+            dest.close()
+            os.chdir(cwd)
             if displayAfter: self.viewBuild()
         except:
             self.app.displayError('building your story')
