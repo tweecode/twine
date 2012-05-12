@@ -56,7 +56,8 @@ class TiddlyWiki:
 			header.close()
 		
 		for i in order:
-			output += self.tiddlers[i].toHtml(self.author)
+			if not any('Twine.' in t[0:6] for t in self.tiddlers[i].tags) and not self.tiddlers[i].title == 'StoryIncludes':
+				output += self.tiddlers[i].toHtml(self.author)
 		
 		if (target):
 			footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
@@ -93,6 +94,7 @@ class TiddlyWiki:
 		# content
 		
 		for i in order:
+			
 			text = rtf_encode(self.tiddlers[i].text)
 			text = re.sub(r'\n', '\\\n', text) # newlines
 			text = re.sub(r'\[\[(.*?)\]\]', r'\ul \1\ulnone ', text) # links
