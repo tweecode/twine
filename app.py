@@ -39,7 +39,11 @@ class App (wx.App):
             os.chdir(os.path.expanduser('~'))
 
         if not self.openOnStartup():
-            self.newStory()
+            if self.config.HasEntry('LastFile') \
+            and os.path.exists(self.config.Read('LastFile')):
+                self.open(self.config.Read('LastFile'))
+            else:
+                self.newStory()
         
     def newStory (self, event = None):
         """Opens a new, blank story."""
@@ -94,6 +98,7 @@ class App (wx.App):
             self.stories.append(newStory)
             newStory.Show(True)
             self.addRecentFile(path)
+            self.config.Write('LastFile', path)
             openedFile.close()
             
             # weird special case:

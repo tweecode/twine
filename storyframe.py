@@ -450,6 +450,7 @@ class StoryFrame (wx.Frame):
             pickle.dump(self.serialize(), dest)
             dest.close()
             self.setDirty(False)
+            self.app.config.Write('LastFile', self.saveDestination)
         except:
             self.app.displayError('saving your story')
 
