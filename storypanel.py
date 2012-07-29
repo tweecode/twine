@@ -38,7 +38,6 @@ class StoryPanel (wx.ScrolledWindow):
         self.undoPointer = -1
         self.lastSearchRegexp = None
         self.lastSearchFlags = None
-        self.trackinghover = True;
        
         if (state):
             self.scale = state['scale']
@@ -70,9 +69,6 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_LEFT_DCLICK, self.handleDoubleClick)
         self.Bind(wx.EVT_RIGHT_UP, self.handleRightClick)
         self.Bind(wx.EVT_MIDDLE_UP, self.handleMiddleClick)
-        self.Bind(wx.EVT_ENTER_WINDOW, self.handleHoverStart)
-        self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
-        self.Bind(wx.EVT_MOTION, self.handleHover)
 
     def newWidget (self, title = None, text = '', pos = None, quietly = False):
         """Adds a new widget to the container."""
@@ -779,23 +775,7 @@ class StoryPanel (wx.ScrolledWindow):
             if not any('Twine.private' in t for t in widget.passage.tags):
                 state['widgets'].append(widget.serialize())
             
-        return state
-    
-    def handleHoverStart(self, event):
-        """Turns on hover tracking when mouse enters the frame."""
-        self.trackinghover = True
-
-    def handleHoverStop(self, event):
-        """Turns off hover tracking when mouse leaves the frame."""
-        self.trackinghover = False
-        
-    def handleHover(self, event):
-        if self.trackinghover and not self.draggingWidgets and not self.draggingMarquee:
-            for widget in self.widgets:
-                if widget.getPixelRect().Contains(event.GetPosition()):
-                    self.SetToolTip(wx.ToolTip(widget.passage.title))
-                    return
-            self.SetToolTip(wx.ToolTip(''))
+        return state   
 
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
