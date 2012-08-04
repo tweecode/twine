@@ -471,14 +471,11 @@ class StoryFrame (wx.Frame):
         Builds an HTML version of the story. Pass whether to open the destination file afterwards.
         """        
         try:
-            # open destination for writing
+            # Remember current working dir and set to savefile's dir
             cwd = os.getcwd()
-            docdir = os.path.dirname(self.buildDestination)
-            os.chdir(docdir)
-            dest = open(self.buildDestination, 'w')
+            os.chdir(os.path.dirname(self.saveDestination))
     
             # assemble our tiddlywiki and write it out
-
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title != 'StoryIncludes' and \
@@ -552,7 +549,9 @@ class StoryFrame (wx.Frame):
                             state = 1
                             continue
                     break
-            
+
+            os.chdir(os.path.dirname(self.buildDestination))
+            dest = open(self.buildDestination, 'w')
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
             dest.close()
             os.chdir(cwd)
