@@ -471,9 +471,13 @@ class StoryFrame (wx.Frame):
         Builds an HTML version of the story. Pass whether to open the destination file afterwards.
         """        
         try:
-            # Remember current working dir and set to savefile's dir
+            # Remember current working dir and set to savefile's dir. InterTwine StoryIncludes are relative to the Twine file.
             cwd = os.getcwd()
-            os.chdir(os.path.dirname(self.saveDestination))
+            if self.saveDestination == '':
+                twinedocdir = cwd
+            else:
+                twinedocdir = os.path.dirname(self.saveDestination)
+                os.chdir(twinedocdir)
     
             # assemble our tiddlywiki and write it out
             hasstartpassage = False
@@ -483,11 +487,11 @@ class StoryFrame (wx.Frame):
                 not any('Twine.private' in t for t in widget.passage.tags) and \
                 not any('Twine.system' in t for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
-                    if(widget.passage.title == "Start"):
+                    if widget.passage.title == "Start":
                         hasstartpassage = True
 
             # is there a Start passage?
-            if(hasstartpassage == False):
+            if hasstartpassage == False:
                 self.app.displayError('building your story because there is no "Start" passage. ' + "\n" 
                                       + 'Your story will build but the web-browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
@@ -559,6 +563,7 @@ class StoryFrame (wx.Frame):
                             continue
                     break
 
+            # Write the output file
             os.chdir(os.path.dirname(self.buildDestination))
             dest = open(self.buildDestination, 'w')
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
