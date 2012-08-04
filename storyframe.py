@@ -476,12 +476,21 @@ class StoryFrame (wx.Frame):
             os.chdir(os.path.dirname(self.saveDestination))
     
             # assemble our tiddlywiki and write it out
+            hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title != 'StoryIncludes' and \
                 not any('Twine.private' in t for t in widget.passage.tags) and \
                 not any('Twine.system' in t for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
+                    if(widget.passage.title == "Start"):
+                        hasstartpassage = True
+
+            # is there a Start passage?
+            if(hasstartpassage == False):
+                self.app.displayError('building your story because there is no "Start" passage. ' + "\n" 
+                                      + 'Your story will build but the web-browser will not be able to run the story. ' + "\n"
+                                      + 'Please add a passage with the title "Start"')
 
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
