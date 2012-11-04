@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, os, urllib, pickle, wx, codecs
+import sys, os, urllib, pickle, wx, codecs, time
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
@@ -42,6 +42,10 @@ class StoryFrame (wx.Frame):
         
         self.Bind(wx.EVT_CLOSE, self.checkClose)
         self.Bind(wx.EVT_UPDATE_UI, self.updateUI)
+        
+        # Timer for the auto build file watcher
+        self.autobuildtimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.autoBuildTick, self.autobuildtimer)
         
         # File menu
         
@@ -180,35 +184,39 @@ class StoryFrame (wx.Frame):
 
         # Story menu
 
-        storyMenu = wx.Menu()
+        self.storyMenu = wx.Menu()
         
-        storyMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&New Passage\tCtrl-N')
+        self.storyMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&New Passage\tCtrl-N')
         self.Bind(wx.EVT_MENU, self.storyPanel.newWidget, id = StoryFrame.STORY_NEW_PASSAGE)
         
-        storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
+        self.storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e)), id = wx.ID_EDIT)
 
-        storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
+        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
         
-        storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
+        self.storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.removeWidgets(e, saveUndo = True), id = wx.ID_DELETE)
  
-        storyMenu.AppendSeparator()
+        self.storyMenu.AppendSeparator()
         
-        storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
+        self.storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
         self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.STORY_BUILD)        
         
-        storyMenu.Append(StoryFrame.STORY_REBUILD, '&Rebuild Story\tCtrl-R')
+        self.storyMenu.Append(StoryFrame.STORY_REBUILD, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.STORY_REBUILD) 
 
-        storyMenu.Append(StoryFrame.STORY_VIEW_LAST, '&View Last Build\tCtrl-L')
+        self.storyMenu.Append(StoryFrame.STORY_VIEW_LAST, '&View Last Build\tCtrl-L')
         self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.STORY_VIEW_LAST)
+        
+        self.autobuildmenuitem = self.storyMenu.Append(StoryFrame.STORY_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
+        self.storyMenu.Check(StoryFrame.STORY_AUTO_BUILD, False)
 
-        storyMenu.AppendSeparator()
+        self.storyMenu.AppendSeparator()
 
-        storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
+        self.storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
         self.Bind(wx.EVT_MENU, self.stats, id = StoryFrame.STORY_STATS) 
 
         # Story Format submenu
@@ -238,7 +246,7 @@ class StoryFrame (wx.Frame):
         storyFormatMenu.Append(StoryFrame.STORY_FORMAT_HELP, '&About Story Formats')        
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
         
-        storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
+        self.storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
         
         # Help menu
         
@@ -264,7 +272,7 @@ class StoryFrame (wx.Frame):
         self.menus.Append(fileMenu, '&File')
         self.menus.Append(editMenu, '&Edit')
         self.menus.Append(viewMenu, '&View')
-        self.menus.Append(storyMenu, '&Story')
+        self.menus.Append(self.storyMenu, '&Story')
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
         
@@ -318,6 +326,7 @@ class StoryFrame (wx.Frame):
             self.showToolbar = False
             self.toolbar.Realize()
             self.toolbar.Hide()
+            
         
     def revert (self, event = None):
         """Reverts to the last saved version of the story file."""
@@ -483,9 +492,11 @@ class StoryFrame (wx.Frame):
             hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
+                # if widget.passage.title != 'StoryIncludes' and \
+                # not any('Twine.private' in t for t in widget.passage.tags) and \
+                # not any('Twine.system' in t for t in widget.passage.tags):
                 if widget.passage.title != 'StoryIncludes' and \
-                not any('Twine.private' in t for t in widget.passage.tags) and \
-                not any('Twine.system' in t for t in widget.passage.tags):
+                not any(t.startswith('Twine.') for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
                         hasstartpassage = True
@@ -579,7 +590,42 @@ class StoryFrame (wx.Frame):
         """
         path = 'file://' + urllib.pathname2url(self.buildDestination)
         path = path.replace('file://///', 'file:///')
-        wx.LaunchDefaultBrowser(path)        
+        wx.LaunchDefaultBrowser(path)
+        
+    def autoBuild (self, event = None):
+        """
+        Toggles the autobuild feature
+        """
+        if self.autobuildmenuitem.IsChecked():
+            self.autobuildtimer.Start(5000)
+            self.autoBuildStart();
+        else:
+            self.autobuildtimer.Stop()
+    
+    def autoBuildTick (self, event = None):
+        """
+        Called whenever the autobuild timer checks up on things
+        """
+        for pathname, oldmtime in self.autobuildfiles.iteritems():
+            newmtime = os.stat(pathname).st_mtime
+            if newmtime != oldmtime:
+                #print "Auto rebuild triggered by: ", pathname
+                self.autobuildfiles[pathname] = newmtime
+                self.rebuild()
+                break
+        
+    def autoBuildStart (self):
+        self.autobuildfiles = { }
+        if self.saveDestination == '':
+            twinedocdir = cwd
+        else:
+            twinedocdir = os.path.dirname(self.saveDestination)
+        for f in os.listdir(twinedocdir):
+            extension = os.path.splitext(f)[1] 
+            if extension == '.tws' or extension == '.tw' or extension == '.txt' or extension == '.twee':
+                pathname = os.path.join(twinedocdir, f)
+                mtime = os.stat(pathname).st_mtime
+                self.autobuildfiles[pathname] = mtime
         
     def stats (self, event = None):
         """
@@ -806,7 +852,8 @@ class StoryFrame (wx.Frame):
     STORY_BUILD = 403
     STORY_REBUILD = 404
     STORY_VIEW_LAST = 405
-    STORY_STATS = 406
+    STORY_AUTO_BUILD = 406
+    STORY_STATS = 407
     
     STORY_FORMAT_HELP = 408
     STORY_FORMAT_BASE = 409    
