@@ -26,6 +26,7 @@ class TiddlyWiki:
 		"""Optionally pass an author name."""
 		self.author = author
 		self.tiddlers = {}
+		self.storysettings = {}
 
 	def tryGetting (self, names, default = ''):
 		"""Tries retrieving the text of several tiddlers by name; returns default if none exist."""
@@ -48,17 +49,30 @@ class TiddlyWiki:
 	def toHtml (self, app, target = None, order = None):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
-		output = ''
+		output = u''
 		
 		if (target):
 			header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
 			output = header.read()
 			header.close()
+
+		if self.storysettings['Obfuscate'] == 'SWAP' and self.storysettings.has_key('ObfuscateKey') :
+			nss = u''
+			for nsc in self.storysettings['ObfuscateKey']:
+				if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
+					nss = nss + nsc
+			self.storysettings['ObfuscateKey'] = nss
 		
 		for i in order:
 			if not any('Twine.private' in t for t in self.tiddlers[i].tags) and \
 			not any('Twine.system' in t for t in self.tiddlers[i].tags):
-				output += self.tiddlers[i].toHtml(self.author)
+				if (not (self.storysettings.has_key('Obfuscate') and \
+						self.storysettings['Obfuscate'] == 'SWAP' and \
+						self.storysettings.has_key('ObfuscateKey'))) or \
+					self.tiddlers[i].title == 'StorySettings':
+					output += self.tiddlers[i].toHtml(self.author)
+				else:
+					output += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['ObfuscateKey'])
 		
 		if (target):
 			footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
@@ -275,20 +289,26 @@ class Tiddler:
 			self.text = decode_text(text.group(1))
 				
 		
-	def toHtml (self, author = 'twee'):
+	def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""
 			
 		now = time.localtime()
-		output = '<div tiddler="' + self.title + '" tags="'
-		
-		for tag in self.tags:
-			output += tag + ' '
-			
-		output = output.strip()
+		output = ''
+		if not obfuscation:
+			output = '<div tiddler="' + self.title + '" tags="'
+			for tag in self.tags:
+				output += tag + ' '
+			output = output.strip()
+		else:
+			output = '<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			for tag in self.tags:
+				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
+			output = output.strip()
+
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
 		output += ' modifier="' + author + '">'
-		output += encode_text(self.text) + '</div>'
+		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		
 		return output
 		
@@ -369,17 +389,32 @@ class Tiddler:
 #
 
 
-def encode_text (text):
+def encode_text (text, obfuscation, obfuscationkey):
 	"""Encodes a string for use in HTML output."""
 	output = text
+	if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
 	output = output.replace('\\', '\s')
 	output = re.sub(r'\r?\n', r'\\n', output)
 	output = output.replace('<', '&lt;')
 	output = output.replace('>', '&gt;')
 	output = output.replace('"', '&quot;')
-	
 	return output
 
+def encode_obfuscate_swap(text, obfuscationkey):
+	"""Does basic character pair swapping obfuscation""" 
+	r = ''
+	for c in text:
+		p = obfuscationkey.find(c)
+		if p <> -1:
+			if p % 2 == 0:
+				p1 = p + 1
+				if p1 >= len(obfuscationkey): 
+					p1 = p
+			else:
+				p1 = p - 1
+			c = obfuscationkey[p1]
+		r = r + c
+	return r
 	
 def decode_text (text):
 	"""Decodes a string from HTML."""

@@ -518,7 +518,7 @@ class StoryFrame (wx.Frame):
                     ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
                     state = 0;
                     state_filename = '';
-                    excludepassages = [ 'Start', 'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes' ]
+                    excludepassages = [ 'Start', 'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings' ]
                     for line in lines:
                         if state == 0:
                             state_filename = line
@@ -573,7 +573,16 @@ class StoryFrame (wx.Frame):
                             state = 1
                             continue
                     break
-
+            
+            # Decode story settings
+            for widget in self.storyPanel.widgets:
+                if widget.passage.title == 'StorySettings':
+                    lines = widget.passage.text.splitlines()
+                    for line in lines:
+                        (skey,svalue) = line.split(':')
+                        tw.storysettings[skey.strip()] = svalue.strip()
+                    break
+            
             # Write the output file
             os.chdir(os.path.dirname(self.buildDestination))
             dest = open(self.buildDestination, 'w')
