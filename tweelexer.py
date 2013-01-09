@@ -46,8 +46,8 @@ class TweeLexer:
         """
         
         pos = 0 # should be self.ctrl.GetEndStyled(), but doesn't work
-        end = event.GetPosition()
-        text = self.ctrl.GetTextRange(pos, end)
+        end = self.ctrl.GetLength()
+        text = self.ctrl.GetTextUTF8()
         style = TweeLexer.DEFAULT
         styleStart = pos
         inMarkup = False
@@ -88,8 +88,9 @@ class TweeLexer:
                     
                     link = text[styleStart + 2:pos - 2]                    
                     link = re.sub('.*\|', '', link)
+                    ulink = link.decode('utf-8', 'replace')
                     
-                    if not self.passageExists(link):
+                    if not self.passageExists(ulink):
                         style = TweeLexer.BAD_LINK
                     self.applyStyle(styleStart, pos, style)
                     styleChanged = True
