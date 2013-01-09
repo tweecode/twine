@@ -3,8 +3,14 @@
 
 ; NOTE: this .NSI script is designed for NSIS v1.8+
 
-Name "Twine 1.3.5_test"
-OutFile "dist\twine-1.3.5-test-windows.exe"
+; This also packages vcredist_x86.exe v9.0.30729.5677 (which includes the MSVCR90.dll v9.0.30729.6161)
+; It can be downloaded from: http://www.microsoft.com/en-us/download/details.aspx?id=26368
+; This only works for unicode Python 2.7.3/wxPython2.8. 
+; Verify which version of MSVCR90.dll you need using dependancy walker on your Python2x.exe
+; Place the vcredist_x86.exe file into the ./build directory and this install does the rest 
+
+Name "Twine 1.3.6"
+OutFile "dist\twine-1.3.6-alpha-windows.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
@@ -35,14 +41,14 @@ File /r "dist\win32\icons"
 
 ; add Start Menu entries
 
-CreateDirectory "$SMPROGRAMS\Twine 1.3.5_test\"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Twine.lnk" "$INSTDIR\twine.exe"
-CreateShortCut "$SMPROGRAMS\Twine 1.3.5_test\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
+CreateDirectory "$SMPROGRAMS\Twine\"
+CreateShortCut "$SMPROGRAMS\Twine\Twine.lnk" "$INSTDIR\twine.exe"
+CreateShortCut "$SMPROGRAMS\Twine\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
 
 ; add uninstall entry in Add/Remove Programs
 
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Twine" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.5_test (remove only)"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.3.6 (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "UninstallString" '"$INSTDIR\uninstalltwine.exe"'
 
 ; file association
@@ -60,12 +66,19 @@ System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (${SHCNE_ASSOCCHANGED}, 
 ; write out uninstaller
 
 WriteUninstaller "$INSTDIR\uninstalltwine.exe"
+
+; Install Visual Studio Redistributable controls
+
+File "build\vcredist_x86.exe"
+ExecWait '"$INSTDIR\vcredist_x86.exe" /qb!'
+Delete "$INSTDIR\vcredist_x86.exe"
+
 SectionEnd ; end of default section
 
 
 ; begin uninstall settings/section
 
-UninstallText "This will uninstall Twine 1.3.5_test from your system."
+UninstallText "This will uninstall Twine 1.3.6 from your system."
 
 Section Uninstall
 
@@ -76,7 +89,7 @@ DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Twine"
 DeleteRegKey HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Twine"
 DeleteRegKey HKCR ".tws"
 DeleteRegKey HKCR "Twine.Story"
-RMDir /r "$SMPROGRAMS\Twine 1.3.5_test"
+RMDir /r "$SMPROGRAMS\Twine"
 RMDir /r "$INSTDIR"
 SectionEnd ; end of uninstall section
 

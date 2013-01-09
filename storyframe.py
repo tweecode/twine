@@ -6,9 +6,10 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, os, urllib, pickle, wx
+import sys, os, urllib, pickle, wx, codecs, time
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
+from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 
@@ -42,6 +43,10 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.checkClose)
         self.Bind(wx.EVT_UPDATE_UI, self.updateUI)
         
+        # Timer for the auto build file watcher
+        self.autobuildtimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.autoBuildTick, self.autobuildtimer)
+        
         # File menu
         
         fileMenu = wx.Menu()
@@ -53,14 +58,22 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_MENU, self.app.openDialog, id = wx.ID_OPEN)
         
         recentFilesMenu = wx.Menu()
-        self.app.recentFiles.UseMenu(recentFilesMenu)
-        self.app.recentFiles.AddFilesToThisMenu(recentFilesMenu)
+        self.recentFiles = wx.FileHistory(self.app.RECENT_FILES)
+        self.recentFiles.Load(self.app.config)
+        self.app.verifyRecentFiles(self)
+        self.recentFiles.UseMenu(recentFilesMenu)
+        self.recentFiles.AddFilesToThisMenu(recentFilesMenu)
         fileMenu.AppendMenu(wx.ID_ANY, 'Open &Recent', recentFilesMenu)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(0), id = wx.ID_FILE1)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(1), id = wx.ID_FILE2)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(2), id = wx.ID_FILE3)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(3), id = wx.ID_FILE4)
-        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(4), id = wx.ID_FILE5)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 0), id = wx.ID_FILE1)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 1), id = wx.ID_FILE2)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 2), id = wx.ID_FILE3)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 3), id = wx.ID_FILE4)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 4), id = wx.ID_FILE5)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 5), id = wx.ID_FILE6)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 6), id = wx.ID_FILE7)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 7), id = wx.ID_FILE8)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 8), id = wx.ID_FILE9)
+        self.Bind(wx.EVT_MENU, lambda e: self.app.openRecent(self, 9), id = wx.ID_FILE9 + 1)
         
         fileMenu.AppendSeparator()
         
@@ -87,7 +100,7 @@ class StoryFrame (wx.Frame):
         fileMenu.AppendSeparator()
         
         fileMenu.Append(wx.ID_CLOSE, '&Close Story\tCtrl-W')
-        self.Bind(wx.EVT_MENU, lambda e: self.Close(), id = wx.ID_CLOSE)
+        self.Bind(wx.EVT_MENU, self.checkCloseMenu, id = wx.ID_CLOSE)
         
         fileMenu.Append(wx.ID_EXIT, 'E&xit Twine\tCtrl-Q')
         self.Bind(wx.EVT_MENU, lambda e: self.app.exit(), id = wx.ID_EXIT)
@@ -171,35 +184,39 @@ class StoryFrame (wx.Frame):
 
         # Story menu
 
-        storyMenu = wx.Menu()
+        self.storyMenu = wx.Menu()
         
-        storyMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&New Passage\tCtrl-N')
+        self.storyMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&New Passage\tCtrl-N')
         self.Bind(wx.EVT_MENU, self.storyPanel.newWidget, id = StoryFrame.STORY_NEW_PASSAGE)
         
-        storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
+        self.storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e)), id = wx.ID_EDIT)
 
-        storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
+        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
         
-        storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
+        self.storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.removeWidgets(e, saveUndo = True), id = wx.ID_DELETE)
  
-        storyMenu.AppendSeparator()
+        self.storyMenu.AppendSeparator()
         
-        storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
+        self.storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
         self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.STORY_BUILD)        
         
-        storyMenu.Append(StoryFrame.STORY_REBUILD, '&Rebuild Story\tCtrl-R')
+        self.storyMenu.Append(StoryFrame.STORY_REBUILD, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.STORY_REBUILD) 
 
-        storyMenu.Append(StoryFrame.STORY_VIEW_LAST, '&View Last Build\tCtrl-L')
+        self.storyMenu.Append(StoryFrame.STORY_VIEW_LAST, '&View Last Build\tCtrl-L')
         self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.STORY_VIEW_LAST)
+        
+        self.autobuildmenuitem = self.storyMenu.Append(StoryFrame.STORY_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
+        self.storyMenu.Check(StoryFrame.STORY_AUTO_BUILD, False)
 
-        storyMenu.AppendSeparator()
+        self.storyMenu.AppendSeparator()
 
-        storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
+        self.storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
         self.Bind(wx.EVT_MENU, self.stats, id = StoryFrame.STORY_STATS) 
 
         # Story Format submenu
@@ -209,9 +226,19 @@ class StoryFrame (wx.Frame):
         storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
         for sfdir in os.listdir(storyFormatPath):
             if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                storyFormatMenu.Append(storyFormatCounter, sfdir.title(), kind = wx.ITEM_CHECK)
-                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target.lower()), id = storyFormatCounter)
-                self.storyFormats[storyFormatCounter] = sfdir.lower();
+                if sfdir == 'jonah':
+                    sfdirlabel = 'Jonah'
+                elif sfdir == 'sugarcane': 
+                    sfdirlabel = 'Sugarcane'
+                elif sfdir == 'tw':
+                    sfdirlabel = 'TW'
+                elif sfdir == 'tw2':
+                    sfdirlabel = 'TW2'
+                else: 
+                    sfdirlabel = sfdir 
+                storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
+                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                self.storyFormats[storyFormatCounter] = sfdir
                 storyFormatCounter = storyFormatCounter + 1
         
         storyFormatMenu.AppendSeparator()
@@ -219,7 +246,7 @@ class StoryFrame (wx.Frame):
         storyFormatMenu.Append(StoryFrame.STORY_FORMAT_HELP, '&About Story Formats')        
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
         
-        storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
+        self.storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
         
         # Help menu
         
@@ -245,7 +272,7 @@ class StoryFrame (wx.Frame):
         self.menus.Append(fileMenu, '&File')
         self.menus.Append(editMenu, '&Edit')
         self.menus.Append(viewMenu, '&View')
-        self.menus.Append(storyMenu, '&Story')
+        self.menus.Append(self.storyMenu, '&Story')
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
         
@@ -300,7 +327,6 @@ class StoryFrame (wx.Frame):
             self.toolbar.Realize()
             self.toolbar.Hide()
             
-        self.Show(True)
         
     def revert (self, event = None):
         """Reverts to the last saved version of the story file."""
@@ -313,9 +339,17 @@ class StoryFrame (wx.Frame):
         
         if (dialog.ShowModal() == wx.ID_YES):
             self.Destroy()
-            self.open(self.saveDestination)
+            self.app.open(self.saveDestination)
+            self.dirty = False;
+            self.checkClose(None)
     
     def checkClose (self, event):
+        self.checkCloseDo(event,byMenu=False)
+    
+    def checkCloseMenu (self, event):
+        self.checkCloseDo(event,byMenu=True)
+        
+    def checkCloseDo (self, event, byMenu):
         """
         If this instance's dirty flag is set, asks the user to confirm that they don't want to save changes.
         """
@@ -331,38 +365,55 @@ class StoryFrame (wx.Frame):
             if (dialog.ShowModal() == wx.ID_NO):
                 event.Veto()
                 return
+            else:
+                self.dirty = False
         
         # ask all our widgets to close any editor windows
         
-        map(lambda w: w.closeEditor(), self.storyPanel.widgets)
-        self.app.removeStory(self)
-        event.Skip()
+        for w in list(self.storyPanel.widgets):
+            if isinstance(w, PassageWidget):
+                w.closeEditor()
+
+        self.app.removeStory(self, byMenu)
+        if event != None:
+            event.Skip()
+        self.Destroy()
         
     def saveAs (self, event = None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
-                         "Twine Story (*.tws)|*.tws", \
+                         "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
                            wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
-            self.saveDestination = dialog.GetPath()
-            self.app.config.Write('savePath', os.getcwd())
-            self.app.addRecentFile(self.saveDestination)
-            self.save(None)
-        
+            if dialog.GetFilterIndex() == 0:
+                self.saveDestination = dialog.GetPath()
+                self.app.config.Write('savePath', os.getcwd())
+                self.app.addRecentFile(self.saveDestination)
+                self.save(None)
+            elif dialog.GetFilterIndex() == 1:
+                npsavedestination = dialog.GetPath()
+                try:
+                    dest = open(npsavedestination, 'wb')
+                    pickle.dump(self.serialize_noprivate(npsavedestination), dest)
+                    dest.close()
+                    self.app.addRecentFile(npsavedestination)
+                except:
+                    self.app.displayError('saving your story')
+                
         dialog.Destroy()
         
     def exportSource (self, event = None):
         """Asks the user to choose a file to export source to, then exports the wiki."""
         dialog = wx.FileDialog(self, 'Export Source Code', os.getcwd(), "", \
-                               "Text File (*.txt)|*.txt", wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 path = dialog.GetPath()
                 tw = TiddlyWiki()
                 
                 for widget in self.storyPanel.widgets: tw.addTiddler(widget.passage)
-                dest = open(path, 'w')
+                dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
                 order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
                 dest.write(tw.toTwee(order))
                 dest.close()
@@ -374,16 +425,13 @@ class StoryFrame (wx.Frame):
     def importSource (self, event = None):
         """Asks the user to choose a file to import source from, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import Source Code', os.getcwd(), '', \
-                               'Text Files (*.txt)|*.txt|Twee Source Code (*.tw)|*.tw', wx.OPEN | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 # have a TiddlyWiki object parse it for us
-                
-                source = open(dialog.GetPath(), 'rb')
                 tw = TiddlyWiki()
-                tw.addTwee(source.read())
-                source.close()
+                tw.addTweeFromFilename(dialog.GetPath())
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
                 
@@ -411,6 +459,7 @@ class StoryFrame (wx.Frame):
             pickle.dump(self.serialize(), dest)
             dest.close()
             self.setDirty(False)
+            self.app.config.Write('LastFile', self.saveDestination)
         except:
             self.app.displayError('saving your story')
 
@@ -431,18 +480,115 @@ class StoryFrame (wx.Frame):
         Builds an HTML version of the story. Pass whether to open the destination file afterwards.
         """        
         try:
-            # open destination for writing
-            
-            dest = open(self.buildDestination, 'w')
+            # Remember current working dir and set to savefile's dir. InterTwine StoryIncludes are relative to the Twine file.
+            cwd = os.getcwd()
+            if self.saveDestination == '':
+                twinedocdir = cwd
+            else:
+                twinedocdir = os.path.dirname(self.saveDestination)
+                os.chdir(twinedocdir)
     
             # assemble our tiddlywiki and write it out
-
+            hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
+                # if widget.passage.title != 'StoryIncludes' and \
+                # not any('Twine.private' in t for t in widget.passage.tags) and \
+                # not any('Twine.system' in t for t in widget.passage.tags):
+                if widget.passage.title != 'StoryIncludes' and \
+                not any(t.startswith('Twine.') for t in widget.passage.tags):
                     tw.addTiddler(widget.passage)
+                    if widget.passage.title == "Start":
+                        hasstartpassage = True
+
+            # is there a Start passage?
+            if hasstartpassage == False:
+                self.app.displayError('building your story because there is no "Start" passage. ' + "\n" 
+                                      + 'Your story will build but the web-browser will not be able to run the story. ' + "\n"
+                                      + 'Please add a passage with the title "Start"')
+
+            for widget in self.storyPanel.widgets:
+                if widget.passage.title == 'StoryIncludes':
+                    lines = widget.passage.text.splitlines()
+                    lines.append('');
+                    # State 0: Look for a filename
+                    ## State 1: have filename, look for filename, EXCEPT, INCLUDE, ALIAS
+                    ## State 2: EXCEPT mode, look for INCLUDE 3, ALIAS 4 or blank line 0
+                    ## State 3: INCLUDE mode, look for EXCEPT 2, ALIAS 4 or blank line 0
+                    ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
+                    state = 0;
+                    state_filename = '';
+                    excludepassages = [ 'Start', 'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings' ]
+                    for line in lines:
+                        if state == 0:
+                            state_filename = line
+                            state = 1
+                            continue
+                        elif state == 1:
+                            try:
+                                if state_filename.strip() != '':
+                                    extension = os.path.splitext(state_filename)[1] 
+                                    if extension == '.tws':
+                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                            openedFile = urllib.urlopen(state_filename)
+                                        else:
+                                            openedFile = open(state_filename, 'r')
+                                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                                        openedFile.close()
+                                        for widget in s.storyPanel.widgets:
+                                            if not any(widget.passage.title in t for t in excludepassages) and \
+                                            not any('Twine.private' in t for t in widget.passage.tags) and \
+                                            not any('Twine.system' in t for t in widget.passage.tags):
+                                                tw.addTiddler(widget.passage)
+                                        s.Destroy()
+                                    elif extension == '.tw' or extension == '.txt' or extension == '.twee':
+                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                            openedFile = urllib.urlopen(state_filename)
+                                            s = openedFile.read()
+                                            openedFile.close()
+                                            t = tempfile.NamedTemporaryFile(delete=False)
+                                            cleanuptempfile = True
+                                            t.write(s)
+                                            t.close()
+                                            filename = t.name
+                                        else:
+                                            filename = state_filename
+                                            cleanuptempfile = False
+                                            
+                                        tw1 = TiddlyWiki()
+                                        tw1.addTweeFromFilename(filename)
+                                        if cleanuptempfile: os.remove(filename)
+                                        tiddlerkeys = tw1.tiddlers.keys()
+                                        for tiddlerkey in tiddlerkeys:
+                                            passage = tw1.tiddlers[tiddlerkey]
+                                            if not any(passage.title == t for t in excludepassages) and \
+                                            not any('Twine.private' in t for t in passage.tags) and \
+                                            not any('Twine.system' in t for t in passage.tags):
+                                                tw.addTiddler(passage)
+                                    else:
+                                        raise 'File format not recognized'
+                            except:
+                                self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
+                            state_filename = line
+                            state = 1
+                            continue
+                    break
             
+            # Decode story settings
+            for widget in self.storyPanel.widgets:
+                if widget.passage.title == 'StorySettings':
+                    lines = widget.passage.text.splitlines()
+                    for line in lines:
+                        (skey,svalue) = line.split(':')
+                        tw.storysettings[skey.strip()] = svalue.strip()
+                    break
+            
+            # Write the output file
+            os.chdir(os.path.dirname(self.buildDestination))
+            dest = open(self.buildDestination, 'w')
             dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
-            dest.close()        
+            dest.close()
+            os.chdir(cwd)
             if displayAfter: self.viewBuild()
         except:
             self.app.displayError('building your story')
@@ -453,7 +599,42 @@ class StoryFrame (wx.Frame):
         """
         path = 'file://' + urllib.pathname2url(self.buildDestination)
         path = path.replace('file://///', 'file:///')
-        wx.LaunchDefaultBrowser(path)        
+        wx.LaunchDefaultBrowser(path)
+        
+    def autoBuild (self, event = None):
+        """
+        Toggles the autobuild feature
+        """
+        if self.autobuildmenuitem.IsChecked():
+            self.autobuildtimer.Start(5000)
+            self.autoBuildStart();
+        else:
+            self.autobuildtimer.Stop()
+    
+    def autoBuildTick (self, event = None):
+        """
+        Called whenever the autobuild timer checks up on things
+        """
+        for pathname, oldmtime in self.autobuildfiles.iteritems():
+            newmtime = os.stat(pathname).st_mtime
+            if newmtime != oldmtime:
+                #print "Auto rebuild triggered by: ", pathname
+                self.autobuildfiles[pathname] = newmtime
+                self.rebuild()
+                break
+        
+    def autoBuildStart (self):
+        self.autobuildfiles = { }
+        if self.saveDestination == '':
+            twinedocdir = cwd
+        else:
+            twinedocdir = os.path.dirname(self.saveDestination)
+        for f in os.listdir(twinedocdir):
+            extension = os.path.splitext(f)[1] 
+            if extension == '.tws' or extension == '.tw' or extension == '.txt' or extension == '.twee':
+                pathname = os.path.join(twinedocdir, f)
+                mtime = os.stat(pathname).st_mtime
+                self.autobuildfiles[pathname] = mtime
         
     def stats (self, event = None):
         """
@@ -528,8 +709,7 @@ class StoryFrame (wx.Frame):
             self.app.displayError('building a proofing copy of your story')
     
     def setTarget (self, target):
-#        self.target = target
-        self.target = target.lower()
+        self.target = target
         
     def updateUI (self, event = None):
         """Adjusts menu items to reflect the current state."""
@@ -652,6 +832,12 @@ class StoryFrame (wx.Frame):
                  'saveDestination': self.saveDestination, \
                  'storyPanel': self.storyPanel.serialize() }
     
+    def serialize_noprivate (self, dest):
+        """Returns a dictionary of state suitable for pickling."""
+        return { 'target': self.target, 'buildDestination': '', \
+                 'saveDestination': dest, \
+                 'storyPanel': self.storyPanel.serialize_noprivate() }
+
     def __repr__ (self):
         return "<StoryFrame '" + self.saveDestination + "'>"
     
@@ -675,7 +861,8 @@ class StoryFrame (wx.Frame):
     STORY_BUILD = 403
     STORY_REBUILD = 404
     STORY_VIEW_LAST = 405
-    STORY_STATS = 406
+    STORY_AUTO_BUILD = 406
+    STORY_STATS = 407
     
     STORY_FORMAT_HELP = 408
     STORY_FORMAT_BASE = 409    
