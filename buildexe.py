@@ -47,7 +47,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
 setup(
     name = 'Twine',
     description = 'Twine',
-    version = '1.3.5',
+    version = '1.3.6',
 
     windows = [{
         'script': 'app.py',
@@ -57,10 +57,11 @@ setup(
     }],
 
     data_files = [
-        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'     + os.sep + 'header.html']),
-        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane' + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw',         ['targets' + os.sep + 'tw'        + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw2',        ['targets' + os.sep + 'tw2'       + os.sep + 'header.html']),
+        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
+        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
+        ('targets' + os.sep + 'tw',         ['targets' + os.sep + 'tw'         + os.sep + 'header.html']),
+        ('targets' + os.sep + 'tw2',        ['targets' + os.sep + 'tw2'        + os.sep + 'header.html']),
+        ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
         ('icons', [
             # toolbar icons
             'icons' + os.sep + 'newpassage.png',
@@ -82,7 +83,7 @@ setup(
                         'bundle_files': 3,
                         'optimize': 2,
                         'ignores': ['_scproxy'],
-                        'dll_excludes': ['w9xpopen.exe'],
+                        'dll_excludes': ['w9xpopen.exe', 'MSVCP90.dll'],
                         'compressed': True,
                   }
     },
