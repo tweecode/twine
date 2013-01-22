@@ -136,9 +136,9 @@ function main(){
 		}
 	}
 	var styles=tale.lookup("tags","stylesheet");
-	for(var i=0;i<styles.length;i++){addStyle(styles[i].text)}
+	for(var i=0;i<styles.length;i++){ addStyle(styles[i].text); }
     state.init();
-}
+};
 
 Interface={
 	init:function(){
