@@ -188,7 +188,10 @@ class PassageFrame (wx.Frame):
     
     def syncPassage (self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
-        self.widget.passage.title = self.titleInput.GetValue()
+        if len(self.titleInput.GetValue()) > 0:
+            self.widget.passage.title = self.titleInput.GetValue()
+        else:
+            self.widget.passage.title = 'Untitled Passage'
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.tags = []
         self.widget.clearPaintCache()
@@ -488,20 +491,22 @@ class PassageFrame (wx.Frame):
         broken = []
         
         for link in self.widget.passage.links():
-            found = False
-            
-            for widget in self.widget.parent.widgets:
-                if widget.passage.title == link:
-                    outgoing.append(link)
-                    found = True
-                    break
+            if len(link) > 0:
+                found = False
                 
-            if not found: broken.append(link)
+                for widget in self.widget.parent.widgets:
+                    if widget.passage.title == link:
+                        outgoing.append(link)
+                        found = True
+                        break
+                    
+                if not found: broken.append(link)
 
         # incoming links
 
         for widget in self.widget.parent.widgets:
-            if self.widget.passage.title in widget.passage.links():
+            if self.widget.passage.title in widget.passage.links() \
+            and len(widget.passage.title) > 0:
                 incoming.append(widget.passage.title)
                 
         # repopulate the menus
