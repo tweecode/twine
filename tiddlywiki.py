@@ -56,7 +56,8 @@ class TiddlyWiki:
 			output = header.read()
 			header.close()
 
-		if self.storysettings['Obfuscate'] == 'SWAP' and self.storysettings.has_key('ObfuscateKey') :
+		if self.storysettings.has_key('Obfuscate') and \
+		self.storysettings['Obfuscate'] == 'SWAP' and self.storysettings.has_key('ObfuscateKey') :
 			nss = u''
 			for nsc in self.storysettings['ObfuscateKey']:
 				if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
