@@ -144,7 +144,7 @@ version.extensions.SilentlyMacro={major:1,minor:0,revision:0};macros.silently={h
 Passage.prototype.render = function() {
     var b = insertElement(null,'div','passage'+this.title,'passage');
     b.style.visibility='hidden';
-    b.setAttribute('data-tags', this.tags.join(' '));
+    if(this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
     insertElement(b, 'div','','header');
     var a = insertElement(b, 'div', '', 'content');
     new Wikifier(a, this.text);

@@ -147,7 +147,7 @@ version.extensions.SilentlyMacro={major:1,minor:0,revision:0};macros.silently = 
 Passage.prototype.render = function(){
 	var E=insertElement(null,'div','passage'+this.title,'passage');
 	E.style.visibility='hidden';
-	E.setAttribute('data-tags', this.tags.join(' '));
+	if(this.tags != null && this.tags.length > 0) E.setAttribute('data-tags', this.tags.join(' '));
 	var F=insertElement(E,'div','','title',this.title);
 	var D=insertElement(F,'span','','toolbar');
 	for(var B=0;B<Passage.toolbarItems.length;B++) {
