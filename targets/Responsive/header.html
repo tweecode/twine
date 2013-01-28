@@ -266,8 +266,62 @@ version.extensions.ifMacros={major:1,minor:0,revision:0};
 macros['if']={handler:function(place,macroName,params,parser){var condition=parser.fullArgs();var srcOffset=parser.source.indexOf(">>",parser.matchStart)+2;var src=parser.source.slice(srcOffset);var endPos=-1;var trueClause="";var falseClause="";for(var i=0,nesting=1,currentClause=true;i<src.length;i++){if(src.substr(i,9)=="<<endif>>"){nesting--;if(nesting==0){endPos=srcOffset+i+9;break}}if((src.substr(i,8)=="<<else>>")&&(nesting==1)){currentClause="false";i+=8}if(src.substr(i,5)=="<<if "){nesting++}if(currentClause==true){trueClause+=src.charAt(i)}else{falseClause+=src.charAt(i)}}try{if(eval(condition)){new Wikifier(place,trueClause.trim())}else{new Wikifier(place,falseClause.trim())}if(endPos!=-1){parser.nextMatch=endPos}else{throwError(place,"can't find matching endif")}}catch(e){throwError(place,"bad condition: "+e.message)}}};
 macros['else'] = macros['endif'] = {handler:function(){}};
 
-version.extensions.rememberMacro={major:1,minor:1,revision:0};
-macros.remember={handler:function(place,macroName,params,parser){var statement=parser.fullArgs();var expire=new Date();var variable,value;macros.set.run(statement);var variableSigil=Wikifier.parse("$");variableSigil=variableSigil.replace("[","\\[");variableSigil=variableSigil.replace("]","\\]");variable=statement.match(new RegExp(variableSigil+"(\\w+)","i"))[1];value=eval(Wikifier.parse("$"+variable));switch(typeof value){case"string":value='"'+value.replace(/"/g,'\\"')+'"';break;case"number":case"boolean":break;default:throwError(place,"can't remember $"+variable+" ("+(typeof value)+")");return}expire.setYear(expire.getFullYear()+1);document.cookie=macros.remember.prefix+variable+"="+value+"; expires="+expire.toGMTString()},init:function(){if(tale.has("StoryTitle")){macros.remember.prefix=tale.get("StoryTitle").text+"_"}else{macros.remember.prefix="__jonah_"}var cookies=document.cookie.split(";");for(var i=0;i<cookies.length;i++){var bits=cookies[i].split("=");if(bits[0].trim().indexOf(this.prefix)==0){var statement=cookies[i].replace(this.prefix,"$");eval(Wikifier.parse(statement))}}}};
+version.extensions.rememberMacro={major:2,minor:0,revision:0};
+macros['remember']={
+	handler: function(place,macroName,params,parser) {
+		var statement=parser.fullArgs();
+		var variable,value;
+		macros['set'].run(statement);
+		var variableSigil=Wikifier.parse("$");
+		variableSigil=variableSigil.replace("[","\\[");
+		variableSigil=variableSigil.replace("]","\\]");
+		variable=statement.match(new RegExp(variableSigil+"(\\w+)","i"))[1];
+		value=eval(Wikifier.parse("$"+variable));
+		switch(typeof value){
+		    case"string":value='"'+value.replace(/"/g,'\\"')+'"';break;
+		    case"number":case"boolean":break;
+		    default:throwError(place,"can't remember $"+variable+" ("+(typeof value)+")");return;
+		}
+		if(this.uselocalstorage) {
+			localStorage[this.prefix+variable] = value;
+		} else {
+		    document.cookie=this.prefix+variable+"="+value+"; expires="+this.expire;
+	    }
+	},
+	init: function() {
+		var expiredate = new Date();
+		expiredate.setYear(expiredate.getFullYear()+1);
+		this.expire = expiredate.toGMTString();
+        if(tale.has("StoryTitle")){
+            this.prefix=tale.get("StoryTitle").text+"_";
+        } else {
+            this.prefix="__twineremember_";
+        }
+		if(typeof localStorage != 'undefined' && localStorage !== null) {
+			this.uselocalstorage = true;
+			for(var i in localStorage) {
+				if(i.indexOf(this.prefix) == 0) {
+    				var variable = i.substr(this.prefix.length);
+	    			var value = localStorage[i];
+		    		eval(Wikifier.parse('$' + variable + ' = ' + value));
+				}
+			}
+		} else {
+			this.uselocalstorage = false;
+			var cookies=document.cookie.split(";");
+			for(var i=0;i<cookies.length;i++) {
+				var bits=cookies[i].split("=");
+				if(bits[0].trim().indexOf(this.prefix)==0) {
+					var statement=cookies[i].replace(this.prefix,"$");
+					eval(Wikifier.parse(statement));
+				}
+			}
+		}
+	},
+	expire: null,
+	uselocalstorage: null,
+	prefix: null,
+};
 
 version.extensions.SilentlyMacro={major:1,minor:0,revision:0};
 macros.silently={handler:function(g,e,f,b){var h=insertElement(null,'div');var k=b.source.indexOf('>>',b.matchStart)+2;var a=b.source.slice(k);var d=-1;var c='';var l=0;for(var i=0;i<a.length;i++){if(a.substr(i,15)=='<<endsilently>>'){if(l==0){d=k+i+15;break;}else{l--;}}else if(a.substr(i,12)=='<<silently>>'){l++;}else{c+=a.charAt(i);}};if(d!=-1){new Wikifier(h,c);b.nextMatch=d;}else{throwError(g,"can't find matching endsilently");delete h;}}};
