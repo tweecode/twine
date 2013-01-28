@@ -354,7 +354,18 @@ function Passage(c,b,a,ofunc,okey){
     this.tags=[];
   }
 }
-Passage.prototype.render=function(){var b=insertElement(null,"div","passage"+this.title,"passage");b.style.visibility="hidden";insertElement(b,"div","","header");var a=insertElement(b,"div","","content");new Wikifier(a,this.text);insertElement(b,"div","","footer");return b};
+
+Passage.prototype.render = function() {
+	var b = insertElement(null,'div','passage'+this.title,'passage');
+	b.style.visibility='hidden';
+	b.setAttribute('data-tags', this.tags.join(' '));
+	insertElement(b, 'div','','header');
+	var a = insertElement(b, 'div', '', 'content');
+	new Wikifier(a, this.text);
+	insertElement(b, 'div', '', 'footer');
+	return b;
+};
+
 Passage.prototype.reset=function(){this.text=this.initialText};
 Passage.prototype.excerpt=function(){var b=this.text.replace(/<<.*?>>/g,"");b=b.replace(/!.*?\n/g,"");b=b.replace(/[\[\]\/]/g,"");var a=b.match(/(.*?\s.*?\s.*?\s.*?\s.*?\s.*?\s.*?)\s/);return a[1]+"..."};Passage.unescapeLineBreaks=function(a){if(a&&a!=""){return a.replace(/\\n/mg,"\n").replace(/\\/mg,"\\").replace(/\r/mg,"")}else{return""}};
 function Tale(){
