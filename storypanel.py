@@ -744,7 +744,7 @@ class StoryPanel (wx.ScrolledWindow):
                 marqueeColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
                 gc.SetPen(wx.Pen(marqueeColor))
                 r, g, b = marqueeColor.Get()
-                marqueeColor = wx.Color(r, g, b, StoryPanel.MARQUEE_ALPHA)            
+                marqueeColor = wx.Colour(r, g, b, StoryPanel.MARQUEE_ALPHA)
                 gc.SetBrush(wx.Brush(marqueeColor))
                 
             gc.DrawRectangle(self.dragRect.x, self.dragRect.y, self.dragRect.width, self.dragRect.height)
