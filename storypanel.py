@@ -673,6 +673,7 @@ class StoryPanel (wx.ScrolledWindow):
             if (scale == 'out'):
                 self.scale -= 0.2
             if (scale == 'fit'):
+                self.zoom(1.0)
                 neededSize = self.toPixels(self.getSize(), scaleOnly = True)
                 actualSize = self.GetSize()
                 widthRatio = actualSize.width / neededSize[0]
