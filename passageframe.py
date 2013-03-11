@@ -260,8 +260,8 @@ class PassageFrame (wx.Frame):
                 break
         
         if not found:
-            editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.pos)
-       
+            editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
+            
         editingWidget.openEditor()
 
     def showSearchFrame (self, type):
