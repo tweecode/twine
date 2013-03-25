@@ -37,7 +37,7 @@ DAMAGE.
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8">
 <title>Jonah</title>
-<script type="text/javascript">
+<script>
 function $(A) {
     if (typeof A == "string") {
         return document.getElementById(A)
@@ -949,6 +949,10 @@ Wikifier.formatHelpers = {
                     I = "backgroundColor";
                     break
                 }
+                case "float":
+                    I = "cssFloat";
+                    break
+                }
                 H.push({
                     style: I,
                     value: G
@@ -1267,10 +1271,10 @@ Wikifier.formatters = [{
     }
 }, {
     name: "image",
-    match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
-    lookahead: "\\[([<]{0,1})([>]{0,1})[Ii][Mm][Gg]\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
+    match: "\\[(?:[<]?)(?:>?)img\\[", 
+    lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
     handler: function (A) {
-        var C = new RegExp(this.lookahead, "mg");
+        var C = new RegExp(this.lookahead, "mig");
         C.lastIndex = A.matchStart;
         var D = C.exec(A.source);
         if (D && D.index == A.matchStart) {
@@ -1284,14 +1288,17 @@ Wikifier.formatters = [{
             }
             var B = insertElement(E, "img");
             if (D[1]) {
-                B.align = "left"
+                B.style.cssFloat = "left"
+                B.style.marginRight = "1em";
             } else {
                 if (D[2]) {
-                    B.align = "right"
+                    B.style.cssFloat = "right"
+                    B.style.marginLeft = "1em";
                 }
             }
             if (D[3]) {
                 B.title = D[3]
+                B.alt = D[3]
             }
             B.src = D[4];
             A.nextMatch = D.index + D[0].length
@@ -1322,10 +1329,10 @@ Wikifier.formatters = [{
     }
 }, {
     name: "html",
-    match: "<[Hh][Tt][Mm][Ll]>",
-    lookahead: "<[Hh][Tt][Mm][Ll]>((?:.|\\n)*?)</[Hh][Tt][Mm][Ll]>",
+    match: "<html>",
+    lookahead: "<html>((?:.|\\n)*?)</html>",
     handler: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
+        var B = new RegExp(this.lookahead, "mig");
         B.lastIndex = A.matchStart;
         var C = B.exec(A.source);
         if (C && C.index == A.matchStart) {

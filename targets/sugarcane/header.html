@@ -37,7 +37,7 @@ DAMAGE.
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8">
 <title>Sugarcane</title>
-<script type="text/javascript">
+<script>
 function $(a) {
     if (typeof a == "string") {
         return document.getElementById(a)
@@ -499,21 +499,26 @@ macros['back'] = {
 	var steps = 1;
 	// Steps parameter
 	var stepsParam = e.indexOf("steps");
-	if (stepsParam>-1) {
-        if (stepsParam==0 || isNaN(e[stepsParam-1])) {
-          throwError(a, "parameter before 'steps' must be a number.");
-          return;
-        } else {
-		  // Previously, trying to go back more steps than were present in the
-		  // history would silently revert to just 1 step. 
-		  // Instead, let's just go back to the start.
-		  steps = e[stepsParam-1];
-          if (steps > state.history.length) {
-			steps = state.history.length;
-		  }
-          d = state.history[steps].passage.title;
-		  e.splice(stepsParam-1,2);
-        }
+	var stepsParam2 = "";
+	if (stepsParam>0) {
+		stepsParam2 = e[stepsParam-1];
+		if (stepsParam2[0] =='$') {
+			try {
+				stepsParam2=eval(Wikifier.parse(stepsParam2));
+			} catch (r) {
+				throwError(place, b+"Macro bad expression: " + r.message)
+				return;
+			}
+		}
+		// Previously, trying to go back more steps than were present in the
+		// history would silently revert to just 1 step. 
+		// Instead, let's just go back to the start.
+		steps = stepsParam2+0;
+		if (steps >= state.history.length-1) {
+		  steps = state.history.length-2;
+		}
+		d = state.history[steps].passage.title;
+		e.splice(stepsParam-1,2);
     }
 	// Label parameter
 	var labelParam = e.indexOf("label");
@@ -532,13 +537,24 @@ macros['back'] = {
 	// What's left is the passage name parameter
     if (!d) {
 	  if(e[0]) {
-        if (tale.get(e[0]).id == undefined) {
-          throwError(a, "The " + e[0] + " passage does not exist");
+	    if (e[0].charAt(0)=='$') {
+	        try {
+		        e=eval(Wikifier.parse(e[0]));
+		    } catch (r) {
+                throwError(place, b+"Macro bad expression: " + r.message)
+		    	return;
+            }
+		} 
+		else {
+		    e = e[0];
+		}
+        if (tale.get(e).id == undefined) {
+          throwError(a, "The " + e + " passage does not exist");
           return;
         }
 		for(var c = 0; c < state.history.length; c++) {
-			if(state.history[c].passage.title == e[0]) {
-				d = e[0];
+			if(state.history[c].passage.title == e) {
+				d = e;
 				steps = c;
 				break;
 			}
@@ -1083,6 +1099,10 @@ Wikifier.formatHelpers = {
                     j = "backgroundColor";
                     break
                 }
+                case "float":
+                    j = "cssFloat";
+                    break
+                }
                 h.push({
                     style: j,
                     value: g
@@ -1401,10 +1421,10 @@ Wikifier.formatters = [{
     }
 }, {
     name: "image",
-    match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
-    lookahead: "\\[([<]{0,1})([>]{0,1})[Ii][Mm][Gg]\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
-    handler: function (a) {
-        var c = new RegExp(this.lookahead, "mg");
+    match: "\\[(?:[<]?)(?:>?)img\\[", 
+    lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
+	handler: function (a) {
+        var c = new RegExp(this.lookahead, "mig");
         c.lastIndex = a.matchStart;
         var d = c.exec(a.source);
         if (d && d.index == a.matchStart) {
@@ -1418,14 +1438,17 @@ Wikifier.formatters = [{
             }
             var b = insertElement(f, "img");
             if (d[1]) {
-                b.align = "left"
+                b.style.cssFloat = "left"
+                b.style.marginRight = "1em";
             } else {
                 if (d[2]) {
-                    b.align = "right"
+                    b.style.cssFloat = "right"
+                    b.style.marginLeft = "1em";
                 }
             }
             if (d[3]) {
                 b.title = d[3]
+                b.alt = d[3]
             }
             b.src = d[4];
             a.nextMatch = d.index + d[0].length
@@ -1456,10 +1479,10 @@ Wikifier.formatters = [{
     }
 }, {
     name: "html",
-    match: "<[Hh][Tt][Mm][Ll]>",
-    lookahead: "<[Hh][Tt][Mm][Ll]>((?:.|\\n)*?)</[Hh][Tt][Mm][Ll]>",
+    match: "<html>",
+    lookahead: "<html>((?:.|\\n)*?)</html>",
     handler: function (a) {
-        var b = new RegExp(this.lookahead, "mg");
+        var b = new RegExp(this.lookahead, "mig");
         b.lastIndex = a.matchStart;
         var c = b.exec(a.source);
         if (c && c.index == a.matchStart) {
