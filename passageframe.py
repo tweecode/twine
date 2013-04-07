@@ -143,6 +143,26 @@ class PassageFrame (wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+
+        # The default keyboard shortcuts for StyledTextCtrl are
+        # nonstandard on Mac OS X
+        if sys.platform == "darwin":
+            # cmd-left/right to move to beginning/end of line
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_HOMEDISPLAY)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_HOMEDISPLAYEXTEND)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_LINEENDDISPLAY)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_LINEENDDISPLAYEXTEND)
+            # opt-left/right to move forward/back a word
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_WORDLEFT)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_ALT | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_WORDLEFTEXTEND)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_WORDRIGHT)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_ALT | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_WORDRIGHTEXTEND)
+            # cmd-delete to delete from the cursor to beginning of line
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_BACK, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_DELLINELEFT)
+            # opt-delete to delete the previous/current word
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_BACK, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_DELWORDLEFT)
+            # cmd-shift-z to redo
+            self.bodyInput.CmdKeyAssign(ord('Z'), wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_REDO)
                 
         # final layout
         
