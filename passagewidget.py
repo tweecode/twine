@@ -216,6 +216,12 @@ class PassageWidget:
             if (widget != self) and (self.intersects(widget)):
                 intersects = True
                 break
+            
+            #Enforce positive coordinates
+            if not 'Twine.hide' in self.passage.tags:
+                if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+                    intersects = True
+                    break
 
         return intersects
 
