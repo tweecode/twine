@@ -77,6 +77,7 @@ function removeChildren(A) {
     }
 }
 function setPageElement(C, B, A) {
+    var place;
     if (place = $(C)) {
         removeChildren(place);
         if (tale.has(B)) {
@@ -176,7 +177,6 @@ function fade(F, C) {
         if (((G == 1) && (H >= 1)) || ((G == -1) && (H <= 0))) {
             F.style.visibility = (C.fade == "in") ? "visible" : "hidden";
             E.parentNode.replaceChild(F, E);
-            delete E;
             window.clearInterval(A);
             if (C.onComplete) {
                 C.onComplete()
@@ -518,18 +518,19 @@ version.extensions.setMacro = {
     minor: 1,
     revision: 0
 };
-macros.set = {
-    handler: function (A, B, C, D) {
-        macros.set.run(D.fullArgs())
+macros['set'] = {
+    handler: function (a, b, c, d) {
+        macros.set.run(a,d.fullArgs())
     },
-    run: function (expression) {
+    run: function (a,expression) {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
-            throwError(place, "bad expression: " + e.message)
+            throwError(a, "bad expression: " + e.message)
         }
     }
 };
+
 version.extensions.ifMacros = {
     major: 1,
     minor: 0,
@@ -593,7 +594,7 @@ macros['remember'] = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
-        macros['set'].run(statement);
+        macros['set'].run(place,statement);
         var variableSigil = Wikifier.parse("$");
         variableSigil = variableSigil.replace("[", "\\[");
         variableSigil = variableSigil.replace("]", "\\]");
@@ -682,7 +683,6 @@ macros.silently = {
             b.nextMatch = d;
         } else {
             throwError(g, "can't find matching endsilently");
-            delete h;
         }
     }
 };
@@ -948,7 +948,6 @@ Wikifier.formatHelpers = {
                 case "bgcolor":
                     I = "backgroundColor";
                     break
-                }
                 case "float":
                     I = "cssFloat";
                     break

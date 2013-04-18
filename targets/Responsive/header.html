@@ -113,6 +113,7 @@ function removeChildren(a) {
     }
 }
 function setPageElement(c, b, a) {
+    var place;
     if (place = $(c)) {
         removeChildren(place);
         if (tale.has(b)) {
@@ -222,7 +223,6 @@ function fade(f, c) {
         if (((g == 1) && (h >= 1)) || ((g == -1) && (h <= 0))) {
             f.style.visibility = (c.fade == "in") ? "visible" : "hidden";
             e.parentNode.replaceChild(f, e);
-            delete e;
             window.clearInterval(a);
             if (c.onComplete) {
                 c.onComplete()
@@ -519,21 +519,26 @@ macros['back'] = {
 	var steps = 1;
 	// Steps parameter
 	var stepsParam = e.indexOf("steps");
-	if (stepsParam>-1) {
-        if (stepsParam==0 || isNaN(e[stepsParam-1])) {
-          throwError(a, "parameter before 'steps' must be a number.");
-          return;
-        } else {
-		  // Previously, trying to go back more steps than were present in the
-		  // history would silently revert to just 1 step. 
-		  // Instead, let's just go back to the start.
-		  steps = e[stepsParam-1];
-          if (steps > state.history.length) {
-			steps = state.history.length;
-		  }
-          d = state.history[steps].passage.title;
-		  e.splice(stepsParam-1,2);
-        }
+	var stepsParam2 = "";
+	if (stepsParam>0) {
+		stepsParam2 = e[stepsParam-1];
+		if (stepsParam2[0] =='$') {
+			try {
+				stepsParam2=eval(Wikifier.parse(stepsParam2));
+			} catch (r) {
+				throwError(a, b+"Macro bad expression: " + r.message)
+				return;
+			}
+		}
+		// Previously, trying to go back more steps than were present in the
+		// history would silently revert to just 1 step. 
+		// Instead, let's just go back to the start.
+		steps = +stepsParam2;
+		if (steps >= state.history.length-1) {
+		  steps = state.history.length-2;
+		}
+		d = state.history[steps].passage.title;
+		e.splice(stepsParam-1,2);
     }
 	// Label parameter
 	var labelParam = e.indexOf("label");
@@ -542,7 +547,7 @@ macros['back'] = {
 	}
 	if (labelParam >-1) {
         if (!e[labelParam+1]) {
-            throwError(place, e[labelParam] + 'keyword needs an additional label parameter');
+            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
             return;
         }
         labeltouse = e[labelParam+1];
@@ -552,13 +557,24 @@ macros['back'] = {
 	// What's left is the passage name parameter
     if (!d) {
 	  if(e[0]) {
-        if (tale.get(e[0]).id == undefined) {
-          throwError(a, "The " + e[0] + " passage does not exist");
+	    if (e[0].charAt(0)=='$') {
+	        try {
+		        e=eval(Wikifier.parse(e[0]));
+		    } catch (r) {
+                throwError(a, b+"Macro bad expression: " + r.message)
+		    	return;
+            }
+		} 
+		else {
+		    e = e[0];
+		}
+        if (tale.get(e).id == undefined) {
+          throwError(a, "The " + e + " passage does not exist");
           return;
         }
 		for(var c = 0; c < state.history.length; c++) {
-			if(state.history[c].passage.title == e[0]) {
-				d = e[0];
+			if(state.history[c].passage.title == e) {
+				d = e;
 				steps = c;
 				break;
 			}
@@ -689,13 +705,13 @@ version.extensions.setMacro = {
 };
 macros['set'] = {
     handler: function (a, b, c, d) {
-        macros.set.run(d.fullArgs())
+        macros.set.run(a,d.fullArgs())
     },
-    run: function (expression) {
+    run: function (a,expression) {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
-            throwError(place, "bad expression: " + e.message)
+            throwError(a, "bad expression: " + e.message)
         }
     }
 };
@@ -763,7 +779,7 @@ macros['remember'] = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
-        macros['set'].run(statement);
+        macros['set'].run(place,statement);
         var variableSigil = Wikifier.parse("$");
         variableSigil = variableSigil.replace("[", "\\[");
         variableSigil = variableSigil.replace("]", "\\]");
@@ -853,7 +869,6 @@ macros.silently = {
             b.nextMatch = d;
         } else {
             throwError(g, "can't find matching endsilently");
-            delete h;
         }
     }
 };
@@ -1187,6 +1202,9 @@ Wikifier.formatHelpers = {
                 case "bgcolor":
                     s = "backgroundColor";
                     break;
+                case "float":
+                    j = "cssFloat";
+                    break
                 }
                 styles.push({
                     style: s,

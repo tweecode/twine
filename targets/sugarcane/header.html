@@ -82,6 +82,7 @@ function removeChildren(a) {
 }
 
 function setPageElement(c, b, a) {
+    var place;
     if (place = $(c)) {
         removeChildren(place);
         if (tale.has(b)) {
@@ -193,7 +194,6 @@ function fade(f, c) {
         if (((g == 1) && (h >= 1)) || ((g == -1) && (h <= 0))) {
             f.style.visibility = (c.fade == "in") ? "visible" : "hidden";
             e.parentNode.replaceChild(f, e);
-            delete e;
             window.clearInterval(a);
             if (c.onComplete) {
                 c.onComplete()
@@ -506,14 +506,14 @@ macros['back'] = {
 			try {
 				stepsParam2=eval(Wikifier.parse(stepsParam2));
 			} catch (r) {
-				throwError(place, b+"Macro bad expression: " + r.message)
+				throwError(a, b+"Macro bad expression: " + r.message)
 				return;
 			}
 		}
 		// Previously, trying to go back more steps than were present in the
 		// history would silently revert to just 1 step. 
 		// Instead, let's just go back to the start.
-		steps = stepsParam2+0;
+		steps = +stepsParam2;
 		if (steps >= state.history.length-1) {
 		  steps = state.history.length-2;
 		}
@@ -527,7 +527,7 @@ macros['back'] = {
 	}
 	if (labelParam >-1) {
         if (!e[labelParam+1]) {
-            throwError(place, e[labelParam] + 'keyword needs an additional label parameter');
+            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
             return;
         }
         labeltouse = e[labelParam+1];
@@ -541,7 +541,7 @@ macros['back'] = {
 	        try {
 		        e=eval(Wikifier.parse(e[0]));
 		    } catch (r) {
-                throwError(place, b+"Macro bad expression: " + r.message)
+                throwError(a, b+"Macro bad expression: " + r.message)
 		    	return;
             }
 		} 
@@ -681,13 +681,13 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, d) {
-        macros.set.run(d.fullArgs())
+        macros.set.run(a,d.fullArgs())
     },
-    run: function (expression) {
+    run: function (a,expression) {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
-            throwError(place, "bad expression: " + e.message)
+            throwError(a, "bad expression: " + e.message)
         }
     }
 };
@@ -754,7 +754,7 @@ macros['remember'] = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
-        macros['set'].run(statement);
+        macros['set'].run(place,statement);
         var variableSigil = Wikifier.parse("$");
         variableSigil = variableSigil.replace("[", "\\[");
         variableSigil = variableSigil.replace("]", "\\]");
@@ -844,7 +844,6 @@ macros.silently = {
             b.nextMatch = d;
         } else {
             throwError(g, "can't find matching endsilently");
-            delete h;
         }
     }
 };
@@ -1098,7 +1097,6 @@ Wikifier.formatHelpers = {
                 case "bgcolor":
                     j = "backgroundColor";
                     break
-                }
                 case "float":
                     j = "cssFloat";
                     break
