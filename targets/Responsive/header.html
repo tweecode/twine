@@ -396,7 +396,7 @@ function main() {
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
-        $("titleSeparator").innerHTML = "<br />";
+        $("titleSeparator").innerHTML = "<br>";
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
@@ -1153,25 +1153,26 @@ Wikifier.prototype.fullArgs = function () {
     return Wikifier.parse(this.source.slice(startPos, endPos));
 };
 
-Wikifier.parse = function (expression) {
-    var result = expression.replace(/\$/g, 'state.history[0].variables.');
-    result = result.replace(/\beq\b/gi, ' == ');
-    result = result.replace(/\bneq\b/gi, ' != ');
-    result = result.replace(/\bgt\b/gi, ' > ');
-    result = result.replace(/\beq\b/gi, ' == ');
-    result = result.replace(/\bneq\b/gi, ' != ');
-    result = result.replace(/\bgt\b/gi, ' > ');
-    result = result.replace(/\bgte\b/gi, ' >= ');
-    result = result.replace(/\blt\b/gi, ' < ');
-    result = result.replace(/\blte\b/gi, ' <= ');
-    result = result.replace(/\band\b/gi, ' && ');
-    result = result.replace(/\bor\b/gi, ' || ');
-    result = result.replace(/\bnot\b/gi, ' ! ');
-
-    return result;
+Wikifier.parse = function (b) {
+    function alter(from,to) {
+        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
+        return b.replace(new RegExp(from+g,"gi"),to);
+    }
+	b = alter("\\$","state.history[0].variables.");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\bgte\\b", " >= ");
+    b = alter("\\blt\\b", " < ");
+    b = alter("\\blte\\b", " <= ");
+    b = alter("\\band\\b", " && ");
+    b = alter("\\bor\\b", " || ");
+    b = alter("\\bnot\\b", " ! ");
+    return b
 };
-
-
 
 Wikifier.formatHelpers = {
     charFormatHelper: function (w) {

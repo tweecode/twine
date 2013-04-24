@@ -376,7 +376,7 @@ function main() {
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
-        $("titleSeparator").innerHTML = "<br />";
+        $("titleSeparator").innerHTML = "<br>";
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
@@ -1054,20 +1054,24 @@ Wikifier.prototype.fullArgs = function () {
     return Wikifier.parse(this.source.slice(b, a))
 };
 Wikifier.parse = function (b) {
-    var a = b.replace(/\$/g, "state.history[0].variables.");
-    a = a.replace(/\beq\b/gi, " == ");
-    a = a.replace(/\bneq\b/gi, " != ");
-    a = a.replace(/\bgt\b/gi, " > ");
-    a = a.replace(/\beq\b/gi, " == ");
-    a = a.replace(/\bneq\b/gi, " != ");
-    a = a.replace(/\bgt\b/gi, " > ");
-    a = a.replace(/\bgte\b/gi, " >= ");
-    a = a.replace(/\blt\b/gi, " < ");
-    a = a.replace(/\blte\b/gi, " <= ");
-    a = a.replace(/\band\b/gi, " && ");
-    a = a.replace(/\bor\b/gi, " || ");
-    a = a.replace(/\bnot\b/gi, " ! ");
-    return a
+    function alter(from,to) {
+        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
+        return b.replace(new RegExp(from+g,"gi"),to);
+    }
+	b = alter("\\$","state.history[0].variables.");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\bgte\\b", " >= ");
+    b = alter("\\blt\\b", " < ");
+    b = alter("\\blte\\b", " <= ");
+    b = alter("\\band\\b", " && ");
+    b = alter("\\bor\\b", " || ");
+    b = alter("\\bnot\\b", " ! ");
+    return b
 };
 Wikifier.formatHelpers = {
     charFormatHelper: function (a) {

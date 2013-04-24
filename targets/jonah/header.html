@@ -904,21 +904,25 @@ Wikifier.prototype.fullArgs = function () {
     var A = this.source.indexOf(">>", this.matchStart);
     return Wikifier.parse(this.source.slice(B, A))
 };
-Wikifier.parse = function (B) {
-    var A = B.replace(/\$/g, "state.history[0].variables.");
-    A = A.replace(/\beq\b/gi, " == ");
-    A = A.replace(/\bneq\b/gi, " != ");
-    A = A.replace(/\bgt\b/gi, " > ");
-    A = A.replace(/\beq\b/gi, " == ");
-    A = A.replace(/\bneq\b/gi, " != ");
-    A = A.replace(/\bgt\b/gi, " > ");
-    A = A.replace(/\bgte\b/gi, " >= ");
-    A = A.replace(/\blt\b/gi, " < ");
-    A = A.replace(/\blte\b/gi, " <= ");
-    A = A.replace(/\band\b/gi, " && ");
-    A = A.replace(/\bor\b/gi, " || ");
-    A = A.replace(/\bnot\b/gi, " ! ");
-    return A
+Wikifier.parse = function (b) {
+    function alter(from,to) {
+        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
+        return b.replace(new RegExp(from+g,"gi"),to);
+    }
+	b = alter("\\$","state.history[0].variables.");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\bgte\\b", " >= ");
+    b = alter("\\blt\\b", " < ");
+    b = alter("\\blte\\b", " <= ");
+    b = alter("\\band\\b", " && ");
+    b = alter("\\bor\\b", " || ");
+    b = alter("\\bnot\\b", " ! ");
+    return b
 };
 Wikifier.formatHelpers = {
     charFormatHelper: function (A) {
