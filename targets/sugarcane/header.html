@@ -38,14 +38,7 @@ DAMAGE.
 <meta http-equiv="Content-Type" content="text/xhtml; charset=UTF-8">
 <title>Sugarcane</title>
 <script>
-function $(a) {
-    if (typeof a == "string") {
-        return document.getElementById(a)
-    } else {
-        return a
-    }
-}
-
+(function(){
 function clone(a) {
     var b = {};
     for (property in a) {
@@ -83,7 +76,7 @@ function removeChildren(a) {
 
 function setPageElement(c, b, a) {
     var place;
-    if (place = $(c)) {
+    if (place = document.getElementById(c)) {
         removeChildren(place);
         if (tale.has(b)) {
             new Wikifier(place, tale.get(b).text)
@@ -116,19 +109,13 @@ String.prototype.readMacroParams = function () {
         var a = c.exec(this);
         if (a) {
             if (a[1]) {
-                b.push(a[1])
-            } else {
-                if (a[2]) {
-                    b.push(a[2])
-                } else {
-                    if (a[3]) {
-                        b.push(a[3])
-                    } else {
-                        if (a[4]) {
-                            b.push(a[4])
-                        }
-                    }
-                }
+                b.push(a[1]);
+            } else if (a[2]) {
+                b.push(a[2]);
+            } else if (a[3]) {
+                b.push(a[3]);
+            } else if (a[4]) {
+                b.push(a[4]);
             }
         }
     } while (a);
@@ -154,9 +141,9 @@ String.prototype.readBracketedList = function () {
     } while (c);
     return (f)
 };
-String.prototype.trim = function () {
+String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
-};
+});
 String.prototype.unDash = function () {
     var s = this.split("-");
     if (s.length > 1) for (var t = 1; t < s.length; t++)
@@ -282,8 +269,8 @@ History.prototype.display = function (d, b, a) {
     this.history[0].hash = this.save();
     var e = c.render();
     if (a != "offscreen") {
-        removeChildren($("passages"));
-        $("passages").appendChild(e);
+        removeChildren(document.getElementById("passages"));
+        document.getElementById("passages").appendChild(e);
         if (a != "quietly") {
             fade(e, {
                 fade: "in"
@@ -303,7 +290,7 @@ History.prototype.display = function (d, b, a) {
     return e
 };
 History.prototype.restart = function () {
-    window.location.hash = ""
+    window.location.hash = "";
 };
 History.prototype.save = function (c) {
     var a = "";
@@ -322,7 +309,7 @@ History.prototype.restore = function () {
         if (window.location.hash.substr(0, 2) == '#!') {
             var mt = window.location.hash.substr(2).split('_').join(' ');
             console.log('Using hashbang to find' + mt);
-            $('passages').appendChild(this.display(mt, null, 'quietly'));
+            document.getElementById('passages').appendChild(this.display(mt, null, 'quietly'));
             return true;
         }
         var a = window.location.hash.replace("#", "").split(".");
@@ -347,12 +334,12 @@ History.prototype.watchHash = function () {
                 passage: null,
                 variables: {}
             }];
-            removeChildren($("passages"));
-            $("passages").style.visibility = "hidden";
+            removeChildren(document.getElementById("passages"));
+            document.getElementById("passages").style.visibility = "hidden";
             if (!this.restore()) {
                 alert("The passage you had previously visited could not be found.")
             }
-            $("passages").style.visibility = "visible"
+            document.getElementById("passages").style.visibility = "visible"
         } else {
             window.location.reload()
         }
@@ -366,21 +353,26 @@ var version = {
     date: new Date("January 1, 2013"),
     extensions: {}
 };
-var tale, state;
+var tale = window.tale = {};
+var state = window.state = {};
 var macros = {};
 
 function main() {
+	// Used by old custom scripts.
+    function $(a) {
+        return (typeof a == "string" ? document.getElementById(a) : a);
+    }
     tale = new Tale();
     state = new History();
     document.title = tale.title;
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
-        $("titleSeparator").innerHTML = "<br>";
+        document.getElementById("titleSeparator").innerHTML = "<br>";
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
-        $("storyMenu").style.display = "inline";
+        document.getElementById("storyMenu").style.display = "inline";
         setPageElement("storyMenu", "StoryMenu", "");
     }
     var scripts = tale.lookup("tags", "script");
@@ -407,9 +399,9 @@ function main() {
 Interface = {
     init: function () {
         main();
-        $("snapback").onclick = Interface.showSnapback;
-        $("restart").onclick = Interface.restart;
-        $("share").onclick = Interface.showShare
+        document.getElementById("snapback").onclick = Interface.showSnapback;
+        document.getElementById("restart").onclick = Interface.restart;
+        document.getElementById("share").onclick = Interface.showShare
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this story?")) {
@@ -418,16 +410,16 @@ Interface = {
     },
     showShare: function (a) {
         Interface.hideAllMenus();
-        Interface.showMenu(a, $("shareMenu"))
+        Interface.showMenu(a, document.getElementById("shareMenu"))
     },
     showSnapback: function (a) {
         Interface.hideAllMenus();
         Interface.buildSnapback();
-        Interface.showMenu(a, $("snapbackMenu"))
+        Interface.showMenu(a, document.getElementById("snapbackMenu"))
     },
     buildSnapback: function () {
         var c = false;
-        removeChildren($("snapbackMenu"));
+        removeChildren(document.getElementById("snapbackMenu"));
         for(var a = state.history.length - 1; a >= 0; a--) {
             if(state.history[a].passage && state.history[a].passage.tags.indexOf("bookmark") != -1) {
                 var b = document.createElement("div");
@@ -444,19 +436,19 @@ Interface = {
 					state.display(n);
                 };
                 b.innerHTML = state.history[a].passage.excerpt();
-                $("snapbackMenu").appendChild(b);
+                document.getElementById("snapbackMenu").appendChild(b);
                 c = true
             }
         }
         if(!c) {
             var b = document.createElement("div");
             b.innerHTML = "<i>No passages available</i>";
-            $("snapbackMenu").appendChild(b)
+            document.getElementById("snapbackMenu").appendChild(b)
         }
     },
     hideAllMenus: function () {
-        $("shareMenu").style.display = "none";
-        $("snapbackMenu").style.display = "none"
+        document.getElementById("shareMenu").style.display = "none";
+        document.getElementById("snapbackMenu").style.display = "none"
     },
     showMenu: function (b, a) {
         if (!b) {
@@ -917,7 +909,7 @@ function Tale() {
     if (document.normalize) {
         document.normalize()
     }
-    var a = $("storeArea").childNodes;
+    var a = document.getElementById("storeArea").childNodes;
     for (var b = 0; b < a.length; b++) {
         var c = a[b];
         if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
@@ -1326,7 +1318,6 @@ Wikifier.formatters = [{
             }
             h = b;
             c.subWikify(d[d.length - 1], this.terminator);
-            insertElement(d[d.length - 1], "br");
             e.lastIndex = c.nextMatch;
             var f = e.exec(c.source);
             var a = f && f.index == c.nextMatch;
@@ -1618,6 +1609,7 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
     Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
     Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
 };
+}());
 </script>
 <style>
 body{background-color:#000;color:#fff;font-family:Verdana,sans-serif;font-size:62.5%;margin:4em 15% 5% 5em;}#sidebar{position:fixed;top:4.2em;left:7.5em;width:12em;list-style:none;margin:0;padding:0 1em 0 0;font:bold 1.1em Verdana,sans-serif;}
