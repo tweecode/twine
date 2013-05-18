@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <!--
 Sugarcane 1.2.1 is based on:
 
@@ -39,9 +39,11 @@ DAMAGE.
 <title>Sugarcane</title>
 <script>
 (function(){
+var hasPushState = (typeof window.history.pushState == "function");
+
 function clone(a) {
     var b = {};
-    for (property in a) {
+    for (var property in a) {
         b[property] = a[property]
     }
     return b
@@ -180,7 +182,9 @@ function fade(f, c) {
         b(e, Math.easeInOut(h));
         if (((g == 1) && (h >= 1)) || ((g == -1) && (h <= 0))) {
             f.style.visibility = (c.fade == "in") ? "visible" : "hidden";
-            e.parentNode.replaceChild(f, e);
+			if (e.parentNode) {
+				e.parentNode.replaceChild(f, e);
+			}
             window.clearInterval(a);
             if (c.onComplete) {
                 c.onComplete()
@@ -255,38 +259,42 @@ History.prototype.init = function () {
     if (!this.restore()) {
         this.display("Start", null)
     }
-    this.hash = window.location.hash;
-    this.interval = window.setInterval(function () {
-        a.watchHash.apply(a)
-    }, 250)
+    if (!hasPushState) {
+        this.hash = window.location.hash;
+        this.interval = window.setInterval(function () {
+            a.watchHash.apply(a)
+        }, 250)
+    }
 };
 History.prototype.display = function (d, b, a) {
     var c = tale.get(d);
-    this.history.unshift({
-        passage: c,
-        variables: clone(this.history[0].variables)
-    });
-    this.history[0].hash = this.save();
+	if (a != "back") {
+		this.history.unshift({
+			passage: c,
+			variables: clone(this.history[0].variables)
+		});
+		this.history[0].hash = this.save();
+		if (hasPushState && this.history && this.history.length>2) {
+			window.history.pushState(this.history);
+		}
+	}
     var e = c.render();
-    if (a != "offscreen") {
-        removeChildren(document.getElementById("passages"));
-        document.getElementById("passages").appendChild(e);
-        if (a != "quietly") {
-            fade(e, {
-                fade: "in"
-            })
-        }
+    removeChildren(document.getElementById("passages"));
+    document.getElementById("passages").appendChild(e);
+    if (a != "quietly") {
+        fade(e, {
+            fade: "in"
+        })
     }
-    if ((a == "quietly") || (a == "offscreen")) {
+    else {
         e.style.visibility = "visible"
     }
-    if (a != "offscreen") {
-        document.title = tale.title;
-        this.hash = this.save();
-        document.title += ": " + c.title;
-        window.location.hash = this.hash;
-        window.scroll(0, 0)
-    }
+    document.title = tale.title + ": " + c.title;
+	if (!hasPushState) {
+		this.hash = this.save();
+		window.location.hash = this.hash;
+	}
+    window.scroll(0, 0)
     return e
 };
 History.prototype.restart = function () {
@@ -303,26 +311,24 @@ History.prototype.save = function (c) {
 };
 History.prototype.restore = function () {
     try {
-        if ((window.location.hash == "") || (window.location.hash == "#")) {
-            return false
-        }
+		if ((window.location.hash == "") || (window.location.hash == "#")) {
+			return false
+		}
         if (window.location.hash.substr(0, 2) == '#!') {
             var mt = window.location.hash.substr(2).split('_').join(' ');
-            console.log('Using hashbang to find' + mt);
             document.getElementById('passages').appendChild(this.display(mt, null, 'quietly'));
             return true;
         }
-        var a = window.location.hash.replace("#", "").split(".");
-        var c = [];
-        for (var b = 0; b < a.length; b++) {
-            var g = parseInt(a[b], 36);
-            if (!tale.has(g)) {
-                return false
-            }
-            var f = (b == a.length - 1) ? "" : "offscreen";
-            c.unshift(this.display(g, null, f))
-        }
-        return true
+		var a = window.location.hash.replace("#", "").split(".");
+		for (var b = 0; b < a.length; b++) {
+			var g = parseInt(a[b], 36);
+			if (!tale.has(g)) {
+				return false
+			}
+	        var f = (b == a.length - 1) ? "" : "offscreen";
+	        this.display(g, null, f);
+	    }
+	    return true
     } catch (d) {
         return false
     }
@@ -335,11 +341,9 @@ History.prototype.watchHash = function () {
                 variables: {}
             }];
             removeChildren(document.getElementById("passages"));
-            document.getElementById("passages").style.visibility = "hidden";
             if (!this.restore()) {
                 alert("The passage you had previously visited could not be found.")
             }
-            document.getElementById("passages").style.visibility = "visible"
         } else {
             window.location.reload()
         }
@@ -353,17 +357,15 @@ var version = {
     date: new Date("January 1, 2013"),
     extensions: {}
 };
-var tale = window.tale = {};
-var state = window.state = {};
-var macros = {};
+var tale, state, macros = window.macros = {};
 
 function main() {
 	// Used by old custom scripts.
     function $(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    tale = new Tale();
-    state = new History();
+    tale = window.tale = new Tale();
+    state = window.state = new History();
     document.title = tale.title;
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
@@ -396,7 +398,7 @@ function main() {
     state.init();
 };
 
-Interface = {
+var Interface = {
     init: function () {
         main();
         document.getElementById("snapback").onclick = Interface.showSnapback;
@@ -478,6 +480,15 @@ Interface = {
     }
 };
 window.onload = Interface.init;
+window.onpopstate = function(e) {
+	if (e.state && e.state.length > 0) {
+		state.history = e.state;
+	} else {
+		state = new History();
+		state.init();
+	}
+	state.display(state.history[0].passage.title,null,"back");
+}
 version.extensions.backMacro = {
     major: 2,
     minor: 0,
@@ -486,12 +497,13 @@ version.extensions.backMacro = {
 macros['back'] = {
   labeltext: '&#171; back',
   handler: function (a, b, e) {
-    var d = "";
-	var labeltouse = this.labeltext;
-	var steps = 1;
+    var d = "",
+	    labeltouse = this.labeltext,
+	    steps = 1,
+	    stepsParam = e.indexOf("steps"),
+	    stepsParam2 = "",
+		labelParam,	c, el;
 	// Steps parameter
-	var stepsParam = e.indexOf("steps");
-	var stepsParam2 = "";
 	if (stepsParam>0) {
 		stepsParam2 = e[stepsParam-1];
 		if (stepsParam2[0] =='$') {
@@ -513,7 +525,7 @@ macros['back'] = {
 		e.splice(stepsParam-1,2);
     }
 	// Label parameter
-	var labelParam = e.indexOf("label");
+	labelParam = e.indexOf("label");
 	if (labelParam == -1) {
 		labelParam = e.indexOf("labeldefault");
 	}
@@ -544,7 +556,7 @@ macros['back'] = {
           throwError(a, "The " + e + " passage does not exist");
           return;
         }
-		for(var c = 0; c < state.history.length; c++) {
+		for(c = 0; c < state.history.length; c++) {
 			if(state.history[c].passage.title == e) {
 				d = e;
 				steps = c;
@@ -563,7 +575,11 @@ macros['back'] = {
       el.className = "return";
       el.onclick = function () {
 	    if (b=="back") {
-			while(steps >= 0) {
+			if (hasPushState) {
+			  window.history.back();
+			  return;
+			}
+			else while(steps >= 0) {
 			  if (state.history.length>1) {
 				state.history.shift();
 			  }
@@ -673,6 +689,16 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, d) {
+		var s, v = c[0];
+		// If first value is set uninitialised, change to 0 before
+		// calculation. If it's numeric addition, it will behave
+		// intuitively. String concatenation is an unlikely use case.
+		if (c[0] && c[0][0]=="$") {
+			s = state.history[0].variables;
+			if (typeof s[c[0].slice(1)] == "undefined") {
+				s[c[0].slice(1)] = 0;
+			}
+		}
         macros.set.run(a,d.fullArgs())
     },
     run: function (a,expression) {
@@ -757,7 +783,7 @@ macros['remember'] = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
-        macros['set'].run(place,statement);
+        macros.set.run(place,statement);
         var variableSigil = Wikifier.parse("$");
         variableSigil = variableSigil.replace("[", "\\[");
         variableSigil = variableSigil.replace("]", "\\]");
@@ -868,7 +894,7 @@ function Passage(c, b, a) {
     this.title = c;
     if (b) {
         this.id = a;
-        this.initialText = this.text = Passage.unescapeLineBreaks(b.firstChild ? b.firstChild.nodeValue : "");
+        this.text = Passage.unescapeLineBreaks(b.firstChild ? b.firstChild.nodeValue : "");
         this.tags = b.getAttribute("tags");
         if (typeof this.tags == "string") {
             this.tags = this.tags.readBracketedList()
@@ -876,7 +902,7 @@ function Passage(c, b, a) {
             this.tags = []
         }
     } else {
-        this.initialText = this.text = "@@This passage does not exist.@@";
+        this.text = "@@This passage does not exist.@@";
         this.tags = []
     }
 }
@@ -890,10 +916,6 @@ Passage.prototype.render = function () {
     new Wikifier(a, this.text);
     insertElement(b, 'div', '', 'footer');
     return b;
-};
-
-Passage.prototype.reset = function () {
-    this.text = this.initialText
 };
 Passage.prototype.excerpt = function () {
     var b = this.text.replace(/<<.*?>>/g, "");
@@ -920,7 +942,9 @@ function Tale() {
     if (document.normalize) {
         document.normalize()
     }
-    var a = document.getElementById("storeArea").childNodes;
+	var tiddlerTitle,
+		store = document.getElementById("storeArea"),
+        a = store.childNodes;
     for (var b = 0; b < a.length; b++) {
         var c = a[b];
         if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
@@ -978,12 +1002,6 @@ Tale.prototype.lookup = function (h, g, a) {
     });
     return d
 };
-Tale.prototype.reset = function () {
-    for (i in this.passages) {
-        this.passages[i].reset()
-    }
-};
-
 function Wikifier(a, b) {
     this.source = b;
     this.output = a;
@@ -1033,7 +1051,7 @@ Wikifier.prototype.subWikify = function (c, b) {
                 var h = -1;
                 for (var d = 1; d < g.length; d++) {
                     if (g[d]) {
-                        matchingFormatter = d - 1
+                        var matchingFormatter = d - 1
                     }
                 }
                 if (matchingFormatter != -1) {
