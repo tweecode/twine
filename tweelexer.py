@@ -91,7 +91,8 @@ class TweeLexer:
         
         # we have to apply DEFAULT styles as necessary here, otherwise
         # old style ranges stick around, and things look very strange
-                
+        self.applyStyle(pos, end, style);
+         
         while pos < end:
             nextToken = text[pos: pos + 2].lower()
 
