@@ -39,7 +39,6 @@ DAMAGE.
 <title>Sugarcane</title>
 <script>
 (function(){
-var hasPushState = (typeof window.history.pushState == "function");
 
 function clone(a) {
     var b = {};
@@ -254,52 +253,6 @@ function History() {
         hash: null
     }]
 }
-History.prototype.init = function () {
-    var a = this;
-    if (!this.restore()) {
-        this.display("Start", null)
-    }
-    if (!hasPushState) {
-        this.hash = window.location.hash;
-        this.interval = window.setInterval(function () {
-            a.watchHash.apply(a)
-        }, 250)
-    }
-};
-History.prototype.display = function (d, b, a) {
-    var c = tale.get(d);
-	if (a != "back") {
-		this.history.unshift({
-			passage: c,
-			variables: clone(this.history[0].variables)
-		});
-		this.history[0].hash = this.save();
-		if(this.history.length == 2 && window.history.state === null) {
-			window.history.replaceState(this.history, document.title);
-		}
-		else {
-			window.history.pushState(this.history, document.title);
-		}
-	}
-    var e = c.render();
-    removeChildren(document.getElementById("passages"));
-    document.getElementById("passages").appendChild(e);
-    if (a != "quietly") {
-        fade(e, {
-            fade: "in"
-        })
-    }
-    else {
-        e.style.visibility = "visible"
-    }
-    document.title = tale.title + ": " + c.title;
-	if (!hasPushState) {
-		this.hash = this.save();
-		window.location.hash = this.hash;
-	}
-    window.scroll(0, 0)
-    return e
-};
 History.prototype.restart = function () {
     window.location.reload();
 };
@@ -365,127 +318,6 @@ var version = {
 };
 var tale, state, macros = window.macros = {};
 
-function main() {
-	// Used by old custom scripts.
-    function $(a) {
-        return (typeof a == "string" ? document.getElementById(a) : a);
-    }
-    tale = window.tale = new Tale();
-    state = window.state = new History();
-    document.title = tale.title;
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
-    setPageElement("storySubtitle", "StorySubtitle", "");
-    if (tale.has("StoryAuthor")) {
-        document.getElementById("titleSeparator").innerHTML = "<br>";
-        setPageElement("storyAuthor", "StoryAuthor", "");
-    }
-    if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "inline";
-        setPageElement("storyMenu", "StoryMenu", "");
-    }
-    var scripts = tale.lookup("tags", "script");
-    for (var i = 0; i < scripts.length; i++) {
-        try {
-            eval(scripts[i].text);
-        } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-        }
-    }
-    for (var macroidx in macros) {
-        var macro = macros[macroidx];
-        if (typeof macro.init == "function") {
-            macro.init();
-        }
-    }
-    var styles = tale.lookup("tags", "stylesheet");
-    for (var i = 0; i < styles.length; i++) {
-        addStyle(styles[i].text);
-    }
-    state.init();
-};
-
-var Interface = {
-    init: function () {
-        main();
-        document.getElementById("snapback").onclick = Interface.showSnapback;
-        document.getElementById("restart").onclick = Interface.restart;
-        document.getElementById("share").onclick = Interface.showShare
-    },
-    restart: function () {
-        if (confirm("Are you sure you want to restart this story?")) {
-            state.restart()
-        }
-    },
-    showShare: function (a) {
-        Interface.hideAllMenus();
-        Interface.showMenu(a, document.getElementById("shareMenu"))
-    },
-    showSnapback: function (a) {
-        Interface.hideAllMenus();
-        Interface.buildSnapback();
-        Interface.showMenu(a, document.getElementById("snapbackMenu"))
-    },
-    buildSnapback: function () {
-        var c = false;
-        removeChildren(document.getElementById("snapbackMenu"));
-        for(var a = state.history.length - 1; a >= 0; a--) {
-            if(state.history[a].passage && state.history[a].passage.tags.indexOf("bookmark") != -1) {
-                var b = document.createElement("div");
-				b.pos = a;
-                b.onclick = function () {
-					var p = this.pos;
-					var n = state.history[p].passage.title;
-					while(p >= 0) {
-						if (state.history.length>1) {
-							state.history.shift();
-						}
-						p--;
-					}
-					state.display(n);
-                };
-                b.innerHTML = state.history[a].passage.excerpt();
-                document.getElementById("snapbackMenu").appendChild(b);
-                c = true
-            }
-        }
-        if(!c) {
-            var b = document.createElement("div");
-            b.innerHTML = "<i>No passages available</i>";
-            document.getElementById("snapbackMenu").appendChild(b)
-        }
-    },
-    hideAllMenus: function () {
-        document.getElementById("shareMenu").style.display = "none";
-        document.getElementById("snapbackMenu").style.display = "none"
-    },
-    showMenu: function (b, a) {
-        if (!b) {
-            b = window.event
-        }
-        var c = {
-            x: 0,
-            y: 0
-        };
-        if (b.pageX || b.pageY) {
-            c.x = b.pageX;
-            c.y = b.pageY
-        } else {
-            if (b.clientX || b.clientY) {
-                c.x = b.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-                c.y = b.clientY + document.body.scrollTop + document.documentElement.scrollTop
-            }
-        }
-        a.style.top = c.y + "px";
-        a.style.left = c.x + "px";
-        a.style.display = "block";
-        document.onclick = Interface.hideAllMenus;
-        b.cancelBubble = true;
-        if (b.stopPropagation) {
-            b.stopPropagation()
-        }
-    }
-};
-window.onload = Interface.init;
 window.onpopstate = function(e) {
 	if (e.state && e.state.length > 0) {
 		state.history = e.state;
@@ -495,123 +327,6 @@ window.onpopstate = function(e) {
 	}
 	state.display(state.history[0].passage.title,null,"back");
 }
-version.extensions.backMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros['back'] = {
-  labeltext: '&#171; back',
-  handler: function (a, b, e) {
-    var d = "",
-	    labeltouse = this.labeltext,
-	    steps = 1,
-	    stepsParam = e.indexOf("steps"),
-	    stepsParam2 = "",
-		labelParam,	c, el;
-	// Steps parameter
-	if (stepsParam>0) {
-		stepsParam2 = e[stepsParam-1];
-		if (stepsParam2[0] =='$') {
-			try {
-				stepsParam2=eval(Wikifier.parse(stepsParam2));
-			} catch (r) {
-				throwError(a, b+"Macro bad expression: " + r.message)
-				return;
-			}
-		}
-		// Previously, trying to go back more steps than were present in the
-		// history would silently revert to just 1 step. 
-		// Instead, let's just go back to the start.
-		steps = +stepsParam2;
-		if (steps >= state.history.length-1) {
-		  steps = state.history.length-2;
-		}
-		d = state.history[steps].passage.title;
-		e.splice(stepsParam-1,2);
-    }
-	// Label parameter
-	labelParam = e.indexOf("label");
-	if (labelParam == -1) {
-		labelParam = e.indexOf("labeldefault");
-	}
-	if (labelParam >-1) {
-        if (!e[labelParam+1]) {
-            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
-            return;
-        }
-        labeltouse = e[labelParam+1];
-        if (e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
-		e.splice(labelParam,2);
-	}
-	// What's left is the passage name parameter
-    if (!d) {
-	  if(e[0]) {
-	    if (e[0].charAt(0)=='$') {
-	        try {
-		        e=eval(Wikifier.parse(e[0]));
-		    } catch (r) {
-                throwError(a, b+"Macro bad expression: " + r.message)
-		    	return;
-            }
-		} 
-		else {
-		    e = e[0];
-		}
-        if (tale.get(e).id == undefined) {
-          throwError(a, "The " + e + " passage does not exist");
-          return;
-        }
-		for(c = 0; c < state.history.length; c++) {
-			if(state.history[c].passage.title == e) {
-				d = e;
-				steps = c;
-				break;
-			}
-		}
-      }
-      else {
-        d = state.history[1].passage.title;
-      }
-	}
-    if (d==undefined) {
-      return;
-    } else {
-      el = document.createElement("a");
-      el.className = "return";
-      el.onclick = function () {
-	    if (b=="back") {
-			if (hasPushState) {
-			  window.history.back();
-			  return;
-			}
-			else while(steps >= 0) {
-			  if (state.history.length>1) {
-				state.history.shift();
-			  }
-			  steps--;
-			}
-		}
-        state.display(d);
-      };
-      el.href = "javascript:void(0)";
-      el.innerHTML = labeltouse;
-      a.appendChild(el);
-    }
-  }
-};
-version.extensions.returnMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros["return"] = {
-  labeltext: '&#171; return',
-  handler: function(a,b,e) { 
-    macros['back'].handler.call(this,a,b,e);
-  }
-};
-
 macros.refresh = {
     handler: function (a, b, c) {
         window.location.reload()
@@ -885,16 +600,6 @@ macros.silently = {
 macros.endsilently = {
     handler: function () {}
 };
-version.extensions.choiceMacro = {
-    major: 1,
-    minor: 0,
-    revision: 0
-};
-macros.choice = {
-    handler: function (a, b, c) {
-        Wikifier.createInternalLink(a, c[0])
-    }
-};
 
 function Passage(c, b, a, ofunc, okey) {
     this.title = c;
@@ -920,28 +625,6 @@ function Passage(c, b, a, ofunc, okey) {
         this.tags = [];
     }
 }
-
-Passage.prototype.render = function () {
-    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
-    b.style.visibility = 'hidden';
-    if (this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
-    insertElement(b, 'div', '', 'header');
-    var a = insertElement(b, 'div', '', 'content');
-    new Wikifier(a, this.text);
-    insertElement(b, 'div', '', 'footer');
-    return b;
-};
-Passage.prototype.excerpt = function () {
-    var b = this.text.replace(/<<.*?>>/g, "");
-    b = b.replace(/!.*?\n/g, "");
-    b = b.replace(/[\[\]\/]/g, "");
-    var a = b.split("\n");
-    while (a.length && a[0].length == 0) a.shift();
-    var c = '';
-    if (a.length == 0 || a[0].length == 0) c = this.title;
-    else c = a[0].substr(0, 30) + '...';
-    return c;
-};
 Passage.unescapeLineBreaks = function (a) {
     if (a && a != "") {
         return a.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
@@ -1009,7 +692,7 @@ function Tale() {
             }
         }
     }
-    this.title = (this.passages.StoryTitle ? this.passages.StoryTitle.text : window.title);
+    this.title = (this.passages.StoryTitle ? this.passages.StoryTitle.text : document.title);
 }
 Tale.prototype.has = function (a) {
     if (typeof a == "string") {
@@ -1121,7 +804,7 @@ Wikifier.prototype.subWikify = function (output, terminator) {
             this.nextMatch = this.formatterRegExp.lastIndex;
 
             // Figure out which formatter matched
-            var matchingformatter = -1;
+            var matchingFormatter = -1;
             for (var t = 1; t < formatterMatch.length; t++)
             if (formatterMatch[t]) matchingFormatter = t - 1;
 
@@ -1249,8 +932,8 @@ Wikifier.formatters = [
         var rowCount = 0;
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            var lookaheadMatch = lookaheadRegExp.exec(w.source),
+				matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
                 nextRowType = lookaheadMatch[2];
                 if (nextRowType != currRowType) rowContainer = insertElement(table, this.rowTypes[nextRowType]);
@@ -1274,8 +957,8 @@ Wikifier.formatters = [
         var cellRegExp = new RegExp(this.cellPattern, "mg");
         do {
             cellRegExp.lastIndex = w.nextMatch;
-            var cellMatch = cellRegExp.exec(w.source);
-            matched = cellMatch && cellMatch.index == w.nextMatch;
+            var cellMatch = cellRegExp.exec(w.source),
+				matched = cellMatch && cellMatch.index == w.nextMatch;
             if (matched) {
                 if (cellMatch[1] == "~") {
                     var last = prevColumns[col];
@@ -1294,14 +977,14 @@ Wikifier.formatters = [
                     break;
                 } else {
                     var spaceLeft = false,
-                        spaceRight = false;
+                        spaceRight = false,
+						lastColCount, lastColElement, styles, cell, t;
                     w.nextMatch++;
-                    var styles = Wikifier.formatHelpers.inlineCssHelper(w);
+                    styles = Wikifier.formatHelpers.inlineCssHelper(w);
                     while (w.source.substr(w.nextMatch, 1) == " ") {
                         spaceLeft = true;
                         w.nextMatch++;
                     }
-                    var cell;
                     if (w.source.substr(w.nextMatch, 1) == "!") {
                         cell = insertElement(e, "th");
                         w.nextMatch++;
@@ -1317,7 +1000,7 @@ Wikifier.formatters = [
                         cell.setAttribute("colspan", currColCount);
                         currColCount = 1;
                     }
-                    for (var t = 0; t < styles.length; t++)
+                    for (t = 0; t < styles.length; t++)
                     cell.style[styles[t].style] = styles[t].value;
                     w.subWikify(cell, this.cellTerminator);
                     if (w.matchText.substr(w.matchText.length - 2, 1) == " ") spaceRight = true;
@@ -1654,7 +1337,7 @@ Wikifier.formatters = [
 	handler: function (a) {
 		var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
 		  doit = false,
-		  re = new RegExp(this.tagname).exec(a.matchText);
+		  re = new RegExp(this.tagname).exec(a.matchText),
 		  tn = re && re[1];
 		if(tn && tn.toLowerCase() != "html") {
 			lookahead = "<\\/\\s*" + tn + "\\s*>";
@@ -1711,6 +1394,335 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
     Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
     Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
     Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+};
+
+/*
+**
+** Sugarcane/Responsive specific code follows
+**
+*/
+var hasPushState = (typeof window.history.pushState == "function");
+History.prototype.init = function () {
+    var a = this;
+    if (!this.restore()) {
+        this.display("Start", null)
+    }
+    if (!hasPushState) {
+        this.hash = window.location.hash;
+        this.interval = window.setInterval(function () {
+            a.watchHash.apply(a)
+        }, 250)
+    }
+};
+Passage.prototype.render = function () {
+    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
+    b.style.visibility = 'hidden';
+    if (this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
+    insertElement(b, 'div', '', 'header');
+    var a = insertElement(b, 'div', '', 'content');
+    new Wikifier(a, this.text);
+    insertElement(b, 'div', '', 'footer');
+    return b;
+};
+Passage.prototype.excerpt = function () {
+    var b = this.text.replace(/<<.*?>>/g, "");
+    b = b.replace(/!.*?\n/g, "");
+    b = b.replace(/[\[\]\/]/g, "");
+    var a = b.split("\n");
+    while (a.length && a[0].length == 0) a.shift();
+    var c = '';
+    if (a.length == 0 || a[0].length == 0) c = this.title;
+    else c = a[0].substr(0, 30) + '...';
+    return c;
+};
+History.prototype.display = function (d, b, a) {
+    var c = tale.get(d);
+	if (a != "back") {
+		this.history.unshift({
+			passage: c,
+			variables: clone(this.history[0].variables)
+		});
+		this.history[0].hash = this.save();
+		if(this.history.length == 2 && window.history.state === null) {
+			window.history.replaceState(this.history, document.title);
+		}
+		else {
+			window.history.pushState(this.history, document.title);
+		}
+	}
+    var e = c.render();
+    removeChildren(document.getElementById("passages"));
+    document.getElementById("passages").appendChild(e);
+    if (a != "quietly") {
+        fade(e, {
+            fade: "in"
+        })
+    }
+    else {
+        e.style.visibility = "visible"
+    }
+    document.title = tale.title + ": " + c.title;
+	if (!hasPushState) {
+		this.hash = this.save();
+		window.location.hash = this.hash;
+	}
+    window.scroll(0, 0)
+    return e
+};
+
+var Interface = {
+    init: function () {
+		var snapback = document.getElementById("snapback"),
+			restart = document.getElementById("restart"),
+			share = document.getElementById("share");
+        main();
+        snapback && (snapback.onclick = Interface.showSnapback);
+        restart && (restart.onclick = Interface.restart);
+        share && (share.onclick = Interface.showShare);
+    },
+    restart: function () {
+        if (confirm("Are you sure you want to restart this story?")) {
+            window.state.restart()
+        }
+    },
+    showShare: function (a) {
+        Interface.hideAllMenus();
+        Interface.showMenu(a, document.getElementById("shareMenu"))
+    },
+    showSnapback: function (a) {
+        Interface.hideAllMenus();
+        Interface.buildSnapback();
+        Interface.showMenu(a, document.getElementById("snapbackMenu"))
+    },
+    buildSnapback: function () {
+        var c = false,
+			state = window.state,
+			menuelem = document.getElementById("snapbackMenu");
+		while (menuelem.hasChildNodes()) {
+			menuelem.removeChild(menuelem.firstChild)
+		}
+        for(var a = state.history.length - 1; a >= 0; a--) {
+            if(state.history[a].passage && state.history[a].passage.tags.indexOf("bookmark") != -1) {
+                var b = document.createElement("div");
+				b.pos = a;
+                b.onclick = function () {
+					var p = this.pos;
+					var n = state.history[p].passage.title;
+					while(p >= 0) {
+						if (state.history.length>1) {
+							state.history.shift();
+						}
+						p--;
+					}
+					state.display(n);
+                };
+                b.innerHTML = state.history[a].passage.excerpt();
+                menuelem.appendChild(b);
+                c = true
+            }
+        }
+        if(!c) {
+            var b = document.createElement("div");
+            b.innerHTML = "<i>No passages available</i>";
+            document.getElementById("snapbackMenu").appendChild(b)
+        }
+    },
+    hideAllMenus: function () {
+        document.getElementById("shareMenu").style.display = "none";
+        document.getElementById("snapbackMenu").style.display = "none"
+    },
+    showMenu: function (b, a) {
+        if (!b) {
+            b = window.event
+        }
+        var c = {
+            x: 0,
+            y: 0
+        };
+        if (b.pageX || b.pageY) {
+            c.x = b.pageX;
+            c.y = b.pageY
+        } else {
+            if (b.clientX || b.clientY) {
+                c.x = b.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+                c.y = b.clientY + document.body.scrollTop + document.documentElement.scrollTop
+            }
+        }
+        a.style.top = c.y + "px";
+        a.style.left = c.x + "px";
+        a.style.display = "block";
+        document.onclick = Interface.hideAllMenus;
+        b.cancelBubble = true;
+        if (b.stopPropagation) {
+            b.stopPropagation()
+        }
+    }
+};
+window.onload = Interface.init;
+
+version.extensions.backMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros['back'] = {
+  labeltext: '&#171; back',
+  handler: function (a, b, e) {
+    var d = "",
+	    labeltouse = this.labeltext,
+	    steps = 1,
+	    stepsParam = e.indexOf("steps"),
+	    stepsParam2 = "",
+		labelParam,	c, el;
+	// Steps parameter
+	if (stepsParam>0) {
+		stepsParam2 = e[stepsParam-1];
+		if (stepsParam2[0] =='$') {
+			try {
+				stepsParam2=eval(Wikifier.parse(stepsParam2));
+			} catch (r) {
+				throwError(a, b+"Macro bad expression: " + r.message)
+				return;
+			}
+		}
+		// Previously, trying to go back more steps than were present in the
+		// history would silently revert to just 1 step. 
+		// Instead, let's just go back to the start.
+		steps = +stepsParam2;
+		if (steps >= state.history.length-1) {
+		  steps = state.history.length-2;
+		}
+		d = state.history[steps].passage.title;
+		e.splice(stepsParam-1,2);
+    }
+	// Label parameter
+	labelParam = e.indexOf("label");
+	if (labelParam == -1) {
+		labelParam = e.indexOf("labeldefault");
+	}
+	if (labelParam >-1) {
+        if (!e[labelParam+1]) {
+            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
+            return;
+        }
+        labeltouse = e[labelParam+1];
+        if (e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
+		e.splice(labelParam,2);
+	}
+	// What's left is the passage name parameter
+    if (!d) {
+	  if(e[0]) {
+	    if (e[0].charAt(0)=='$') {
+	        try {
+		        e=eval(Wikifier.parse(e[0]));
+		    } catch (r) {
+                throwError(a, b+"Macro bad expression: " + r.message)
+		    	return;
+            }
+		} 
+		else {
+		    e = e[0];
+		}
+        if (tale.get(e).id == undefined) {
+          throwError(a, "The " + e + " passage does not exist");
+          return;
+        }
+		for(c = 0; c < state.history.length; c++) {
+			if(state.history[c].passage.title == e) {
+				d = e;
+				steps = c;
+				break;
+			}
+		}
+      }
+      else {
+        d = state.history[1].passage.title;
+      }
+	}
+    if (d==undefined) {
+      return;
+    } else {
+      el = document.createElement("a");
+      el.className = "return";
+      el.onclick = function () {
+	    if (b=="back") {
+			if (hasPushState) {
+			  window.history.back();
+			  return;
+			}
+			else while(steps >= 0) {
+			  if (state.history.length>1) {
+				state.history.shift();
+			  }
+			  steps--;
+			}
+		}
+        state.display(d);
+      };
+      el.href = "javascript:void(0)";
+      el.innerHTML = labeltouse;
+      a.appendChild(el);
+    }
+  }
+};
+version.extensions.returnMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros["return"] = {
+  labeltext: '&#171; return',
+  handler: function(a,b,e) { 
+    macros['back'].handler.call(this,a,b,e);
+  }
+};
+version.extensions.choiceMacro = {
+    major: 1,
+    minor: 0,
+    revision: 0
+};
+macros.choice = {
+    handler: function (a, b, c) {
+        Wikifier.createInternalLink(a, c[0])
+    }
+};
+function main() {
+	// Used by old custom scripts.
+    function $(a) {
+        return (typeof a == "string" ? document.getElementById(a) : a);
+    }
+    tale = window.tale = new Tale();
+    state = window.state = new History();
+    document.title = tale.title;
+    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
+    setPageElement("storySubtitle", "StorySubtitle", "");
+    if (tale.has("StoryAuthor")) {
+        document.getElementById("titleSeparator").innerHTML = "<br>";
+        setPageElement("storyAuthor", "StoryAuthor", "");
+    }
+    if (tale.has("StoryMenu")) {
+        document.getElementById("storyMenu").style.display = "inline";
+        setPageElement("storyMenu", "StoryMenu", "");
+    }
+    var scripts = tale.lookup("tags", "script");
+    for (var i = 0; i < scripts.length; i++) {
+        try {
+            eval(scripts[i].text);
+        } catch (e) {
+            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+        }
+    }
+    for (var macroidx in macros) {
+        var macro = macros[macroidx];
+        if (typeof macro.init == "function") {
+            macro.init();
+        }
+    }
+    var styles = tale.lookup("tags", "stylesheet");
+    for (var i = 0; i < styles.length; i++) {
+        addStyle(styles[i].text);
+    }
+    state.init();
 };
 }());
 </script>

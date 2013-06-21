@@ -39,62 +39,68 @@ DAMAGE.
 <title>Jonah</title>
 <script>
 (function(){
-function clone(A) {
-    var B = {};
-    for (property in A) {
-        B[property] = A[property]
+function clone(a) {
+    var b = {};
+    for (var property in a) {
+        b[property] = a[property]
     }
-    return B
+    return b
 }
-function insertElement(A, D, F, C, E) {
-    var B = document.createElement(D);
-    if (F) {
-        B.id = F
+
+function insertElement(a, d, f, c, e) {
+    var b = document.createElement(d);
+    if (f) {
+        b.id = f
     }
-    if (C) {
-        B.className = C
+    if (c) {
+        b.className = c
     }
-    if (E) {
-        insertText(B, E)
+    if (e) {
+        insertText(b, e)
     }
-    if (A) {
-        A.appendChild(B)
+    if (a) {
+        a.appendChild(b)
     }
-    return B
+    return b
 }
-function insertText(A, B) {
-    return A.appendChild(document.createTextNode(B))
+
+function insertText(a, b) {
+    return a.appendChild(document.createTextNode(b))
 }
-function removeChildren(A) {
-    while (A.hasChildNodes()) {
-        A.removeChild(A.firstChild)
+
+function removeChildren(a) {
+    while (a.hasChildNodes()) {
+        a.removeChild(a.firstChild)
     }
 }
-function setPageElement(C, B, A) {
+
+function setPageElement(c, b, a) {
     var place;
-    if (place = document.getElementById(C)) {
+    if (place = document.getElementById(c)) {
         removeChildren(place);
-        if (tale.has(B)) {
-            new Wikifier(place, tale.get(B).text)
+        if (tale.has(b)) {
+            new Wikifier(place, tale.get(b).text)
         } else {
-            new Wikifier(place, A)
+            new Wikifier(place, a)
         }
     }
 }
-function addStyle(B) {
+
+function addStyle(b) {
     if (document.createStyleSheet) {
-        document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "&nbsp;<style>" + B + "</style>")
+        document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "&nbsp;<style>" + b + "</style>")
     } else {
-        var A = document.createElement("style");
-        A.appendChild(document.createTextNode(B));
-        document.getElementsByTagName("head")[0].appendChild(A)
+        var a = document.createElement("style");
+        a.appendChild(document.createTextNode(b));
+        document.getElementsByTagName("head")[0].appendChild(a)
     }
 }
-function throwError(A, B) {
-    new Wikifier(A, "'' @@ " + B + " @@ ''")
+
+function throwError(a, b) {
+    new Wikifier(a, "'' @@ " + b + " @@ ''")
 }
-Math.easeInOut = function (A) {
-    return (1 - ((Math.cos(A * Math.PI) + 1) / 2))
+Math.easeInOut = function (a) {
+    return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
 };
 String.prototype.readMacroParams = function () {
     var c = new RegExp("(?:\\s*)(?:(?:\"([^\"]*)\")|(?:'([^']*)')|(?:\\[\\[([^\\]]*)\\]\\])|([^\"'\\s]\\S*))", "mg");
@@ -116,24 +122,24 @@ String.prototype.readMacroParams = function () {
     return b
 };
 String.prototype.readBracketedList = function () {
-    var B = "\\[\\[([^\\]]+)\\]\\]";
-    var A = "[^\\s$]+";
-    var E = "(?:" + B + ")|(" + A + ")";
-    var D = new RegExp(E, "mg");
-    var F = [];
+    var b = "\\[\\[([^\\]]+)\\]\\]";
+    var a = "[^\\s$]+";
+    var e = "(?:" + b + ")|(" + a + ")";
+    var d = new RegExp(e, "mg");
+    var f = [];
     do {
-        var C = D.exec(this);
-        if (C) {
-            if (C[1]) {
-                F.push(C[1])
+        var c = d.exec(this);
+        if (c) {
+            if (c[1]) {
+                f.push(c[1])
             } else {
-                if (C[2]) {
-                    F.push(C[2])
+                if (c[2]) {
+                    f.push(c[2])
                 }
             }
         }
-    } while (C);
-    return (F)
+    } while (c);
+    return (f)
 };
 String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
@@ -144,216 +150,162 @@ String.prototype.unDash = function () {
     s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
     return s.join("");
 }
-
-function fade(F, C) {
-    var H;
-    var E = F.cloneNode(true);
-    var G = (C.fade == "in") ? 1 : -1;
-    F.parentNode.replaceChild(E, F);
-    if (C.fade == "in") {
-        H = 0;
-        E.style.visibility = "visible"
-    } else {
-        H = 1
+Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
+    d = (d == null) ? 0 : d;
+    var a = this.length;
+    for (var c = d; c < a; c++) {
+        if (this[c] == b) {
+            return c
+        }
     }
-    B(E, H);
-    var A = window.setInterval(D, 25);
+    return -1
+});
 
-    function D() {
-        H += 0.05 * G;
-        B(E, Math.easeInOut(H));
-        if (((G == 1) && (H >= 1)) || ((G == -1) && (H <= 0))) {
-            F.style.visibility = (C.fade == "in") ? "visible" : "hidden";
-            E.parentNode.replaceChild(F, E);
-            window.clearInterval(A);
-            if (C.onComplete) {
-                C.onComplete()
+function fade(f, c) {
+    var h;
+    var e = f.cloneNode(true);
+    var g = (c.fade == "in") ? 1 : -1;
+    f.parentNode.replaceChild(e, f);
+    if (c.fade == "in") {
+        h = 0;
+        e.style.visibility = "visible"
+    } else {
+        h = 1
+    }
+    b(e, h);
+    var a = window.setInterval(d, 25);
+
+    function d() {
+        h += 0.05 * g;
+        b(e, Math.easeInOut(h));
+        if (((g == 1) && (h >= 1)) || ((g == -1) && (h <= 0))) {
+            f.style.visibility = (c.fade == "in") ? "visible" : "hidden";
+			if (e.parentNode) {
+				e.parentNode.replaceChild(f, e);
+			}
+            window.clearInterval(a);
+            if (c.onComplete) {
+                c.onComplete()
             }
         }
     }
-    function B(J, I) {
-        var K = Math.floor(I * 100);
-        J.style.zoom = 1;
-        J.style.filter = "alpha(opacity=" + K + ")";
-        J.style.opacity = I
+
+    function b(k, j) {
+        var l = Math.floor(j * 100);
+        k.style.zoom = 1;
+        k.style.filter = "alpha(opacity=" + l + ")";
+        k.style.opacity = j
     }
 }
-function scrollWindowTo(E) {
-    var D = window.scrollY ? window.scrollY : document.body.scrollTop;
-    var G = J(E);
-    var C = Math.abs(D - G);
-    var B = 0;
-    var I = (D > G) ? -1 : 1;
-    var F = window.setInterval(H, 25);
 
-    function H() {
-        B += 0.1;
-        window.scrollTo(0, D + I * (C * Math.easeInOut(B)));
-        if (B >= 1) {
-            window.clearInterval(F)
+function scrollWindowTo(e) {
+    var d = window.scrollY ? window.scrollY : document.body.scrollTop;
+    var g = k(e);
+    var c = Math.abs(d - g);
+    var b = 0;
+    var j = (d > g) ? -1 : 1;
+    var f = window.setInterval(h, 25);
+
+    function h() {
+        b += 0.1;
+        window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
+        if (b >= 1) {
+            window.clearInterval(f)
         }
     }
-    function J(N) {
-        var O = A(N);
-        var P = O + N.offsetHeight;
-        var K = window.scrollY ? window.scrollY : document.body.scrollTop;
-        var L = window.innerHeight ? window.innerHeight : document.body.clientHeight;
-        var M = K + L;
-        if (O < K) {
-            return O
+
+    function k(o) {
+        var p = a(o);
+        var q = p + o.offsetHeight;
+        var l = window.scrollY ? window.scrollY : document.body.scrollTop;
+        var m = window.innerHeight ? window.innerHeight : document.body.clientHeight;
+        var n = l + m;
+        if (p < l) {
+            return p
         } else {
-            if (P > M) {
-                if (N.offsetHeight < L) {
-                    return (O - (L - N.offsetHeight) + 20)
+            if (q > n) {
+                if (o.offsetHeight < m) {
+                    return (p - (m - o.offsetHeight) + 20)
                 } else {
-                    return O
+                    return p
                 }
             } else {
-                return O
+                return p
             }
         }
     }
-    function A(K) {
-        var L = 0;
-        while (K.offsetParent) {
-            L += K.offsetTop;
-            K = K.offsetParent
+
+    function a(l) {
+        var m = 0;
+        while (l.offsetParent) {
+            m += l.offsetTop;
+            l = l.offsetParent
         }
-        return L
+        return m
     }
 }
-function restart() {
-    if (confirm("Are you sure you want to restart this story?")) {
-        main();
-        window.location.reload()
-    }
-}
+
 function History() {
     this.history = [{
         passage: null,
-        variables: {}
+        variables: {},
+        hash: null
     }]
 }
-History.prototype.init = function () {
-    if (!this.restore()) {
-        if (tale.has("StartPassages")) {
-            var B = tale.get("StartPassages").text.readBracketedList();
-            for (var A = 0; A < B.length; A++) {
-                this.display(B[A], null, "quietly")
-            }
-        } else {
-            this.display("Start", null, "quietly")
-        }
-    }
-};
-History.prototype.close = function (B) {
-    var A = document.getElementById("passage" + B.title);
-    if (A) {
-        A.parentNode.removeChild(A)
-    }
-};
-History.prototype.display = function (E, C, A) {
-    var B = C;
-    while (B && (B.className.indexOf("passage") == -1)) {
-        if (B.parentNode.id != 'passages') {
-            B = B.parentNode
-        } else {
-            B = null;
-            break
-        }
-    }
-    if (el = document.getElementById("passage" + E)) {
-        scrollWindowTo(el);
-        return
-    }
-    var D = tale.get(E);
-    this.history.unshift({
-        passage: D,
-        variables: clone(this.history[0].variables)
-    });
-    var F = D.render();
-    if (A != "offscreen") {
-        if (B) {
-            document.getElementById("passages").insertBefore(F, B.nextSibling)
-        } else {
-            document.getElementById("passages").appendChild(F)
-        }
-        if (A != "quietly") {
-            scrollWindowTo(F);
-            fade(F, {
-                fade: "in"
-            })
-        }
-    }
-    if ((A == "quietly") || (A == "offscreen")) {
-        F.style.visibility = "visible"
-    }
-    return F
-};
 History.prototype.restart = function () {
-    window.location.hash = ""
+    window.location.reload();
 };
-History.prototype.save = function (C) {
-    var A = "";
-    for (var B = 0; B < this.history.length; B++) {
-        if ((this.history[B].passage) && (this.history[B].passage.id)) {
-            A += this.history[B].passage.id.toString(36) + ".";
-            if (this.history[B].passage.id == C.id) {
-                break
-            }
+History.prototype.save = function (c) {
+    var a = "";
+    for (var b = this.history.length - 1; b >= 0; b--) {
+        if ((this.history[b].passage) && (this.history[b].passage.id)) {
+            a += this.history[b].passage.id.toString(36) + "."
         }
     }
-    return "#" + A.substr(0, A.length - 1)
+    return "#" + a.substr(0, a.length - 1)
 };
 History.prototype.restore = function () {
     try {
-        if (window.location.hash == "") {
-            return false
-        }
+		if ((window.location.hash == "") || (window.location.hash == "#")) {
+			return false
+		}
         if (window.location.hash.substr(0, 2) == '#!') {
             var mt = window.location.hash.substr(2).split('_').join(' ');
-            console.log('Using hashbang to find' + mt);
             document.getElementById('passages').appendChild(this.display(mt, null, 'quietly'));
             return true;
         }
-        var A = window.location.hash.replace("#", "").split(".");
-        var C = [];
-        for (var B = A.length - 1; B >= 0; B--) {
-            var E = parseInt(A[B], 36);
-            if (!tale.has(E)) {
-                return false
-            }
-            C.unshift(this.display(E, null, "offscreen"))
-        }
-        document.getElementById("passages").appendChild(C[0]);
-        return true
-    } catch (D) {
+		var a = window.location.hash.replace("#", "").split(".");
+		for (var b = 0; b < a.length; b++) {
+			var g = parseInt(a[b], 36);
+			if (!tale.has(g)) {
+				return false
+			}
+			if (b == a.length - 1) {
+			  this.display(g, null, f);
+			}
+			else
+			  tale.get(g).render();
+	    }
+	    return true
+    } catch (d) {
         return false
     }
 };
-History.prototype.rewindTo = function (C) {
-    var B = this;
-    fade(document.getElementById("passages"), {
-        fade: "out",
-        onComplete: A
-    });
-
-    function A() {
-        while (B.history[0].passage.title != C.title) {
-            B.close(B.history.shift().passage)
-        }
-        B.history[0].variables = clone(B.history[1].variables);
-        C.reset();
-        var E = document.getElementById("passage" + C.title).childNodes;
-        for (var D = 0; D < E.length; D++) {
-            if (E[D].className == "body") {
-                removeChildren(E[D]);
-                new Wikifier(E[D], C.text)
+History.prototype.watchHash = function () {
+    if (window.location.hash != this.hash) {
+        if ((window.location.hash != "") && (window.location.hash != "#")) {
+            this.history = [{
+                passage: null,
+                variables: {}
+            }];
+            removeChildren(document.getElementById("passages"));
+            if (!this.restore()) {
+                alert("The passage you had previously visited could not be found.")
             }
+        } else {
+            window.location.reload()
         }
-        fade(document.getElementById("passages"), {
-            fade: "in"
-        })
+        this.hash = window.location.hash
     }
 };
 var version = {
@@ -363,97 +315,20 @@ var version = {
     date: new Date("January 1, 2013"),
     extensions: {}
 };
-window.tale = {};
-window.state = {};
-var macros = {};
+var tale, state, macros = window.macros = {};
 
-function main() {
-	// Used by old custom scripts.
-    function $(a) {
-        return (typeof a == "string" ? document.getElementById(a) : a);
-    }
-	$("restart").onclick=restart;
-    tale = new Tale();
-    state = new History();
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
-    setPageElement("storySubtitle", "StorySubtitle", "");
-    if (tale.has("StoryTitle")) {
-        document.title = tale.get("StoryTitle").text;
-        if (tale.has("StorySubtitle")) {
-            document.title += ": " + tale.get("StorySubtitle").text;
-        }
-    }
-    if (tale.has("StoryAuthor")) {
-        setPageElement("storyAuthor", "StoryAuthor", "");
-    }
-    if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "inline";
-        setPageElement("storyMenu", "StoryMenu", "");
-    }
-    var scripts = tale.lookup("tags", "script");
-    for (var i = 0; i < scripts.length; i++) {
-        try {
-            eval(scripts[i].text);
-        } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-        }
-    }
-    for (var macroidx in macros) {
-        var macro = macros[macroidx];
-        if (typeof macro.init == "function") {
-            macro.init();
-        }
-    }
-    var styles = tale.lookup("tags", "stylesheet");
-    for (var i = 0; i < styles.length; i++) {
-        addStyle(styles[i].text);
-    }
-    state.init();
-};
-window.onload = main;
-
-version.extensions.choiceMacro = {
-    major: 1,
-    minor: 2,
-    revision: 0
-};
-macros.choice = {
-    handler: function (A, C, D) {
-        var B = document.createElement("a");
-        B.href = "javascript:void(0)";
-        B.className = "internalLink choice";
-        if (D[1]) {
-            B.innerHTML = D[1]
-        } else {
-            B.innerHTML = D[0]
-        }
-        B.onclick = function () {
-            macros.choice.activate(B, D[0])
-        };
-        A.appendChild(B)
-    },
-    activate: function (E, A) {
-        var H = E.parentNode;
-        while (H.className.indexOf("body") == -1) {
-            H = H.parentNode
-        }
-        var G = H.parentNode.id.substr(7);
-        var B = H.getElementsByTagName("a");
-        var F = [];
-        for (var C = 0; C < B.length; C++) {
-            if ((B[C] != E) && (B[C].className.indexOf("choice") != -1)) {
-                var D = document.createElement("span");
-                D.innerHTML = B[C].innerHTML;
-                D.className = "disabled";
-                B[C].parentNode.insertBefore(D, B[C].nextSibling);
-                F.push(B[C])
-            }
-        }
-        for (var C = 0; C < F.length; C++) {
-            F[C].parentNode.removeChild(F[C])
-        }
-        tale.get(G).text = "<html>" + H.childNodes[0].innerHTML + "</html>";
-        state.display(A, E)
+window.onpopstate = function(e) {
+	if (e.state && e.state.length > 0) {
+		state.history = e.state;
+	} else {
+		state = new History();
+		state.init();
+	}
+	state.display(state.history[0].passage.title,null,"back");
+}
+macros.refresh = {
+    handler: function (a, b, c) {
+        window.location.reload()
     }
 };
 version.extensions.displayMacro = {
@@ -462,33 +337,52 @@ version.extensions.displayMacro = {
     revision: 0
 };
 macros.display = {
-    handler: function (A, B, C) {
-        new Wikifier(A, tale.get(C[0]).text)
+    handler: function (a, b, c) {
+        if (c[0] == "_previous") {
+            if (state.history[1]) {
+                for (var d = 1; d <= state.history.length; d++) {
+                    if (state.history[d].passage.title != state.history[0].passage.title) {
+                        break
+                    }
+                }
+                var e = state.history[d].passage.title;
+                new Wikifier(a, tale.get(e).text)
+            } else {
+                return
+            }
+        } else {
+            if (tale.get(c[0]).id == undefined) {
+                throwError(a, "The " + c[0] + " passage does not exist");
+                return
+            } else {
+                new Wikifier(a, tale.get(c[0]).text)
+            }
+        }
     }
 };
 version.extensions.actionsMacro = {
     major: 1,
-    minor: 0,
+    minor: 2,
     revision: 0
 };
 macros.actions = {
-    clicked: new Object(),
-    handler: function (A, F, G) {
-        var E = document.createElement("ul");
-        for (var B = 0; B < G.length; B++) {
-            if (macros.actions.clicked[G[B]]) {
+    handler: function (a, f, g) {
+        var e = insertElement(a, "ul");
+        if (!state.history[0].variables["actions clicked"]) {
+            state.history[0].variables["actions clicked"] = {}
+        }
+        for (var b = 0; b < g.length; b++) {
+            if (state.history[0].variables["actions clicked"][g[b]]) {
                 continue
             }
-            var D = document.createElement("li");
-            macros.choice.handler(D, "choice", [G[B]]);
-            var C = D.getElementsByTagName("a")[0];
-            C.onclick = function () {
-                macros.actions.clicked[this.innerHTML] = true;
-                macros.choice.activate(this, this.innerHTML)
-            };
-            E.appendChild(D)
+            var d = insertElement(e, "li");
+            var c = Wikifier.createInternalLink(d, g[b]);
+            insertText(c, g[b]);
+            c.onclick = function () {
+                state.history[0].variables["actions clicked"][this.id] = true;
+                state.display(this.id, c)
+            }
         }
-        A.appendChild(E)
     }
 };
 version.extensions.printMacro = {
@@ -513,8 +407,18 @@ version.extensions.setMacro = {
     minor: 1,
     revision: 0
 };
-macros['set'] = {
+macros.set = {
     handler: function (a, b, c, d) {
+		var s, v = c[0];
+		// If first value is set uninitialised, change to 0 before
+		// calculation. If it's numeric addition, it will behave
+		// intuitively. String concatenation is an unlikely use case.
+		if (c[0] && c[0][0]=="$") {
+			s = state.history[0].variables;
+			if (typeof s[c[0].slice(1)] == "undefined") {
+				s[c[0].slice(1)] = 0;
+			}
+		}
         macros.set.run(a,d.fullArgs())
     },
     run: function (a,expression) {
@@ -525,7 +429,6 @@ macros['set'] = {
         }
     }
 };
-
 version.extensions.ifMacros = {
     major: 2,
     minor: 0,
@@ -600,7 +503,7 @@ macros['remember'] = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
-        macros['set'].run(place,statement);
+        macros.set.run(place,statement);
         var variableSigil = Wikifier.parse("$");
         variableSigil = variableSigil.replace("[", "\\[");
         variableSigil = variableSigil.replace("]", "\\]");
@@ -657,6 +560,7 @@ macros['remember'] = {
     uselocalstorage: null,
     prefix: null,
 };
+
 version.extensions.SilentlyMacro = {
     major: 1,
     minor: 0,
@@ -683,7 +587,7 @@ macros.silently = {
             } else {
                 c += a.charAt(i);
             }
-        }
+        };
         if (d != -1) {
             new Wikifier(h, c);
             b.nextMatch = d;
@@ -696,23 +600,887 @@ macros.endsilently = {
     handler: function () {}
 };
 
-function Passage(C, B, A) {
-    this.title = C;
-    if (B) {
-        this.id = A;
-        this.initialText = this.text = Passage.unescapeLineBreaks(B.firstChild ? B.firstChild.nodeValue : "");
-        this.tags = B.getAttribute("tags");
-        if (typeof this.tags == "string") {
-            this.tags = this.tags.readBracketedList()
+function Passage(c, b, a, ofunc, okey) {
+    this.title = c;
+    if (b) {
+        this.id = a;
+        if (ofunc != null && typeof ofunc == 'function' && okey != null) {
+            var t = b.firstChild ? b.firstChild.nodeValue : "";
+            t = ofunc(t, okey);
+            this.initialText = this.text = Passage.unescapeLineBreaks(t);
+            this.tags = b.getAttribute("tags");
+            if (typeof this.tags == "string") {
+                this.tags = ofunc(this.tags, okey);
+                this.tags = this.tags.readBracketedList();
+            } else this.tags = [];
         } else {
-            this.tags = []
+            this.initialText = this.text = Passage.unescapeLineBreaks(b.firstChild ? b.firstChild.nodeValue : "");
+            this.tags = b.getAttribute("tags");
+            if (typeof this.tags == "string") this.tags = this.tags.readBracketedList();
+            else this.tags = [];
         }
     } else {
-        this.initialText = this.text = "@@This passage does not exist.@@";
-        this.tags = []
+        this.initialText = this.text = '@@This passage does not exist: ' + c + '@@';
+        this.tags = [];
     }
 }
+Passage.unescapeLineBreaks = function (a) {
+    if (a && a != "") {
+        return a.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
+    } else {
+        return ""
+    }
+};
 
+function Tale() {
+    this.passages = {};
+    this.storysettings = {};
+	var a,b,c,lines,i,kv,ns,nsc,nope,tiddlerTitle = '';
+    function deswap(t, k) {
+		var i,c,p,p1,r = '';
+		for (i = 0; i < t.length; i++) {
+			c = t.charAt(i);
+			p = k.indexOf(c);
+			if (p > -1) {
+				p1 = p + (p % 2 == 0 ? 1 : -1);
+				if (p1 >= k.length) p1 = p;
+				c = k.charAt(p1);
+			}
+			r = r + c;
+		}
+		return r
+    };
+    //Look for and load the StorySettings
+    if (document.normalize) document.normalize();
+    a = document.getElementById("storeArea").childNodes;
+    for (b = 0; b < a.length; b++) {
+        c = a[b];
+        if (c.getAttribute && c.getAttribute("tiddler") == 'StorySettings') {
+            lines = new Passage('StorySettings', c, 0, null, null).text.split('\n');
+            for (i in lines) {
+                if (lines[i].indexOf(':') > -1) {
+                    kv = lines[i].split(':');
+                    kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
+                    kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
+                    this.storysettings[kv[0]] = kv[1];
+                }
+            }
+        }
+    }
+    //Load in the passages
+    if (this.storysettings['Obfuscate'] == 'SWAP') {
+        ns = '';
+		nope = ":\\\"n0";
+        for (i = 0; i < this.storysettings['ObfuscateKey'].length; i++) {
+            nsc = this.storysettings['ObfuscateKey'][i];
+            if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
+        }
+        this.storysettings['ObfuscateKey'] = ns;
+        for (b = 0; b < a.length; b++) {
+            c = a[b];
+            if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
+                if (tiddlerTitle != 'StorySettings') tiddlerTitle = deswap(tiddlerTitle, this.storysettings['ObfuscateKey']);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, this.storysettings['ObfuscateKey']);
+            }
+        }
+    } else {
+        for (b = 0; b < a.length; b++) {
+            c = a[b];
+            if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, null, null)
+            }
+        }
+    }
+    this.title = (this.passages.StoryTitle ? this.passages.StoryTitle.text : document.title);
+}
+Tale.prototype.has = function (a) {
+    if (typeof a == "string") {
+        return (this.passages[a] != null)
+    } else {
+        for (i in this.passages) {
+            if (this.passages[i].id == a) {
+                return true
+            }
+        }
+        return false
+    }
+};
+Tale.prototype.get = function (a) {
+    if (typeof a == "string") {
+        return this.passages[a] || new Passage(a)
+    } else {
+        for (i in this.passages) {
+            if (this.passages[i].id == a) {
+                return this.passages[i]
+            }
+        }
+    }
+};
+Tale.prototype.lookup = function (h, g, a) {
+    var d = [];
+    for (var c in this.passages) {
+        var f = this.passages[c];
+        var e = false;
+        for (var b = 0; b < f[h].length; b++) {
+            if (f[h][b] == g) {
+                d.push(f)
+            }
+        }
+    }
+    if (!a) {
+        a = "title"
+    }
+    d.sort(function (k, j) {
+        if (k[a] == j[a]) {
+            return (0)
+        } else {
+            return (k[a] < j[a]) ? -1 : +1
+        }
+    });
+    return d
+};
+function Wikifier(place, source) {
+    this.source = source;
+    this.output = place;
+    this.nextMatch = 0;
+    this.assembleFormatterMatches(Wikifier.formatters);
+    this.subWikify(this.output);
+};
+
+Wikifier.prototype.assembleFormatterMatches = function (formatters) {
+    this.formatters = [];
+    var pattern = [];
+
+    for (var n = 0; n < formatters.length; n++) {
+        pattern.push("(" + formatters[n].match + ")");
+        this.formatters.push(formatters[n]);
+    };
+
+    this.formatterRegExp = new RegExp(pattern.join("|"), "mg");
+};
+
+Wikifier.prototype.subWikify = function (output, terminator) {
+    // Temporarily replace the output pointer
+    var oldOutput = this.output;
+    this.output = output;
+
+    // Prepare the terminator RegExp
+    var terminatorRegExp = terminator ? new RegExp("(" + terminator + ")", "mg") : null;
+    do {
+        // Prepare the RegExp match positions
+        this.formatterRegExp.lastIndex = this.nextMatch;
+
+        if (terminatorRegExp) terminatorRegExp.lastIndex = this.nextMatch;
+
+        // Get the first matches
+        var formatterMatch = this.formatterRegExp.exec(this.source);
+        var terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
+
+        // Check for a terminator match
+        if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index)) {
+            // Output any text before the match
+            if (terminatorMatch.index > this.nextMatch) this.outputText(this.output, this.nextMatch, terminatorMatch.index);
+
+            // Set the match parameters
+            this.matchStart = terminatorMatch.index;
+            this.matchLength = terminatorMatch[1].length;
+            this.matchText = terminatorMatch[1];
+            this.nextMatch = terminatorMatch.index + terminatorMatch[1].length;
+
+            // Restore the output pointer and exit
+            this.output = oldOutput;
+            return;
+        }
+        // Check for a formatter match
+        else if (formatterMatch) {
+            // Output any text before the match
+            if (formatterMatch.index > this.nextMatch) this.outputText(this.output, this.nextMatch, formatterMatch.index);
+
+            // Set the match parameters
+            this.matchStart = formatterMatch.index;
+            this.matchLength = formatterMatch[0].length;
+            this.matchText = formatterMatch[0];
+            this.nextMatch = this.formatterRegExp.lastIndex;
+
+            // Figure out which formatter matched
+            var matchingFormatter = -1;
+            for (var t = 1; t < formatterMatch.length; t++)
+            if (formatterMatch[t]) matchingFormatter = t - 1;
+
+            // Call the formatter
+            if (matchingFormatter != -1) { this.formatters[matchingFormatter].handler(this); }
+        }
+    }
+    while (terminatorMatch || formatterMatch);
+
+    // Output any text after the last match
+    if (this.nextMatch < this.source.length) {
+        this.outputText(this.output, this.nextMatch, this.source.length);
+        this.nextMatch = this.source.length;
+    };
+
+    // Restore the output pointer
+    this.output = oldOutput;
+};
+
+Wikifier.prototype.outputText = function (place, startPos, endPos) {
+    insertText(place, this.source.substring(startPos, endPos));
+};
+
+Wikifier.prototype.fullArgs = function () {
+    var startPos = this.source.indexOf(' ', this.matchStart);
+    var endPos = this.source.indexOf('>>', this.matchStart);
+
+    return Wikifier.parse(this.source.slice(startPos, endPos));
+};
+Wikifier.parse = function (b) {
+    function alter(from,to) {
+        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
+        return b.replace(new RegExp(from+g,"gi"),to);
+    }
+	b = alter("\\$","state.history[0].variables.");
+    b = alter("\\beq\\b", " == ");
+    b = alter("\\bneq\\b", " != ");
+    b = alter("\\bgt\\b", " > ");
+    b = alter("\\bgte\\b", " >= ");
+    b = alter("\\blt\\b", " < ");
+    b = alter("\\blte\\b", " <= ");
+    b = alter("\\band\\b", " && ");
+    b = alter("\\bor\\b", " || ");
+    b = alter("\\bnot\\b", " ! ");
+    b = alter("\\bto\\b", " = ");
+    return b
+};
+Wikifier.formatHelpers = {
+    charFormatHelper: function (a) {
+        var b = insertElement(a.output, this.element);
+        a.subWikify(b, this.terminator)
+    },
+    inlineCssHelper: function (w) {
+        var styles = [];
+        var lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)";
+        var lookaheadRegExp = new RegExp(lookahead, "mg");
+        var hadStyle = false;
+        do {
+            lookaheadRegExp.lastIndex = w.nextMatch;
+            var lookaheadMatch = lookaheadRegExp.exec(w.source);
+            var gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            if (gotMatch) {
+                var s, v;
+                hadStyle = true;
+                if (lookaheadMatch[1]) {
+                    s = lookaheadMatch[1].unDash();
+                    v = lookaheadMatch[2];
+                } else {
+                    s = lookaheadMatch[3].unDash();
+                    v = lookaheadMatch[4];
+                }
+                switch (s) {
+                case "bgcolor":
+                    s = "backgroundColor";
+                    break;
+                case "float":
+                    j = "cssFloat";
+                    break
+                }
+                styles.push({
+                    style: s,
+                    value: v
+                });
+                w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+            }
+        } while (gotMatch);
+        return styles;
+    },
+    monospacedByLineHelper: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source);
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
+            var text = lookaheadMatch[1];
+
+            // IE specific hack
+            if (navigator.userAgent.indexOf("msie") != -1 && navigator.userAgent.indexOf("opera") == -1) text = text.replace(/\n/g, "\r");
+            var e = insertElement(w.output, "pre", null, null, text);
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+};
+Wikifier.formatters = [
+{
+    name: "table",
+    match: "^\\|(?:[^\\n]*)\\|(?:[fhc]?)$",
+    lookahead: "^\\|([^\\n]*)\\|([fhc]?)$",
+    rowTerminator: "\\|(?:[fhc]?)$\\n?",
+    cellPattern: "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhc]?$\\n?)",
+    cellTerminator: "(?:\\x20*)\\|",
+    rowTypes: {
+        "c": "caption",
+        "h": "thead",
+        "": "tbody",
+        "f": "tfoot"
+    },
+    handler: function (w) {
+        var table = insertElement(w.output, "table");
+        w.nextMatch = w.matchStart;
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var currRowType = null,
+            nextRowType;
+        var rowContainer, rowElement;
+        var prevColumns = [];
+        var rowCount = 0;
+        do {
+            lookaheadRegExp.lastIndex = w.nextMatch;
+            var lookaheadMatch = lookaheadRegExp.exec(w.source),
+				matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            if (matched) {
+                nextRowType = lookaheadMatch[2];
+                if (nextRowType != currRowType) rowContainer = insertElement(table, this.rowTypes[nextRowType]);
+                currRowType = nextRowType;
+                if (currRowType == "c") {
+                    if (rowCount == 0) rowContainer.setAttribute("align", "top");
+                    else rowContainer.setAttribute("align", "bottom");
+                    w.nextMatch = w.nextMatch + 1;
+                    w.subWikify(rowContainer, this.rowTerminator);
+                } else {
+                    rowElement = insertElement(rowContainer, "tr");
+                    this.rowHandler(w, rowElement, prevColumns);
+                }
+                rowCount++;
+            }
+        } while (matched);
+    },
+    rowHandler: function (w, e, prevColumns) {
+        var col = 0;
+        var currColCount = 1;
+        var cellRegExp = new RegExp(this.cellPattern, "mg");
+        do {
+            cellRegExp.lastIndex = w.nextMatch;
+            var cellMatch = cellRegExp.exec(w.source),
+				matched = cellMatch && cellMatch.index == w.nextMatch;
+            if (matched) {
+                if (cellMatch[1] == "~") {
+                    var last = prevColumns[col];
+                    if (last) {
+                        last.rowCount++;
+                        last.element.setAttribute("rowSpan", last.rowCount);
+                        last.element.setAttribute("rowspan", last.rowCount);
+                        last.element.valign = "center";
+                    }
+                    w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
+                } else if (cellMatch[1] == ">") {
+                    currColCount++;
+                    w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
+                } else if (cellMatch[2]) {
+                    w.nextMatch = cellMatch.index + cellMatch[0].length;;
+                    break;
+                } else {
+                    var spaceLeft = false,
+                        spaceRight = false,
+						lastColCount, lastColElement, styles, cell, t;
+                    w.nextMatch++;
+                    styles = Wikifier.formatHelpers.inlineCssHelper(w);
+                    while (w.source.substr(w.nextMatch, 1) == " ") {
+                        spaceLeft = true;
+                        w.nextMatch++;
+                    }
+                    if (w.source.substr(w.nextMatch, 1) == "!") {
+                        cell = insertElement(e, "th");
+                        w.nextMatch++;
+                    } else cell = insertElement(e, "td");
+                    prevColumns[col] = {
+                        rowCount: 1,
+                        element: cell
+                    };
+                    lastColCount = 1;
+                    lastColElement = cell;
+                    if (currColCount > 1) {
+                        cell.setAttribute("colSpan", currColCount);
+                        cell.setAttribute("colspan", currColCount);
+                        currColCount = 1;
+                    }
+                    for (t = 0; t < styles.length; t++)
+                    cell.style[styles[t].style] = styles[t].value;
+                    w.subWikify(cell, this.cellTerminator);
+                    if (w.matchText.substr(w.matchText.length - 2, 1) == " ") spaceRight = true;
+                    if (spaceLeft && spaceRight) cell.align = "center";
+                    else if (spaceLeft) cell.align = "right";
+                    else if (spaceRight) cell.align = "left";
+                    w.nextMatch = w.nextMatch - 1;
+                }
+                col++;
+            }
+        } while (matched);
+    }
+},
+{
+    name: "rule",
+    match: "^----$\\n?",
+    handler: function (w) {
+        insertElement(w.output, "hr");
+    }
+},
+{
+    name: "emdash",
+    match: "--",
+    handler: function (w) {
+        var e = insertElement(w.output, "span");
+        e.innerHTML = '&mdash;';
+    }
+},
+{
+    name: "heading",
+    match: "^!{1,5}",
+    terminator: "\\n",
+    handler: function (w) {
+        var e = insertElement(w.output, "h" + w.matchLength);
+        w.subWikify(e, this.terminator);
+    }
+},
+{
+    name: "monospacedByLine",
+    match: "^\\{\\{\\{\\n",
+    lookahead: "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
+    handler: Wikifier.formatHelpers.monospacedByLineHelper
+},
+{
+    name: "monospacedByLineForPlugin",
+    match: "^//\\{\\{\\{\\n",
+    lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
+    handler: Wikifier.formatHelpers.monospacedByLineHelper
+},
+{
+    name: "wikifyCommentForPlugin",
+    match: "^/\\*\\*\\*\\n",
+    terminator: "^\\*\\*\\*/\\n",
+    handler: function (w) {
+        w.subWikify(w.output, this.terminator);
+    }
+},
+{
+    name: "quoteByBlock",
+    match: "^<<<\\n",
+    terminator: "^<<<\\n",
+    handler: function (w) {
+        var e = insertElement(w.output, "blockquote");
+        w.subWikify(e, this.terminator);
+    }
+},
+{
+    name: "quoteByLine",
+    match: "^>+",
+    terminator: "\\n",
+    element: "blockquote",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.match, "mg");
+        var placeStack = [w.output];
+        var currLevel = 0;
+        var newLevel = w.matchLength;
+        var t;
+        do {
+            if (newLevel > currLevel) {
+                for (t = currLevel; t < newLevel; t++)
+                placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
+            } else if (newLevel < currLevel) {
+                for (t = currLevel; t > newLevel; t--)
+                placeStack.pop();
+            }
+            currLevel = newLevel;
+            w.subWikify(placeStack[placeStack.length - 1], this.terminator);
+            lookaheadRegExp.lastIndex = w.nextMatch;
+            var lookaheadMatch = lookaheadRegExp.exec(w.source);
+            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            if (matched) {
+                newLevel = lookaheadMatch[0].length;
+                w.nextMatch += lookaheadMatch[0].length;
+				insertElement(placeStack[placeStack.length - 1], "br");
+            }
+        } while (matched);
+    }
+},
+{
+    name: "list",
+    match: "^(?:(?:\\*+)|(?:#+))",
+    lookahead: "^(?:(\\*+)|(#+))",
+    terminator: "\\n",
+    outerElement: "ul",
+    itemElement: "li",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        w.nextMatch = w.matchStart;
+        var placeStack = [w.output];
+        var currType = null,
+            newType;
+        var currLevel = 0,
+            newLevel;
+        var t;
+        do {
+            lookaheadRegExp.lastIndex = w.nextMatch;
+            var lookaheadMatch = lookaheadRegExp.exec(w.source);
+            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            if (matched) {
+                if (lookaheadMatch[1]) newType = "ul";
+                if (lookaheadMatch[2]) newType = "ol";
+                newLevel = lookaheadMatch[0].length;
+                w.nextMatch += lookaheadMatch[0].length;
+                if (newLevel > currLevel) {
+                    for (t = currLevel; t < newLevel; t++)
+                    placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                } else if (newLevel < currLevel) {
+                    for (t = currLevel; t > newLevel; t--)
+                    placeStack.pop();
+                } else if (newLevel == currLevel && newType != currType) {
+                    placeStack.pop();
+                    placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                }
+                currLevel = newLevel;
+                currType = newType;
+                var e = insertElement(placeStack[placeStack.length - 1], "li");
+                w.subWikify(e, this.terminator);
+            }
+        } while (matched);
+    }
+},
+{
+    name: "prettyLink",
+    match: "\\[\\[",
+    lookahead: "\\[\\[([^\\|\\]]*?)(?:(\\]\\])|(\\|(.*?)\\]\\]))",
+    terminator: "\\|",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketted link
+        {
+            var link = Wikifier.createInternalLink(w.output, lookaheadMatch[1]);
+            w.outputText(link, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
+            w.nextMatch += lookaheadMatch[1].length + 2;
+        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketted link
+        {
+            var e;
+            if (tale.has(lookaheadMatch[4])) e = Wikifier.createInternalLink(w.output, lookaheadMatch[4]);
+            else e = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
+            w.outputText(e, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+},
+{
+    name: "urlLink",
+    match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",
+    handler: function (w) {
+        var e = Wikifier.createExternalLink(w.output, w.matchText);
+        w.outputText(e, w.matchStart, w.nextMatch);
+    }
+},
+{
+    name: "image",
+    match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
+    lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source);
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketted link
+        {
+            var e = w.output;
+            if (lookaheadMatch[5]) {
+                if (tale.has(lookaheadMatch[5])) e = Wikifier.createInternalLink(w.output, lookaheadMatch[5]);
+                else e = Wikifier.createExternalLink(w.output, lookaheadMatch[5]);
+            }
+            var img = insertElement(e, "img");
+            if (lookaheadMatch[1]) img.align = "left";
+            else if (lookaheadMatch[2]) img.align = "right";
+            if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
+            img.src = lookaheadMatch[4];
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+},
+{
+    name: "macro",
+    match: "<<",
+    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>(?!>))*)>>",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {
+            var params = lookaheadMatch[2].readMacroParams();
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+            try {
+                var macro = macros[lookaheadMatch[1]];
+                if (macro && macro.handler) macro.handler(w.output, lookaheadMatch[1], params, w);
+                else throwError(w.output, 'Macro not found: ' + lookaheadMatch[1]);
+            } catch (e) {
+                throwError(w.output, 'Error executing macro ' + lookaheadMatch[1] + ': ' + e.toString());
+            }
+        }
+    }
+},
+{
+    name: "html",
+    match: "<html>",
+    lookahead: "<html>((?:.|\\n)*?)</html>",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
+            var e = insertElement(w.output, "span");
+            e.innerHTML = lookaheadMatch[1];
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+},
+{
+    name: "commentByBlock",
+    match: "/%",
+    lookahead: "/%((?:.|\\n)*?)%/",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+    }
+},
+{
+    name: "boldByChar",
+    match: "''",
+    terminator: "''",
+    element: "strong",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "strikeByChar",
+    match: "==",
+    terminator: "==",
+    element: "strike",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "underlineByChar",
+    match: "__",
+    terminator: "__",
+    element: "u",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "italicByChar",
+    match: "//",
+    terminator: "//",
+    element: "em",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "subscriptByChar",
+    match: "~~",
+    terminator: "~~",
+    element: "sub",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "superscriptByChar",
+    match: "\\^\\^",
+    terminator: "\\^\\^",
+    element: "sup",
+    handler: Wikifier.formatHelpers.charFormatHelper
+},
+{
+    name: "monospacedByChar",
+    match: "\\{\\{\\{",
+    lookahead: "\\{\\{\\{((?:.|\\n)*?)\\}\\}\\}",
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
+            var e = insertElement(w.output, "code", null, null, lookaheadMatch[1]);
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+},
+{
+    name: "styleByChar",
+    match: "@@",
+    terminator: "@@",
+    lookahead: "(?:([^\\(@]+)\\(([^\\)]+)(?:\\):))|(?:([^:@]+):([^;]+);)",
+    handler: function (w) {
+        var e = insertElement(w.output, "span", null, null, null);
+        var styles = Wikifier.formatHelpers.inlineCssHelper(w);
+        if (styles.length == 0) e.className = "marked";
+        else for (var t = 0; t < styles.length; t++)
+        e.style[styles[t].style] = styles[t].value;
+        w.subWikify(e, this.terminator);
+    }
+},
+{
+    name: "lineBreak",
+    match: "\\n",
+    handler: function (w) {
+        insertElement(w.output, "br");
+    }
+},
+{
+    name: "continuedLine",
+    match: "\\\\\\n",
+    handler: function(a) {
+        a.nextMatch = a.matchStart+2;
+    }
+},
+{
+	name: "htmltag",
+	match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
+	tagname: "<(\\w+)",
+	voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
+	handler: function (a) {
+		var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
+		  doit = false,
+		  re = new RegExp(this.tagname).exec(a.matchText),
+		  tn = re && re[1];
+		if(tn && tn.toLowerCase() != "html") {
+			lookahead = "<\\/\\s*" + tn + "\\s*>";
+			isvoid = (this.voids.indexOf(tn.toLowerCase()) != -1);
+			lookaheadRegExp = new RegExp(lookahead, "mg");
+			lookaheadRegExp.lastIndex = a.matchStart;
+			lookaheadMatch = lookaheadRegExp.exec(a.source);
+			if (lookaheadMatch || isvoid) {
+				e = document.createElement(a.output.tagName);
+				e.innerHTML = a.matchText;
+				e = e.firstChild;
+				if (!isvoid) {
+					a.subWikify(e, lookahead);
+				}
+				a.output.appendChild(e);
+			} else {
+				throwError(a.output,"HTML tag '"+tn+"' wasn't closed.");
+			}
+		}
+	}
+}
+];
+Wikifier.createInternalLink = function (place, title) {
+    var el = insertElement(place, 'a', title);
+    el.href = 'javascript:void(0)';
+
+    if (tale.has(title)) el.className = 'internalLink';
+    else el.className = 'brokenLink';
+
+    el.onclick = function () {
+        state.display(title, el)
+    };
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
+Wikifier.createExternalLink = function (place, url) {
+    var el = insertElement(place, 'a');
+    el.href = url;
+    el.className = 'externalLink';
+    el.target = '_blank';
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
+Wikifier.textPrimitives = {};
+if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
+    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
+    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
+    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
+} else {
+    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
+    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
+    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+};
+
+/*
+**
+** Jonah specific code follows
+**
+*/
+History.prototype.init = function () {
+    if (!this.restore()) {
+        if (tale.has("StartPassages")) {
+            var B = tale.get("StartPassages").text.readBracketedList();
+            for (var A = 0; A < B.length; A++) {
+                this.display(B[A], null, "quietly")
+            }
+        } else {
+            this.display("Start", null, "quietly")
+        }
+    }
+};
+History.prototype.close = function (B) {
+    var A = document.getElementById("passage" + B.title);
+    if (A) {
+        A.parentNode.removeChild(A)
+    }
+};
+History.prototype.display = function (E, C, A) {
+    var el, D, F, B = C;
+    while (B && (B.className.indexOf("passage") == -1)) {
+        if (B.parentNode.id != 'passages') {
+            B = B.parentNode
+        } else {
+            B = null;
+            break
+        }
+    }
+    if (el = document.getElementById("passage" + E)) {
+        scrollWindowTo(el);
+        return
+    }
+    D = tale.get(E);
+    this.history.unshift({
+        passage: D,
+        variables: clone(this.history[0].variables)
+    });
+    F = D.render();
+    if (A != "offscreen") {
+        if (B) {
+            document.getElementById("passages").insertBefore(F, B.nextSibling)
+        } else {
+            document.getElementById("passages").appendChild(F)
+        }
+        if (A != "quietly") {
+            scrollWindowTo(F);
+            fade(F, {
+                fade: "in"
+            })
+        }
+    }
+    if ((A == "quietly") || (A == "offscreen")) {
+        F.style.visibility = "visible"
+    }
+    return F
+};
+History.prototype.rewindTo = function (C) {
+    var B = this;
+    fade(document.getElementById("passages"), {
+        fade: "out",
+        onComplete: A
+    });
+
+    function A() {
+        while (B.history[0].passage.title != C.title) {
+            B.close(B.history.shift().passage)
+        }
+        B.history[0].variables = clone(B.history[1].variables);
+        C.reset();
+        var E = document.getElementById("passage" + C.title).childNodes;
+        for (var D = 0; D < E.length; D++) {
+            if (E[D].className == "body") {
+                removeChildren(E[D]);
+                new Wikifier(E[D], C.text)
+            }
+        }
+        fade(document.getElementById("passages"), {
+            fade: "in"
+        })
+    }
+};
 Passage.prototype.render = function () {
     var E = insertElement(null, 'div', 'passage' + this.title, 'passage');
     E.style.visibility = 'hidden';
@@ -741,7 +1509,6 @@ Passage.prototype.render = function () {
     };
     return E
 };
-
 Passage.prototype.reset = function () {
     this.text = this.initialText
 };
@@ -765,719 +1532,110 @@ Passage.toolbarItems = [{
         state.rewindTo(this.passage)
     }
 }];
-Passage.unescapeLineBreaks = function (A) {
-    if (A && A != "") {
-        return A.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
-    } else {
-        return ""
-    }
-};
-
-function Tale() {
-    this.passages = {};
-    if (document.normalize) {
-        document.normalize()
-    }
-    var A = document.getElementById("storeArea").childNodes;
-    for (var B = 0; B < A.length; B++) {
-        var C = A[B];
-        if (C.getAttribute && (title = C.getAttribute("tiddler"))) {
-            this.passages[title] = new Passage(title, C, B)
-        }
-    }
-}
-Tale.prototype.has = function (A) {
-    if (typeof A == "string") {
-        return (this.passages[A] != null)
-    } else {
-        for (i in this.passages) {
-            if (this.passages[i].id == A) {
-                return true
-            }
-        }
-        return false
-    }
-};
-Tale.prototype.get = function (A) {
-    if (typeof A == "string") {
-        return this.passages[A] || new Passage(A)
-    } else {
-        for (i in this.passages) {
-            if (this.passages[i].id == A) {
-                return this.passages[i]
-            }
-        }
-    }
-};
-Tale.prototype.lookup = function (H, G, A) {
-    var D = [];
-    for (var C in this.passages) {
-        var F = this.passages[C];
-        var E = false;
-        for (var B = 0; B < F[H].length; B++) {
-            if (F[H][B] == G) {
-                D.push(F)
-            }
-        }
-    }
-    if (!A) {
-        A = "title"
-    }
-    D.sort(function (J, I) {
-        if (J[A] == I[A]) {
-            return (0)
-        } else {
-            return (J[A] < I[A]) ? -1 : +1
-        }
-    });
-    return D
-};
 Tale.prototype.reset = function () {
     for (i in this.passages) {
         this.passages[i].reset()
     }
 };
-
-function Wikifier(A, B) {
-    this.source = B;
-    this.output = A;
-    this.nextMatch = 0;
-    this.assembleFormatterMatches(Wikifier.formatters);
-    this.subWikify(this.output)
-}
-Wikifier.prototype.assembleFormatterMatches = function (A) {
-    this.formatters = [];
-    var B = [];
-    for (var C = 0; C < A.length; C++) {
-        B.push("(" + A[C].match + ")");
-        this.formatters.push(A[C])
-    }
-    this.formatterRegExp = new RegExp(B.join("|"), "mg")
+version.extensions.choiceMacro = {
+    major: 1,
+    minor: 2,
+    revision: 0
 };
-Wikifier.prototype.subWikify = function (C, B) {
-    var A = this.output;
-    this.output = C;
-    var F = B ? new RegExp("(" + B + ")", "mg") : null;
-    do {
-        this.formatterRegExp.lastIndex = this.nextMatch;
-        if (F) {
-            F.lastIndex = this.nextMatch
-        }
-        var G = this.formatterRegExp.exec(this.source);
-        var E = F ? F.exec(this.source) : null;
-        if (E && (!G || E.index <= G.index)) {
-            if (E.index > this.nextMatch) {
-                this.outputText(this.output, this.nextMatch, E.index)
-            }
-            this.matchStart = E.index;
-            this.matchLength = E[1].length;
-            this.matchText = E[1];
-            this.nextMatch = E.index + E[1].length;
-            this.output = A;
-            return
+macros.choice = {
+    handler: function (A, C, D) {
+        var B = document.createElement("a");
+        B.href = "javascript:void(0)";
+        B.className = "internalLink choice";
+        if (D[1]) {
+            B.innerHTML = D[1]
         } else {
-            if (G) {
-                if (G.index > this.nextMatch) {
-                    this.outputText(this.output, this.nextMatch, G.index)
-                }
-                this.matchStart = G.index;
-                this.matchLength = G[0].length;
-                this.matchText = G[0];
-                this.nextMatch = this.formatterRegExp.lastIndex;
-                var H = -1;
-                for (var D = 1; D < G.length; D++) {
-                    if (G[D]) {
-                        matchingFormatter = D - 1
-                    }
-                }
-                if (matchingFormatter != -1) {
-                    this.formatters[matchingFormatter].handler(this)
-                }
-            }
+            B.innerHTML = D[0]
         }
-    } while (E || G);
-    if (this.nextMatch < this.source.length) {
-        this.outputText(this.output, this.nextMatch, this.source.length);
-        this.nextMatch = this.source.length
-    }
-    this.output = A
-};
-Wikifier.prototype.outputText = function (A, C, B) {
-    insertText(A, this.source.substring(C, B))
-};
-Wikifier.prototype.fullArgs = function () {
-    var B = this.source.indexOf(" ", this.matchStart);
-    var A = this.source.indexOf(">>", this.matchStart);
-    return Wikifier.parse(this.source.slice(B, A))
-};
-Wikifier.parse = function (b) {
-    function alter(from,to) {
-        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
-        return b.replace(new RegExp(from+g,"gi"),to);
-    }
-	b = alter("\\$","state.history[0].variables.");
-    b = alter("\\beq\\b", " == ");
-    b = alter("\\bneq\\b", " != ");
-    b = alter("\\bgt\\b", " > ");
-    b = alter("\\bgte\\b", " >= ");
-    b = alter("\\blt\\b", " < ");
-    b = alter("\\blte\\b", " <= ");
-    b = alter("\\band\\b", " && ");
-    b = alter("\\bor\\b", " || ");
-    b = alter("\\bnot\\b", " ! ");
-    b = alter("\\bto\\b", " = ");
-    return b
-};
-Wikifier.formatHelpers = {
-    charFormatHelper: function (A) {
-        var B = insertElement(A.output, this.element);
-        A.subWikify(B, this.terminator)
-    },
-    inlineCssHelper: function (F) {
-        var H = [];
-        var A = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)";
-        var B = new RegExp(A, "mg");
-        var C = false;
-        do {
-            B.lastIndex = F.nextMatch;
-            var D = B.exec(F.source);
-            var E = D && D.index == F.nextMatch;
-            if (E) {
-                var I, G;
-                C = true;
-                if (D[1]) {
-                    I = D[1].unDash();
-                    G = D[2]
-                } else {
-                    I = D[3].unDash();
-                    G = D[4]
-                }
-                switch (I) {
-                case "bgcolor":
-                    I = "backgroundColor";
-                    break
-                case "float":
-                    I = "cssFloat";
-                    break
-                }
-                H.push({
-                    style: I,
-                    value: G
-                });
-                F.nextMatch = D.index + D[0].length
-            }
-        } while (E);
-        return H
-    },
-    monospacedByLineHelper: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart) {
-            var E = C[1];
-            if (navigator.userAgent.indexOf("msie") != -1 && navigator.userAgent.indexOf("opera") == -1) {
-                E = E.replace(/\n/g, "\r")
-            }
-            var D = insertElement(A.output, "pre", null, null, E);
-            A.nextMatch = C.index + C[0].length
-        }
-    }
-};
-Wikifier.formatters = [{
-    name: "table",
-    match: "^\\|(?:[^\\n]*)\\|(?:[fhc]?)$",
-    lookahead: "^\\|([^\\n]*)\\|([fhc]?)$",
-    rowTerminator: "\\|(?:[fhc]?)$\\n?",
-    cellPattern: "(?:\\|([^\\n\\|]*)\\|)|(\\|[fhc]?$\\n?)",
-    cellTerminator: "(?:\\x20*)\\|",
-    rowTypes: {
-        c: "caption",
-        h: "thead",
-        "": "tbody",
-        f: "tfoot"
-    },
-    handler: function (H) {
-        var J = insertElement(H.output, "table");
-        H.nextMatch = H.matchStart;
-        var C = new RegExp(this.lookahead, "mg");
-        var D = null,
-            A;
-        var K, E;
-        var I = [];
-        var G = 0;
-        do {
-            C.lastIndex = H.nextMatch;
-            var F = C.exec(H.source);
-            var B = F && F.index == H.nextMatch;
-            if (B) {
-                A = F[2];
-                if (A != D) {
-                    K = insertElement(J, this.rowTypes[A])
-                }
-                D = A;
-                if (D == "c") {
-                    if (G == 0) {
-                        K.setAttribute("align", "top")
-                    } else {
-                        K.setAttribute("align", "bottom")
-                    }
-                    H.nextMatch = H.nextMatch + 1;
-                    H.subWikify(K, this.rowTerminator)
-                } else {
-                    E = insertElement(K, "tr");
-                    this.rowHandler(H, E, I)
-                }
-                G++
-            }
-        } while (B)
-    },
-    rowHandler: function (G, D, K) {
-        var A = 0;
-        var I = 1;
-        var C = new RegExp(this.cellPattern, "mg");
-        do {
-            C.lastIndex = G.nextMatch;
-            var E = C.exec(G.source);
-            matched = E && E.index == G.nextMatch;
-            if (matched) {
-                if (E[1] == "~") {
-                    var J = K[A];
-                    if (J) {
-                        J.rowCount++;
-                        J.element.setAttribute("rowSpan", J.rowCount);
-                        J.element.setAttribute("rowspan", J.rowCount);
-                        J.element.valign = "center"
-                    }
-                    G.nextMatch = E.index + E[0].length - 1
-                } else {
-                    if (E[1] == ">") {
-                        I++;
-                        G.nextMatch = E.index + E[0].length - 1
-                    } else {
-                        if (E[2]) {
-                            G.nextMatch = E.index + E[0].length;
-                            break
-                        } else {
-                            var B = false,
-                                F = false;
-                            G.nextMatch++;
-                            var M = Wikifier.formatHelpers.inlineCssHelper(G);
-                            while (G.source.substr(G.nextMatch, 1) == " ") {
-                                B = true;
-                                G.nextMatch++
-                            }
-                            var H;
-                            if (G.source.substr(G.nextMatch, 1) == "!") {
-                                H = insertElement(D, "th");
-                                G.nextMatch++
-                            } else {
-                                H = insertElement(D, "td")
-                            }
-                            K[A] = {
-                                rowCount: 1,
-                                element: H
-                            };
-                            lastColCount = 1;
-                            lastColElement = H;
-                            if (I > 1) {
-                                H.setAttribute("colSpan", I);
-                                H.setAttribute("colspan", I);
-                                I = 1
-                            }
-                            for (var L = 0; L < M.length; L++) {
-                                H.style[M[L].style] = M[L].value
-                            }
-                            G.subWikify(H, this.cellTerminator);
-                            if (G.matchText.substr(G.matchText.length - 2, 1) == " ") {
-                                F = true
-                            }
-                            if (B && F) {
-                                H.align = "center"
-                            } else {
-                                if (B) {
-                                    H.align = "right"
-                                } else {
-                                    if (F) {
-                                        H.align = "left"
-                                    }
-                                }
-                            }
-                            G.nextMatch = G.nextMatch - 1
-                        }
-                    }
-                }
-                A++
-            }
-        } while (matched)
-    }
-}, {
-    name: "rule",
-    match: "^----$\\n?",
-    handler: function (A) {
-        insertElement(A.output, "hr")
-    }
-}, {
-    name: "emdash",
-    match: "--",
-    handler: function (A) {
-        var B = insertElement(A.output, "span");
-        B.innerHTML = "&mdash;"
-    }
-}, {
-    name: "heading",
-    match: "^!{1,5}",
-    terminator: "\\n",
-    handler: function (A) {
-        var B = insertElement(A.output, "h" + A.matchLength);
-        A.subWikify(B, this.terminator)
-    }
-}, {
-    name: "monospacedByLine",
-    match: "^\\{\\{\\{\\n",
-    lookahead: "^\\{\\{\\{\\n((?:^[^\\n]*\\n)+?)(^\\}\\}\\}$\\n?)",
-    handler: Wikifier.formatHelpers.monospacedByLineHelper
-}, {
-    name: "monospacedByLineForPlugin",
-    match: "^//\\{\\{\\{\\n",
-    lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
-    handler: Wikifier.formatHelpers.monospacedByLineHelper
-}, {
-    name: "wikifyCommentForPlugin",
-    match: "^/\\*\\*\\*\\n",
-    terminator: "^\\*\\*\\*/\\n",
-    handler: function (A) {
-        A.subWikify(A.output, this.terminator)
-    }
-}, {
-    name: "quoteByBlock",
-    match: "^<<<\\n",
-    terminator: "^<<<\\n",
-    handler: function (A) {
-        var B = insertElement(A.output, "blockquote");
-        A.subWikify(B, this.terminator)
-    }
-}, {
-    name: "quoteByLine",
-    match: "^>+",
-    terminator: "\\n",
-    element: "blockquote",
-    handler: function (C) {
-        var E = new RegExp(this.match, "mg");
-        var D = [C.output];
-        var H = 0;
-        var B = C.matchLength;
-        var G;
-        do {
-            if (B > H) {
-                for (G = H; G < B; G++) {
-                    D.push(insertElement(D[D.length - 1], this.element))
-                }
-            } else {
-                if (B < H) {
-                    for (G = H; G > B; G--) {
-                        D.pop()
-                    }
-                }
-            }
-            H = B;
-            C.subWikify(D[D.length - 1], this.terminator);
-            E.lastIndex = C.nextMatch;
-            var F = E.exec(C.source);
-            var A = F && F.index == C.nextMatch;
-            if (A) {
-                B = F[0].length;
-                C.nextMatch += F[0].length
-            }
-        } while (A)
-    }
-}, {
-    name: "list",
-    match: "^(?:(?:\\*+)|(?:#+))",
-    lookahead: "^(?:(\\*+)|(#+))",
-    terminator: "\\n",
-    outerElement: "ul",
-    itemElement: "li",
-    handler: function (I) {
-        var B = new RegExp(this.lookahead, "mg");
-        I.nextMatch = I.matchStart;
-        var E = [I.output];
-        var J = null,
-            C;
-        var G = 0,
-            D;
-        var K;
-        do {
-            B.lastIndex = I.nextMatch;
-            var F = B.exec(I.source);
-            var A = F && F.index == I.nextMatch;
-            if (A) {
-                if (F[1]) {
-                    C = "ul"
-                }
-                if (F[2]) {
-                    C = "ol"
-                }
-                D = F[0].length;
-                I.nextMatch += F[0].length;
-                if (D > G) {
-                    for (K = G; K < D; K++) {
-                        E.push(insertElement(E[E.length - 1], C))
-                    }
-                } else {
-                    if (D < G) {
-                        for (K = G; K > D; K--) {
-                            E.pop()
-                        }
-                    } else {
-                        if (D == G && C != J) {
-                            E.pop();
-                            E.push(insertElement(E[E.length - 1], C))
-                        }
-                    }
-                }
-                G = D;
-                J = C;
-                var H = insertElement(E[E.length - 1], "li");
-                I.subWikify(H, this.terminator)
-            }
-        } while (A)
-    }
-}, {
-    name: "prettyLink",
-    match: "\\[\\[",
-    lookahead: "\\[\\[([^\\|\\]]*?)(?:(\\]\\])|(\\|(.*?)\\]\\]))",
-    terminator: "\\|",
-    handler: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart && C[2]) {
-            var D = Wikifier.createInternalLink(A.output, C[1]);
-            A.outputText(D, A.nextMatch, A.nextMatch + C[1].length);
-            A.nextMatch += C[1].length + 2
-        } else {
-            if (C && C.index == A.matchStart && C[3]) {
-                var E;
-                if (tale.has(C[4])) {
-                    E = Wikifier.createInternalLink(A.output, C[4])
-                } else {
-                    E = Wikifier.createExternalLink(A.output, C[4])
-                }
-                A.outputText(E, A.nextMatch, A.nextMatch + C[1].length);
-                A.nextMatch = C.index + C[0].length
-            }
-        }
-    }
-}, {
-    name: "urlLink",
-    match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",
-    handler: function (A) {
-        var B = Wikifier.createExternalLink(A.output, A.matchText);
-        A.outputText(B, A.matchStart, A.nextMatch)
-    }
-}, {
-    name: "image",
-    match: "\\[(?:[<]?)(?:>?)img\\[", 
-    lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
-    handler: function (A) {
-        var C = new RegExp(this.lookahead, "mig");
-        C.lastIndex = A.matchStart;
-        var D = C.exec(A.source);
-        if (D && D.index == A.matchStart) {
-            var E = A.output;
-            if (D[5]) {
-                if (tale.has(D[5])) {
-                    E = Wikifier.createInternalLink(A.output, D[5])
-                } else {
-                    E = Wikifier.createExternalLink(A.output, D[5])
-                }
-            }
-            var B = insertElement(E, "img");
-            if (D[1]) {
-                B.style.cssFloat = "left"
-                B.style.marginRight = "1em";
-            } else {
-                if (D[2]) {
-                    B.style.cssFloat = "right"
-                    B.style.marginLeft = "1em";
-                }
-            }
-            if (D[3]) {
-                B.title = D[3]
-                B.alt = D[3]
-            }
-            B.src = D[4];
-            A.nextMatch = D.index + D[0].length
-        }
-    }
-}, {
-    name: "macro",
-    match: "<<",
-    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>(?!>))*)>>",
-    handler: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart && C[1]) {
-            var F = C[2].readMacroParams();
-            A.nextMatch = C.index + C[0].length;
-            try {
-                var D = macros[C[1]];
-                if (D && D.handler) {
-                    D.handler(A.output, C[1], F, A)
-                } else {
-                    insertElement(A.output, "span", null, "marked", "macro not found: " + C[1])
-                }
-            } catch (E) {
-                throwError(A.output, "Error executing macro " + C[1] + ": " + E.toString())
-            }
-        }
-    }
-}, {
-    name: "html",
-    match: "<html>",
-    lookahead: "<html>((?:.|\\n)*?)</html>",
-    handler: function (A) {
-        var B = new RegExp(this.lookahead, "mig");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart) {
-            var D = insertElement(A.output, "span");
-            D.innerHTML = C[1];
-            A.nextMatch = C.index + C[0].length
-        }
-    }
-}, {
-    name: "commentByBlock",
-    match: "/%",
-    lookahead: "/%((?:.|\\n)*?)%/",
-    handler: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart) {
-            A.nextMatch = C.index + C[0].length
-        }
-    }
-}, {
-    name: "boldByChar",
-    match: "''",
-    terminator: "''",
-    element: "strong",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "strikeByChar",
-    match: "==",
-    terminator: "==",
-    element: "strike",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "underlineByChar",
-    match: "__",
-    terminator: "__",
-    element: "u",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "italicByChar",
-    match: "//",
-    terminator: "//",
-    element: "em",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "subscriptByChar",
-    match: "~~",
-    terminator: "~~",
-    element: "sub",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "superscriptByChar",
-    match: "\\^\\^",
-    terminator: "\\^\\^",
-    element: "sup",
-    handler: Wikifier.formatHelpers.charFormatHelper
-}, {
-    name: "monospacedByChar",
-    match: "\\{\\{\\{",
-    lookahead: "\\{\\{\\{((?:.|\\n)*?)\\}\\}\\}",
-    handler: function (A) {
-        var B = new RegExp(this.lookahead, "mg");
-        B.lastIndex = A.matchStart;
-        var C = B.exec(A.source);
-        if (C && C.index == A.matchStart) {
-            var D = insertElement(A.output, "code", null, null, C[1]);
-            A.nextMatch = C.index + C[0].length
-        }
-    }
-}, {
-    name: "styleByChar",
-    match: "@@",
-    terminator: "@@",
-    lookahead: "(?:([^\\(@]+)\\(([^\\)]+)(?:\\):))|(?:([^:@]+):([^;]+);)",
-    handler: function (A) {
-        var D = insertElement(A.output, "span", null, null, null);
-        var C = Wikifier.formatHelpers.inlineCssHelper(A);
-        if (C.length == 0) {
-            D.className = "marked"
-        } else {
-            for (var B = 0; B < C.length; B++) {
-                D.style[C[B].style] = C[B].value
-            }
-        }
-        A.subWikify(D, this.terminator)
-    }
-}, {
-    name: "lineBreak",
-    match: "\\n",
-    handler: function (A) {
-        insertElement(A.output, "br")
-    }
-}];
-Wikifier.textPrimitives = {
-    anyDigit: "[0-9]",
-    anyNumberChar: "[0-9\\.E]",
-    urlPattern: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)"
-};
-Wikifier.createInternalLink = function (A, C) {
-    var B = insertElement(A, "a", C);
-    B.href = "javascript:void(0)";
-    if (tale.has(C)) {
-        B.className = "internalLink"
-    } else {
-        B.className = "brokenLink"
-    }
-    B.onclick = function () {
-        state.display(C, B)
-    };
-    if (A) {
+        B.onclick = function () {
+            macros.choice.activate(B, D[0])
+        };
         A.appendChild(B)
+    },
+    activate: function (E, A) {
+        var H = E.parentNode;
+        while (H.className.indexOf("body") == -1) {
+            H = H.parentNode
+        }
+        var G = H.parentNode.id.substr(7),
+			B = H.getElementsByTagName("a"),
+			F = [];
+        for (var C = 0; C < B.length; C++) {
+            if ((B[C] != E) && (B[C].className.indexOf("choice") != -1)) {
+                var D = document.createElement("span");
+                D.innerHTML = B[C].innerHTML;
+                D.className = "disabled";
+                B[C].parentNode.insertBefore(D, B[C].nextSibling);
+                F.push(B[C])
+            }
+        }
+        for (var C = 0; C < F.length; C++) {
+            F[C].parentNode.removeChild(F[C])
+        }
+        tale.get(G).text = "<html>" + H.childNodes[0].innerHTML + "</html>";
+        state.display(A, E)
     }
-    return B
 };
-Wikifier.createExternalLink = function (A, B) {
-    var C = insertElement(A, "a");
-    C.href = B;
-    C.className = "externalLink";
-    C.target = "_blank";
-    if (A) {
-        A.appendChild(C)
+version.extensions.backMacro={major:1,minor:0,revision:0};
+macros.back={handler:function(a,b,c){return}};
+version.extensions.returnMacro={major:1,minor:0,revision:0};
+macros.return={handler:function(a,b,c){return}};
+
+function restart() {
+    if (confirm("Are you sure you want to restart this story?")) {
+        main();
+        window.location.reload()
     }
-    return C
+}
+function main() {
+	// Used by old custom scripts.
+    function $(a) {
+        return (typeof a == "string" ? document.getElementById(a) : a);
+    }
+	$("restart").onclick=restart;
+    tale = new Tale();
+    state = new History();
+    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
+    setPageElement("storySubtitle", "StorySubtitle", "");
+    if (tale.has("StoryTitle")) {
+        document.title = tale.get("StoryTitle").text;
+        if (tale.has("StorySubtitle")) {
+            document.title += ": " + tale.get("StorySubtitle").text;
+        }
+    }
+    if (tale.has("StoryAuthor")) {
+        setPageElement("storyAuthor", "StoryAuthor", "");
+    }
+    if (tale.has("StoryMenu")) {
+        document.getElementById("storyMenu").style.display = "inline";
+        setPageElement("storyMenu", "StoryMenu", "");
+    }
+    var scripts = tale.lookup("tags", "script");
+    for (var i = 0; i < scripts.length; i++) {
+        try {
+            eval(scripts[i].text);
+        } catch (e) {
+            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+        }
+    }
+    for (var macroidx in macros) {
+        var macro = macros[macroidx];
+        if (typeof macro.init == "function") {
+            macro.init();
+        }
+    }
+    var styles = tale.lookup("tags", "stylesheet");
+    for (var i = 0; i < styles.length; i++) {
+        addStyle(styles[i].text);
+    }
+    state.init();
 };
-if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
-    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
-    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
-    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
-} else {
-    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
-    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
-    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
-};
-
-/*patch*/
-/*no back or return*/
-version.extensions.backMacro={major:1,minor:0,revision:0};macros.back={handler:function(a,b,c){return}};version.extensions.returnMacro={major:1,minor:0,revision:0};macros.return={handler:function(a,b,c){return}};
-/*endpatch*/
-
+window.onload = main;
 }());
 </script>
 <style>
