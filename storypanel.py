@@ -231,6 +231,14 @@ class StoryPanel (wx.ScrolledWindow):
                                   'Not Found', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 
+    def replaceRegexpInSelectedWidget (self, findRegexp, replacementRegexp, flags):
+        for widget in self.widgets:                                            
+            if widget.selected:
+                widget.replaceRegexp(findRegexp, replacementRegexp, flags)         
+                widget.clearPaintCache()
+                self.Refresh()
+                self.parent.setDirty(True, action = 'Replace in Currently Selected Widget')
+
     def replaceRegexpInWidgets (self, findRegexp, replacementRegexp, flags):
         """
         Performs a string replace on all widgets in this StoryPanel.
