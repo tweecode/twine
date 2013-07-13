@@ -261,7 +261,10 @@ class StoryPanel (wx.ScrolledWindow):
         Scrolls so that the widget passed is visible.
         """
         widgetRect = widget.getPixelRect()
-        self.Scroll(max(widgetRect.x - 20, 0), max(widgetRect.y - 20, 0))
+        xUnit,yUnit = self.GetScrollPixelsPerUnit()
+        sx = (widgetRect.x-20) / float(xUnit)
+        sy = (widgetRect.y-20) / float(yUnit)
+        self.Scroll(max(sx, 0), max(sy - 20, 0))
 
     def pushUndo (self, action):
         """
