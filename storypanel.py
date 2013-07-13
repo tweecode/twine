@@ -207,19 +207,23 @@ class StoryPanel (wx.ScrolledWindow):
         # find the current selection
         # if there are multiple selections, we just use the first
         
-        widget = self.widgets[0]
-        i = 0
+        i = -1
         
-        for widget in self.widgets:
-            i += 1
-            if widget.selected: break    
-            
-        while i <= len(self.widgets):
-            if self.widgets[i % len(self.widgets)].containsRegexp(regexp, flags):
-                self.widgets[i % len(self.widgets)].setSelected(True)
-                self.scrollToWidget(self.widgets[i % len(self.widgets)])
+        # look for selected PassageWidgets
+        for num, widget in enumerate(self.widgets):
+            if widget.selected: 
+                i = num
+                break
+
+        # if no widget is selected, start at first widget
+        if i==len(self.widgets)-1:
+            i=-1
+        
+        for widget in self.widgets[i+1:]:
+            if widget.containsRegexp(regexp, flags):
+                widget.setSelected(True)
+                self.scrollToWidget(widget)
                 return
-            i += 1
             
         # fallthrough: text not found
         
