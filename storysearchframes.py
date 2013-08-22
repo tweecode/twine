@@ -49,7 +49,8 @@ class StoryReplaceFrame (wx.Frame):
                           style = wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CAPTION | wx.SYSTEM_MENU)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
-        replacePanel = ReplacePanel(self, allowIncremental = False, \
+        replacePanel = ReplacePanel(self, allowIncremental = True, \
+                                    onFind=self.onFind, onReplace=self.onReplace, \
                                     onReplaceAll = self.onReplaceAll, onClose = self.onClose)
         sizer.Add(replacePanel)
         replacePanel.focus()
@@ -57,6 +58,12 @@ class StoryReplaceFrame (wx.Frame):
         sizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
+
+    def onFind (self, regexp, flags):            
+        self.storyPanel.findWidgetRegexp(regexp, flags)
+
+    def onReplace(self, findRegexp, flags, replaceRegexp):
+        self.storyPanel.replaceRegexpInSelectedWidget(findRegexp, replaceRegexp, flags)
         
     def onReplaceAll (self, findRegexp, flags, replaceRegexp):        
         self.storyPanel.replaceRegexpInWidgets(findRegexp, replaceRegexp, flags)

@@ -207,25 +207,37 @@ class StoryPanel (wx.ScrolledWindow):
         # find the current selection
         # if there are multiple selections, we just use the first
         
-        widget = self.widgets[0]
-        i = 0
+        i = -1
         
-        for widget in self.widgets:
-            i += 1
-            if widget.selected: break    
-            
-        while i <= len(self.widgets):
-            if self.widgets[i % len(self.widgets)].containsRegexp(regexp, flags):
-                self.widgets[i % len(self.widgets)].setSelected(True)
-                self.scrollToWidget(self.widgets[i % len(self.widgets)])
+        # look for selected PassageWidgets
+        for num, widget in enumerate(self.widgets):
+            if widget.selected: 
+                i = num
+                break
+
+        # if no widget is selected, start at first widget
+        if i==len(self.widgets)-1:
+            i=-1
+        
+        for widget in self.widgets[i+1:]:
+            if widget.containsRegexp(regexp, flags):
+                widget.setSelected(True)
+                self.scrollToWidget(widget)
                 return
-            i += 1
             
         # fallthrough: text not found
         
         dialog = wx.MessageDialog(self, 'The text you entered was not found in your story.', \
                                   'Not Found', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
+
+    def replaceRegexpInSelectedWidget (self, findRegexp, replacementRegexp, flags):
+        for widget in self.widgets:                                            
+            if widget.selected:
+                widget.replaceRegexp(findRegexp, replacementRegexp, flags)         
+                widget.clearPaintCache()
+                self.Refresh()
+                self.parent.setDirty(True, action = 'Replace in Currently Selected Widget')
 
     def replaceRegexpInWidgets (self, findRegexp, replacementRegexp, flags):
         """
@@ -257,7 +269,10 @@ class StoryPanel (wx.ScrolledWindow):
         Scrolls so that the widget passed is visible.
         """
         widgetRect = widget.getPixelRect()
-        self.Scroll(max(widgetRect.x - 20, 0), max(widgetRect.y - 20, 0))
+        xUnit,yUnit = self.GetScrollPixelsPerUnit()
+        sx = (widgetRect.x-20) / float(xUnit)
+        sy = (widgetRect.y-20) / float(yUnit)
+        self.Scroll(max(sx, 0), max(sy - 20, 0))
 
     def pushUndo (self, action):
         """
