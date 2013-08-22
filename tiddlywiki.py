@@ -338,52 +338,56 @@ class Tiddler:
 			pubDate = datetime.datetime.now()
 		)
 
-	def links (self, includeExternal = False):
+	def displays(self):
+		"""
+		Returns a list of all passages <<display>>ed by this one. By default,
+		returns internal links and dis
+		"""
+		if ('script' in self.tags) or ('stylesheet' in self.tags):
+			return []
+		return re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
+		
+	def links (self, includeInternal = True, includeMacros = True):
 		"""
 		Returns a list of all passages linked to by this one. By default,
-		only returns internal links, but you can override it with the includeExternal
-		parameter.
+		returns internal links and <<choice>>/<<actions>> macros.
 		"""
 		
 		if ('script' in self.tags) or ('stylesheet' in self.tags):
 			return []
-
+		
+		links = []
+		actions = []
+		choices = []
+		
 		# regular hyperlinks
+		if includeInternal:
+			links = re.findall(r'\[\[(.+?)\]\]', self.text)
 		
-		links = re.findall(r'\[\[(.+?)\]\]', self.text)
+			# check for [[title|target]] formats
 	
-		# check for [[title|target]] formats
+			def filterPrettyLinks (text):
+				if '|' in text: return re.sub('.*\|', '', text)
+				else: return text
 
-		def filterPrettyLinks (text):
-			if '|' in text: return re.sub('.*\|', '', text)
-			else: return text
+			links = map(filterPrettyLinks, links)
+
+		if includeMacros:
 			
-		# remove external links
-		
-		def isInternalLink (text):
-			return not re.match('http://', text)
-		
-		links = map(filterPrettyLinks, links)
-		if not includeExternal: links = filter(isInternalLink, links)
+			# <<choice ''>>
+			
+			choices = re.findall(r'\<\<choice\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 
-		# <<display ''>>
-		
-		displays = re.findall(r'\<\<display\s+[\'"](.+?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
-		
-		# <<choice ''>>
-		
-		choices = re.findall(r'\<\<choice\s+[\'"](.+?)[\'"]\s?\>\>', self.text, re.IGNORECASE)
-
-		# <<actions ''>>
-		
-		actions = list()
-		actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text, re.IGNORECASE)
-		for block in actionBlocks:
-			actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
+			# <<actions ''>>
+			
+			actions = []
+			actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text, re.IGNORECASE)
+			for block in actionBlocks:
+				actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
 		
 		# remove duplicates by converting to a set
 		
-		return list(set(links + displays + choices + actions))
+		return list(set(links + choices + actions))
 
 #
 # Helper functions

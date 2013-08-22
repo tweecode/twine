@@ -836,7 +836,7 @@ Wikifier.prototype.fullArgs = function () {
 };
 Wikifier.parse = function (b) {
     function alter(from,to) {
-        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|['\"](?:[^\"'\\\\]*\\\\.)*[^\"'\\\\]*['\"]))*[^'\"]*$)";
+        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
         return b.replace(new RegExp(from+g,"gi"),to);
     }
 	b = alter("\\$","state.history[0].variables.");

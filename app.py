@@ -261,11 +261,11 @@ class App (wx.App):
         
         # OS X py2app'd apps will direct us right into the app bundle
         
-        scriptPath = re.sub('[^/]+.app/Contents/Resources', '', scriptPath)
+        scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
         
         # Windows py2exe'd apps add an extraneous library.zip at the end
         
-        scriptPath = scriptPath.replace('\\library.zip', '')
+        scriptPath = scriptPath.replace('\\\w*.zip', '')
         return scriptPath
     
     NAME = 'Twine'

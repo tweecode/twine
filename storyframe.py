@@ -334,7 +334,7 @@ class StoryFrame (wx.Frame):
         title = '"' + os.path.basename(bits[0]) + '"'
         if title == '""': title = 'your story'
         
-        message = 'Revert to the last version of ' + title + ' you saved?'
+        message = 'Revert to the last saved version of ' + title + '?'
         dialog = wx.MessageDialog(self, message, 'Revert to Saved', wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
         
         if (dialog.ShowModal() == wx.ID_YES):
@@ -351,7 +351,7 @@ class StoryFrame (wx.Frame):
         
     def checkCloseDo (self, event, byMenu):
         """
-        If this instance's dirty flag is set, asks the user to confirm that they don't want to save changes.
+        If this instance's dirty flag is set, asks the user if they want to save the changes.
         """
                 
         if (self.dirty):
@@ -359,14 +359,20 @@ class StoryFrame (wx.Frame):
             title = '"' + os.path.basename(bits[0]) + '"'
             if title == '""': title = 'your story' 
 
-            message = 'Are you sure you want to close ' + title + ' without saving changes?'
+            message = 'Do you want to save the changes to ' + title + ' before closing?'
             dialog = wx.MessageDialog(self, message, 'Unsaved Changes', \
-                                      wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
-            if (dialog.ShowModal() == wx.ID_NO):
+                                      wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+            result = dialog.ShowModal();
+            if (result == wx.ID_CANCEL):
                 event.Veto()
                 return
-            else:
+            elif (result == wx.ID_NO):
                 self.dirty = False
+            else:
+                self.save(None)
+                if self.dirty:
+                    event.Veto()
+                    return
         
         # ask all our widgets to close any editor windows
         
@@ -439,7 +445,7 @@ class StoryFrame (wx.Frame):
                     for t in tw.tiddlers:
                         tiddler = tw.tiddlers[t]
                         new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True)
-                        new.tags = tiddler.tags
+                        new.passage.tags = tiddler.tags
                     self.setDirty(True, 'Import')
                 else:
                     dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
@@ -518,7 +524,7 @@ class StoryFrame (wx.Frame):
                     ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
                     state = 0;
                     state_filename = '';
-                    excludepassages = [ 'Start', 'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings' ]
+                    excludepassages = PassageWidget.INFO_PASSAGES + ['Start']
                     for line in lines:
                         if state == 0:
                             state_filename = line
