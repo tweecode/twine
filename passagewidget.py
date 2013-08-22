@@ -216,6 +216,12 @@ class PassageWidget:
             if (widget != self) and (self.intersects(widget)):
                 intersects = True
                 break
+            
+            #Enforce positive coordinates
+            if not 'Twine.hide' in self.passage.tags:
+                if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+                    intersects = True
+                    break
 
         return intersects
 
@@ -360,12 +366,12 @@ class PassageWidget:
 
         def dim (c, dim):
             """Lowers a color's alpha if dim is true."""
-            if isinstance(c, wx.Color): c = list(c.Get(includeAlpha = True))
+            if isinstance(c, wx.Colour): c = list(c.Get(includeAlpha = True))
             if len(c) < 4:
                 c = list(c)
                 c.append(255)
             if dim: c[3] *= PassageWidget.DIMMED_ALPHA
-            return wx.Color(c[0], c[1], c[2], c[3])
+            return wx.Colour(c[0], c[1], c[2], c[3])
 
         # set up our buffer
 
@@ -533,7 +539,7 @@ class PassageWidget:
             
             if isinstance(gc, wx.GraphicsContext):
                 r, g, b = color.Get()
-                color = wx.Color(r, g, b, 64)
+                color = wx.Colour(r, g, b, 64)
                 gc.SetBrush(wx.Brush(color))
             else:
                 gc.SetBrush(wx.TRANSPARENT_BRUSH)
