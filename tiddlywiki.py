@@ -369,8 +369,16 @@ class Tiddler:
 			def filterPrettyLinks (text):
 				if '|' in text: return re.sub('.*\|', '', text)
 				else: return text
-
+			
 			links = map(filterPrettyLinks, links)
+			
+			# Remove externals
+			def filterExternals (text):
+				for t in ['http://', 'https://', 'ftp://']:
+					if text.lower().startswith(t): return False
+				return True
+				
+			links = filter(filterExternals, links)
 
 		if includeMacros:
 			

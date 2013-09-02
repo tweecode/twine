@@ -257,9 +257,6 @@ class StoryFrame (wx.Frame):
 
         helpMenu.Append(StoryFrame.HELP_GROUP, '&Discuss Twine Online')
         self.Bind(wx.EVT_MENU, self.app.openGroup, id = StoryFrame.HELP_GROUP)
-
-        helpMenu.Append(StoryFrame.HELP_BUG, 'Report a &Bug')
-        self.Bind(wx.EVT_MENU, self.app.reportBug, id = StoryFrame.HELP_BUG)
         
         helpMenu.AppendSeparator()
         
@@ -510,7 +507,7 @@ class StoryFrame (wx.Frame):
             # is there a Start passage?
             if hasstartpassage == False:
                 self.app.displayError('building your story because there is no "Start" passage. ' + "\n" 
-                                      + 'Your story will build but the web-browser will not be able to run the story. ' + "\n"
+                                      + 'Your story will build but the web browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
 
             for widget in self.storyPanel.widgets:
@@ -875,7 +872,6 @@ class StoryFrame (wx.Frame):
     
     HELP_MANUAL = 501
     HELP_GROUP = 502
-    HELP_BUG = 503
 
     # tooltip labels
     

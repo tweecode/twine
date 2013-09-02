@@ -131,7 +131,7 @@ class TweeLexer:
                     if not self.passageExists(m.group(4)):
                         s2 = TweeLexer.BAD_LINK
                         for t in ['http://', 'https://', 'ftp://']:
-                          if t in m.group(4).lower():
+                          if m.group(4).lower().startswith(t):
                             s2 = TweeLexer.EXTERNAL
                 self.applyStyle(pos, length, s2)
                 pos += length-1
@@ -187,8 +187,17 @@ class TweeLexer:
                 pos += length-1
                 styleStart = pos+1
                 
-            # HTML (cannot have interior markup)
+            # Old-version HTML block (cannot have interior markup)
             m = re.match("<html>((?:.|\\n)*?)</html>",text[pos:],re.I)
+            if m:
+                length = m.end(0);
+                self.applyStyle(styleStart, pos-styleStart, style)
+                self.applyStyle(pos, length, TweeLexer.HTML)
+                pos += length-1
+                styleStart = pos+1
+                
+            # Inline HTML tags
+            m = re.match("<(?:\\/?\\w+|\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?)>",text[pos:],re.I)
             if m:
                 length = m.end(0);
                 self.applyStyle(styleStart, pos-styleStart, style)
@@ -217,11 +226,7 @@ class TweeLexer:
                 self.applyStyle(styleStart, pos-styleStart, style)
                 self.applyStyle(pos, length, TweeLexer.MONO)
                 pos += length-1
-                styleStart = pos+1   
-                
-                """(?:([^\(@]+)\(([^\)]+)(?:\):))
-                |
-                (?:([^:@]+):([^;]+);)"""
+                styleStart = pos+1
                 
             # comment (cannot have interior markup)
             m = re.match("/%((?:.|\\n)*?)%/",text[pos:],re.I)

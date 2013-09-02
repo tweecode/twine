@@ -95,7 +95,10 @@ class StoryPanel (wx.ScrolledWindow):
         return new
         
     def snapWidget (self, widget):
-        """Snaps a widget to our grid if self.snapping is set."""
+        """
+        Snaps a widget to our grid if self.snapping is set.
+        Then, call findSpace()
+        """
         if self.snapping:
             pos = list(widget.pos)
             
@@ -109,6 +112,7 @@ class StoryPanel (wx.ScrolledWindow):
                 
             widget.pos = pos
             self.Refresh()
+			widget.findSpace()
             
     def cleanup (self):
         """Snaps all widgets to the grid."""

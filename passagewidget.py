@@ -41,7 +41,6 @@ class PassageWidget:
             self.passage.text = text
             self.selected = False
             self.pos = list(pos)
-            self.findSpace()
             
     def getSize (self):
         """Returns this instance's logical size."""
@@ -99,16 +98,21 @@ class PassageWidget:
  
     def findSpace (self):
         """Moves this widget so it doesn't overlap any others."""        
-        originalX = self.pos[0]
+        turns = 0.0
+        movecount = 1
+        """
+        Don't adhere to the grid if snapping isn't enabled.
+        Instead, move in 1/5 grid increments.
+        """
+        griddivision = 1 if self.parent.snapping else 0.2
         
-        while self.intersectsAny():
-            self.pos[0] += self.parent.GRID_SPACING 
-            rightEdge = self.pos[0] + PassageWidget.SIZE
-            maxWidth = self.parent.toLogical((self.parent.GetSize().width - self.parent.INSET[0], -1), \
-                                             scaleOnly = True)[0]
-            if rightEdge > maxWidth:
-                self.pos[0] = 10
-                self.pos[1] += self.parent.GRID_SPACING
+        while self.intersectsAny() and turns < 99*griddivision:
+            """Move in an Ulam spiral pattern: n spaces left, n spaces up, n+1 spaces right, n+1 spaces down"""
+            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1));
+            movecount -= 1
+            if movecount <= 0:
+                turns += 0.5
+                movecount = int(math.ceil(turns)/griddivision)
 
     def containsRegexp (self, regexp, flags):
         """
@@ -134,7 +138,8 @@ class PassageWidget:
         """Returns a list of broken links in this widget."""
         brokens = []
         for link in self.passage.links():
-            if not self.parent.findWidget(link): brokens.append(link)
+            if not self.parent.findWidget(link):
+                brokens.append(link)
         return brokens
                  
     def setSelected (self, value, exclusive = True):
@@ -335,7 +340,9 @@ class PassageWidget:
         dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
     
     def getTitleColorIndex(self):
-        if 'script' in self.passage.tags:
+        if any(t.startswith('Twine.') for t in self.passage.tags):
+            return 'privateTitleBar'
+        elif 'script' in self.passage.tags:
             return 'scriptTitleBar'
         elif 'stylesheet' in self.passage.tags:
             return 'stylesheetTitleBar'
@@ -493,7 +500,6 @@ class PassageWidget:
                 if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
-            
             titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
@@ -514,11 +520,14 @@ class PassageWidget:
             
             gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
             
-            while height < size.height - inset:
+            chars = len(self.passage.text)
+            while height < size.height - inset and chars > 0:
                 width = size.height - inset
                 
                 if height + (PassageWidget.GREEK_HEIGHT * 2) > size.height - inset:
-                    width = width / 2
+                    width /= 2
+                elif chars < 80:
+                    width = max(4, width * chars / 80)
 
                 if isinstance(gc, wx.GraphicsContext):
                     gc.StrokeLine(inset, height, width, height)
@@ -526,6 +535,7 @@ class PassageWidget:
                     gc.DrawLine(inset, height, width, height)
                     
                 height += PassageWidget.GREEK_HEIGHT * 2
+                chars -= 80
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
@@ -599,6 +609,7 @@ class PassageWidget:
                'storyInfoTitleBar': (28, 89, 74), \
                'scriptTitleBar': (89, 66, 28), \
                'stylesheetTitleBar': (111, 49, 83), \
+               'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
                'excerptText': (0, 0, 0) }
     DIMMED_ALPHA = 0.25
