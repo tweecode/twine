@@ -88,13 +88,13 @@ class StoryPanel (wx.ScrolledWindow):
         pos = self.toLogical(pos)
         new = PassageWidget(self, self.app, title = title, text = text, pos = pos)
         self.widgets.append(new)
-        self.snapWidget(new)
+        self.snapWidget(new, quietly)
         self.Refresh()
         self.resize()
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
         
-    def snapWidget (self, widget):
+    def snapWidget (self, widget, quickly = False):
         """
         Snaps a widget to our grid if self.snapping is set.
         Then, call findSpace()
@@ -112,7 +112,10 @@ class StoryPanel (wx.ScrolledWindow):
                 
             widget.pos = pos
             self.Refresh()
-			widget.findSpace()
+        if quickly:
+            widget.findSpaceQuickly()
+        else:
+            widget.findSpace()
             
     def cleanup (self):
         """Snaps all widgets to the grid."""

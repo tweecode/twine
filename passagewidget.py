@@ -113,6 +113,18 @@ class PassageWidget:
             if movecount <= 0:
                 turns += 0.5
                 movecount = int(math.ceil(turns)/griddivision)
+                
+    def findSpaceQuickly(self):
+        """ A quicker findSpace where the position and visibility doesn't really matter """
+        while self.intersectsAny():
+            self.pos[0] += self.parent.GRID_SPACING 
+            rightEdge = self.pos[0] + PassageWidget.SIZE
+            maxWidth = self.parent.toLogical((self.parent.GetSize().width - self.parent.INSET[0], -1), \
+                                             scaleOnly = True)[0]
+            if rightEdge > maxWidth:
+                self.pos[0] = 10
+                self.pos[1] += self.parent.GRID_SPACING
+ 
 
     def containsRegexp (self, regexp, flags):
         """

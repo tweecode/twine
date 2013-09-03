@@ -437,12 +437,13 @@ class StoryFrame (wx.Frame):
                 tw.addTweeFromFilename(dialog.GetPath())
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
-                
+                lastpos = (0, 0)
                 if len(tw.tiddlers):
                     for t in tw.tiddlers:
                         tiddler = tw.tiddlers[t]
-                        new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True)
+                        new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True, pos = lastpos)
                         new.passage.tags = tiddler.tags
+                        lastpos = new.pos
                     self.setDirty(True, 'Import')
                 else:
                     dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
