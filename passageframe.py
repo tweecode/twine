@@ -433,13 +433,11 @@ class PassageFrame (wx.Frame):
     def setLexer (self):
         """
         Sets our custom lexer for the body input so long as the passage
-        does not have the tag "stylesheet" or "script" or is StoryIncludes.
+        is part of the story.
         """
         oldLexing = self.usingLexer
         
-        if re.search(r'\bstylesheet\b', self.tagsInput.GetValue()) or \
-           re.search(r'\bscript\b', self.tagsInput.GetValue()) or \
-           self.widget.passage.title == 'StoryIncludes':
+        if not self.widget.passage.isStoryText():
             self.usingLexer = False
             self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
         else:

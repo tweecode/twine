@@ -52,10 +52,24 @@ class TiddlyWiki:
 		output = u''
 		
 		if (target):
-			header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
-			output = header.read()
-			header.close()
-
+			try:
+				header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
+				output = header.read()
+				header.close()
+			except IOError:
+				app.displayError("building: the story format '" + target + "' isn't available.\n"
+					+ "Please select another format from the Story Format submenu.\n\n")
+			
+			# Insert the main engine
+			if output.count('"ENGINE"') > 0:
+				try:
+					engine = open(app.getPath() + os.sep + 'targets' + os.sep + 'engine.js')
+					enginecode = engine.read()
+					engine.close()
+					output = output.replace('"ENGINE"',enginecode)
+				except IOError:
+					app.displayError("building: the file 'engine.js' used by the story format '" + target + "' wasn't found.\n\n")
+		
 		if self.storysettings.has_key('Obfuscate') and \
 		self.storysettings['Obfuscate'] == 'SWAP' and self.storysettings.has_key('ObfuscateKey') :
 			nss = u''
@@ -122,33 +136,7 @@ class TiddlyWiki:
 		output += '}'
 			
 		return output
-		
-	def toRss (self, num_items = 5):
-		"""Returns an RSS2 object of recently changed tiddlers."""
-		url = self.try_getting(['StoryUrl', 'SiteUrl'])
-		title = self.try_getting(['StoryTitle', 'SiteTitle'], 'Untitled Story')
-		subtitle = self.try_getting(['StorySubtitle', 'SiteSubtitle'])
-		
-		# build a date-sorted list of tiddler titles
-		
-		sorted_keys = self.tiddlers.keys()
-		sorted_keys.sort(key = lambda i: self.tiddlers[i].modified)
 				
-		# and then generate our items
-		
-		rss_items = []
-		
-		for i in sorted_keys[:num_items]:
-			rss_items.append(self.tiddlers[i].toRss())
-				
-		return rss.RSS2(
-			title = title,
-			link = url,
-			description = subtitle,
-			pubDate = datetime.datetime.now(),
-			items = rss_items
-			)
-		
 	def addTwee (self, source):
 		"""Adds Twee source code to this TiddlyWiki."""
 		source = source.replace("\r\n", "\n")
@@ -159,15 +147,17 @@ class TiddlyWiki:
 			
 	def addHtml (self, source):
 		"""Adds HTML source code to this TiddlyWiki."""
-		divs_re = re.compile(r'<div id="storeArea">(.*)</div>\s*</html>',
+		divs_re = re.compile(r'<div id="storeArea">(.*)</div>',
 												 re.DOTALL)
 		divs = divs_re.search(source)
-
 		if divs:
 			for div in divs.group(1).split('<div'):
 				self.addTiddler(Tiddler('<div' + div, 'html'))
 				
-	def addTweeFromFilename(self, filename):
+	def addHtmlFromFilename(self, filename):
+		self.addTweeFromFilename(filename, True)
+		
+	def addTweeFromFilename(self, filename, html = False):
 		try:
 			source = codecs.open(filename, 'r', 'utf-8-sig', 'strict')
 			w = source.read()
@@ -179,7 +169,10 @@ class TiddlyWiki:
 				source = open(filename, 'rb')
 				w = source.read()
 		source.close()
-		self.addTwee(w)
+		if html:
+			self.addHtml(w)
+		else:
+			self.addTwee(w)
 
 	def addTiddler (self, tiddler):
 		"""Adds a Tiddler object to this TiddlyWiki."""
@@ -190,6 +183,8 @@ class TiddlyWiki:
 				self.tiddlers[tiddler.title] = tiddler
 		else:
 			self.tiddlers[tiddler.title] = tiddler
+	
+	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings']
 		
 #
 # Tiddler class
@@ -218,6 +213,7 @@ class Tiddler:
 		# we were just born
 		
 		self.created = self.modified = time.localtime()
+		self.pos = [0,0]
 		
 		# figure out our title
 				
@@ -252,7 +248,7 @@ class Tiddler:
 		# title
 		
 		self.title = 'untitled passage'
-		title_re = re.compile(r'tiddler="(.*?)"')
+		title_re = re.compile(r'(?:data\-)?(?:tiddler|name)="([^"]*?)"')
 		title = title_re.search(source)
 		if title:
 			self.title = title.group(1)
@@ -260,7 +256,7 @@ class Tiddler:
 		# tags
 		
 		self.tags = []
-		tags_re = re.compile(r'tags="(.*?)"')
+		tags_re = re.compile(r'(?:data\-)?tags="([^"]*?)"')
 		tags = tags_re.search(source)
 		if tags and tags.group(1) != '':
 			self.tags = tags.group(1).split(' ')
@@ -268,7 +264,7 @@ class Tiddler:
 		# creation date
 		
 		self.created = time.localtime()
-		created_re = re.compile(r'created="(.*?)"')
+		created_re = re.compile(r'(?:data\-)?created="([^"]*?)"')
 		created = created_re.search(source)
 		if created:
 			self.created = decode_date(created.group(1))
@@ -276,10 +272,17 @@ class Tiddler:
 		# modification date
 		
 		self.modified = time.localtime()
-		modified_re = re.compile(r'modified="(.*?)"')
+		modified_re = re.compile(r'(?:data\-)?modified="([^"]*?)"')
 		modified = modified_re.search(source)
 		if (modified):
 			self.modified = decode_date(modified.group(1))
+		
+		# position
+		self.pos = [0,0]
+		pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
+		pos = pos_re.search(source)
+		if (pos):
+			self.pos = map(int, pos.group(1).split(','))
 		
 		# body text
 		
@@ -308,6 +311,7 @@ class Tiddler:
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
+		output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
 		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		
@@ -327,23 +331,19 @@ class Tiddler:
 			
 		output += u"\n" + self.text + u"\n\n\n"
 		return output
-		
-		
-	def toRss (self, author = 'twee'):
-		"""Returns an RSS representation of this tiddler."""
-		return rss.RSSItem(
-			title = self.title,
-			link = '',
-			description = self.text,
-			pubDate = datetime.datetime.now()
-		)
+	
+	def isStoryText(self):
+		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
+			or (self.title in TiddlyWiki.INFO_PASSAGES))
 
+	def linksAndDisplays(self):
+		return list(set(self.links()+self.displays()))
+	
 	def displays(self):
 		"""
-		Returns a list of all passages <<display>>ed by this one. By default,
-		returns internal links and dis
+		Returns a list of all passages <<display>>ed by this one.
 		"""
-		if ('script' in self.tags) or ('stylesheet' in self.tags):
+		if not self.isStoryText():
 			return []
 		return re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 		
@@ -353,7 +353,7 @@ class Tiddler:
 		returns internal links and <<choice>>/<<actions>> macros.
 		"""
 		
-		if ('script' in self.tags) or ('stylesheet' in self.tags):
+		if not self.isStoryText():
 			return []
 		
 		links = []

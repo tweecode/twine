@@ -10,7 +10,7 @@ class App (wx.App):
     
     NAME = 'Twine'
     VERSION = '1.3.6 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
-    RECENT_FILES = 5
+    RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
         """Initializes the application."""
@@ -197,7 +197,7 @@ class App (wx.App):
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#simple,storyformats')
+        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#basic,storyformats')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
@@ -206,6 +206,10 @@ class App (wx.App):
     def openGroup (self, event = None):
         """Opens the Google group."""
         wx.LaunchDefaultBrowser('http://groups.google.com/group/tweecode/')
+        
+    def openGitHub (self, event = None):
+        """Opens the GitHub page."""
+        wx.LaunchDefaultBrowser('https://github.com/tweecode/twine')
 
     def loadPrefs (self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
@@ -263,10 +267,6 @@ class App (wx.App):
         
         scriptPath = scriptPath.replace('\\\w*.zip', '')
         return scriptPath
-    
-    NAME = 'Twine'
-    VERSION = '1.3.6'
-    RECENT_FILES = 10
 
 # start things up if we were called directly
 if __name__ == "__main__":

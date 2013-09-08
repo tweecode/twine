@@ -205,23 +205,6 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
-        
-    def checkDelete (self):
-        """Warns the user about deleting this passage if links exist to it."""
-        linked = False
-        for widget in self.parent.widgets:
-            if self.passage.title in widget.passage.links():
-                linked = True
-                break
-          
-        if linked:
-            message = 'Are you sure you want to delete "' + self.passage.title + '"?' + \
-                      ' Links to it from other passages will become broken.'
-            dialog = wx.MessageDialog(self.parent, message, 'Delete Passage', \
-                                      wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
-            return dialog.ShowModal() == wx.ID_YES
-                
-        return True
 
     def intersectsAny (self):
         """Returns whether this widget intersects any other in the same StoryPanel."""
@@ -322,8 +305,7 @@ class PassageWidget:
             gc = wx.GraphicsContext.Create(gc)
         
         links = self.passage.links()
-        displays = self.passage.displays()
-        for link in list(set(links + displays)):
+        for link in self.passage.linksAndDisplays():
             if link in dontDraw: continue
                  
             otherWidget = self.parent.findWidget(link)
@@ -358,7 +340,7 @@ class PassageWidget:
             return 'scriptTitleBar'
         elif 'stylesheet' in self.passage.tags:
             return 'stylesheetTitleBar'
-        elif self.passage.title in PassageWidget.INFO_PASSAGES:
+        elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
             return 'startTitleBar'
@@ -632,7 +614,6 @@ class PassageWidget:
     ARROWHEAD_LENGTH = 10
     MIN_ARROWHEAD_LENGTH = 5
     ARROWHEAD_ANGLE = math.pi / 6
-    INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings']
         
 # contextual menu
 

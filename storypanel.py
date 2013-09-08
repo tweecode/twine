@@ -185,14 +185,39 @@ class StoryPanel (wx.ScrolledWindow):
         Deletes all selected widgets. You can ask this to save an undo state manually,
         but by default, it doesn't.
         """
-        toDelete = []
+
+        selected = []
+        connected = []
         
         for widget in self.widgets:
-            if widget.selected and widget.checkDelete(): toDelete.append(widget)
+            if widget.selected: selected.append(widget)
+            
+        for widget in self.widgets: 
+            if not widget.selected:
+                for link in widget.passage.linksAndDisplays():
+                    if len(link) > 0:
+                        for widget2 in selected:
+                            if widget2.passage.title == link:
+                                connected.append(widget)
+                                
+        if len(connected):
+            message = 'Are you sure you want to delete ' + \
+                      (('"' + selected[0].passage.title + '"? Links to it') if len(selected) == 1 else
+                      (str(len(selected)+1) + ' passages? Links to them')) + \
+                       ' from ' + \
+                      (('"' + connected[0].passage.title + '"') if len(connected) == 1 else
+                      (str(len(connected)+1) + ' other passages')) + \
+                      ' will become broken.'
+            dialog = wx.MessageDialog(self.parent, message,
+                                      'Delete Passage' + ('s' if len(selected) > 1 else ''), \
+                                      wx.ICON_WARNING | wx.OK | wx.CANCEL )
+            
+            if dialog.ShowModal() != wx.ID_OK:
+                return
         
-        for widget in toDelete: self.widgets.remove(widget)
+        for widget in selected: self.widgets.remove(widget)
         
-        if len(toDelete):
+        if len(selected):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
         
