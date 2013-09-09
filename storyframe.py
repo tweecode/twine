@@ -88,7 +88,8 @@ class StoryFrame (wx.Frame):
         
         fileMenu.AppendSeparator()
         
-        # Import menu
+        # Import submenu
+        
         importMenu = wx.Menu()
 
         importMenu.Append(StoryFrame.FILE_IMPORT_SOURCE, 'Twee Source &Code...')
@@ -98,7 +99,7 @@ class StoryFrame (wx.Frame):
         
         fileMenu.AppendMenu(wx.ID_ANY, '&Import', importMenu)
         
-        # Export menu
+        # Export submenu
         
         exportMenu = wx.Menu()
         
@@ -127,8 +128,13 @@ class StoryFrame (wx.Frame):
         editMenu.Append(wx.ID_UNDO, '&Undo\tCtrl-Z')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.undo(), id = wx.ID_UNDO)
         
-        editMenu.Append(wx.ID_REDO, '&Redo\tCtrl-Y')
-        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.redo(), id = wx.ID_REDO)
+        if sys.platform == 'darwin':
+            shortcut = 'Ctrl-Shift-Z'
+        else:
+            shortcut = 'Ctrl-Y'
+            
+        editMenu.Append(wx.ID_REDO, '&Redo\t' + shortcut)
+        self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Redo(), id = wx.ID_REDO)
 
         editMenu.AppendSeparator()
         
@@ -452,12 +458,12 @@ class StoryFrame (wx.Frame):
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
                 if len(tw.tiddlers):
-                    lastpos = (0, 0)
+                    lastpos = [0, 0]
                     for t in tw.tiddlers:
                         tiddler = tw.tiddlers[t]
                         new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, \
                                                         pos = tiddler.pos if tiddler.pos != None else lastpos, \
-                                                        quietly = True)
+                                                        logicals = True, quietly = True)
                         lastpos = new.pos
                         new.passage.tags = tiddler.tags
                     self.setDirty(True, 'Import')
@@ -482,7 +488,7 @@ class StoryFrame (wx.Frame):
                 
                 # add passages for each of the tiddlers the TiddlyWiki saw
                 if len(tw.tiddlers):
-                    lastpos = (0, 0)
+                    lastpos = [0, 0]
                     for t in tw.tiddlers:
                         tiddler = tw.tiddlers[t]
                         new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True, pos = lastpos)

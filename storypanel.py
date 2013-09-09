@@ -32,7 +32,8 @@ class StoryPanel (wx.ScrolledWindow):
         self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
         self.draggingMarquee = False
-        self.draggingWidgets = False
+        self.draggingWidgets = None
+        self.notDraggingWidgets = None
         self.scrolling = False
         self.undoStack = []
         self.undoPointer = -1
@@ -77,15 +78,15 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
         
-    def newWidget (self, title = None, text = '', pos = None, quietly = False):
+    def newWidget (self, title = None, text = '', pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
                 
         # defaults
         
         if not title: title = self.untitledName()
         if not pos: pos = StoryPanel.INSET
-        
-        pos = self.toLogical(pos)
+        if not logicals: qspos = self.toLogical(pos)
+		
         new = PassageWidget(self, self.app, title = title, text = text, pos = pos)
         self.widgets.append(new)
         self.snapWidget(new, quietly)
@@ -461,7 +462,9 @@ class StoryPanel (wx.ScrolledWindow):
         it passes control to us so that we can move all selected widgets at once.
         """
         if not self.draggingWidgets:
-            self.draggingWidgets = True
+            # cache the sets of dragged vs not-dragged widgets
+            self.draggingWidgets = []
+            self.notDraggingWidgets = []
             self.clickedWidget = clickedWidget
             self.actuallyDragged = False
             self.dragCurrent = event.GetPosition()
@@ -472,7 +475,10 @@ class StoryPanel (wx.ScrolledWindow):
             
             for widget in self.widgets:
                 if widget.selected:
+                    self.draggingWidgets.append(widget)
                     widget.predragPos = widget.pos
+                else:
+                    self.notDraggingWidgets.append(widget)
             
             # grab mouse focus
             
@@ -501,10 +507,8 @@ class StoryPanel (wx.ScrolledWindow):
             
             goodDrag = True
             
-            # TODO: optimize this loop
-            
-            for widget in self.widgets:
-                if widget.selected and widget.intersectsAny():
+            for widget in self.draggingWidgets:
+                if widget.intersectsAny(dragging = True):
                     goodDrag = False
                     break
 
@@ -540,15 +544,14 @@ class StoryPanel (wx.ScrolledWindow):
             self.oldDirtyRect = dirtyRect
             self.Refresh(True, dirtyRect)
         else:
-            self.draggingWidgets = False
 
             if self.actuallyDragged:
                 # is this a bad drag?
     
                 goodDrag = True
                 
-                for widget in self.widgets:
-                    if widget.selected and widget.intersectsAny():
+                for widget in self.draggingWidgets:
+                    if widget.intersectsAny(dragging = True):
                         goodDrag = False
                         break
                     
@@ -558,11 +561,14 @@ class StoryPanel (wx.ScrolledWindow):
                     self.parent.setDirty(True, action = 'Move')
                     self.resize()
                 else:
-                    for widget in self.widgets:
-                        if widget.selected:
-                            widget.pos = widget.predragPos
-                            widget.setDimmed(False)
+                    for widget in self.draggingWidgets:
+                        widget.pos = widget.predragPos
+                        widget.setDimmed(False)
                     self.Refresh()
+					
+				self.draggingWidgets = None
+                self.notDraggingWidgets = None
+				
             else:
                 # change the selection
                 self.clickedWidget.setSelected(True, not event.ShiftDown())

@@ -33,6 +33,7 @@ class PassageWidget:
         
         if state:
             self.passage = state['passage']
+            self.passage.update()
             self.pos = state['pos']
             self.selected = state['selected']
         else:
@@ -73,7 +74,7 @@ class PassageWidget:
         
         # first, passages we link to
         
-        for link in self.passage.links():
+        for link in self.passage.links:
             widget = self.parent.findWidget(link)
             if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
         
@@ -83,7 +84,7 @@ class PassageWidget:
         bridge = [ dirtyRect ]
         
         def addLinkingToRect (widget):
-            if self.passage.title in widget.passage.links():
+            if self.passage.title in widget.passage.links:
                 dirtyRect = bridge[0].Union(widget.getPixelRect())
         
         self.parent.eachWidget(addLinkingToRect)
@@ -149,7 +150,7 @@ class PassageWidget:
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""
         brokens = []
-        for link in self.passage.links():
+        for link in self.passage.links:
             if not self.parent.findWidget(link):
                 brokens.append(link)
         return brokens
@@ -206,24 +207,21 @@ class PassageWidget:
         try: self.passageFrame.Destroy()
         except: pass
 
-    def intersectsAny (self):
+    def intersectsAny (self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""
-        intersects = False
+        
+        #Enforce positive coordinates
+        if not 'Twine.hide' in self.passage.tags:
+            if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+                return True
         
         # we do this manually so we don't have to go through all of them
         
-        for widget in self.parent.widgets:
+        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgets):
             if (widget != self) and (self.intersects(widget)):
-                intersects = True
-                break
+                return True
             
-            #Enforce positive coordinates
-            if not 'Twine.hide' in self.passage.tags:
-                if ((self.pos[0] < 0) or (self.pos[1] < 0)):
-                    intersects = True
-                    break
-
-        return intersects
+        return False
 
     def intersects (self, other):
         """
@@ -304,7 +302,7 @@ class PassageWidget:
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
         
-        links = self.passage.links()
+        links = self.passage.links
         for link in self.passage.linksAndDisplays():
             if link in dontDraw: continue
                  
@@ -334,6 +332,8 @@ class PassageWidget:
         dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
     
     def getTitleColorIndex(self):
+        # Find the StartPassages passage
+        
         if any(t.startswith('Twine.') for t in self.passage.tags):
             return 'privateTitleBar'
         elif 'script' in self.passage.tags:

@@ -13,7 +13,6 @@
 #
 
 import re, datetime, time, os, sys, tempfile, codecs
-import PyRSS2Gen as rss
 
 #
 # TiddlyWiki class
@@ -184,7 +183,7 @@ class TiddlyWiki:
 		else:
 			self.tiddlers[tiddler.title] = tiddler
 	
-	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings']
+	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
 		
 #
 # Tiddler class
@@ -194,6 +193,10 @@ class Tiddler:
 	"""A single tiddler in a TiddlyWiki."""
 	
 	def __init__ (self, source, type = 'twee'):
+		# cache of passage names linked from this one
+		self.links = []
+		self.displays = []
+		
 		"""Pass source code, and optionally 'twee' or 'html'"""
 		if type == 'twee':
 			self.initTwee(source)
@@ -213,6 +216,7 @@ class Tiddler:
 		# we were just born
 		
 		self.created = self.modified = time.localtime()
+		# used only during builds
 		self.pos = [0,0]
 		
 		# figure out our title
@@ -244,7 +248,7 @@ class Tiddler:
 		
 	def initHtml (self, source):
 		"""Initializes a Tiddler from HTML source code."""
-	
+		
 		# title
 		
 		self.title = 'untitled passage'
@@ -337,24 +341,20 @@ class Tiddler:
 			or (self.title in TiddlyWiki.INFO_PASSAGES))
 
 	def linksAndDisplays(self):
-		return list(set(self.links()+self.displays()))
+		return list(set(self.links+self.displays))
 	
-	def displays(self):
+	def update(self, includeInternal = True, includeMacros = True):
 		"""
-		Returns a list of all passages <<display>>ed by this one.
-		"""
-		if not self.isStoryText():
-			return []
-		return re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
-		
-	def links (self, includeInternal = True, includeMacros = True):
-		"""
-		Returns a list of all passages linked to by this one. By default,
+		Update the lists of all passages linked/displayed by this one. By default,
 		returns internal links and <<choice>>/<<actions>> macros.
 		"""
-		
 		if not self.isStoryText():
-			return []
+			self.displays = []
+			self.links = []
+			return
+		
+		# <<display>>
+		self.displays = re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 		
 		links = []
 		actions = []
@@ -395,7 +395,7 @@ class Tiddler:
 		
 		# remove duplicates by converting to a set
 		
-		return list(set(links + choices + actions))
+		self.links = list(set(links + choices + actions))
 
 #
 # Helper functions
