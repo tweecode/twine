@@ -33,7 +33,6 @@ class PassageWidget:
         
         if state:
             self.passage = state['passage']
-            self.passage.update()
             self.pos = state['pos']
             self.selected = state['selected']
         else:
@@ -42,6 +41,7 @@ class PassageWidget:
             self.passage.text = text
             self.selected = False
             self.pos = list(pos)
+        self.passage.update()
             
     def getSize (self):
         """Returns this instance's logical size."""

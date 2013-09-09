@@ -461,7 +461,7 @@ class StoryPanel (wx.ScrolledWindow):
         Starts a widget drag. The initial event is caught by PassageWidget, but
         it passes control to us so that we can move all selected widgets at once.
         """
-        if not self.draggingWidgets:
+        if not self.draggingWidgets or not len(self.draggingWidgets):
             # cache the sets of dragged vs not-dragged widgets
             self.draggingWidgets = []
             self.notDraggingWidgets = []
@@ -565,16 +565,14 @@ class StoryPanel (wx.ScrolledWindow):
                         widget.pos = widget.predragPos
                         widget.setDimmed(False)
                     self.Refresh()
-					
-				self.draggingWidgets = None
-                self.notDraggingWidgets = None
 				
             else:
                 # change the selection
                 self.clickedWidget.setSelected(True, not event.ShiftDown())
         
             # general cleanup
-            
+            self.draggingWidgets = None
+            self.notDraggingWidgets = None
             self.Bind(wx.EVT_MOUSE_EVENTS, None)
             self.ReleaseMouse()        
             self.SetCursor(self.defaultCursor)

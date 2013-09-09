@@ -218,7 +218,7 @@ class PassageFrame (wx.Frame):
         else:
             self.widget.passage.title = 'Untitled Passage'
         self.widget.passage.text = self.bodyInput.GetText()
-		self.widget.passage.modified = time.localtime()
+        self.widget.passage.modified = time.localtime()
         self.widget.passage.tags = []
         self.widget.clearPaintCache()
         
