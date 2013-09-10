@@ -58,35 +58,58 @@ class TiddlyWiki:
 			except IOError:
 				app.displayError("building: the story format '" + target + "' isn't available.\n"
 					+ "Please select another format from the Story Format submenu.\n\n")
+				return
+			
+			
+			def insertEngine(app, output, filename, label):
+				if output.count(label) > 0:
+					try:
+						engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
+						enginecode = engine.read()
+						engine.close()
+						return output.replace(label,enginecode)
+					except IOError:
+						app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
+						return None
+				else:
+					return output
 			
 			# Insert the main engine
-			if output.count('"ENGINE"') > 0:
-				try:
-					engine = open(app.getPath() + os.sep + 'targets' + os.sep + 'engine.js')
-					enginecode = engine.read()
-					engine.close()
-					output = output.replace('"ENGINE"',enginecode)
-				except IOError:
-					app.displayError("building: the file 'engine.js' used by the story format '" + target + "' wasn't found.\n\n")
+			output = insertEngine(app, output, 'engine.js', '"ENGINE"')
+			if not output: return
+			
+			# Insert jQuery
+			if 'jquery' in self.storysettings:
+				output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
+				if not output: return
+			
+			# Insert Modernizr
+			if 'modernizr' in self.storysettings:
+				output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
+				if not output: return
 		
-		if self.storysettings.has_key('Obfuscate') and \
-		self.storysettings['Obfuscate'] == 'SWAP' and self.storysettings.has_key('ObfuscateKey') :
+		obfuscate = 'obfuscate' in self.storysettings and \
+			self.storysettings['obfuscate'] == 'swap' and 'obfuscatekey' in self.storysettings;
+		
+		if obfuscate:
+			# Quick Rot13 shortcut
+			if self.storysettings['obfuscatekey'] == 'rot13':
+				self.storysettings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
 			nss = u''
-			for nsc in self.storysettings['ObfuscateKey']:
+			for nsc in self.storysettings['obfuscatekey']:
 				if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
 					nss = nss + nsc
-			self.storysettings['ObfuscateKey'] = nss
+			self.storysettings['obfuscatekey'] = nss
 		
 		for i in order:
 			if not any('Twine.private' in t for t in self.tiddlers[i].tags) and \
 			not any('Twine.system' in t for t in self.tiddlers[i].tags):
-				if (not (self.storysettings.has_key('Obfuscate') and \
-						self.storysettings['Obfuscate'] == 'SWAP' and \
-						self.storysettings.has_key('ObfuscateKey'))) or \
-					self.tiddlers[i].title == 'StorySettings':
+				if (self.tiddlers[i].title == 'StorySettings'):
+					output += self.tiddlers[i].toHtml(self.author, insensitive = True)
+				elif (not obfuscate):
 					output += self.tiddlers[i].toHtml(self.author)
 				else:
-					output += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['ObfuscateKey'])
+					output += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
 		
 		if (target):
 			footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
@@ -297,7 +320,7 @@ class Tiddler:
 			self.text = decode_text(text.group(1))
 				
 		
-	def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
+	def toHtml (self, author = 'twee', insensitive = False, obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""
 			
 		now = time.localtime()
@@ -317,7 +340,7 @@ class Tiddler:
 		output += ' created="' + encode_date(self.created) + '"' 
 		output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
-		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
+		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
 		
 		return output
 		
@@ -417,6 +440,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 	"""Does basic character pair swapping obfuscation""" 
 	r = ''
 	for c in text:
+		upper = c.isupper()
 		p = obfuscationkey.find(c)
 		if p <> -1:
 			if p % 2 == 0:
@@ -425,7 +449,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 					p1 = p
 			else:
 				p1 = p - 1
-			c = obfuscationkey[p1]
+			c = obfuscationkey[p1].toupper() if upper else obfuscationkey[p1]
 		r = r + c
 	return r
 	

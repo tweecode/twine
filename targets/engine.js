@@ -592,8 +592,9 @@ Passage.unescapeLineBreaks = function (a) {
 
 function Tale() {
     this.passages = {};
-    this.storysettings = {};
-	var a,b,c,lines,i,kv,ns,nsc,nope,tiddlerTitle = '';
+	var a,b,c,lines,i,kv,ns,nsc,nope,
+	    settings = this.storysettings = {},
+		tiddlerTitle = '';
     function deswap(t, k) {
 		var i,c,p,p1,r = '';
 		for (i = 0; i < t.length; i++) {
@@ -620,25 +621,29 @@ function Tale() {
                     kv = lines[i].split(':');
                     kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
                     kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
-                    this.storysettings[kv[0]] = kv[1];
+                    settings[kv[0]] = kv[1];
                 }
             }
         }
     }
     //Load in the passages
-    if (this.storysettings['Obfuscate'] == 'SWAP') {
+    if (settings['obfuscate'] == 'swap' && settings['obfuscatekey']) {
         ns = '';
 		nope = ":\\\"n0";
-        for (i = 0; i < this.storysettings['ObfuscateKey'].length; i++) {
-            nsc = this.storysettings['ObfuscateKey'][i];
+		if (settings['obfuscatekey'] == 'rot13') {
+			settings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
+		}
+        for (i = 0; i < settings['obfuscatekey'].length; i++) {
+            nsc = settings['obfuscatekey'][i];
             if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
         }
-        this.storysettings['ObfuscateKey'] = ns;
+        settings['obfuscatekey'] = ns;
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
-                if (tiddlerTitle != 'StorySettings') tiddlerTitle = deswap(tiddlerTitle, this.storysettings['ObfuscateKey']);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, this.storysettings['ObfuscateKey']);
+                if (tiddlerTitle != 'StorySettings') 
+                    tiddlerTitle = deswap(tiddlerTitle, settings['obfuscatekey']);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, settings['obfuscatekey']);
             }
         }
     } else {

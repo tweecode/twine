@@ -632,7 +632,7 @@ class StoryFrame (wx.Frame):
                     lines = widget.passage.text.splitlines()
                     for line in lines:
                         (skey,svalue) = line.split(':')
-                        tw.storysettings[skey.strip()] = svalue.strip()
+                        tw.storysettings[skey.strip().lower()] = svalue.strip().lower()
                     break
             
             # Write the output file
