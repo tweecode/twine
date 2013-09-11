@@ -82,11 +82,15 @@ class TiddlyWiki:
 			if 'jquery' in self.storysettings:
 				output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
 				if not output: return
+			else:
+				output = output.replace('"JQUERY"','')
 			
 			# Insert Modernizr
 			if 'modernizr' in self.storysettings:
 				output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
 				if not output: return
+			else:
+				output = output.replace('"MODERNIZR"','')
 		
 		obfuscate = 'obfuscate' in self.storysettings and \
 			self.storysettings['obfuscate'] == 'swap' and 'obfuscatekey' in self.storysettings;

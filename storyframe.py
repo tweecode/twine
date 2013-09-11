@@ -631,8 +631,11 @@ class StoryFrame (wx.Frame):
                 if widget.passage.title == 'StorySettings':
                     lines = widget.passage.text.splitlines()
                     for line in lines:
-                        (skey,svalue) = line.split(':')
-                        tw.storysettings[skey.strip().lower()] = svalue.strip().lower()
+                        try:
+                            (skey,svalue) = line.split(':')
+                            tw.storysettings[skey.strip().lower()] = svalue.strip().lower()
+                        except:
+                            tw.storysettings[line.strip().lower()] = "true"
                     break
             
             # Write the output file
