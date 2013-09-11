@@ -59,12 +59,6 @@ History.prototype.init = function () {
         }
     }
 };
-History.prototype.close = function (B) {
-    var A = document.getElementById("passage" + B.title);
-    if (A) {
-        A.parentNode.removeChild(A)
-    }
-};
 History.prototype.display = function (E, C, A) {
     var el, D, F, B = C;
     while (B && (B.className.indexOf("passage") == -1)) {
@@ -112,7 +106,10 @@ History.prototype.rewindTo = function (C) {
 
     function A() {
         while (B.history[0].passage.title != C.title) {
-            B.close(B.history.shift().passage)
+            var A = document.getElementById("passage" + B.history.shift().passage.title);
+            if (A) {
+                A.parentNode.removeChild(A)
+            }
         }
         B.history[0].variables = clone(B.history[1].variables);
         C.reset();
@@ -179,11 +176,7 @@ Passage.toolbarItems = [{
         state.rewindTo(this.passage)
     }
 }];
-Tale.prototype.reset = function () {
-    for (i in this.passages) {
-        this.passages[i].reset()
-    }
-};
+
 version.extensions.choiceMacro = {
     major: 1,
     minor: 2,
@@ -210,8 +203,8 @@ macros.choice = {
             H = H.parentNode
         }
         var G = H.parentNode.id.substr(7),
-			B = H.getElementsByTagName("a"),
-			F = [];
+            B = H.getElementsByTagName("a"),
+            F = [];
         for (var C = 0; C < B.length; C++) {
             if ((B[C] != E) && (B[C].className.indexOf("choice") != -1)) {
                 var D = document.createElement("span");
@@ -233,56 +226,14 @@ macros.back={handler:function(a,b,c){return}};
 version.extensions.returnMacro={major:1,minor:0,revision:0};
 macros.return={handler:function(a,b,c){return}};
 
-function restart() {
-    if (confirm("Are you sure you want to restart this story?")) {
-        main();
-        window.location.reload()
-    }
-}
-function main() {
-	// Used by old custom scripts.
-    function $(a) {
-        return (typeof a == "string" ? document.getElementById(a) : a);
-    }
-	$("restart").onclick=restart;
-    tale = new Tale();
-    state = new History();
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
-    setPageElement("storySubtitle", "StorySubtitle", "");
-    if (tale.has("StoryTitle")) {
-        document.title = tale.get("StoryTitle").text;
-        if (tale.has("StorySubtitle")) {
-            document.title += ": " + tale.get("StorySubtitle").text;
+window.onload = function() {
+    document.getElementById("restart").onclick=function() {
+        if (confirm("Are you sure you want to restart this story?")) {
+            window.location.reload()
         }
-    }
-    if (tale.has("StoryAuthor")) {
-        setPageElement("storyAuthor", "StoryAuthor", "");
-    }
-    if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "inline";
-        setPageElement("storyMenu", "StoryMenu", "");
-    }
-    var scripts = tale.lookup("tags", "script");
-    for (var i = 0; i < scripts.length; i++) {
-        try {
-            eval(scripts[i].text);
-        } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-        }
-    }
-    for (var macroidx in macros) {
-        var macro = macros[macroidx];
-        if (typeof macro.init == "function") {
-            macro.init();
-        }
-    }
-    var styles = tale.lookup("tags", "stylesheet");
-    for (var i = 0; i < styles.length; i++) {
-        addStyle(styles[i].text);
-    }
-    state.init();
+    };
+    main();
 };
-window.onload = main;
 }());
 </script>
 <script title="modules">

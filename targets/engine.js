@@ -138,9 +138,9 @@ function fade(f, c) {
         b(e, Math.easeInOut(h));
         if (((g == 1) && (h >= 1)) || ((g == -1) && (h <= 0))) {
             f.style.visibility = (c.fade == "in") ? "visible" : "hidden";
-			if (e.parentNode) {
-				e.parentNode.replaceChild(f, e);
-			}
+            if (e.parentNode) {
+                e.parentNode.replaceChild(f, e);
+            }
             window.clearInterval(a);
             if (c.onComplete) {
                 c.onComplete()
@@ -224,27 +224,27 @@ History.prototype.save = function (c) {
 };
 History.prototype.restore = function () {
     try {
-		if ((window.location.hash == "") || (window.location.hash == "#")) {
-			return false
-		}
+        if ((window.location.hash == "") || (window.location.hash == "#")) {
+            return false
+        }
         if (window.location.hash.substr(0, 2) == '#!') {
             var mt = window.location.hash.substr(2).split('_').join(' ');
             document.getElementById('passages').appendChild(this.display(mt, null, 'quietly'));
             return true;
         }
-		var a = window.location.hash.replace("#", "").split(".");
-		for (var b = 0; b < a.length; b++) {
-			var g = parseInt(a[b], 36);
-			if (!tale.has(g)) {
-				return false
-			}
-			if (b == a.length - 1) {
-			  this.display(g, null, f);
-			}
-			else
-			  tale.get(g).render();
-	    }
-	    return true
+        var a = window.location.hash.replace("#", "").split(".");
+        for (var b = 0; b < a.length; b++) {
+            var g = parseInt(a[b], 36);
+            if (!tale.has(g)) {
+                return false
+            }
+            if (b == a.length - 1) {
+              this.display(g, null, f);
+            }
+            else
+              tale.get(g).render();
+        }
+        return true
     } catch (d) {
         return false
     }
@@ -276,13 +276,13 @@ var version = {
 var tale, state, macros = window.macros = {};
 
 window.onpopstate = function(e) {
-	if (e.state && e.state.length > 0) {
-		state.history = e.state;
-	} else {
-		state = new History();
-		state.init();
-	}
-	state.display(state.history[0].passage.title,null,"back");
+    if (e.state && e.state.length > 0) {
+        state.history = e.state;
+    } else {
+        state = new History();
+        state.init();
+    }
+    state.display(state.history[0].passage.title,null,"back");
 }
 macros.refresh = {
     handler: function (a, b, c) {
@@ -367,16 +367,16 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, d) {
-		var s, v = c[0];
-		// If first value is set uninitialised, change to 0 before
-		// calculation. If it's numeric addition, it will behave
-		// intuitively. String concatenation is an unlikely use case.
-		if (c[0] && c[0][0]=="$") {
-			s = state.history[0].variables;
-			if (typeof s[c[0].slice(1)] == "undefined") {
-				s[c[0].slice(1)] = 0;
-			}
-		}
+        var s, v = c[0];
+        // If first value is set uninitialised, change to 0 before
+        // calculation. If it's numeric addition, it will behave
+        // intuitively. String concatenation is an unlikely use case.
+        if (c[0] && c[0][0]=="$") {
+            s = state.history[0].variables;
+            if (typeof s[c[0].slice(1)] == "undefined") {
+                s[c[0].slice(1)] = 0;
+            }
+        }
         macros.set.run(a,d.fullArgs(true))
     },
     run: function (a,expression) {
@@ -395,35 +395,35 @@ version.extensions.ifMacros = {
 macros["if"] = {
     handler: function (place, macroName, params, parser) {
         var conditions = [],
-		    clauses = [],
+            clauses = [],
             srcOffset = parser.source.indexOf(">>", parser.matchStart) + 2,
             src = parser.source.slice(srcOffset),
             endPos = -1,
-		    currentCond = parser.fullArgs(),
-		    currentClause = "",
-			t = 0,
-			nesting = 0;
+            currentCond = parser.fullArgs(),
+            currentClause = "",
+            t = 0,
+            nesting = 0;
         for (var i = 0; i < src.length; i++) {
             if (src.substr(i, 9) == "<<endif>>") {
                 nesting--;
                 if (nesting < 0) {
                     endPos = srcOffset + i + 9;
-					conditions.push(currentCond);
-					clauses.push(currentClause);
+                    conditions.push(currentCond);
+                    clauses.push(currentClause);
                     break;
                 }
             }
             if ((src.substr(i, 6) == "<<else") && nesting == 0) {
                 conditions.push(currentCond);
-				clauses.push(currentClause);
-				currentClause="";
-				t = src.indexOf(">>",i+6);
-				if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
-				    currentCond = Wikifier.parse(src.slice(i+9,t));
-				}
-				else {
-				    currentCond = "true";
-				}
+                clauses.push(currentClause);
+                currentClause="";
+                t = src.indexOf(">>",i+6);
+                if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
+                    currentCond = Wikifier.parse(src.slice(i+9,t));
+                }
+                else {
+                    currentCond = "true";
+                }
                 i = t+2;
             }
             if (src.substr(i, 5) == "<<if ") {
@@ -434,11 +434,11 @@ macros["if"] = {
         try {
             if (endPos != -1) {
                 parser.nextMatch = endPos;
-				for(i=0;i<clauses.length;i++) {
-				    if (eval(conditions.shift())) {
-				        new Wikifier(place, clauses[i].trim());
-						break;
-				    }
+                for(i=0;i<clauses.length;i++) {
+                    if (eval(conditions.shift())) {
+                        new Wikifier(place, clauses[i].trim());
+                        break;
+                    }
                 }
             } else {
                 throwError(place, "can't find matching endif");
@@ -589,25 +589,24 @@ Passage.unescapeLineBreaks = function (a) {
         return ""
     }
 };
-
 function Tale() {
     this.passages = {};
-	var a,b,c,lines,i,kv,ns,nsc,nope,
-	    settings = this.storysettings = {},
-		tiddlerTitle = '';
+    var a,b,c,lines,i,kv,ns,nsc,nope,
+        settings = this.storysettings = {},
+        tiddlerTitle = '';
     function deswap(t, k) {
-		var i,c,p,p1,r = '';
-		for (i = 0; i < t.length; i++) {
-			c = t.charAt(i);
-			p = k.indexOf(c);
-			if (p > -1) {
-				p1 = p + (p % 2 == 0 ? 1 : -1);
-				if (p1 >= k.length) p1 = p;
-				c = k.charAt(p1);
-			}
-			r = r + c;
-		}
-		return r
+        var i,c,p,p1,r = '';
+        for (i = 0; i < t.length; i++) {
+            c = t.charAt(i);
+            p = k.indexOf(c);
+            if (p > -1) {
+                p1 = p + (p % 2 == 0 ? 1 : -1);
+                if (p1 >= k.length) p1 = p;
+                c = k.charAt(p1);
+            }
+            r = r + c;
+        }
+        return r
     };
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
@@ -629,10 +628,10 @@ function Tale() {
     //Load in the passages
     if (settings['obfuscate'] == 'swap' && settings['obfuscatekey']) {
         ns = '';
-		nope = ":\\\"n0";
-		if (settings['obfuscatekey'] == 'rot13') {
-			settings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
-		}
+        nope = ":\\\"n0";
+        if (settings['obfuscatekey'] == 'rot13') {
+            settings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
+        }
         for (i = 0; i < settings['obfuscatekey'].length; i++) {
             nsc = settings['obfuscatekey'][i];
             if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
@@ -801,13 +800,13 @@ Wikifier.parse = function (b, setter) {
         var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
         return b.replace(new RegExp(from+g,"gi"),to);
     }
-	if (setter) {
+    if (setter) {
         b = alter("\\$(\\S+)","state.history[0].variables.$1");
-	} else {
-		// This deliberately contains a 'null or undefined' check
+    } else {
+        // This deliberately contains a 'null or undefined' check
         b = alter("\\$(\\S+)","(state.history[0].variables['$1'] == null ? 0 : state.history[0].variables['$1'])");
-	}
-	// Old operators
+    }
+    // Old operators
     b = alter("\\beq\\b", " == ");
     b = alter("\\bneq\\b", " != ");
     b = alter("\\bgt\\b", " > ");
@@ -817,10 +816,10 @@ Wikifier.parse = function (b, setter) {
     b = alter("\\band\\b", " && ");
     b = alter("\\bor\\b", " || ");
     b = alter("\\bnot\\b", " ! ");
-	// New operators
-	b = alter("\\bis\\b", " == ");
-	b = alter("\\bto\\b", " = ");
-	console.log(b)
+    // New operators
+    b = alter("\\bis\\b", " == ");
+    b = alter("\\bto\\b", " = ");
+    console.log(b)
     return b
 };
 Wikifier.formatHelpers = {
@@ -904,7 +903,7 @@ Wikifier.formatters = [
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
             var lookaheadMatch = lookaheadRegExp.exec(w.source),
-				matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+                matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
                 nextRowType = lookaheadMatch[2];
                 if (nextRowType != currRowType) rowContainer = insertElement(table, this.rowTypes[nextRowType]);
@@ -929,7 +928,7 @@ Wikifier.formatters = [
         do {
             cellRegExp.lastIndex = w.nextMatch;
             var cellMatch = cellRegExp.exec(w.source),
-				matched = cellMatch && cellMatch.index == w.nextMatch;
+                matched = cellMatch && cellMatch.index == w.nextMatch;
             if (matched) {
                 if (cellMatch[1] == "~") {
                     var last = prevColumns[col];
@@ -949,7 +948,7 @@ Wikifier.formatters = [
                 } else {
                     var spaceLeft = false,
                         spaceRight = false,
-						lastColCount, lastColElement, styles, cell, t;
+                        lastColCount, lastColElement, styles, cell, t;
                     w.nextMatch++;
                     styles = Wikifier.formatHelpers.inlineCssHelper(w);
                     while (w.source.substr(w.nextMatch, 1) == " ") {
@@ -1065,7 +1064,7 @@ Wikifier.formatters = [
             if (matched) {
                 newLevel = lookaheadMatch[0].length;
                 w.nextMatch += lookaheadMatch[0].length;
-				insertElement(placeStack[placeStack.length - 1], "br");
+                insertElement(placeStack[placeStack.length - 1], "br");
             }
         } while (matched);
     }
@@ -1301,34 +1300,34 @@ Wikifier.formatters = [
     }
 },
 {
-	name: "htmltag",
-	match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
-	tagname: "<(\\w+)",
-	voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
-	handler: function (a) {
-		var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
-		  doit = false,
-		  re = new RegExp(this.tagname).exec(a.matchText),
-		  tn = re && re[1];
-		if(tn && tn.toLowerCase() != "html") {
-			lookahead = "<\\/\\s*" + tn + "\\s*>";
-			isvoid = (this.voids.indexOf(tn.toLowerCase()) != -1);
-			lookaheadRegExp = new RegExp(lookahead, "mg");
-			lookaheadRegExp.lastIndex = a.matchStart;
-			lookaheadMatch = lookaheadRegExp.exec(a.source);
-			if (lookaheadMatch || isvoid) {
-				e = document.createElement(a.output.tagName);
-				e.innerHTML = a.matchText;
-				e = e.firstChild;
-				if (!isvoid) {
-					a.subWikify(e, lookahead);
-				}
-				a.output.appendChild(e);
-			} else {
-				throwError(a.output,"HTML tag '"+tn+"' wasn't closed.");
-			}
-		}
-	}
+    name: "htmltag",
+    match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
+    tagname: "<(\\w+)",
+    voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
+    handler: function (a) {
+        var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
+          doit = false,
+          re = new RegExp(this.tagname).exec(a.matchText),
+          tn = re && re[1];
+        if(tn && tn.toLowerCase() != "html") {
+            lookahead = "<\\/\\s*" + tn + "\\s*>";
+            isvoid = (this.voids.indexOf(tn.toLowerCase()) != -1);
+            lookaheadRegExp = new RegExp(lookahead, "mg");
+            lookaheadRegExp.lastIndex = a.matchStart;
+            lookaheadMatch = lookaheadRegExp.exec(a.source);
+            if (lookaheadMatch || isvoid) {
+                e = document.createElement(a.output.tagName);
+                e.innerHTML = a.matchText;
+                e = e.firstChild;
+                if (!isvoid) {
+                    a.subWikify(e, lookahead);
+                }
+                a.output.appendChild(e);
+            } else {
+                throwError(a.output,"HTML tag '"+tn+"' wasn't closed.");
+            }
+        }
+    }
 }
 ];
 Wikifier.createInternalLink = function (place, title) {
@@ -1365,4 +1364,55 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
     Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
     Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
     Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+};
+/* Functions usable by custom scripts */
+function visited(e) {
+	var ret,c;
+	e || (e = state.history[0].passage.title);
+  	for(ret=c=0; c<state.history.length; c++) {
+		if(state.history[c].passage && state.history[c].passage.title == e) {
+			ret++;
+		}
+	}
+	return ret;
+}
+/* Init function */
+function main() {
+    // Used by old custom scripts.
+    // Cedes to jQuery if it exists.
+    var $ = window.$ || function(a) {
+        return (typeof a == "string" ? document.getElementById(a) : a);
+    }
+    tale = window.tale = new Tale();
+    state = window.state = new History();
+    document.title = tale.title;
+    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
+    setPageElement("storySubtitle", "StorySubtitle", "");
+    if (tale.has("StoryAuthor")) {
+        document.getElementById("titleSeparator").innerHTML = "<br>";
+        setPageElement("storyAuthor", "StoryAuthor", "");
+    }
+    if (tale.has("StoryMenu")) {
+        document.getElementById("storyMenu").style.display = "inline";
+        setPageElement("storyMenu", "StoryMenu", "");
+    }
+    var scripts = tale.lookup("tags", "script");
+    for (var i = 0; i < scripts.length; i++) {
+        try {
+            eval(scripts[i].text);
+        } catch (e) {
+            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+        }
+    }
+    for (var macroidx in macros) {
+        var macro = macros[macroidx];
+        if (typeof macro.init == "function") {
+            macro.init();
+        }
+    }
+    var styles = tale.lookup("tags", "stylesheet");
+    for (var i = 0; i < styles.length; i++) {
+        addStyle(styles[i].text);
+    }
+    state.init();
 };

@@ -67,30 +67,6 @@ History.prototype.init = function () {
         }, 250)
     }
 };
-Passage.prototype.reset = function () {
-	this.text = this.initialText
-};
-Passage.prototype.render = function () {
-    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
-    b.style.visibility = 'hidden';
-    if (this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
-    insertElement(b, 'div', '', 'header');
-    var a = insertElement(b, 'div', '', 'content');
-    new Wikifier(a, this.text);
-    insertElement(b, 'div', '', 'footer');
-    return b;
-};
-Passage.prototype.excerpt = function () {
-    var b = this.text.replace(/<<.*?>>/g, "");
-    b = b.replace(/!.*?\n/g, "");
-    b = b.replace(/[\[\]\/]/g, "");
-    var a = b.split("\n");
-    while (a.length && a[0].length == 0) a.shift();
-    var c = '';
-    if (a.length == 0 || a[0].length == 0) c = this.title;
-    else c = a[0].substr(0, 30) + '...';
-    return c;
-};
 History.prototype.display = function (d, b, a) {
     var c = tale.get(d);
 	if (a != "back") {
@@ -124,6 +100,27 @@ History.prototype.display = function (d, b, a) {
 	}
     window.scroll(0, 0)
     return e
+};
+Passage.prototype.render = function () {
+    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
+    b.style.visibility = 'hidden';
+    if (this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
+    insertElement(b, 'div', '', 'header');
+    var a = insertElement(b, 'div', '', 'content');
+    new Wikifier(a, this.text);
+    insertElement(b, 'div', '', 'footer');
+    return b;
+};
+Passage.prototype.excerpt = function () {
+    var b = this.text.replace(/<<.*?>>/g, "");
+    b = b.replace(/!.*?\n/g, "");
+    b = b.replace(/[\[\]\/]/g, "");
+    var a = b.split("\n");
+    while (a.length && a[0].length == 0) a.shift();
+    var c = '';
+    if (a.length == 0 || a[0].length == 0) c = this.title;
+    else c = a[0].substr(0, 30) + '...';
+    return c;
 };
 
 var Interface = {
@@ -341,44 +338,6 @@ macros.choice = {
     handler: function (a, b, c) {
         Wikifier.createInternalLink(a, c[0])
     }
-};
-function main() {
-	// Used by old custom scripts.
-    function $(a) {
-        return (typeof a == "string" ? document.getElementById(a) : a);
-    }
-    tale = window.tale = new Tale();
-    state = window.state = new History();
-    document.title = tale.title;
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
-    setPageElement("storySubtitle", "StorySubtitle", "");
-    if (tale.has("StoryAuthor")) {
-        document.getElementById("titleSeparator").innerHTML = "<br>";
-        setPageElement("storyAuthor", "StoryAuthor", "");
-    }
-    if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "inline";
-        setPageElement("storyMenu", "StoryMenu", "");
-    }
-    var scripts = tale.lookup("tags", "script");
-    for (var i = 0; i < scripts.length; i++) {
-        try {
-            eval(scripts[i].text);
-        } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
-        }
-    }
-    for (var macroidx in macros) {
-        var macro = macros[macroidx];
-        if (typeof macro.init == "function") {
-            macro.init();
-        }
-    }
-    var styles = tale.lookup("tags", "stylesheet");
-    for (var i = 0; i < styles.length; i++) {
-        addStyle(styles[i].text);
-    }
-    state.init();
 };
 }());
 </script>
