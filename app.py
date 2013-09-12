@@ -9,8 +9,8 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.3.5 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
-    RECENT_FILES = 5
+    VERSION = '1.3.6 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
+    RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
         """Initializes the application."""
@@ -191,13 +191,13 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\nhttp://gimcrackd.com/etc/src/')
-        info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe files in the targets directory are derivative works of Jeremy Ruston\'s TiddlyWiki project and are used under the terms of its license.')
+        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\n1.3.6 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
+        info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project and is used under the terms of its license.')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#simple,storyformats')
+        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#basic,storyformats')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
@@ -207,9 +207,9 @@ class App (wx.App):
         """Opens the Google group."""
         wx.LaunchDefaultBrowser('http://groups.google.com/group/tweecode/')
         
-    def reportBug (self, event = None):
-        """Opens the online bug report form."""
-        wx.LaunchDefaultBrowser('http://code.google.com/p/twee/issues/entry')
+    def openGitHub (self, event = None):
+        """Opens the GitHub page."""
+        wx.LaunchDefaultBrowser('https://github.com/tweecode/twine')
 
     def loadPrefs (self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
@@ -261,16 +261,12 @@ class App (wx.App):
         
         # OS X py2app'd apps will direct us right into the app bundle
         
-        scriptPath = re.sub('[^/]+.app/Contents/Resources', '', scriptPath)
+        scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
         
         # Windows py2exe'd apps add an extraneous library.zip at the end
         
-        scriptPath = scriptPath.replace('\\library.zip', '')
+        scriptPath = scriptPath.replace('\\\w*.zip', '')
         return scriptPath
-    
-    NAME = 'Twine'
-    VERSION = '1.3.5'
-    RECENT_FILES = 10
 
 # start things up if we were called directly
 if __name__ == "__main__":

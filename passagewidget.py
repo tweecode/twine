@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import os, copy, math, re, wx, storypanel, tiddlywiki
+import sys, os, copy, math, re, wx, storypanel, tiddlywiki
 import geometry, metrics
 from passageframe import PassageFrame
 
@@ -26,7 +26,10 @@ class PassageWidget:
         self.parent = parent
         self.app = app
         self.dimmed = False
-        self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
+        if sys.platform == 'darwin':
+            self.brokenEmblem = wx.Bitmap(re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep + 'brokenemblem.png')
+        else:
+            self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
         self.paintBuffer = wx.MemoryDC()
         self.paintBufferBounds = None
         pos = list(pos)
@@ -41,7 +44,7 @@ class PassageWidget:
             self.passage.text = text
             self.selected = False
             self.pos = list(pos)
-            self.findSpace()
+        self.passage.update()
             
     def getSize (self):
         """Returns this instance's logical size."""
@@ -74,7 +77,7 @@ class PassageWidget:
         
         # first, passages we link to
         
-        for link in self.passage.links():
+        for link in self.passage.links:
             widget = self.parent.findWidget(link)
             if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
         
@@ -84,7 +87,7 @@ class PassageWidget:
         bridge = [ dirtyRect ]
         
         def addLinkingToRect (widget):
-            if self.passage.title in widget.passage.links():
+            if self.passage.title in widget.passage.links:
                 dirtyRect = bridge[0].Union(widget.getPixelRect())
         
         self.parent.eachWidget(addLinkingToRect)
@@ -99,8 +102,24 @@ class PassageWidget:
  
     def findSpace (self):
         """Moves this widget so it doesn't overlap any others."""        
-        originalX = self.pos[0]
+        turns = 0.0
+        movecount = 1
+        """
+        Don't adhere to the grid if snapping isn't enabled.
+        Instead, move in 1/5 grid increments.
+        """
+        griddivision = 1 if self.parent.snapping else 0.2
         
+        while self.intersectsAny() and turns < 99*griddivision:
+            """Move in an Ulam spiral pattern: n spaces left, n spaces up, n+1 spaces right, n+1 spaces down"""
+            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1));
+            movecount -= 1
+            if movecount <= 0:
+                turns += 0.5
+                movecount = int(math.ceil(turns)/griddivision)
+                
+    def findSpaceQuickly(self):
+        """ A quicker findSpace where the position and visibility doesn't really matter """
         while self.intersectsAny():
             self.pos[0] += self.parent.GRID_SPACING 
             rightEdge = self.pos[0] + PassageWidget.SIZE
@@ -109,6 +128,7 @@ class PassageWidget:
             if rightEdge > maxWidth:
                 self.pos[0] = 10
                 self.pos[1] += self.parent.GRID_SPACING
+ 
 
     def containsRegexp (self, regexp, flags):
         """
@@ -133,8 +153,9 @@ class PassageWidget:
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""
         brokens = []
-        for link in self.passage.links():
-            if not self.parent.findWidget(link): brokens.append(link)
+        for link in self.passage.links:
+            if not self.parent.findWidget(link):
+                brokens.append(link)
         return brokens
                  
     def setSelected (self, value, exclusive = True):
@@ -188,42 +209,22 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
-        
-    def checkDelete (self):
-        """Warns the user about deleting this passage if links exist to it."""
-        linked = False
-        for widget in self.parent.widgets:
-            if self.passage.title in widget.passage.links():
-                linked = True
-                break
-          
-        if linked:
-            message = 'Are you sure you want to delete "' + self.passage.title + '"?' + \
-                      ' Links to it from other passages will become broken.'
-            dialog = wx.MessageDialog(self.parent, message, 'Delete Passage', \
-                                      wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
-            return dialog.ShowModal() == wx.ID_YES
-                
-        return True
 
-    def intersectsAny (self):
+    def intersectsAny (self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""
-        intersects = False
+        
+        #Enforce positive coordinates
+        if not 'Twine.hide' in self.passage.tags:
+            if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+                return True
         
         # we do this manually so we don't have to go through all of them
         
-        for widget in self.parent.widgets:
+        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgets):
             if (widget != self) and (self.intersects(widget)):
-                intersects = True
-                break
+                return True
             
-            #Enforce positive coordinates
-            if not 'Twine.hide' in self.passage.tags:
-                if ((self.pos[0] < 0) or (self.pos[1] < 0)):
-                    intersects = True
-                    break
-
-        return intersects
+        return False
 
     def intersects (self, other):
         """
@@ -243,7 +244,7 @@ class PassageWidget:
         try: self.passageFrame.fullscreen.applyPrefs()
         except: pass
     
-    def paintConnectorTo (self, otherWidget, arrowheads, gc, updateRect = None):
+    def paintConnectorTo (self, otherWidget, arrowheads, color, gc, updateRect = None):
         """
         Paints a connecting line between this widget and another,
         with optional arrowheads. You may pass either a wx.GraphicsContext
@@ -264,7 +265,7 @@ class PassageWidget:
         # ok, really draw the line
         
         lineWidth = max(self.parent.toPixels((PassageWidget.CONNECTOR_WIDTH, 0), scaleOnly = True)[0], 1)
-        gc.SetPen(wx.Pen(PassageWidget.CONNECTOR_COLOR, lineWidth))
+        gc.SetPen(wx.Pen(color, lineWidth))
         
         if isinstance(gc, wx.GraphicsContext):
             gc.StrokeLine(start[0], start[1], end[0], end[1])
@@ -304,14 +305,16 @@ class PassageWidget:
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
         
-        for link in self.passage.links():
+        links = self.passage.links
+        for link in self.passage.linksAndDisplays():
             if link in dontDraw: continue
                  
             otherWidget = self.parent.findWidget(link)
             if not otherWidget: dontDraw.append(link)
         
             if otherWidget and not otherWidget.dimmed:
-                self.paintConnectorTo(otherWidget, arrowheads, gc, updateRect)
+                color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in links else PassageWidget.CONNECTOR_COLOR
+                self.paintConnectorTo(otherWidget, arrowheads, color, gc, updateRect)
         
         return dontDraw
     
@@ -330,6 +333,21 @@ class PassageWidget:
             self.cachePaint(wx.Size(rect.width, rect.height))
         
         dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
+    
+    def getTitleColorIndex(self):
+        # Find the StartPassages passage
+        
+        if any(t.startswith('Twine.') for t in self.passage.tags):
+            return 'privateTitleBar'
+        elif 'script' in self.passage.tags:
+            return 'scriptTitleBar'
+        elif 'stylesheet' in self.passage.tags:
+            return 'stylesheetTitleBar'
+        elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
+            return 'storyInfoTitleBar'
+        elif self.passage.title == "Start":
+            return 'startTitleBar'
+        return 'titleBar'
     
     def cachePaint (self, size):
         """
@@ -424,7 +442,7 @@ class PassageWidget:
             # title bar
             
             titleBarHeight = titleFontHeight + (2 * inset)
-            titleBarColor = dim(PassageWidget.COLORS['titleBar'], self.dimmed)
+            titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
             gc.DrawRectangle(1, 1, size.width - 3, titleBarHeight)            
@@ -479,8 +497,7 @@ class PassageWidget:
                 if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
-            
-            titleBarColor = dim(PassageWidget.COLORS['titleBar'], self.dimmed)
+            titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
             gc.DrawRectangle(1, 1, size.width - 3, PassageWidget.GREEK_HEIGHT * 3)
@@ -500,11 +517,14 @@ class PassageWidget:
             
             gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
             
-            while height < size.height - inset:
+            chars = len(self.passage.text)
+            while height < size.height - inset and chars > 0:
                 width = size.height - inset
                 
                 if height + (PassageWidget.GREEK_HEIGHT * 2) > size.height - inset:
-                    width = width / 2
+                    width /= 2
+                elif chars < 80:
+                    width = max(4, width * chars / 80)
 
                 if isinstance(gc, wx.GraphicsContext):
                     gc.StrokeLine(inset, height, width, height)
@@ -512,6 +532,7 @@ class PassageWidget:
                     gc.DrawLine(inset, height, width, height)
                     
                 height += PassageWidget.GREEK_HEIGHT * 2
+                chars -= 80
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
@@ -580,13 +601,19 @@ class PassageWidget:
     COLORS = { 'frame': (0, 0, 0), \
                'bodyStart': (255, 255, 255), \
                'bodyEnd': (228, 228, 226), \
+               'startTitleBar': (76, 163, 51), \
                'titleBar': (52, 101, 164), \
+               'storyInfoTitleBar': (28, 89, 74), \
+               'scriptTitleBar': (89, 66, 28), \
+               'stylesheetTitleBar': (111, 49, 83), \
+               'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
                'excerptText': (0, 0, 0) }
     DIMMED_ALPHA = 0.25
     LINE_SPACING = 1.2
     CONNECTOR_WIDTH = 2.0
     CONNECTOR_COLOR = '#babdb6'
+    CONNECTOR_DISPLAY_COLOR = '#84a4bd'
     ARROWHEAD_LENGTH = 10
     MIN_ARROWHEAD_LENGTH = 5
     ARROWHEAD_ANGLE = math.pi / 6
