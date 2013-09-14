@@ -258,7 +258,6 @@ class ReplacePanel (wx.Panel):
         
         if not self.regexpCheckbox.GetValue():
             result['find'] = re.escape(result['find'])
-            result['replace'] = re.escape(result['replace'])
 
         if not self.caseCheckbox.GetValue():
             result['flags'] = re.IGNORECASE

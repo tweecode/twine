@@ -16,7 +16,7 @@
 # know what flags to pass to wx.stc.
 #
 
-import sys, os, re, threading, wx, wx.stc
+import sys, os, re, threading, wx, time
 import metrics
 from tweelexer import TweeLexer
 from passagesearchframe import PassageSearchFrame
@@ -72,7 +72,12 @@ class PassageFrame (wx.Frame):
         editMenu.Append(wx.ID_UNDO, '&Undo\tCtrl-Z')
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Undo(), id = wx.ID_UNDO)
 
-        editMenu.Append(wx.ID_REDO, '&Redo\tCtrl-Y')
+        if sys.platform == 'darwin':
+            shortcut = 'Ctrl-Shift-Z'
+        else:
+            shortcut = 'Ctrl-Y'
+            
+        editMenu.Append(wx.ID_REDO, '&Redo\t' + shortcut)
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Redo(), id = wx.ID_REDO)
         
         editMenu.AppendSeparator()
@@ -213,6 +218,7 @@ class PassageFrame (wx.Frame):
         else:
             self.widget.passage.title = 'Untitled Passage'
         self.widget.passage.text = self.bodyInput.GetText()
+        self.widget.passage.modified = time.localtime()
         self.widget.passage.tags = []
         self.widget.clearPaintCache()
         
@@ -236,6 +242,9 @@ class PassageFrame (wx.Frame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
+		# update links/displays lists
+        self.widget.passage.update()
+
         # change our lexer as necessary
         
         self.setLexer()
@@ -262,7 +271,6 @@ class PassageFrame (wx.Frame):
         it is a wx.CommandEvent, and uses the exact text of the menu as the title.
         """
 
-        # this is a bit retarded
         # we seem to be receiving CommandEvents, not MenuEvents,
         # so we can only see menu item IDs
         # unfortunately all our menu items are dynamically generated
@@ -433,13 +441,11 @@ class PassageFrame (wx.Frame):
     def setLexer (self):
         """
         Sets our custom lexer for the body input so long as the passage
-        does not have the tag "stylesheet" or "script" or is StoryIncludes.
+        is part of the story.
         """
         oldLexing = self.usingLexer
         
-        if re.search(r'\bstylesheet\b', self.tagsInput.GetValue()) or \
-           re.search(r'\bscript\b', self.tagsInput.GetValue()) or \
-           self.widget.passage.title == 'StoryIncludes':
+        if not self.widget.passage.isStoryText():
             self.usingLexer = False
             self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
         else:
@@ -510,7 +516,7 @@ class PassageFrame (wx.Frame):
         incoming = []
         broken = []
         
-        for link in self.widget.passage.links():
+        for link in self.widget.passage.links:
             if len(link) > 0:
                 found = False
                 
@@ -525,7 +531,7 @@ class PassageFrame (wx.Frame):
         # incoming links
 
         for widget in self.widget.parent.widgets:
-            if self.widget.passage.title in widget.passage.links() \
+            if self.widget.passage.title in widget.passage.links \
             and len(widget.passage.title) > 0:
                 incoming.append(widget.passage.title)
                 

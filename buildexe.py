@@ -59,9 +59,8 @@ setup(
     data_files = [
         ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
         ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw',         ['targets' + os.sep + 'tw'         + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw2',        ['targets' + os.sep + 'tw2'        + os.sep + 'header.html']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
+        ('engine.js', ['targets' + os.sep + 'engine.js']),
         ('icons', [
             # toolbar icons
             'icons' + os.sep + 'newpassage.png',
