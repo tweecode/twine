@@ -54,6 +54,9 @@ class TweeLexer:
         self.ctrl.StyleSetBold(self.HTML, True)
         self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
         
+        self.ctrl.StyleSetFont(self.HTML_BLOCK, bodyFont)
+        self.ctrl.StyleSetForeground(self.HTML_BLOCK, self.HTML_COLOR)
+        
         self.ctrl.StyleSetFont(self.MACRO, bodyFont)
         self.ctrl.StyleSetBold(self.MACRO, True)
         self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
@@ -122,7 +125,6 @@ class TweeLexer:
         
         pos = 0
         prev = 0
-        end = self.ctrl.GetLength()
         text = self.ctrl.GetTextUTF8()
         style = self.DEFAULT
         styleStack = []
@@ -130,12 +132,12 @@ class TweeLexer:
         inSilence = False
         macroNestStack = []; # macro nesting
         
-        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.I), text[pos:end]);
+        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.I), text[pos:]);
         
         for p in iterator:
-            prev = pos
+            prev = pos+1
             pos = p.start()
-            self.applyStyle(prev+1, pos, style);
+            self.applyStyle(prev, pos, style);
             
             nextToken, m = self.lexMatchToken(p.group(0))
             
@@ -274,7 +276,7 @@ class TweeLexer:
     
     # regexes
     LINK_REGEX = r"\[\[([^\|\]]*?)(?:(?:\]\])|(?:\|(.*?)\]\]))"
-    MACRO_REGEX = r"[^<]<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
+    MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
     IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
     HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
     HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
@@ -297,6 +299,6 @@ class TweeLexer:
     MACRO_COLOR = '#a94286'
     COMMENT_COLOR = '#868686'
     IMAGE_COLOR = '#088A85'
-    HTML_COLOR = '#3104B4'
+    HTML_COLOR = '#4242a9'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
