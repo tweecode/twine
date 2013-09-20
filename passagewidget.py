@@ -163,6 +163,7 @@ class PassageWidget:
         Sets whether this widget should be selected. Pass a false value for
         exclusive to prevent other widgets from being deselected.
         """        
+        
         if (exclusive):
             self.parent.eachWidget(lambda i: i.setSelected(False, False))
         
@@ -170,15 +171,22 @@ class PassageWidget:
         self.selected = value
         if self.selected != old:
             self.clearPaintCache()
-            self.parent.Refresh(True, self.getPixelRect())
+            
+            # Figure out the dirty rect
+            dirtyRect = self.getPixelRect()
+            for link in self.passage.linksAndDisplays():
+                widget = self.parent.findWidget(link)
+                if widget:
+                    dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+            self.parent.Refresh(True, dirtyRect)
         
     def setDimmed (self, value):
         """Sets whether this widget should be dimmed."""
         old = self.dimmed
         self.dimmed = value
-        if self.selected != old:
+        if self.dimmed != old:
             self.clearPaintCache()
-
+                               
     def clearPaintCache (self):
         """
         Forces the widget to be repainted from scratch.
@@ -244,7 +252,7 @@ class PassageWidget:
         try: self.passageFrame.fullscreen.applyPrefs()
         except: pass
     
-    def paintConnectorTo (self, otherWidget, arrowheads, color, gc, updateRect = None):
+    def paintConnectorTo (self, otherWidget, arrowheads, color, width, gc, updateRect = None):
         """
         Paints a connecting line between this widget and another,
         with optional arrowheads. You may pass either a wx.GraphicsContext
@@ -264,7 +272,7 @@ class PassageWidget:
             
         # ok, really draw the line
         
-        lineWidth = max(self.parent.toPixels((PassageWidget.CONNECTOR_WIDTH, 0), scaleOnly = True)[0], 1)
+        lineWidth = max(self.parent.toPixels((width, 0), scaleOnly = True)[0], 1)
         gc.SetPen(wx.Pen(color, lineWidth))
         
         if isinstance(gc, wx.GraphicsContext):
@@ -314,7 +322,8 @@ class PassageWidget:
         
             if otherWidget and not otherWidget.dimmed:
                 color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in links else PassageWidget.CONNECTOR_COLOR
-                self.paintConnectorTo(otherWidget, arrowheads, color, gc, updateRect)
+                width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
+                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
         return dontDraw
     
@@ -388,7 +397,14 @@ class PassageWidget:
             if len(c) < 4:
                 c = list(c)
                 c.append(255)
-            if dim: c[3] *= PassageWidget.DIMMED_ALPHA
+            if dim:
+                a = PassageWidget.DIMMED_ALPHA
+                if not self.app.config.ReadBool('fastStoryPanel'):
+                    c[3] *= a
+                else:
+                    c[0] *= a
+                    c[1] *= a
+                    c[2] *= a
             return wx.Colour(c[0], c[1], c[2], c[3])
 
         # set up our buffer
@@ -609,11 +625,12 @@ class PassageWidget:
                'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
                'excerptText': (0, 0, 0) }
-    DIMMED_ALPHA = 0.25
+    DIMMED_ALPHA = 0.5
     LINE_SPACING = 1.2
     CONNECTOR_WIDTH = 2.0
     CONNECTOR_COLOR = '#babdb6'
     CONNECTOR_DISPLAY_COLOR = '#84a4bd'
+    CONNECTOR_SELECTED_WIDTH = 5.0
     ARROWHEAD_LENGTH = 10
     MIN_ARROWHEAD_LENGTH = 5
     ARROWHEAD_ANGLE = math.pi / 6
