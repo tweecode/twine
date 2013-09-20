@@ -60,7 +60,7 @@ class TweeLexer:
         self.ctrl.StyleSetFont(self.MACRO, bodyFont)
         self.ctrl.StyleSetBold(self.MACRO, True)
         self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
-                
+        
         self.ctrl.StyleSetFont(self.COMMENT, bodyFont)
         self.ctrl.StyleSetItalic(self.COMMENT, True)
         self.ctrl.StyleSetForeground(self.COMMENT, self.COMMENT_COLOR)
@@ -179,6 +179,9 @@ class TweeLexer:
                           if m.group(2).lower().startswith(t):
                             s2 = self.EXTERNAL
                 self.applyStyle(pos, length, s2)
+                # Apply a plainer style to the text, if any
+                if m.group(2):
+                    self.applyStyle(pos + m.start(1), len(m.group(1)), self.BOLD)
                 pos += length-1
                 styleStart = pos+1
                  

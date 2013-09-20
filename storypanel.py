@@ -500,7 +500,7 @@ class StoryPanel (wx.ScrolledWindow):
                         
             # offset selected passages
             
-            self.eachSelectedWidget(lambda p: p.offset(deltaX, deltaY))
+            for widget in self.draggingWidgets: widget.offset(deltaX, deltaY)
             self.dragCurrent = pos
                         
             # if there any overlaps, then warn the user with a bad drag cursor
@@ -519,10 +519,8 @@ class StoryPanel (wx.ScrolledWindow):
             # in slow drawing, we dim passages
             # to indicate you're not allowed to drag there
             
-            if self.app.config.ReadBool('fastStoryPanel'):
-                self.eachSelectedWidget(lambda w: w.setDimmed(True))
-            else:
-                self.eachSelectedWidget(lambda w: w.setDimmed(not goodDrag))
+            for widget in self.draggingWidgets:
+                widget.setDimmed(self.app.config.ReadBool('fastStoryPanel') or not goodDrag)
                 
             if goodDrag: self.SetCursor(self.dragCursor)
             else: self.SetCursor(self.badDragCursor)
@@ -531,15 +529,18 @@ class StoryPanel (wx.ScrolledWindow):
             # and shift passages accordingly
             
             widgetScroll = self.toLogical(self.scrollWithMouse(event), scaleOnly = True)
-            self.eachSelectedWidget(lambda w: w.offset(widgetScroll[0], widgetScroll[1]))
+            for widget in self.draggingWidgets: widget.offset(widgetScroll[0], widgetScroll[1])
                 
             # figure out our dirty rect
             
             dirtyRect = self.oldDirtyRect
             
-            for widget in self.widgets:
-                if widget.selected:
-                    dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+            for widget in self.draggingWidgets:
+                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                for link in widget.passage.linksAndDisplays():
+                    widget2 = self.findWidget(link)
+                    if widget2:
+                        dirtyRect = dirtyRect.Union(widget2.getDirtyPixelRect())
             
             self.oldDirtyRect = dirtyRect
             self.Refresh(True, dirtyRect)
@@ -556,15 +557,17 @@ class StoryPanel (wx.ScrolledWindow):
                         break
                     
                 if goodDrag:
-                    self.eachSelectedWidget(lambda w: self.snapWidget(w))
-                    self.eachSelectedWidget(lambda w: w.setDimmed(False))
+                    for widget in self.draggingWidgets:
+                        self.snapWidget(widget)
+                        widget.setDimmed(False)
                     self.parent.setDirty(True, action = 'Move')
                     self.resize()
                 else:
                     for widget in self.draggingWidgets:
                         widget.pos = widget.predragPos
                         widget.setDimmed(False)
-                    self.Refresh()
+                
+                self.Refresh()
 				
             else:
                 # change the selection
