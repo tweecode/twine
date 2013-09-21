@@ -40,7 +40,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.lastSearchRegexp = None
         self.lastSearchFlags = None
         self.trackinghover = None
-        self.tooltipcounter = 0
+        self.tooltiptimer = wx.PyTimer(self.tooltipShow)
         self.tooltipplace = ''
         self.tooltipobj = None
        
@@ -848,22 +848,32 @@ class StoryPanel (wx.ScrolledWindow):
         """Turns off hover tracking when mouse leaves the frame."""
         self.trackinghover = False
         
+    def tooltipShow(self):
+        if self.tooltipplace != None:
+            m = wx.GetMousePosition()
+            text = self.tooltipplace.passage.text[:840]
+            length = len(self.tooltipplace.passage.text);
+            if length >= 840:
+                text += "..."
+            self.tooltipobj = wx.TipWindow(self, text, min(240, max(160,length/2)), wx.Rect(m[0],m[1],1,1))
+    
     def handleHover(self, event):
         if self.trackinghover and not self.draggingWidgets and not self.draggingMarquee:
             for widget in self.widgets:
                 if widget.getPixelRect().Contains(event.GetPosition()):
-                    if self.tooltipcounter == 0 or widget.passage.title != self.tooltipplace:
-                        self.tooltipcounter = time.time() + 0.500
-                        self.tooltipplace = widget.passage.title
+                    if widget != self.tooltipplace:
+                        # Stop current timer
+                        if self.tooltiptimer.IsRunning():
+                            self.tooltiptimer.Stop()
+                        self.tooltiptimer.Start(800, wx.TIMER_ONE_SHOT)
+                        self.tooltipplace = widget                     
                         if self.tooltipobj != None:
                             if isinstance(self.tooltipobj, wx.TipWindow): 
                                 self.tooltipobj.Close()
                             self.tooltipobj = None
-                    elif time.time() >= self.tooltipcounter and self.tooltipobj == None:
-                        self.tooltipobj = wx.TipWindow(self, self.tooltipplace, 80, wx.Rect(0,0,300,200))
                     return
         
-        self.tooltipcounter = 0
+        self.tooltiptimer.Stop()
         self.tooltipplace = None
         if self.tooltipobj != None:
             if isinstance(self.tooltipobj, wx.TipWindow): 
