@@ -77,6 +77,26 @@ class TweeLexer:
         self.ctrl.StyleSetFont(self.IMAGE, bodyFont)
         self.ctrl.StyleSetBold(self.IMAGE, True)
         self.ctrl.StyleSetForeground(self.IMAGE, self.IMAGE_COLOR)
+        
+        self.ctrl.StyleSetFont(self.PARAM, bodyFont)
+        self.ctrl.StyleSetBold(self.PARAM, True)
+        self.ctrl.StyleSetForeground(self.PARAM, self.PARAM_COLOR)
+        
+        self.ctrl.StyleSetFont(self.PARAM_VAR, bodyFont)
+        self.ctrl.StyleSetBold(self.PARAM_VAR, True)
+        self.ctrl.StyleSetForeground(self.PARAM_VAR, self.PARAM_VAR_COLOR)
+        
+        self.ctrl.StyleSetFont(self.PARAM_STR, bodyFont)
+        self.ctrl.StyleSetBold(self.PARAM_STR, True)
+        self.ctrl.StyleSetForeground(self.PARAM_STR, self.PARAM_STR_COLOR)
+        
+        self.ctrl.StyleSetFont(self.PARAM_NUM, bodyFont)
+        self.ctrl.StyleSetBold(self.PARAM_NUM, True)
+        self.ctrl.StyleSetForeground(self.PARAM_NUM, self.PARAM_NUM_COLOR)
+        
+        self.ctrl.StyleSetFont(self.PARAM_BOOL, bodyFont)
+        self.ctrl.StyleSetBold(self.PARAM_BOOL, True)
+        self.ctrl.StyleSetForeground(self.PARAM_BOOL, self.PARAM_BOOL_COLOR)
       
     def lexMatchToken(self, text):
         m = text[:2].lower()
@@ -122,6 +142,30 @@ class TweeLexer:
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
         """
+        
+        def applyMacroStyle(pos, m):
+            length = m.end(0)
+            self.applyStyle(pos, length, self.MACRO)
+            # Apply different style to the macro contents
+            contents = m.group(2)
+            if contents:
+                pos2 = pos + m.start(2)
+                self.applyStyle(pos2, len(m.group(2)), self.PARAM)
+                # Do the match
+                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.I)
+                for param in iterator:
+                    if param.group(1):
+                        # String
+                        self.applyStyle(pos2 + param.start(1), len(param.group(1)), self.PARAM_STR)
+                    elif param.group(2):
+                        # Number
+                        self.applyStyle(pos2 + param.start(2), len(param.group(2)), self.PARAM_NUM)
+                    elif param.group(3):
+                        # Boolean or null
+                        self.applyStyle(pos2 + param.start(3), len(param.group(3)), self.PARAM_BOOL)
+                    elif param.group(4):
+                        # Variable
+                        self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
         
         pos = 0
         prev = 0
@@ -187,15 +231,15 @@ class TweeLexer:
                  
             #macro               
             elif nextToken == self.MACRO:
-                length = m.end(0)
                 name = m.group(1).lower()
+                length = m.end(0)
                 self.applyStyle(styleStart, pos-styleStart, style)
-                self.applyStyle(pos, length, self.MACRO)
+                
                 for i in self.NESTED_MACROS:
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
                         self.applyStyle(pos, length, self.BAD_LINK)
-                        macroNestStack.append((i, pos, length))
+                        macroNestStack.append((i,pos, m))
                         if i=="silently":
                             inSilence = True;
                             styleStack.append(style)
@@ -203,13 +247,15 @@ class TweeLexer:
                     elif name == ('end' + i):
                         if macroNestStack and macroNestStack[-1][0] == i:
                             # Re-style open macro
-                            macroStart,macroLength = macroNestStack.pop()[1:];
-                            self.applyStyle(macroStart,macroLength, self.MACRO)
+                            macroStart,macroMatch = macroNestStack.pop()[1:];
+                            applyMacroStyle(macroStart,macroMatch)
                         else:
                             self.applyStyle(pos, length, self.BAD_LINK)
                         if i=="silently":
                             inSilence = False;
-                            style = styleStack.pop() if styleStack else self.DEFAULT 
+                            style = styleStack.pop() if styleStack else self.DEFAULT  
+                            
+                applyMacroStyle(pos,m)
                 pos += length-1
                 styleStart = pos+1
                         
@@ -271,7 +317,8 @@ class TweeLexer:
     # style constants
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
-    GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE = range(20)
+    GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
+    PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(25)
     
     # markup constants
     
@@ -289,19 +336,35 @@ class TweeLexer:
     
     COMBINED_REGEX = '(' + ')|('.join([ LINK_REGEX, MACRO_REGEX, IMAGE_REGEX, HTML_BLOCK_REGEX, HTML_REGEX, INLINE_STYLE_REGEX,\
                       MONO_REGEX, COMMENT_REGEX, "''|//|__|^^|~~|==" ]) + ')'
+                      
+    # macro param regex - string or number or boolean or variable
+    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\')' \
+        +r'|(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)' \
+        +r'|(true|false|null|undefined)' \
+        +r'|(\$[^\s]+)' \
+        +r')'
+    
     # nested macros
     
     NESTED_MACROS = [ "if", "silently" ]
     
     # style colors
     
-    GOOD_LINK_COLOR = '#0000ff'
-    EXTERNAL_COLOR = '#0077ff'
-    BAD_LINK_COLOR = '#ff0000'
+    GOOD_LINK_COLOR = '#3333cc'
+    EXTERNAL_COLOR = '#337acc'
+    BAD_LINK_COLOR = '#cc3333'
     MARKUP_COLOR = '#008200'
     MACRO_COLOR = '#a94286'
     COMMENT_COLOR = '#868686'
     IMAGE_COLOR = '#088A85'
-    HTML_COLOR = '#4242a9'
+    HTML_COLOR = '#4d4d9d'
+    
+    # param colours
+    
+    PARAM_COLOR = '#7f456a'
+    PARAM_VAR_COLOR = '#005682'
+    PARAM_BOOL_COLOR = '#626262'
+    PARAM_STR_COLOR = '#008141'
+    PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
