@@ -849,7 +849,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.trackinghover = False
         
     def tooltipShow(self):
-        if self.tooltipplace != None:
+        if self.tooltipplace != None and self.trackinghover and not self.draggingWidgets:
             m = wx.GetMousePosition()
             text = self.tooltipplace.passage.text[:840]
             length = len(self.tooltipplace.passage.text);

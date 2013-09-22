@@ -176,15 +176,15 @@ class TweeLexer:
         inSilence = False
         macroNestStack = []; # macro nesting
         
+        self.applyStyle(0, len(text), self.DEFAULT);
+        
         iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.I), text[pos:]);
         
         for p in iterator:
             prev = pos+1
             pos = p.start()
-            self.applyStyle(prev, pos, style);
             
             nextToken, m = self.lexMatchToken(p.group(0))
-            
 
             # important: all style ends must be handled before beginnings
             # otherwise we start treading on each other in certain circumstances
@@ -300,6 +300,9 @@ class TweeLexer:
                 self.applyStyle(pos, length, nextToken)
                 pos += length-1
                 styleStart = pos+1
+        
+        # Finish up unclosed styles
+        self.applyStyle(pos+1, len(text), style) 
 
     def passageExists (self, title):
         """
