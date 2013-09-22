@@ -7,6 +7,7 @@
 #
 
 import sys, re, os, urllib, pickle, wx, codecs, time
+from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
@@ -222,6 +223,11 @@ class StoryFrame (wx.Frame):
  
         self.storyMenu.AppendSeparator()
         
+        self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
+        self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
+        
+        self.storyMenu.AppendSeparator()
+        
         self.storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
         self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.STORY_BUILD)        
         
@@ -277,7 +283,7 @@ class StoryFrame (wx.Frame):
         helpMenu.Append(StoryFrame.HELP_GROUP, '&Discuss Twine Online')
         self.Bind(wx.EVT_MENU, self.app.openGroup, id = StoryFrame.HELP_GROUP)
         
-        helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine on &GitHub')
+        helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine\'s Source Code on &GitHub')
         self.Bind(wx.EVT_MENU, self.app.openGitHub, id = StoryFrame.HELP_GITHUB)
         
         helpMenu.AppendSeparator()
@@ -458,6 +464,7 @@ class StoryFrame (wx.Frame):
             self.importHtml(dialog.GetPath())
             
     def importHtml (self, path):
+        """Imports the tiddler objects in a HTML file into the story."""
         try:
             # have a TiddlyWiki object parse it for us
             tw = TiddlyWiki()
@@ -491,6 +498,7 @@ class StoryFrame (wx.Frame):
             self.importSource(dialog.GetPath())
                          
     def importSource (self, path):
+        """Imports the tiddler objects in a Twee file into the story."""
         try:
             # have a TiddlyWiki object parse it for us
             tw = TiddlyWiki()
@@ -512,6 +520,45 @@ class StoryFrame (wx.Frame):
                 dialog.ShowModal()
         except:
             self.app.displayError('importing your source code')
+    
+    def importImageDialog(self, event = None, useImageDialog = True):
+        """Asks the user to choose an image file to import, then imports into the current story."""
+        # Use the wxPython image browser?
+        if useImageDialog:
+            dialog = imagebrowser.ImageDialog(self, os.getcwd())
+            dialog.ChangeFileTypes([ ('Web Image File', '*.(gif|jpg|jpeg|png|webp|svg)')])
+            dialog.ResetFiles()
+            if dialog.ShowModal() == wx.ID_OK:
+                self.importImage(dialog.GetFile())
+        else:
+            dialog = wx.FileDialog(self, 'Import Image File', os.getcwd(), '', \
+                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+            if dialog.ShowModal() == wx.ID_OK:
+                self.importImage(dialog.GetPath())
+            
+    def importImage(self, file, showdialog = True):
+        """Imports an image in base64 format into the story."""
+        try:
+            image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
+            title, mimeType = os.path.splitext(os.path.basename(file))
+            # Remove the extension's dot
+            mimeType = mimeType[1:]
+            # Correct certain MIME types
+            if mimeType == "jpg":
+                mimeType == "jpeg"
+            elif mimeType == "svg":
+                mimeType += "+xml"
+            self.storyPanel.newWidget(title = title, text = "data:image/" + mimeType + ";base64," + image64, tags = ['image'])
+            if showdialog:
+                dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
+                                          'You can include the image in your passages with this syntax:\n\n' + \
+                                          '[img[' + title + ']]', 'Image added', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+            return True
+        except IOError:
+            self.app.displayError('importing an image')
+            return False
     
     def save (self, event = None):
         if (self.saveDestination == ''):
@@ -930,9 +977,10 @@ class StoryFrame (wx.Frame):
     STORY_VIEW_LAST = 405
     STORY_AUTO_BUILD = 406
     STORY_STATS = 407
+    STORY_IMPORT_IMAGE = 408
     
-    STORY_FORMAT_HELP = 408
-    STORY_FORMAT_BASE = 409    
+    STORY_FORMAT_HELP = 409
+    STORY_FORMAT_BASE = 410    
     
     HELP_MANUAL = 501
     HELP_GROUP = 502

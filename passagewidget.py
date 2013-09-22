@@ -20,7 +20,7 @@ from passageframe import PassageFrame
 
 class PassageWidget:
     
-    def __init__ (self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', state = None):
+    def __init__ (self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', tags = [], state = None):
         # inner state
         
         self.parent = parent
@@ -42,6 +42,7 @@ class PassageWidget:
             self.passage = tiddlywiki.Tiddler('')
             self.passage.title = title
             self.passage.text = text
+            self.passage.tags += tags
             self.selected = False
             self.pos = list(pos)
         self.passage.update()
@@ -352,6 +353,8 @@ class PassageWidget:
             return 'scriptTitleBar'
         elif 'stylesheet' in self.passage.tags:
             return 'stylesheetTitleBar'
+        elif 'image' in self.passage.tags:
+            return 'imageTitleBar'
         elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
@@ -622,6 +625,7 @@ class PassageWidget:
                'storyInfoTitleBar': (28, 89, 74), \
                'scriptTitleBar': (89, 66, 28), \
                'stylesheetTitleBar': (111, 49, 83), \
+               'imageTitleBar': (8, 138, 133), \
                'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
                'excerptText': (0, 0, 0) }
