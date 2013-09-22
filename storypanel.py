@@ -43,6 +43,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.tooltiptimer = wx.PyTimer(self.tooltipShow)
         self.tooltipplace = ''
         self.tooltipobj = None
+        self.textDragSource = None
        
         if (state):
             self.scale = state['scale']
@@ -913,17 +914,41 @@ class StoryPanelContext (wx.Menu):
         
 # drag and drop listener
 
-class StoryPanelDropTarget (wx.TextDropTarget):
+class StoryPanelDropTarget (wx.PyDropTarget):
     def __init__ (self, panel):
-        wx.TextDropTarget.__init__(self)
+        wx.PyDropTarget.__init__(self)
         self.panel = panel
+        self.data = wx.DataObjectComposite()
+        self.filedrop = wx.FileDataObject()
+        self.textdrop = wx.TextDataObject()
+        self.data.Add(self.filedrop,False)
+        self.data.Add(self.textdrop,False)
+        self.SetDataObject(self.data)
         
-    def OnDropText (self, x, y, data):
-        # add the new widget
-        
-        self.panel.newWidget(title = data, pos = (x, y))
-        
-        # update the source text with a link
-        # this is set by PassageFrame.prepDrag()
-        
-        self.panel.textDragSource.linkSelection()
+    def OnData (self, x, y, d):
+        if self.GetData():
+            type = self.data.GetReceivedFormat().GetType()
+            if type in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
+                # add the new widget
+                
+                self.panel.newWidget(title = self.textdrop.GetText(), pos = (x, y))
+                
+                # update the source text with a link
+                # this is set by PassageFrame.prepDrag()
+                # (note: if text is dragged from outside Twine into it, 
+                # then it won't be set for the destination.)
+                if self.panel.textDragSource:
+                    self.panel.textDragSource.linkSelection()
+                self.panel.textDragSource = None
+            elif type == wx.DF_FILENAME:
+                for file in self.filedrop.GetFilenames():
+                    # Open a file if it's .tws
+                    if file.endswith(".tws"):
+                        self.panel.app.open(file)
+                    # Import a file if it's HTML, .tw or .twee
+                    elif file.endswith(".twee") or file.endswith(".tw"):
+                        self.panel.parent.importSource(file)
+                    elif file.endswith(".html") or file.endswith(".htm"):
+                        self.panel.parent.importHtml(file)
+        return d
+
