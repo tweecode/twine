@@ -79,7 +79,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
         
-    def newWidget (self, title = None, text = '', pos = None, quietly = False, logicals = False):
+    def newWidget (self, title = None, text = '', tags = [], pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
                 
         # defaults
@@ -88,7 +88,7 @@ class StoryPanel (wx.ScrolledWindow):
         if not pos: pos = StoryPanel.INSET
         if not logicals: qspos = self.toLogical(pos)
 		
-        new = PassageWidget(self, self.app, title = title, text = text, pos = pos)
+        new = PassageWidget(self, self.app, title = title, text = text, tags = tags, pos = pos)
         self.widgets.append(new)
         self.snapWidget(new, quietly)
         self.Refresh()
@@ -940,15 +940,38 @@ class StoryPanelDropTarget (wx.PyDropTarget):
                 if self.panel.textDragSource:
                     self.panel.textDragSource.linkSelection()
                 self.panel.textDragSource = None
+                
             elif type == wx.DF_FILENAME:
-                for file in self.filedrop.GetFilenames():
+                
+                imageRegex = r'\.(?:jpe?g|png|gif|webp|svg)$'
+                files = self.filedrop.GetFilenames();
+                
+                # Check if dropped files contains multiple images,
+                # so the correct dialogs are displayed
+                
+                imagesImported = 0
+                multipleImages = len([re.search(imageRegex, file) for file in files]) > 1
+                
+                for file in files:
+                    
                     # Open a file if it's .tws
+                    
                     if file.endswith(".tws"):
                         self.panel.app.open(file)
+                    
                     # Import a file if it's HTML, .tw or .twee
+                    
                     elif file.endswith(".twee") or file.endswith(".tw"):
                         self.panel.parent.importSource(file)
                     elif file.endswith(".html") or file.endswith(".htm"):
                         self.panel.parent.importHtml(file)
+                    elif re.search(imageRegex, file):
+                        imagesImported += self.panel.parent.importImage(file, not multipleImages)
+                
+                if imagesImported > 1:
+                    dialog = wx.MessageDialog(self.panel.parent, 'Multiple image files imported successfully.', 'Images added', \
+                          wx.ICON_INFORMATION | wx.OK)
+                    dialog.ShowModal()
+                
         return d
 

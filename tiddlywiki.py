@@ -374,7 +374,7 @@ class Tiddler:
 		return output
 	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
+		return not (('script' in self.tags) or ('stylesheet' in self.tags) or ('image' in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES))
 
 	def linksAndDisplays(self):

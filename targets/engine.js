@@ -1164,6 +1164,14 @@ Wikifier.formatters = [
             else if (lookaheadMatch[2]) img.align = "right";
             if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
             img.src = lookaheadMatch[4];
+            // Base64 passage transclusion
+            var imgPassages = tale.lookup("tags", "image");
+            for (var j = 0; j < imgPassages.length; j++) {
+                if (imgPassages[j].title == lookaheadMatch[4]) {
+                    img.src = imgPassages[j].text;
+                    break;
+                }
+            }
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
