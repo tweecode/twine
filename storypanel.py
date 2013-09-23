@@ -954,18 +954,19 @@ class StoryPanelDropTarget (wx.PyDropTarget):
                 
                 for file in files:
                     
+                    fname = file.lower()
                     # Open a file if it's .tws
                     
-                    if file.endswith(".tws"):
+                    if fname.endswith(".tws"):
                         self.panel.app.open(file)
                     
                     # Import a file if it's HTML, .tw or .twee
                     
-                    elif file.endswith(".twee") or file.endswith(".tw"):
+                    elif fname.endswith(".twee") or fname.endswith(".tw"):
                         self.panel.parent.importSource(file)
-                    elif file.endswith(".html") or file.endswith(".htm"):
+                    elif fname.endswith(".html") or fname.endswith(".htm"):
                         self.panel.parent.importHtml(file)
-                    elif re.search(imageRegex, file):
+                    elif re.search(imageRegex, fname):
                         imagesImported += self.panel.parent.importImage(file, not multipleImages)
                 
                 if imagesImported > 1:

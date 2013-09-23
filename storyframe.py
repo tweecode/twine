@@ -521,34 +521,46 @@ class StoryFrame (wx.Frame):
         except:
             self.app.displayError('importing your source code')
     
-    def importImageDialog(self, event = None, useImageDialog = True):
-        """Asks the user to choose an image file to import, then imports into the current story."""
+    def importImageDialog(self, event = None, useImageDialog = True, replace = None):
+        """Asks the user to choose an image file to import, then imports into the current story.
+           replace is a Tiddler, if any, that will be replaced by the image."""
         # Use the wxPython image browser?
         if useImageDialog:
             dialog = imagebrowser.ImageDialog(self, os.getcwd())
             dialog.ChangeFileTypes([ ('Web Image File', '*.(gif|jpg|jpeg|png|webp|svg)')])
             dialog.ResetFiles()
-            if dialog.ShowModal() == wx.ID_OK:
-                self.importImage(dialog.GetFile())
         else:
             dialog = wx.FileDialog(self, 'Import Image File', os.getcwd(), '', \
                                    'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
-            if dialog.ShowModal() == wx.ID_OK:
-                self.importImage(dialog.GetPath())
-            
+        if dialog.ShowModal() == wx.ID_OK:
+            file = dialog.GetFile() if useImageDialog else dialog.GetPath()
+            if not replace:
+                self.importImage(file)
+            else:
+                try:
+                    replace.passage.text = self.openImageAsBase64(file)[0]
+                except IOError:
+                    self.app.displayError('importing an image')
+          
+    def openImageAsBase64(self, file):
+        """Opens an image file and returns its base64 representation."""
+        image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
+        title, mimeType = os.path.splitext(os.path.basename(file))
+        # Remove the extension's dot
+        mimeType = mimeType[1:]
+        # Correct certain MIME types
+        if mimeType == "jpg":
+            mimeType == "jpeg"
+        elif mimeType == "svg":
+            mimeType += "+xml"
+        
+        return ("data:image/" + mimeType + ";base64," + image64, title)
+    
     def importImage(self, file, showdialog = True):
-        """Imports an image in base64 format into the story."""
+        """Imports an image into the story as an image passage."""
         try:
-            image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
-            title, mimeType = os.path.splitext(os.path.basename(file))
-            # Remove the extension's dot
-            mimeType = mimeType[1:]
-            # Correct certain MIME types
-            if mimeType == "jpg":
-                mimeType == "jpeg"
-            elif mimeType == "svg":
-                mimeType += "+xml"
-            self.storyPanel.newWidget(title = title, text = "data:image/" + mimeType + ";base64," + image64, tags = ['image'])
+            text, title = self.openImageAsBase64(file)
+            self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
             if showdialog:
                 dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
                                           'You can include the image in your passages with this syntax:\n\n' + \
@@ -604,7 +616,7 @@ class StoryFrame (wx.Frame):
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title != 'StoryIncludes' and \
-                not any(t.startswith('Twine.') for t in widget.passage.tags):
+                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
@@ -646,8 +658,7 @@ class StoryFrame (wx.Frame):
                                         openedFile.close()
                                         for widget in s.storyPanel.widgets:
                                             if not any(widget.passage.title in t for t in excludepassages) and \
-                                            not any('Twine.private' in t for t in widget.passage.tags) and \
-                                            not any('Twine.system' in t for t in widget.passage.tags):
+                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                                                 tw.addTiddler(widget.passage)
                                         s.Destroy()
                                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -671,8 +682,7 @@ class StoryFrame (wx.Frame):
                                         for tiddlerkey in tiddlerkeys:
                                             passage = tw1.tiddlers[tiddlerkey]
                                             if not any(passage.title == t for t in excludepassages) and \
-                                            not any('Twine.private' in t for t in passage.tags) and \
-                                            not any('Twine.system' in t for t in passage.tags):
+                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
                                                 tw.addTiddler(passage)
                                     else:
                                         raise 'File format not recognized'

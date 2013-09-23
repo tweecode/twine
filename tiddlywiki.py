@@ -106,8 +106,7 @@ class TiddlyWiki:
 			self.storysettings['obfuscatekey'] = nss
 		
 		for i in order:
-			if not any('Twine.private' in t for t in self.tiddlers[i].tags) and \
-			not any('Twine.system' in t for t in self.tiddlers[i].tags):
+			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
 				if (self.tiddlers[i].title == 'StorySettings'):
 					output += self.tiddlers[i].toHtml(self.author, insensitive = True)
 				elif (not obfuscate):
@@ -211,7 +210,8 @@ class TiddlyWiki:
 			self.tiddlers[tiddler.title] = tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
-		
+	SPECIAL_TAGS = ['Twine.image']
+	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
 #
 # Tiddler class
 #
@@ -374,7 +374,7 @@ class Tiddler:
 		return output
 	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) or ('image' in self.tags) \
+		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES))
 
 	def linksAndDisplays(self):

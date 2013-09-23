@@ -1165,7 +1165,7 @@ Wikifier.formatters = [
             if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
             img.src = lookaheadMatch[4];
             // Base64 passage transclusion
-            var imgPassages = tale.lookup("tags", "image");
+            var imgPassages = tale.lookup("tags", "Twine.image");
             for (var j = 0; j < imgPassages.length; j++) {
                 if (imgPassages[j].title == lookaheadMatch[4]) {
                     img.src = imgPassages[j].text;
@@ -1375,14 +1375,14 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
 };
 /* Functions usable by custom scripts */
 function visited(e) {
-	var ret,c;
-	e || (e = state.history[0].passage.title);
-  	for(ret=c=0; c<state.history.length; c++) {
-		if(state.history[c].passage && state.history[c].passage.title == e) {
-			ret++;
-		}
-	}
-	return ret;
+    var ret,c;
+    e || (e = state.history[0].passage.title);
+    for(ret=c=0; c<state.history.length; c++) {
+        if(state.history[c].passage && state.history[c].passage.title == e) {
+            ret++;
+        }
+    }
+    return ret;
 }
 /* Init function */
 function main() {
