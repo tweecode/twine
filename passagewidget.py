@@ -16,7 +16,7 @@
 
 import sys, os, copy, math, re, wx, storypanel, tiddlywiki
 import geometry, metrics
-from passageframe import PassageFrame
+from passageframe import PassageFrame, ImageFrame
 
 class PassageWidget:
     
@@ -200,13 +200,18 @@ class PassageWidget:
         
     def openEditor (self, event = None, fullscreen = False):
         """Opens a PassageFrame to edit this passage."""
+        image = 'Twine.image' in self.passage.tags
+        
         if (not hasattr(self, 'passageFrame')):
-            self.passageFrame = PassageFrame(None, self, self.app)
-            if fullscreen: self.passageFrame.openFullscreen()
+            if image:
+                self.passageFrame = ImageFrame(None, self, self.app)
+            else:
+                self.passageFrame = PassageFrame(None, self, self.app)
+                if fullscreen: self.passageFrame.openFullscreen()
         else:
             try:
                 self.passageFrame.Raise()
-                if fullscreen: self.passageFrame.openFullscreen()
+                if fullscreen and not image: self.passageFrame.openFullscreen()
             except wx._core.PyDeadObjectError:
                 # user closed the frame, so we need to recreate it
                 delattr(self, 'passageFrame')
@@ -346,15 +351,14 @@ class PassageWidget:
     
     def getTitleColorIndex(self):
         # Find the StartPassages passage
-        
-        if any(t.startswith('Twine.') for t in self.passage.tags):
+        if 'Twine.image' in self.passage.tags:
+            return 'imageTitleBar'
+        elif any(t.startswith('Twine.') for t in self.passage.tags):
             return 'privateTitleBar'
         elif 'script' in self.passage.tags:
             return 'scriptTitleBar'
         elif 'stylesheet' in self.passage.tags:
             return 'stylesheetTitleBar'
-        elif 'image' in self.passage.tags:
-            return 'imageTitleBar'
         elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":

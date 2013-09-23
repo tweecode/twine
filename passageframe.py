@@ -6,7 +6,7 @@
 # of a passage. This must be paired with a PassageWidget; it gets to the
 # underlying passage via it, and also notifies it of changes made here.
 #
-# This doesn't require the user to save his changes -- as he makes changes,
+# This doesn't require the user to save their changes -- as they make changes,
 # they are automatically updated everywhere.
 #
 # nb: This does not make use of wx.stc's built-in find/replace functions.
@@ -19,8 +19,10 @@
 import sys, os, re, threading, wx, time
 import metrics
 from tweelexer import TweeLexer
+from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
+import cStringIO
 
 class PassageFrame (wx.Frame):
     
@@ -219,11 +221,12 @@ class PassageFrame (wx.Frame):
             self.widget.passage.title = 'Untitled Passage'
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.modified = time.localtime()
-        self.widget.passage.tags = []
+        # Preserve the special (uneditable) tags
+        self.widget.passage.tags = []#[i for i in self.widget.passage.tags if i in TiddlyWiki.SPECIAL_TAGS]
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
-            if tag != '': self.widget.passage.tags.append(tag)
+            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS : self.widget.passage.tags.append(tag)
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
         
@@ -592,3 +595,138 @@ class PassageFrame (wx.Frame):
     PASSAGE_FULLSCREEN = 1001
     PASSAGE_EDIT_SELECTION = 1002
     PASSAGE_REBUILD_STORY = 1003
+    
+#
+# ImageFrame
+# Special type of PassageFrame which only displays passages whose text consists of base64
+# encoded images - the image is converted to a bitmap and displayed, if possible.
+#
+class ImageFrame (PassageFrame):
+    
+    def __init__ (self, parent, widget, app):
+        self.widget = widget
+        self.app = app
+        self.syncTimer = None
+        
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
+                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+        # menus
+        
+        self.menus = wx.MenuBar()
+        self.SetMenuBar(self.menus)
+        
+        # controls
+        
+        self.panel = wx.Panel(self)
+        allSizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(allSizer)
+        
+        # title control
+        
+        self.topControls = wx.Panel(self.panel)
+        topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        
+        titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
+        self.titleInput = wx.TextCtrl(self.topControls)
+        self.titleInput.SetValue(self.widget.passage.title)
+        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        
+        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
+        topSizer.AddGrowableCol(1, 1)
+        self.topControls.SetSizer(topSizer)
+        
+        # image pane
+        
+        self.image = wx.StaticBitmap(self.panel, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+        
+        # menus
+        
+        passageMenu = wx.Menu()
+        
+        passageMenu.Append(self.IMPORT_IMAGE, '&Replace Image...\tCtrl-O')
+        self.Bind(wx.EVT_MENU, self.ReplaceImage, id = self.IMPORT_IMAGE)
+
+        passageMenu.AppendSeparator()
+        
+        passageMenu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
+        self.Bind(wx.EVT_MENU, self.widget.parent.parent.save, id = wx.ID_SAVE)
+        
+        passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
+        self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
+
+        passageMenu.AppendSeparator()
+
+        passageMenu.Append(wx.ID_CLOSE, '&Close Image\tCtrl-W')
+        self.Bind(wx.EVT_MENU, lambda e: self.Destroy(), id = wx.ID_CLOSE)   
+        
+        # menu bar
+        
+        self.menus = wx.MenuBar()
+        self.menus.Append(passageMenu, '&Passage')
+        self.SetMenuBar(self.menus)
+        
+        # finish
+        
+        allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
+        allSizer.Add(self.image, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
+        
+        # bindings
+        self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
+        
+        self.SetIcon(self.app.icon)
+        self.SetImage(False)        
+        self.Show(True)
+    
+    def syncPassage (self, event = None):
+        """Updates the image based on the title input; asks our matching widget to repaint."""
+        if len(self.titleInput.GetValue()) > 0:
+            self.widget.passage.title = self.titleInput.GetValue()
+        else:
+            self.widget.passage.title = 'Untitled Image'
+        self.widget.clearPaintCache()
+        
+        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        
+        # immediately mark the story dirty
+        
+        self.widget.parent.parent.setDirty(True)
+        
+        # reset redraw timer
+        
+        def reallySync (self):
+            self.widget.parent.Refresh()
+
+        if (self.syncTimer):
+            self.syncTimer.cancel()
+            
+        self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
+        self.syncTimer.start()
+        
+    def SetImage(self, refresh = True):
+        """Updates the image pane by converting the base64 encoded image back into """
+        try:
+            text = self.widget.passage.text
+            # Remove MIME type
+            text = text[text.find(';base64,')+8:]
+            # Convert to bitmap
+            imgData = text.decode('base64')
+            stream = cStringIO.StringIO(imgData)
+            bmp = wx.BitmapFromImage(wx.ImageFromStream(stream))
+            self.image.SetBitmap(bmp)
+            size = bmp.GetSize()
+            self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+32))
+            if refresh:
+                self.Refresh()
+        except:
+            pass
+        
+    def ReplaceImage(self, event = None):
+        """Replace the image with a new file, if possible."""
+        self.widget.parent.parent.importImageDialog(replace = self.widget)
+        self.SetImage(True)
+    
+    IMPORT_IMAGE = 1004
+    EXPORT_IMAGE = 1005
+        
+        
