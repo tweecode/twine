@@ -640,7 +640,7 @@ class ImageFrame (PassageFrame):
         
         self.image = wx.StaticBitmap(self.panel, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
         
-        # menus
+        # image menu
         
         passageMenu = wx.Menu()
         
@@ -660,10 +660,21 @@ class ImageFrame (PassageFrame):
         passageMenu.Append(wx.ID_CLOSE, '&Close Image\tCtrl-W')
         self.Bind(wx.EVT_MENU, lambda e: self.Destroy(), id = wx.ID_CLOSE)   
         
+        # edit menu
+        
+        editMenu = wx.Menu()
+        
+        editMenu.Append(wx.ID_COPY, '&Copy\tCtrl-C')
+        self.Bind(wx.EVT_MENU, self.CopyImage, id = wx.ID_COPY)
+
+        editMenu.Append(wx.ID_PASTE, '&Paste\tCtrl-V')
+        self.Bind(wx.EVT_MENU, self.PasteImage, id = wx.ID_PASTE)
+        
         # menu bar
         
         self.menus = wx.MenuBar()
-        self.menus.Append(passageMenu, '&Passage')
+        self.menus.Append(passageMenu, '&Image')
+        self.menus.Append(editMenu, '&Edit')
         self.SetMenuBar(self.menus)
         
         # finish
@@ -675,7 +686,7 @@ class ImageFrame (PassageFrame):
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
         
         self.SetIcon(self.app.icon)
-        self.SetImage(False)        
+        self.SetImage()        
         self.Show(True)
     
     def syncPassage (self, event = None):
@@ -703,8 +714,15 @@ class ImageFrame (PassageFrame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
-    def SetImage(self, refresh = True):
-        """Updates the image pane by converting the base64 encoded image back into """
+    def SetBitmap(self, bmp):
+        """Assigns a bitmap to this frame's StaticBitmap component."""
+        self.image.SetBitmap(bmp)
+        size = bmp.GetSize()
+        self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+        self.Refresh()
+        
+    def SetImage(self):
+        """Updates the image pane by converting the base64 encoded image back into a bitmap"""
         try:
             text = self.widget.passage.text
             # Remove MIME type
@@ -713,11 +731,7 @@ class ImageFrame (PassageFrame):
             imgData = text.decode('base64')
             stream = cStringIO.StringIO(imgData)
             bmp = wx.BitmapFromImage(wx.ImageFromStream(stream))
-            self.image.SetBitmap(bmp)
-            size = bmp.GetSize()
-            self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+32))
-            if refresh:
-                self.Refresh()
+            self.SetBitmap(bmp)
         except:
             pass
         
@@ -725,6 +739,36 @@ class ImageFrame (PassageFrame):
         """Replace the image with a new file, if possible."""
         self.widget.parent.parent.importImageDialog(replace = self.widget)
         self.SetImage(True)
+        
+    def CopyImage(self, event = None):
+        """Copy the bitmap to the clipboard"""
+        clip = wx.TheClipboard
+        if clip.Open():
+            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap()))
+            clip.Flush()
+            clip.Close()
+        
+    def PasteImage(self, event = None):
+        """Paste from the clipboard, converting to a PNG"""
+        clip = wx.TheClipboard
+        bdo = wx.BitmapDataObject()
+        pasted = False
+        if clip.Open():
+            pasted = clip.GetData(bdo)
+            clip.Close()
+        if not pasted:
+            return
+        bmp = bdo.GetBitmap()
+        img = bmp.ConvertToImage()
+        # "PngZL" in wxPython 2.9 is equivalent to wx.IMAGE_OPTION_PNG_COMPRESSION_LEVEL in wxPython Phoenix
+        img.SetOptionInt("PngZL", 9)
+        stream = cStringIO.StringIO()
+        try:
+            img.SaveStream(stream, wx.BITMAP_TYPE_PNG)
+            self.widget.passage.text = "data:image/png;base64," + stream.getvalue().encode('base64')
+            self.SetBitmap(bmp)
+        except:
+            pass
     
     IMPORT_IMAGE = 1004
     EXPORT_IMAGE = 1005

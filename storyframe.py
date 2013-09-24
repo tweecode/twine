@@ -538,12 +538,12 @@ class StoryFrame (wx.Frame):
                 self.importImage(file)
             else:
                 try:
-                    replace.passage.text = self.openImageAsBase64(file)[0]
+                    replace.passage.text = self.openImageFileAsBase64(file)[0]
                 except IOError:
                     self.app.displayError('importing an image')
           
-    def openImageAsBase64(self, file):
-        """Opens an image file and returns its base64 representation."""
+    def openImageFileAsBase64(self, file):
+        """Opens an image file and returns its base64 representation, expressed as a Data URI with MIME type"""
         image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
         # Remove the extension's dot
@@ -559,7 +559,7 @@ class StoryFrame (wx.Frame):
     def importImage(self, file, showdialog = True):
         """Imports an image into the story as an image passage."""
         try:
-            text, title = self.openImageAsBase64(file)
+            text, title = self.openImageFileAsBase64(file)
             self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
             if showdialog:
                 dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
