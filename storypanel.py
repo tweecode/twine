@@ -850,12 +850,23 @@ class StoryPanel (wx.ScrolledWindow):
         self.trackinghover = False
         
     def tooltipShow(self):
+        """ Show the tooltip, showing a text sample for text passages,
+        and some image size info for image passages."""
         if self.tooltipplace != None and self.trackinghover and not self.draggingWidgets:
             m = wx.GetMousePosition()
-            text = self.tooltipplace.passage.text[:840]
-            length = len(self.tooltipplace.passage.text);
-            if length >= 840:
-                text += "..."
+            p = self.tooltipplace.passage
+            length = len(p.text);
+            if "Twine.image" in p.tags:
+                mimeType = "unknown"
+                mimeTypeRE = re.search(r"data:image/([^;]*);",p.text)
+                if mimeTypeRE:
+                    mimeType = mimeTypeRE.group(1)
+                # Including the data URI prefix in the byte count, just because.
+                text = "Image type: " + mimeType + "\nSize: "+ str(len(p.text)/1024)+" KB"
+            else:
+                text = p.text[:840]
+                if length >= 840:
+                    text += "..."
             self.tooltipobj = wx.TipWindow(self, text, min(240, max(160,length/2)), wx.Rect(m[0],m[1],1,1))
     
     def handleHover(self, event):
