@@ -17,7 +17,7 @@
 #
 
 import sys, os, re, threading, wx, time
-import metrics
+import metrics, images
 from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
@@ -645,7 +645,7 @@ class ImageFrame (PassageFrame):
         passageMenu = wx.Menu()
         
         passageMenu.Append(self.IMPORT_IMAGE, '&Replace Image...\tCtrl-O')
-        self.Bind(wx.EVT_MENU, self.ReplaceImage, id = self.IMPORT_IMAGE)
+        self.Bind(wx.EVT_MENU, self.replaceImage, id = self.IMPORT_IMAGE)
 
         passageMenu.AppendSeparator()
         
@@ -665,10 +665,10 @@ class ImageFrame (PassageFrame):
         editMenu = wx.Menu()
         
         editMenu.Append(wx.ID_COPY, '&Copy\tCtrl-C')
-        self.Bind(wx.EVT_MENU, self.CopyImage, id = wx.ID_COPY)
+        self.Bind(wx.EVT_MENU, self.copyImage, id = wx.ID_COPY)
 
         editMenu.Append(wx.ID_PASTE, '&Paste\tCtrl-V')
-        self.Bind(wx.EVT_MENU, self.PasteImage, id = wx.ID_PASTE)
+        self.Bind(wx.EVT_MENU, self.pasteImage, id = wx.ID_PASTE)
         
         # menu bar
         
@@ -686,7 +686,7 @@ class ImageFrame (PassageFrame):
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
         
         self.SetIcon(self.app.icon)
-        self.SetImage()        
+        self.updateImage()      
         self.Show(True)
     
     def syncPassage (self, event = None):
@@ -714,33 +714,21 @@ class ImageFrame (PassageFrame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
-    def SetBitmap(self, bmp):
+    def updateImage(self):
         """Assigns a bitmap to this frame's StaticBitmap component."""
-        self.image.SetBitmap(bmp)
-        size = bmp.GetSize()
-        self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
-        self.Refresh()
+        bmp = self.widget.bitmap
+        if bmp:
+            self.image.SetBitmap(bmp)
+            size = bmp.GetSize()
+            self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+            self.Refresh()
         
-    def SetImage(self):
-        """Updates the image pane by converting the base64 encoded image back into a bitmap"""
-        try:
-            text = self.widget.passage.text
-            # Remove MIME type
-            text = text[text.find(';base64,')+8:]
-            # Convert to bitmap
-            imgData = text.decode('base64')
-            stream = cStringIO.StringIO(imgData)
-            bmp = wx.BitmapFromImage(wx.ImageFromStream(stream))
-            self.SetBitmap(bmp)
-        except:
-            pass
-        
-    def ReplaceImage(self, event = None):
+    def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
         self.widget.parent.parent.importImageDialog(replace = self.widget)
-        self.SetImage(True)
+        self.updateImage()
         
-    def CopyImage(self, event = None):
+    def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
         if clip.Open():
@@ -748,7 +736,7 @@ class ImageFrame (PassageFrame):
             clip.Flush()
             clip.Close()
         
-    def PasteImage(self, event = None):
+    def pasteImage(self, event = None):
         """Paste from the clipboard, converting to a PNG"""
         clip = wx.TheClipboard
         bdo = wx.BitmapDataObject()
@@ -759,16 +747,9 @@ class ImageFrame (PassageFrame):
         if not pasted:
             return
         bmp = bdo.GetBitmap()
-        img = bmp.ConvertToImage()
-        # "PngZL" in wxPython 2.9 is equivalent to wx.IMAGE_OPTION_PNG_COMPRESSION_LEVEL in wxPython Phoenix
-        img.SetOptionInt("PngZL", 9)
-        stream = cStringIO.StringIO()
-        try:
-            img.SaveStream(stream, wx.BITMAP_TYPE_PNG)
-            self.widget.passage.text = "data:image/png;base64," + stream.getvalue().encode('base64')
-            self.SetBitmap(bmp)
-        except:
-            pass
+        self.widget.passage.text = images.BitmapToBase64PNG(bmp)
+        self.widget.updateBitmap()
+        self.updateImage()
     
     IMPORT_IMAGE = 1004
     EXPORT_IMAGE = 1005

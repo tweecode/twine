@@ -15,7 +15,7 @@
 #
 
 import sys, os, copy, math, re, wx, storypanel, tiddlywiki
-import geometry, metrics
+import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame
 
 class PassageWidget:
@@ -45,6 +45,9 @@ class PassageWidget:
             self.passage.tags += tags
             self.selected = False
             self.pos = list(pos)
+        
+        self.bitmap = None
+        self.updateBitmap()
         self.passage.update()
             
     def getSize (self):
@@ -200,7 +203,7 @@ class PassageWidget:
         
     def openEditor (self, event = None, fullscreen = False):
         """Opens a PassageFrame to edit this passage."""
-        image = 'Twine.image' in self.passage.tags
+        image = self.passage.isImage()
         
         if (not hasattr(self, 'passageFrame')):
             if image:
@@ -257,6 +260,11 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.fullscreen.applyPrefs()
         except: pass
+        
+    def updateBitmap(self):
+        """If an image passage, updates the bitmap to match the contained base64 data."""
+        if self.passage.isImage():
+            self.bitmap = images.Base64ToBitmap(self.passage.text)
     
     def paintConnectorTo (self, otherWidget, arrowheads, color, width, gc, updateRect = None):
         """
@@ -351,7 +359,7 @@ class PassageWidget:
     
     def getTitleColorIndex(self):
         # Find the StartPassages passage
-        if 'Twine.image' in self.passage.tags:
+        if self.passage.isImage():
             return 'imageTitleBar'
         elif any(t.startswith('Twine.') for t in self.passage.tags):
             return 'privateTitleBar'
@@ -492,34 +500,36 @@ class PassageWidget:
             
             # draw excerpt
     
-            excerptTop = inset + titleBarHeight
-    
-            # we split the excerpt by line, then draw them in turn
-            # (we use a library to determine breaks, but have to draw the lines ourselves)
-    
-            if isinstance(gc, wx.GraphicsContext):
-                gc.ResetClip()
-                gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2))
-            else:
-                gc.DestroyClippingRegion()
-                gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
-            
-            excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
-
-            if isinstance(gc, wx.GraphicsContext):
-                gc.SetFont(excerptFont, excerptTextColor)
-            else:
-                gc.SetFont(excerptFont)
-                gc.SetTextForeground(excerptTextColor)
+            if not self.passage.isImage():
+                excerptTop = inset + titleBarHeight
+        
+                # we split the excerpt by line, then draw them in turn
+                # (we use a library to determine breaks, but have to draw the lines ourselves)
+        
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.ResetClip()
+                    gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2))
+                else:
+                    gc.DestroyClippingRegion()
+                    gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
                 
-            excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
-            
-            for line in excerptLines:
-                gc.DrawText(line, inset, excerptTop)
-                excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING
-                if excerptTop + excerptFontHeight > size.height - inset: break
+                excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
+    
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.SetFont(excerptFont, excerptTextColor)
+                else:
+                    gc.SetFont(excerptFont)
+                    gc.SetTextForeground(excerptTextColor)
+                    
+                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
+                
+                for line in excerptLines:
+                    gc.DrawText(line, inset, excerptTop)
+                    excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING
+                    if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
+            titleBarHeight = PassageWidget.GREEK_HEIGHT*3
             titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
@@ -537,25 +547,41 @@ class PassageWidget:
             height += PassageWidget.GREEK_HEIGHT * 3
             
             # greek body text
-            
-            gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
-            
-            chars = len(self.passage.text)
-            while height < size.height - inset and chars > 0:
-                width = size.height - inset
+            if not self.passage.isImage():
                 
-                if height + (PassageWidget.GREEK_HEIGHT * 2) > size.height - inset:
-                    width /= 2
-                elif chars < 80:
-                    width = max(4, width * chars / 80)
-
-                if isinstance(gc, wx.GraphicsContext):
-                    gc.StrokeLine(inset, height, width, height)
-                else:
-                    gc.DrawLine(inset, height, width, height)
+                gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
+                
+                chars = len(self.passage.text)
+                while height < size.height - inset and chars > 0:
+                    width = size.height - inset
                     
-                height += PassageWidget.GREEK_HEIGHT * 2
-                chars -= 80
+                    if height + (PassageWidget.GREEK_HEIGHT * 2) > size.height - inset:
+                        width /= 2
+                    elif chars < 80:
+                        width = max(4, width * chars / 80)
+    
+                    if isinstance(gc, wx.GraphicsContext):
+                        gc.StrokeLine(inset, height, width, height)
+                    else:
+                        gc.DrawLine(inset, height, width, height)
+                        
+                    height += PassageWidget.GREEK_HEIGHT * 2
+                    chars -= 80
+                
+        if self.passage.isImage():
+            if self.bitmap:
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.ResetClip()
+                    gc.Clip(1, titleBarHeight + 1, size.width - 3, size.height - 3)
+                else:
+                    gc.DestroyClippingRegion()
+                    gc.SetClippingRect(wx.Rect(1, titleBarHeight + 1, size.width - 3, size.height - 3))
+                
+                scale = size.width/float(self.bitmap.GetWidth());
+                img = self.bitmap.ConvertToImage();
+                if scale != 1:
+                    img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
+                gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1)
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()

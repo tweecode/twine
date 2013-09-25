@@ -373,6 +373,9 @@ class Tiddler:
 		output += u"\n" + self.text + u"\n\n\n"
 		return output
 	
+	def isImage(self):
+		return 'Twine.image' in self.tags
+	
 	def isStoryText(self):
 		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES))
