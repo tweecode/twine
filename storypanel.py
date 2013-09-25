@@ -856,7 +856,7 @@ class StoryPanel (wx.ScrolledWindow):
             m = wx.GetMousePosition()
             p = self.tooltipplace.passage
             length = len(p.text);
-            if "Twine.image" in p.tags:
+            if p.isImage():
                 mimeType = "unknown"
                 mimeTypeRE = re.search(r"data:image/([^;]*);",p.text)
                 if mimeTypeRE:
