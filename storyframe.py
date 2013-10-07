@@ -683,7 +683,7 @@ class StoryFrame (wx.Frame):
     def autoBuildStart (self):
         self.autobuildfiles = { }
         if self.saveDestination == '':
-            twinedocdir = cwd
+            twinedocdir = os.getcwd()
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
         for f in os.listdir(twinedocdir):
