@@ -265,7 +265,7 @@ class App (wx.App):
         
         # Windows py2exe'd apps add an extraneous library.zip at the end
         
-        scriptPath = scriptPath.replace('\\\w*.zip', '')
+        scriptPath = re.sub('\\\\\w*.zip', '', scriptPath)
         return scriptPath
 
 # start things up if we were called directly
