@@ -251,6 +251,8 @@ class StoryFrame (wx.Frame):
                     sfdirlabel = 'Jonah'
                 elif sfdir == 'sugarcane': 
                     sfdirlabel = 'Sugarcane'
+                elif sfdir == 'sugarcube': 
+                    sfdirlabel = 'SugarCube'
                 else: 
                     sfdirlabel = sfdir.capitalize()
                 storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)

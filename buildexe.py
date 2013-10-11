@@ -60,6 +60,7 @@ setup(
         ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
         ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
+        ('targets' + os.sep + 'sugarcube',  ['targets' + os.sep + 'sugarcube'  + os.sep + 'header.html']),
         ('engine.js', ['targets' + os.sep + 'engine.js']),
         ('icons', [
             # toolbar icons
