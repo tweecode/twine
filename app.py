@@ -18,6 +18,13 @@ class App (wx.App):
         locale.setlocale(locale.LC_ALL, '')
         self.stories = []
         self.loadPrefs()
+        
+        # Determine the path to the executing script or application.
+        self.scriptPath = os.path.realpath(sys.path[0])
+        # OS X py2app'd apps will direct us right into the app bundle
+        self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+        # Windows py2exe'd apps add an extraneous library.zip at the end
+        self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
 
         # try to load our app icon under win32
         # if it doesn't work, we continue anyway
@@ -257,16 +264,7 @@ class App (wx.App):
 
     def getPath (self):
         """Returns the path to the executing script or application."""
-        scriptPath = os.path.realpath(sys.path[0])
-        
-        # OS X py2app'd apps will direct us right into the app bundle
-        
-        scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
-        
-        # Windows py2exe'd apps add an extraneous library.zip at the end
-        
-        scriptPath = re.sub('\\\\\w*.zip', '', scriptPath)
-        return scriptPath
+        return self.scriptPath
 
 # start things up if we were called directly
 if __name__ == "__main__":
