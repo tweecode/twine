@@ -230,6 +230,16 @@ class Tiddler:
 		else:
 			self.initHtml(source)
 
+	def __getstate__ (self):
+		"""Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
+		return {
+			'created': self.created,
+			'modified': self.modified,
+			'title': self.title,
+			'tags': self.tags,
+			'text': self.text,
+		}
+		
 	def __repr__ (self):
 		return "<Tiddler '" + self.title + "'>"
 
