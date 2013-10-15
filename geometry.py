@@ -18,7 +18,7 @@ def clipLineByRects (line, *rects):
     for rect in rects:
         rectLines = None
         for i in range(2):
-            if rect.Inside(result[i]):
+            if rect.Contains(result[i]):
                 intersection = lineRectIntersection(result, rect, excludeTrivial = True)
                 if intersection:
                     result[i] = intersection
@@ -93,7 +93,7 @@ def lineRectIntersection (line, rect, excludeTrivial = False):
     
     if not excludeTrivial:
         for i in range(2):
-            if rect.Inside(line[i]): return line[i]
+            if rect.Contains(line[i]): return line[i]
     
     # check for intersection with borders
     
