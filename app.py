@@ -70,7 +70,7 @@ class App (wx.App):
         """Opens a story file of the user's choice."""
         opened = False
         dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
-                               wx.OPEN | wx.FD_CHANGE_DIR)
+                               wx.FD_OPEN | wx.FD_CHANGE_DIR)
                                                 
         if dialog.ShowModal() == wx.ID_OK:
             opened = True
