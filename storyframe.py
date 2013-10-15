@@ -531,7 +531,7 @@ class StoryFrame (wx.Frame):
             dialog.ResetFiles()
         else:
             dialog = wx.FileDialog(self, 'Import Image File', os.getcwd(), '', \
-                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             file = dialog.GetFile() if useImageDialog else dialog.GetPath()
             if not replace:
