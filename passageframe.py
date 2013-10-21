@@ -16,7 +16,7 @@
 # know what flags to pass to wx.stc.
 #
 
-import sys, os, re, threading, wx, time
+import sys, os, re, threading, wx, wx.animate, base64, time
 import metrics, images
 from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
@@ -607,6 +607,8 @@ class ImageFrame (PassageFrame):
         self.widget = widget
         self.app = app
         self.syncTimer = None
+        self.image = None
+        self.gif = None
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
@@ -640,8 +642,6 @@ class ImageFrame (PassageFrame):
         
         self.imageScroller = wx.ScrolledWindow(self.panel)
         self.imageSizer = wx.GridSizer(1,1)
-        self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
-        self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
         self.imageScroller.SetSizer(self.imageSizer)
         
         # image menu
@@ -719,14 +719,42 @@ class ImageFrame (PassageFrame):
         self.syncTimer.start()
         
     def updateImage(self):
-        """Assigns a bitmap to this frame's StaticBitmap component."""
+        """Assigns a bitmap to this frame's StaticBitmap component,
+        unless it's a GIF, in which case, animate it."""
+        if self.gif:
+            self.gif.Stop()
+        self.imageSizer.Clear(True)
+        self.gif = None
+        self.image = None
+        
+        t = self.widget.passage.text
+        # Get the bitmap (will be used as inactive for GIFs)
         bmp = self.widget.bitmap
-        if bmp:
-            self.image.SetBitmap(bmp)
-            size = bmp.GetSize()
-            self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
-            self.imageScroller.SetScrollRate(2,2)
-            self.Refresh()
+        size = bmp.GetSize()
+        
+        if t.startswith("data:image/gif"):
+            self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
+            self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
+            
+            # Convert the full GIF to an Animation
+            anim = wx.animate.Animation()
+            data = base64.b64decode(t[t.index("base64,")+7:])
+            anim.Load(cStringIO.StringIO(data))
+            
+            # Load the Animation into the AnimationCtrl
+            self.gif.SetAnimation(anim)
+            self.gif.SetInactiveBitmap(bmp)
+            self.gif.Play()
+        
+        else:
+            if bmp:
+                self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+                self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+                self.image.SetBitmap(bmp)
+        
+        self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+        self.imageScroller.SetScrollRate(2,2)
+        self.Refresh()
         
     def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
@@ -737,7 +765,7 @@ class ImageFrame (PassageFrame):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
         if clip.Open():
-            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap()))
+            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
         
