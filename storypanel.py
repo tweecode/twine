@@ -179,6 +179,8 @@ class StoryPanel (wx.ScrolledWindow):
         but by default, it doesn't.
         """
         self.widgets.remove(widget)
+        if self.tooltipplace == widget:
+            self.tooltipplace = None
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
         self.Refresh()
             
@@ -217,8 +219,10 @@ class StoryPanel (wx.ScrolledWindow):
             if dialog.ShowModal() != wx.ID_OK:
                 return
         
-        for widget in selected: self.widgets.remove(widget)
-        
+        for widget in selected: 
+            self.widgets.remove(widget)
+            if self.tooltipplace == widget:
+                self.tooltipplace = None
         if len(selected):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
@@ -867,7 +871,9 @@ class StoryPanel (wx.ScrolledWindow):
                 text = p.text[:840]
                 if length >= 840:
                     text += "..."
-            self.tooltipobj = wx.TipWindow(self, text, min(240, max(160,length/2)), wx.Rect(m[0],m[1],1,1))
+            # Don't show a tooltip for a 0-length passage
+            if length > 0:
+                self.tooltipobj = wx.TipWindow(self, text, min(240, max(160,length/2)), wx.Rect(m[0],m[1],1,1))
     
     def handleHover(self, event):
         if self.trackinghover and not self.draggingWidgets and not self.draggingMarquee:
@@ -879,17 +885,23 @@ class StoryPanel (wx.ScrolledWindow):
                             self.tooltiptimer.Stop()
                         self.tooltiptimer.Start(800, wx.TIMER_ONE_SHOT)
                         self.tooltipplace = widget                     
-                        if self.tooltipobj != None:
+                        if self.tooltipobj:
                             if isinstance(self.tooltipobj, wx.TipWindow): 
-                                self.tooltipobj.Close()
+                                try:
+                                    self.tooltipobj.Close()
+                                except:
+                                    pass
                             self.tooltipobj = None
                     return
         
         self.tooltiptimer.Stop()
         self.tooltipplace = None
-        if self.tooltipobj != None:
-            if isinstance(self.tooltipobj, wx.TipWindow): 
-                self.tooltipobj.Close()
+        if self.tooltipobj:
+            if isinstance(self.tooltipobj, wx.TipWindow):
+                try:
+                    self.tooltipobj.Close()
+                except:
+                    pass
             self.tooltipobj = None
 
     INSET = (10, 10)

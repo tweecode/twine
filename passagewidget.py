@@ -371,6 +371,8 @@ class PassageWidget:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
             return 'startTitleBar'
+        elif not self.passage.linksAndDisplays():
+            return 'endTitleBar'
         return 'titleBar'
     
     def cachePaint (self, size):
@@ -651,6 +653,7 @@ class PassageWidget:
                'bodyStart': (255, 255, 255), \
                'bodyEnd': (228, 228, 226), \
                'startTitleBar': (76, 163, 51), \
+               'endTitleBar': (16, 51, 96), \
                'titleBar': (52, 101, 164), \
                'storyInfoTitleBar': (28, 89, 74), \
                'scriptTitleBar': (89, 66, 28), \

@@ -519,7 +519,7 @@ class StoryFrame (wx.Frame):
         except:
             self.app.displayError('importing your source code')
     
-    def importImageDialog(self, event = None, useImageDialog = True, replace = None):
+    def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
            replace is a Tiddler, if any, that will be replaced by the image."""
         # Use the wxPython image browser?
@@ -537,6 +537,7 @@ class StoryFrame (wx.Frame):
             else:
                 try:
                     replace.passage.text = self.openImageFileAsBase64(file)[0]
+                    replace.updateBitmap()
                 except IOError:
                     self.app.displayError('importing an image')
           
