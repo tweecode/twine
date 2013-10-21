@@ -609,7 +609,7 @@ class ImageFrame (PassageFrame):
         self.syncTimer = None
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
-                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
         # menus
         
         self.menus = wx.MenuBar()
@@ -638,7 +638,11 @@ class ImageFrame (PassageFrame):
         
         # image pane
         
-        self.image = wx.StaticBitmap(self.panel, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+        self.imageScroller = wx.ScrolledWindow(self.panel)
+        self.imageSizer = wx.GridSizer(1,1)
+        self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+        self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+        self.imageScroller.SetSizer(self.imageSizer)
         
         # image menu
         
@@ -680,7 +684,7 @@ class ImageFrame (PassageFrame):
         # finish
         
         allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
-        allSizer.Add(self.image, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
+        allSizer.Add(self.imageScroller, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
         
         # bindings
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
@@ -721,6 +725,7 @@ class ImageFrame (PassageFrame):
             self.image.SetBitmap(bmp)
             size = bmp.GetSize()
             self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+            self.imageScroller.SetScrollRate(2,2)
             self.Refresh()
         
     def replaceImage(self, event = None):
