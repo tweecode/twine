@@ -352,7 +352,7 @@ macros['print'] = {
     handler: function (place, macroName, params, parser) {
         try {
             var output = eval(parser.fullArgs());
-            if (output != null || !isNaN(output)) {
+            if (output != null && (typeof output !== "number" || !isNaN(output))) {
                 new Wikifier(place, output.toString());
             }
         } catch (e) {
