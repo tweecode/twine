@@ -13,6 +13,7 @@ from storypanel import StoryPanel
 from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
+from random import shuffle
 
 class StoryFrame (wx.Frame):
     
@@ -225,6 +226,35 @@ class StoryFrame (wx.Frame):
         
         self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
+        
+        self.storyMenu.AppendSeparator()
+        
+        # Story Settings submenu
+        
+        self.storySettingsMenu = wx.Menu()
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_TITLE, 'StoryTitle')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_TITLE)
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_SUBTITLE, 'StorySubtitle')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_SUBTITLE)
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_AUTHOR, 'StoryAuthor')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_AUTHOR)
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_MENU, 'StoryMenu')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_MENU)
+        
+        # Separator for 'visible' passages (title, subtitle) and those that solely affect compilation
+        self.storySettingsMenu.AppendSeparator()
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_SETTINGS, 'StorySettings')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_SETTINGS)
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INCLUDES, 'StoryIncludes')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INCLUDES)
+        
+        self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
         
         self.storyMenu.AppendSeparator()
         
@@ -573,6 +603,56 @@ class StoryFrame (wx.Frame):
             self.app.displayError('importing an image')
             return False
     
+    def createInfoPassage(self, event = None):
+        """Create, or otherwise open, one of the """
+        id = event.GetId()
+        title = self.storySettingsMenu.FindItemById(id).GetLabel()
+        defaultText = ""
+        found = False
+        
+        if id == self.STORYSETTINGS_TITLE:
+            defaultText = self.DEFAULT_TITLE
+        
+        elif id == self.STORYSETTINGS_SUBTITLE:
+            defaultText = "This text appears below the story's title."
+        
+        elif id == self.STORYSETTINGS_AUTHOR:
+            defaultText = "Anonymous"
+        
+        elif id == self.STORYSETTINGS_MENU:
+            defaultText = "This passage's text will be included in the menu for this story."
+        
+        elif id == self.STORYSETTINGS_INCLUDES:
+            defaultText = "Put the file paths of any .twee or .tws files that should be merged with this "
+        
+        elif id == self.STORYSETTINGS_SETTINGS:         
+            # Generate a random obfuscateKey
+            obfuscateKey = list('anbocpdqerfsgthuivjwkxlymz')
+            shuffle(obfuscateKey)
+            defaultText = """--Obfuscate the story's HTML to prevent possible spoilers? (swap / off)
+Obfuscate: off
+
+--String of letter pairs to use for swap-style obfuscation
+ObfuscateKey: """ + ''.join(obfuscateKey) + """
+
+--Include the jQuery script library? (on / off)
+jQuery: off
+
+--Include the Modernizr script library? (on / off)
+Modernizr: off
+"""
+        
+        for widget in self.storyPanel.widgets:
+            if widget.passage.title == title:
+                found = True
+                editingWidget = widget
+                break
+        
+        if not found:
+            editingWidget = self.storyPanel.newWidget(title = title, text = defaultText)
+        
+        editingWidget.openEditor()
+        
     def save (self, event = None):
         if (self.saveDestination == ''):
             self.saveAs()
@@ -701,7 +781,9 @@ class StoryFrame (wx.Frame):
                     for line in lines:
                         try:
                             (skey,svalue) = line.split(':')
-                            tw.storysettings[skey.strip().lower()] = svalue.strip().lower()
+                            skey = skey.strip().lower()
+                            svalue = svalue.strip().lower()
+                            tw.storysettings[skey] = svalue
                         except:
                             tw.storysettings[line.strip().lower()] = "true"
                     break
@@ -976,26 +1058,20 @@ class StoryFrame (wx.Frame):
     FILE_IMPORT_HTML = 104
     
     EDIT_FIND_NEXT = 201
-        
+    
     VIEW_SNAP = 301
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
     
-    STORY_NEW_PASSAGE = 401
-    STORY_EDIT_FULLSCREEN = 402
-    STORY_BUILD = 403
-    STORY_REBUILD = 404
-    STORY_VIEW_LAST = 405
-    STORY_AUTO_BUILD = 406
-    STORY_STATS = 407
-    STORY_IMPORT_IMAGE = 408
+    [STORY_NEW_PASSAGE, STORY_EDIT_FULLSCREEN, STORY_BUILD, STORY_REBUILD, STORY_VIEW_LAST, STORY_AUTO_BUILD, STORY_STATS, \
+     STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,416)
     
-    STORY_FORMAT_HELP = 409
-    STORY_FORMAT_BASE = 410    
+    STORY_FORMAT_BASE = 501
     
-    HELP_MANUAL = 501
-    HELP_GROUP = 502
-    HELP_GITHUB = 503
+    HELP_MANUAL = 601
+    HELP_GROUP = 602
+    HELP_GITHUB = 603
 
     # tooltip labels
     
