@@ -650,6 +650,9 @@ class ImageFrame (PassageFrame):
         
         passageMenu.Append(self.IMPORT_IMAGE, '&Replace Image...\tCtrl-O')
         self.Bind(wx.EVT_MENU, self.replaceImage, id = self.IMPORT_IMAGE)
+        
+        passageMenu.Append(self.SAVE_IMAGE, '&Save Image...')
+        self.Bind(wx.EVT_MENU, self.saveImage, id = self.SAVE_IMAGE)
 
         passageMenu.AppendSeparator()
         
@@ -718,6 +721,7 @@ class ImageFrame (PassageFrame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
+        
     def updateImage(self):
         """Assigns a bitmap to this frame's StaticBitmap component,
         unless it's a GIF, in which case, animate it."""
@@ -732,6 +736,7 @@ class ImageFrame (PassageFrame):
         bmp = self.widget.bitmap
         size = bmp.GetSize()
         
+        # GIF animation
         if t.startswith("data:image/gif"):
             self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
             self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
@@ -746,6 +751,7 @@ class ImageFrame (PassageFrame):
             self.gif.SetInactiveBitmap(bmp)
             self.gif.Play()
         
+        # Static images
         else:
             if bmp:
                 self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
@@ -759,7 +765,34 @@ class ImageFrame (PassageFrame):
     def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
         self.widget.parent.parent.importImageDialog(replace = self.widget)
+        self.widget.parent.parent.setDirty(True)
         self.updateImage()
+        
+    def saveImage(self, event = None):
+        """Saves the base64 image as a file."""
+        t = self.widget.passage.text;
+        # Get the extension
+        search = re.search(r"data:image/(\w*)", t);
+        if (search):
+            extension = "." + search.group(1)
+        
+        dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
+                               'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+        
+        if dialog.ShowModal() == wx.ID_OK:
+            try:
+                path = dialog.GetPath()
+                
+                dest = open(path, 'wb')
+                
+                data = base64.b64decode(t[t.index("base64,")+7:])
+                dest.write(data)
+                
+                dest.close()
+            except:
+                self.app.displayError('saving the image')
+        
+        dialog.Destroy()
         
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
@@ -774,11 +807,15 @@ class ImageFrame (PassageFrame):
         clip = wx.TheClipboard
         bdo = wx.BitmapDataObject()
         pasted = False
+        
+        # Try and read from the clipboard
         if clip.Open():
             pasted = clip.GetData(bdo)
             clip.Close()
         if not pasted:
             return
+        
+        # Convert bitmap to PNG
         bmp = bdo.GetBitmap()
         self.widget.passage.text = images.BitmapToBase64PNG(bmp)
         self.widget.updateBitmap()
@@ -786,5 +823,6 @@ class ImageFrame (PassageFrame):
     
     IMPORT_IMAGE = 1004
     EXPORT_IMAGE = 1005
+    SAVE_IMAGE = 1006
         
-        
+   
