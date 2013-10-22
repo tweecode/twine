@@ -238,16 +238,16 @@ class PassageFrame (wx.Frame):
         
         def reallySync (self):
             self.widget.parent.Refresh()
-
+        
         if (self.syncTimer):
             self.syncTimer.cancel()
-            
+        
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
 		# update links/displays lists
         self.widget.passage.update()
-
+        
         # change our lexer as necessary
         
         self.setLexer()
@@ -772,9 +772,7 @@ class ImageFrame (PassageFrame):
         """Saves the base64 image as a file."""
         t = self.widget.passage.text;
         # Get the extension
-        search = re.search(r"data:image/(\w*)", t);
-        if (search):
-            extension = "." + search.group(1)
+        extension = images.GetImageType(t)
         
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
@@ -785,7 +783,7 @@ class ImageFrame (PassageFrame):
                 
                 dest = open(path, 'wb')
                 
-                data = base64.b64decode(t[t.index("base64,")+7:])
+                data = base64.b64decode(images.RemoveURIPrefix(t))
                 dest.write(data)
                 
                 dest.close()

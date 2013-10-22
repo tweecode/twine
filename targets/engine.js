@@ -595,14 +595,16 @@ function Tale() {
         settings = this.storysettings = {},
         tiddlerTitle = '';
     function deswap(t, k) {
-        var i,c,p,p1,r = '';
+        var i,c,p,p1,up,r = '';
         for (i = 0; i < t.length; i++) {
             c = t.charAt(i);
-            p = k.indexOf(c);
+            up = (c == c.toUpperCase());
+            p = k.indexOf(c.toLowerCase());
             if (p > -1) {
                 p1 = p + (p % 2 == 0 ? 1 : -1);
                 if (p1 >= k.length) p1 = p;
                 c = k.charAt(p1);
+                up && (c = c.toUpperCase());
             }
             r = r + c;
         }

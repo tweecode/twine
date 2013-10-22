@@ -53,6 +53,8 @@ class StoryPanel (wx.ScrolledWindow):
         else:
             self.scale = 1
             self.newWidget(title = StoryPanel.FIRST_TITLE, text = StoryPanel.FIRST_TEXT, quietly = True)
+            self.newWidget(title = "StoryTitle", text = self.parent.DEFAULT_TITLE, quietly = True)
+            self.newWidget(title = "StoryAuthor", text = "Anonymous", quietly = True)
             
         self.pushUndo(action = '')
         self.undoPointer -= 1

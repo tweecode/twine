@@ -78,15 +78,17 @@ class TiddlyWiki:
 			output = insertEngine(app, output, 'engine.js', '"ENGINE"')
 			if not output: return
 			
+			falseOpts = ["false", "off", "0"]
+			
 			# Insert jQuery
-			if 'jquery' in self.storysettings:
+			if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
 				output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
 				if not output: return
 			else:
 				output = output.replace('"JQUERY"','')
 			
 			# Insert Modernizr
-			if 'modernizr' in self.storysettings:
+			if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
 				output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
 				if not output: return
 			else:
@@ -210,6 +212,7 @@ class TiddlyWiki:
 			self.tiddlers[tiddler.title] = tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
+	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
 	SPECIAL_TAGS = ['Twine.image']
 	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
 #
@@ -378,7 +381,7 @@ class Tiddler:
 	
 	def isStoryText(self):
 		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
-			or (self.title in TiddlyWiki.INFO_PASSAGES))
+			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
 
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
@@ -458,7 +461,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 	r = ''
 	for c in text:
 		upper = c.isupper()
-		p = obfuscationkey.find(c)
+		p = obfuscationkey.find(c.lower())
 		if p <> -1:
 			if p % 2 == 0:
 				p1 = p + 1
@@ -466,7 +469,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 					p1 = p
 			else:
 				p1 = p - 1
-			c = obfuscationkey[p1].toupper() if upper else obfuscationkey[p1]
+			c = obfuscationkey[p1].upper() if upper else obfuscationkey[p1]
 		r = r + c
 	return r
 	
