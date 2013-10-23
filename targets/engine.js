@@ -542,9 +542,8 @@ macros.silently = {
                 }
             } else if (a.substr(i, 12) == '<<silently>>') {
                 l++;
-            } else {
-                c += a.charAt(i);
             }
+            c += a.charAt(i);
         };
         if (d != -1) {
             new Wikifier(h, c);
