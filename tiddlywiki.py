@@ -355,7 +355,8 @@ class Tiddler:
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
-		output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
+		if hasattr(self, 'pos'):
+			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
 		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
 		
