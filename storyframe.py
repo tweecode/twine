@@ -215,7 +215,7 @@ class StoryFrame (wx.Frame):
         self.storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e)), id = wx.ID_EDIT)
 
-        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
+        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit Passage Text &Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
         
@@ -292,8 +292,12 @@ class StoryFrame (wx.Frame):
         
         buildMenu = wx.Menu()
         
-        buildMenu.Append(StoryFrame.BUILD_TEST, 'Test Play\tCtrl-T')
+        buildMenu.Append(StoryFrame.BUILD_TEST, '&Test Play\tCtrl-T')
         self.Bind(wx.EVT_MENU, self.testBuild, id = StoryFrame.BUILD_TEST)  
+        
+        buildMenu.Append(StoryFrame.BUILD_TEST_HERE, 'Test Play From Here\tCtrl-Shift-T')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: self.testBuild(startAt = w.passage.title)), \
+            id = StoryFrame.BUILD_TEST_HERE)  
         
         buildMenu.AppendSeparator()
         buildMenu.Append(StoryFrame.BUILD_BUILD, '&Build Story...\tCtrl-B')
@@ -686,13 +690,13 @@ Modernizr: off
         
         dialog.Destroy()
     
-    def testBuild(self, event = None):
-        self.rebuild(temp = True, displayAfter = True)
+    def testBuild(self, event = None, startAt = ''):
+        self.rebuild(temp = True, startAt = startAt, displayAfter = True)
         
-    def rebuild (self, event = None, temp = False, displayAfter = False):
+    def rebuild (self, event = None, temp = False, displayAfter = False, startAt = ''):
         """
         Builds an HTML version of the story. Pass whether to use a temp file, and/or open the file afterwards.
-        """        
+        """      
         try:
             # assemble our tiddlywiki and write it out
             hasstartpassage = False
@@ -732,7 +736,7 @@ Modernizr: off
             if temp:
                 dest = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False);
                 name = dest.name
-                dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
+                dest.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
                 dest.close()
                 if displayAfter: self.viewBuild(name = name)
             else:
@@ -930,7 +934,8 @@ Modernizr: off
         """Adjusts menu items to reflect the current state."""
 
         hasSelection = self.storyPanel.hasSelection()
-
+        multipleSelection = self.storyPanel.hasMultipleSelection()
+        
         canPaste = False
         if wx.TheClipboard.Open():
             canPaste = wx.TheClipboard.IsSupported(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
@@ -990,13 +995,25 @@ Modernizr: off
         snapItem = self.menus.FindItemById(StoryFrame.VIEW_SNAP)
         snapItem.Check(self.storyPanel.snapping)
         
-        # Story menu
+        # Story menu, Build menu
         
         editItem = self.menus.FindItemById(wx.ID_EDIT)
-        editItem.Enable(hasSelection)
+        testItem = self.menus.FindItemById(StoryFrame.BUILD_TEST_HERE)
+        editItem.SetItemLabel("&Edit Passage");
+        editItem.Enable(False)
+        testItem.SetItemLabel("Test Play From Here");
+        testItem.Enable(False)
+        if hasSelection and not multipleSelection:
+            widget = self.storyPanel.selectedWidget();
+            editItem.SetItemLabel("Edit \"" + widget.passage.title + "\"")
+            editItem.Enable(True)
+            # Only allow test plays from story pasages
+            if widget.passage.isStoryPassage(): 
+                testItem.SetItemLabel("Test Play From \"" + widget.passage.title + "\"")
+                testItem.Enable(True)
         
         editFullscreenItem = self.menus.FindItemById(StoryFrame.STORY_EDIT_FULLSCREEN)
-        editFullscreenItem.Enable(hasSelection and not self.storyPanel.hasMultipleSelection())
+        editFullscreenItem.Enable(hasSelection and not multipleSelection)
         
         rebuildItem = self.menus.FindItemById(StoryFrame.BUILD_REBUILD)
         rebuildItem.Enable(self.buildDestination != '')
@@ -1079,7 +1096,7 @@ Modernizr: off
     
     STORY_FORMAT_BASE = 501
     
-    [BUILD_TEST, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 606)
+    [BUILD_TEST, BUILD_TEST_HERE, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 607)
     
     [HELP_MANUAL, HELP_GROUP, HELP_GITHUB] = range(701,704)
 

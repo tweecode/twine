@@ -224,13 +224,17 @@ History.prototype.save = function (c) {
 };
 History.prototype.restore = function () {
     try {
+        if (testplay) {
+            this.display(testplay);
+            return true
+        }
         if ((window.location.hash == "") || (window.location.hash == "#")) {
             return false
         }
         if (window.location.hash.substr(0, 2) == '#!') {
             var mt = window.location.hash.substr(2).split('_').join(' ');
-            document.getElementById('passages').appendChild(this.display(mt, null, 'quietly'));
-            return true;
+            this.display(mt, null, 'quietly');
+            return true
         }
         var a = window.location.hash.replace("#", "").split(".");
         for (var b = 0; b < a.length; b++) {
@@ -239,7 +243,7 @@ History.prototype.restore = function () {
                 return false
             }
             if (b == a.length - 1) {
-              this.display(g, null, f);
+              this.display(g);
             }
             else
               tale.get(g).render();

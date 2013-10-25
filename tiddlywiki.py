@@ -45,7 +45,7 @@ class TiddlyWiki:
 		
 		return output
 		
-	def toHtml (self, app, target = None, order = None):
+	def toHtml (self, app, target = None, order = None, startAt = ''):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
@@ -61,21 +61,24 @@ class TiddlyWiki:
 				return
 			
 			
-			def insertEngine(app, output, filename, label):
+			def insertEngine(app, output, filename, label, extra = ''):
 				if output.count(label) > 0:
 					try:
 						engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
 						enginecode = engine.read()
 						engine.close()
-						return output.replace(label,enginecode)
+						return output.replace(label,enginecode + extra)
 					except IOError:
 						app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
 						return None
 				else:
 					return output
 			
+			# Set up the test play variable
+			if (startAt):
+				startAt = 'var testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
 			# Insert the main engine
-			output = insertEngine(app, output, 'engine.js', '"ENGINE"')
+			output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
 			if not output: return
 			
 			falseOpts = ["false", "off", "0"]
@@ -215,6 +218,7 @@ class TiddlyWiki:
 	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
 	SPECIAL_TAGS = ['Twine.image']
 	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
+	INFO_TAGS = ['script', 'stylesheet'] + SPECIAL_TAGS + NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -383,7 +387,11 @@ class Tiddler:
 	def isStoryText(self):
 		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
-
+	
+	def isStoryPassage(self):
+		""" A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
+		return self.isStoryText() and self.title not in TiddlyWiki.INFO_PASSAGES
+	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
 	
