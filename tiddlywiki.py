@@ -106,8 +106,7 @@ class TiddlyWiki:
 			self.storysettings['obfuscatekey'] = nss
 		
 		for i in order:
-			if not any('Twine.private' in t for t in self.tiddlers[i].tags) and \
-			not any('Twine.system' in t for t in self.tiddlers[i].tags):
+			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
 				if (self.tiddlers[i].title == 'StorySettings'):
 					output += self.tiddlers[i].toHtml(self.author, insensitive = True)
 				elif (not obfuscate):
@@ -211,7 +210,8 @@ class TiddlyWiki:
 			self.tiddlers[tiddler.title] = tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
-		
+	SPECIAL_TAGS = ['Twine.image']
+	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
 #
 # Tiddler class
 #
@@ -230,6 +230,16 @@ class Tiddler:
 		else:
 			self.initHtml(source)
 
+	def __getstate__ (self):
+		"""Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
+		return {
+			'created': self.created,
+			'modified': self.modified,
+			'title': self.title,
+			'tags': self.tags,
+			'text': self.text,
+		}
+		
 	def __repr__ (self):
 		return "<Tiddler '" + self.title + "'>"
 
@@ -363,8 +373,11 @@ class Tiddler:
 		output += u"\n" + self.text + u"\n\n\n"
 		return output
 	
+	def isImage(self):
+		return 'Twine.image' in self.tags
+	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
+		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES))
 
 	def linksAndDisplays(self):

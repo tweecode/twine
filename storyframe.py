@@ -7,6 +7,7 @@
 #
 
 import sys, re, os, urllib, pickle, wx, codecs, time
+from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
@@ -93,9 +94,9 @@ class StoryFrame (wx.Frame):
         importMenu = wx.Menu()
 
         importMenu.Append(StoryFrame.FILE_IMPORT_SOURCE, 'Twee Source &Code...')
-        self.Bind(wx.EVT_MENU, self.importSource, id = StoryFrame.FILE_IMPORT_SOURCE) 
+        self.Bind(wx.EVT_MENU, self.importSourceDialog, id = StoryFrame.FILE_IMPORT_SOURCE) 
         importMenu.Append(StoryFrame.FILE_IMPORT_HTML, 'Compiled &HTML File...')
-        self.Bind(wx.EVT_MENU, self.importHtml, id = StoryFrame.FILE_IMPORT_HTML) 
+        self.Bind(wx.EVT_MENU, self.importHtmlDialog, id = StoryFrame.FILE_IMPORT_HTML) 
         
         fileMenu.AppendMenu(wx.ID_ANY, '&Import', importMenu)
         
@@ -222,6 +223,11 @@ class StoryFrame (wx.Frame):
  
         self.storyMenu.AppendSeparator()
         
+        self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
+        self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
+        
+        self.storyMenu.AppendSeparator()
+        
         self.storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
         self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.STORY_BUILD)        
         
@@ -251,6 +257,8 @@ class StoryFrame (wx.Frame):
                     sfdirlabel = 'Jonah'
                 elif sfdir == 'sugarcane': 
                     sfdirlabel = 'Sugarcane'
+                elif sfdir == 'sugarcube': 
+                    sfdirlabel = 'SugarCube'
                 else: 
                     sfdirlabel = sfdir.capitalize()
                 storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
@@ -275,7 +283,7 @@ class StoryFrame (wx.Frame):
         helpMenu.Append(StoryFrame.HELP_GROUP, '&Discuss Twine Online')
         self.Bind(wx.EVT_MENU, self.app.openGroup, id = StoryFrame.HELP_GROUP)
         
-        helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine on &GitHub')
+        helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine\'s Source Code on &GitHub')
         self.Bind(wx.EVT_MENU, self.app.openGitHub, id = StoryFrame.HELP_GITHUB)
         
         helpMenu.AppendSeparator()
@@ -408,7 +416,7 @@ class StoryFrame (wx.Frame):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
                          "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
             if dialog.GetFilterIndex() == 0:
@@ -431,7 +439,7 @@ class StoryFrame (wx.Frame):
     def exportSource (self, event = None):
         """Asks the user to choose a file to export source to, then exports the wiki."""
         dialog = wx.FileDialog(self, 'Export Source Code', os.getcwd(), "", \
-                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 path = dialog.GetPath()
@@ -447,63 +455,122 @@ class StoryFrame (wx.Frame):
 
         dialog.Destroy()
         
-    def importHtml (self, event = None):
+    def importHtmlDialog(self, event = None):
         """Asks the user to choose a file to import HTML tiddlers from, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import From Compiled HTML', os.getcwd(), '', \
-                               'HTML Twine game (*.html;* .htm; *.txt)|*.html;*.htm;*.txt|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                               'HTML Twine game (*.html;* .htm; *.txt)|*.html;*.htm;*.txt|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
-            try:
-                # have a TiddlyWiki object parse it for us
-                tw = TiddlyWiki()
-                tw.addHtmlFromFilename(dialog.GetPath())
-                
-                # add passages for each of the tiddlers the TiddlyWiki saw
-                if len(tw.tiddlers):
-                    lastpos = [0, 0]
-                    for t in tw.tiddlers:
-                        tiddler = tw.tiddlers[t]
-                        new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, \
-                                                        pos = tiddler.pos if tiddler.pos != None else lastpos, \
-                                                        logicals = True, quietly = True)
-                        lastpos = new.pos
-                        new.passage.tags = tiddler.tags
-                    self.setDirty(True, 'Import')
-                else:
-                    dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
-                                              'this is a Twine game file.', 'No Passages Found', \
-                                              wx.ICON_INFORMATION | wx.OK)
-                    dialog.ShowModal()
-            except:
-                self.app.displayError('importing from HTML') 
-                   
-    def importSource (self, event = None):
+            self.importHtml(dialog.GetPath())
+            
+    def importHtml (self, path):
+        """Imports the tiddler objects in a HTML file into the story."""
+        try:
+            # have a TiddlyWiki object parse it for us
+            tw = TiddlyWiki()
+            tw.addHtmlFromFilename(path)
+            
+            # add passages for each of the tiddlers the TiddlyWiki saw
+            if len(tw.tiddlers):
+                lastpos = [0, 0]
+                for t in tw.tiddlers:
+                    tiddler = tw.tiddlers[t]
+                    new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, \
+                                                    pos = tiddler.pos if tiddler.pos != None else lastpos, \
+                                                    logicals = True, quietly = True)
+                    lastpos = new.pos
+                    new.passage.tags = tiddler.tags
+                self.setDirty(True, 'Import')
+            else:
+                dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
+                                          'this is a Twine game file.', 'No Passages Found', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+        except:
+            self.app.displayError('importing from HTML') 
+
+    def importSourceDialog(self, event = None):
         """Asks the user to choose a file to import source from, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import Source Code', os.getcwd(), '', \
-                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
-            try:
-                # have a TiddlyWiki object parse it for us
-                tw = TiddlyWiki()
-                tw.addTweeFromFilename(dialog.GetPath())
-                
-                # add passages for each of the tiddlers the TiddlyWiki saw
-                if len(tw.tiddlers):
-                    lastpos = [0, 0]
-                    for t in tw.tiddlers:
-                        tiddler = tw.tiddlers[t]
-                        new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True, pos = lastpos)
-                        new.passage.tags = tiddler.tags
-                        lastpos = new.pos
-                    self.setDirty(True, 'Import')
-                else:
-                    dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
-                                              'this is a Twee source file.', 'No Passages Found', \
-                                              wx.ICON_INFORMATION | wx.OK)
-                    dialog.ShowModal()
-            except:
-                self.app.displayError('importing your source code')
+            self.importSource(dialog.GetPath())
+                         
+    def importSource (self, path):
+        """Imports the tiddler objects in a Twee file into the story."""
+        try:
+            # have a TiddlyWiki object parse it for us
+            tw = TiddlyWiki()
+            tw.addTweeFromFilename(path)
+            
+            # add passages for each of the tiddlers the TiddlyWiki saw
+            if len(tw.tiddlers):
+                lastpos = [0, 0]
+                for t in tw.tiddlers:
+                    tiddler = tw.tiddlers[t]
+                    new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True, pos = lastpos)
+                    new.passage.tags = tiddler.tags
+                    lastpos = new.pos
+                self.setDirty(True, 'Import')
+            else:
+                dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
+                                          'this is a Twee source file.', 'No Passages Found', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+        except:
+            self.app.displayError('importing your source code')
+    
+    def importImageDialog(self, event = None, useImageDialog = True, replace = None):
+        """Asks the user to choose an image file to import, then imports into the current story.
+           replace is a Tiddler, if any, that will be replaced by the image."""
+        # Use the wxPython image browser?
+        if useImageDialog:
+            dialog = imagebrowser.ImageDialog(self, os.getcwd())
+            dialog.ChangeFileTypes([ ('Web Image File', '*.(gif|jpg|jpeg|png|webp|svg)')])
+            dialog.ResetFiles()
+        else:
+            dialog = wx.FileDialog(self, 'Import Image File', os.getcwd(), '', \
+                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
+        if dialog.ShowModal() == wx.ID_OK:
+            file = dialog.GetFile() if useImageDialog else dialog.GetPath()
+            if not replace:
+                self.importImage(file)
+            else:
+                try:
+                    replace.passage.text = self.openImageFileAsBase64(file)[0]
+                except IOError:
+                    self.app.displayError('importing an image')
+          
+    def openImageFileAsBase64(self, file):
+        """Opens an image file and returns its base64 representation, expressed as a Data URI with MIME type"""
+        image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
+        title, mimeType = os.path.splitext(os.path.basename(file))
+        # Remove the extension's dot
+        mimeType = mimeType[1:]
+        # Correct certain MIME types
+        if mimeType == "jpg":
+            mimeType == "jpeg"
+        elif mimeType == "svg":
+            mimeType += "+xml"
+        
+        return ("data:image/" + mimeType + ";base64," + image64, title)
+    
+    def importImage(self, file, showdialog = True):
+        """Imports an image into the story as an image passage."""
+        try:
+            text, title = self.openImageFileAsBase64(file)
+            self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
+            if showdialog:
+                dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
+                                          'You can include the image in your passages with this syntax:\n\n' + \
+                                          '[img[' + title + ']]', 'Image added', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+            return True
+        except IOError:
+            self.app.displayError('importing an image')
+            return False
     
     def save (self, event = None):
         if (self.saveDestination == ''):
@@ -523,7 +590,7 @@ class StoryFrame (wx.Frame):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
         dialog = wx.FileDialog(self, 'Build Story', os.getcwd(), "", \
                          "Web Page (*.html)|*.html", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
             self.buildDestination = dialog.GetPath()
@@ -549,7 +616,7 @@ class StoryFrame (wx.Frame):
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title != 'StoryIncludes' and \
-                not any(t.startswith('Twine.') for t in widget.passage.tags):
+                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
@@ -591,8 +658,7 @@ class StoryFrame (wx.Frame):
                                         openedFile.close()
                                         for widget in s.storyPanel.widgets:
                                             if not any(widget.passage.title in t for t in excludepassages) and \
-                                            not any('Twine.private' in t for t in widget.passage.tags) and \
-                                            not any('Twine.system' in t for t in widget.passage.tags):
+                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                                                 tw.addTiddler(widget.passage)
                                         s.Destroy()
                                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -616,8 +682,7 @@ class StoryFrame (wx.Frame):
                                         for tiddlerkey in tiddlerkeys:
                                             passage = tw1.tiddlers[tiddlerkey]
                                             if not any(passage.title == t for t in excludepassages) and \
-                                            not any('Twine.private' in t for t in passage.tags) and \
-                                            not any('Twine.system' in t for t in passage.tags):
+                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
                                                 tw.addTiddler(passage)
                                     else:
                                         raise 'File format not recognized'
@@ -683,7 +748,7 @@ class StoryFrame (wx.Frame):
     def autoBuildStart (self):
         self.autobuildfiles = { }
         if self.saveDestination == '':
-            twinedocdir = cwd
+            twinedocdir = os.getcwd()
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
         for f in os.listdir(twinedocdir):
@@ -739,7 +804,7 @@ class StoryFrame (wx.Frame):
         
         dialog = wx.FileDialog(self, 'Proof Story', os.getcwd(), "", \
                          "RTF Document (*.rtf)|*.rtf", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
@@ -845,6 +910,9 @@ class StoryFrame (wx.Frame):
         
         viewLastItem = self.menus.FindItemById(StoryFrame.STORY_VIEW_LAST)
         viewLastItem.Enable(self.buildDestination != '')
+
+        autoBuildItem = self.menus.FindItemById(StoryFrame.STORY_AUTO_BUILD)
+        autoBuildItem.Enable(self.buildDestination != '')
         
         # Story format submenu
 
@@ -919,9 +987,10 @@ class StoryFrame (wx.Frame):
     STORY_VIEW_LAST = 405
     STORY_AUTO_BUILD = 406
     STORY_STATS = 407
+    STORY_IMPORT_IMAGE = 408
     
-    STORY_FORMAT_HELP = 408
-    STORY_FORMAT_BASE = 409    
+    STORY_FORMAT_HELP = 409
+    STORY_FORMAT_BASE = 410    
     
     HELP_MANUAL = 501
     HELP_GROUP = 502

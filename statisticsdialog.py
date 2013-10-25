@@ -82,7 +82,7 @@ class StatisticsDialog (wx.Dialog):
                 counts['chars'] += len(widget.passage.text)
                 counts['words'] += len(widget.passage.text.split(None))
                 counts['passages'] += 1
-                counts['links'] += len(widget.passage.links())
+                counts['links'] += len(widget.passage.links)
                 counts['brokenLinks'] += len(widget.getBrokenLinks())
         
         self.storyPanel.eachWidget(lambda w: count(w, counts))
