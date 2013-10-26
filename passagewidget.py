@@ -583,14 +583,10 @@ class PassageWidget:
                 img = self.bitmap.ConvertToImage();
                 if scale != 1:
                     img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
-<<<<<<< HEAD
-                gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1, img.Width, img.Height)
-=======
                 if isinstance(gc, wx.GraphicsContext):
                     gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1, img.GetWidth(), img.GetHeight())
                 else:
                     gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1)
->>>>>>> Fixed image thumbnail crash in slow drawing mode
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
