@@ -287,6 +287,8 @@ class StoryFrame (wx.Frame):
                     sfdirlabel = 'Jonah'
                 elif sfdir == 'sugarcane': 
                     sfdirlabel = 'Sugarcane'
+                elif sfdir == 'sugarcube': 
+                    sfdirlabel = 'SugarCube'
                 else: 
                     sfdirlabel = sfdir.capitalize()
                 storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
@@ -444,7 +446,7 @@ class StoryFrame (wx.Frame):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
                          "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
             if dialog.GetFilterIndex() == 0:
@@ -467,7 +469,7 @@ class StoryFrame (wx.Frame):
     def exportSource (self, event = None):
         """Asks the user to choose a file to export source to, then exports the wiki."""
         dialog = wx.FileDialog(self, 'Export Source Code', os.getcwd(), "", \
-                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 path = dialog.GetPath()
@@ -486,7 +488,7 @@ class StoryFrame (wx.Frame):
     def importHtmlDialog(self, event = None):
         """Asks the user to choose a file to import HTML tiddlers from, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import From Compiled HTML', os.getcwd(), '', \
-                               'HTML Twine game (*.html;* .htm; *.txt)|*.html;*.htm;*.txt|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                               'HTML Twine game (*.html;* .htm; *.txt)|*.html;*.htm;*.txt|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
             self.importHtml(dialog.GetPath())
@@ -520,7 +522,7 @@ class StoryFrame (wx.Frame):
     def importSourceDialog(self, event = None):
         """Asks the user to choose a file to import source from, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import Source Code', os.getcwd(), '', \
-                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                               'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
             self.importSource(dialog.GetPath())
@@ -559,7 +561,7 @@ class StoryFrame (wx.Frame):
             dialog.ResetFiles()
         else:
             dialog = wx.FileDialog(self, 'Import Image File', os.getcwd(), '', \
-                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.OPEN | wx.FD_CHANGE_DIR)
+                                   'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             file = dialog.GetFile() if useImageDialog else dialog.GetPath()
             if not replace:
@@ -669,7 +671,7 @@ Modernizr: off
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
         dialog = wx.FileDialog(self, 'Build Story', os.getcwd(), "", \
                          "Web Page (*.html)|*.html", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     
         if dialog.ShowModal() == wx.ID_OK:
             self.buildDestination = dialog.GetPath()
@@ -829,7 +831,7 @@ Modernizr: off
     def autoBuildStart (self):
         self.autobuildfiles = { }
         if self.saveDestination == '':
-            twinedocdir = cwd
+            twinedocdir = os.getcwd()
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
         for f in os.listdir(twinedocdir):
@@ -885,7 +887,7 @@ Modernizr: off
         
         dialog = wx.FileDialog(self, 'Proof Story', os.getcwd(), "", \
                          "RTF Document (*.rtf)|*.rtf", \
-                           wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+                           wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         
         if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
@@ -991,6 +993,9 @@ Modernizr: off
         
         viewLastItem = self.menus.FindItemById(StoryFrame.STORY_VIEW_LAST)
         viewLastItem.Enable(self.buildDestination != '')
+
+        autoBuildItem = self.menus.FindItemById(StoryFrame.STORY_AUTO_BUILD)
+        autoBuildItem.Enable(self.buildDestination != '')
         
         # Story format submenu
 

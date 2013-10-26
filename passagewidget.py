@@ -613,7 +613,7 @@ class PassageWidget:
             gc.SetPen(wx.Pen(color, 2))
             
             if isinstance(gc, wx.GraphicsContext):
-                r, g, b = color.Get()
+                r, g, b = color.Get(False)
                 color = wx.Colour(r, g, b, 64)
                 gc.SetBrush(wx.Brush(color))
             else:
