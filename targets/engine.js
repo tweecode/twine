@@ -367,21 +367,11 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, d) {
-        var s, v = c[0];
-        // If first value is set uninitialised, change to 0 before
-        // calculation. If it's numeric addition, it will behave
-        // intuitively. String concatenation is an unlikely use case.
-        if (c[0] && c[0][0]=="$") {
-            s = state.history[0].variables;
-            if (typeof s[c[0].slice(1)] == "undefined") {
-                s[c[0].slice(1)] = 0;
-            }
-        }
         macros.set.run(a,d.fullArgs(true))
     },
     run: function (a,expression) {
         try {
-            return eval(Wikifier.parse(expression, true))
+            return eval(Wikifier.parse(expression))
         } catch (e) {
             throwError(a, "bad expression: " + e.message)
         }
@@ -462,11 +452,8 @@ macros['remember'] = {
         var statement = parser.fullArgs(true);
         var variable, value;
         macros.set.run(place,statement);
-        var variableSigil = Wikifier.parse("$", true);
-        variableSigil = variableSigil.replace("[", "\\[");
-        variableSigil = variableSigil.replace("]", "\\]");
-        variable = statement.match(new RegExp(variableSigil + "(\\w+)", "i"))[1];
-        value = eval(Wikifier.parse("$" + variable, true));
+        variable = statement.match(Wikifier.textPrimitives.variable)[1];
+        value = eval(Wikifier.parse("$" + variable));
         switch (typeof value) {
         case "string":
             value = '"' + value.replace(/"/g, '\\"') + '"';
@@ -499,7 +486,7 @@ macros['remember'] = {
                 if (i.indexOf(this.prefix) == 0) {
                     var variable = i.substr(this.prefix.length);
                     var value = localStorage[i];
-                    eval(Wikifier.parse('$' + variable + ' = ' + value, true));
+                    eval(Wikifier.parse('$' + variable + ' = ' + value));
                 }
             }
         } else {
@@ -509,7 +496,7 @@ macros['remember'] = {
                 var bits = cookies[i].split("=");
                 if (bits[0].trim().indexOf(this.prefix) == 0) {
                     var statement = cookies[i].replace(this.prefix, "$");
-                    eval(Wikifier.parse(statement, true));
+                    eval(Wikifier.parse(statement));
                 }
             }
         }
@@ -794,19 +781,22 @@ Wikifier.prototype.fullArgs = function (setter) {
     var startPos = this.source.indexOf(' ', this.matchStart);
     var endPos = this.source.indexOf('>>', this.matchStart);
 
-    return Wikifier.parse(this.source.slice(startPos, endPos), setter);
+    return Wikifier.parse(this.source.slice(startPos, endPos).trim(), setter);
 };
-Wikifier.parse = function (b, setter) {
+Wikifier.parse = function (input) {
+    var m, re, b = input,
+        g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
+    
     function alter(from,to) {
-        var g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
         return b.replace(new RegExp(from+g,"gi"),to);
     }
-    if (setter) {
-        b = alter("\\$(\\S+)","state.history[0].variables.$1");
-    } else {
+    // Extract all the variables, and set them to 0 if undefined.
+    re = new RegExp(Wikifier.textPrimitives.variable,"gi");
+    while (m = re.exec(input)) {
         // This deliberately contains a 'null or undefined' check
-        b = alter("\\$(\\S+)","(state.history[0].variables['$1'] == null ? 0 : state.history[0].variables['$1'])");
+        b = m[0]+" == null && ("+m[0]+" = 0);"+b;
     }
+    b = alter(Wikifier.textPrimitives.variable, "state.history[0].variables.$1");
     // Old operators
     b = alter("\\beq\\b", " == ");
     b = alter("\\bneq\\b", " != ");
@@ -820,7 +810,6 @@ Wikifier.parse = function (b, setter) {
     // New operators
     b = alter("\\bis\\b", " == ");
     b = alter("\\bto\\b", " = ");
-    console.log(b)
     return b
 };
 Wikifier.formatHelpers = {
@@ -1374,6 +1363,8 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
     Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
     Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
 };
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"|\\[[^\\]]+\\])+)";
+    
 /* Functions usable by custom scripts */
 function visited(e) {
     var ret,c;
