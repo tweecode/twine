@@ -367,7 +367,7 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, d) {
-        macros.set.run(a,d.fullArgs(true))
+        macros.set.run(a,d.fullArgs())
     },
     run: function (a,expression) {
         try {
@@ -449,7 +449,7 @@ version.extensions.rememberMacro = {
 };
 macros['remember'] = {
     handler: function (place, macroName, params, parser) {
-        var statement = parser.fullArgs(true);
+        var statement = parser.fullArgs();
         var variable, value;
         macros.set.run(place,statement);
         variable = statement.match(Wikifier.textPrimitives.variable)[1];
@@ -777,14 +777,14 @@ Wikifier.prototype.outputText = function (place, startPos, endPos) {
     insertText(place, this.source.substring(startPos, endPos));
 };
 
-Wikifier.prototype.fullArgs = function (setter) {
+Wikifier.prototype.fullArgs = function () {
     var startPos = this.source.indexOf(' ', this.matchStart);
     var endPos = this.source.indexOf('>>', this.matchStart);
 
-    return Wikifier.parse(this.source.slice(startPos, endPos).trim(), setter);
+    return Wikifier.parse(this.source.slice(startPos, endPos).trim());
 };
 Wikifier.parse = function (input) {
-    var m, re, b = input,
+    var m, re, b = input, found = [],
         g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
     
     function alter(from,to) {
@@ -793,8 +793,11 @@ Wikifier.parse = function (input) {
     // Extract all the variables, and set them to 0 if undefined.
     re = new RegExp(Wikifier.textPrimitives.variable,"gi");
     while (m = re.exec(input)) {
-        // This deliberately contains a 'null or undefined' check
-        b = m[0]+" == null && ("+m[0]+" = 0);"+b;
+        if (!~found.indexOf(m[0])) {
+            // This deliberately contains a 'null or undefined' check
+            b = m[0]+" == null && ("+m[0]+" = 0);"+b;
+            found.push(m[0]);
+        }
     }
     b = alter(Wikifier.textPrimitives.variable, "state.history[0].variables.$1");
     // Old operators
