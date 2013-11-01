@@ -60,7 +60,10 @@ setup(
         ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
         ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
-        ('engine.js', ['targets' + os.sep + 'engine.js']),
+        ('targets', [
+            'targets' + os.sep + 'engine.js',
+            'targets' + os.sep + 'jquery.js',
+            'targets' + os.sep + 'modernizr.js']),
         ('icons', [
             # toolbar icons
             'icons' + os.sep + 'newpassage.png',

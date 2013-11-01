@@ -1021,7 +1021,7 @@ Modernizr: off
         viewLastItem = self.menus.FindItemById(StoryFrame.BUILD_VIEW_LAST)
         viewLastItem.Enable(self.buildDestination != '')
 
-        autoBuildItem = self.menus.FindItemById(StoryFrame.STORY_AUTO_BUILD)
+        autoBuildItem = self.menus.FindItemById(StoryFrame.BUILD_AUTO_BUILD)
         autoBuildItem.Enable(self.buildDestination != '')
         
         # Story format submenu
