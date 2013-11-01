@@ -690,3 +690,9 @@ class PassageWidgetContext (wx.Menu):
         delete = wx.MenuItem(self, wx.NewId(), 'Delete ' + title)
         self.AppendItem(delete)
         self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent), id = delete.GetId())
+        
+        if parent.passage.isStoryPassage():
+            test = wx.MenuItem(self, wx.NewId(), 'Test Play From Here')
+            self.AppendItem(test)
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.parent.testBuild(startAt = parent.passage.title), id = test.GetId())
+    

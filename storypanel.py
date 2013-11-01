@@ -653,6 +653,12 @@ class StoryPanel (wx.ScrolledWindow):
         """Returns a sorted list of widgets, left to right, top to bottom."""
         return sorted(self.widgets, PassageWidget.sort)
 
+    def selectedWidget(self):
+        """Returns any one selected widget."""
+        for widget in self.widgets:
+            if widget.selected: return widget
+        return None
+    
     def eachSelectedWidget (self, function):
         """Runs a function on every selected passage in the panel."""
         for widget in self.widgets:

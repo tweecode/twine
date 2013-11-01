@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, re, os, urllib, pickle, wx, codecs, time
+import sys, re, os, urllib, pickle, wx, codecs, time, tempfile
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
@@ -215,7 +215,7 @@ class StoryFrame (wx.Frame):
         self.storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e)), id = wx.ID_EDIT)
 
-        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, '&Edit Passage Text Fullscreen\tF12')
+        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit Passage Text &Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
         
@@ -255,21 +255,6 @@ class StoryFrame (wx.Frame):
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INCLUDES)
         
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
-        
-        self.storyMenu.AppendSeparator()
-        
-        self.storyMenu.Append(StoryFrame.STORY_BUILD, '&Build Story...\tCtrl-B')
-        self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.STORY_BUILD)        
-        
-        self.storyMenu.Append(StoryFrame.STORY_REBUILD, '&Rebuild Story\tCtrl-R')
-        self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.STORY_REBUILD) 
-
-        self.storyMenu.Append(StoryFrame.STORY_VIEW_LAST, '&View Last Build\tCtrl-L')
-        self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.STORY_VIEW_LAST)
-        
-        self.autobuildmenuitem = self.storyMenu.Append(StoryFrame.STORY_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
-        self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
-        self.storyMenu.Check(StoryFrame.STORY_AUTO_BUILD, False)
 
         self.storyMenu.AppendSeparator()
 
@@ -303,6 +288,31 @@ class StoryFrame (wx.Frame):
         
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
         
+        # Build menu
+        
+        buildMenu = wx.Menu()
+        
+        buildMenu.Append(StoryFrame.BUILD_TEST, '&Test Play\tCtrl-T')
+        self.Bind(wx.EVT_MENU, self.testBuild, id = StoryFrame.BUILD_TEST)  
+        
+        buildMenu.Append(StoryFrame.BUILD_TEST_HERE, 'Test Play From Here\tCtrl-Shift-T')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: self.testBuild(startAt = w.passage.title)), \
+            id = StoryFrame.BUILD_TEST_HERE)  
+        
+        buildMenu.AppendSeparator()
+        buildMenu.Append(StoryFrame.BUILD_BUILD, '&Build Story...\tCtrl-B')
+        self.Bind(wx.EVT_MENU, self.build, id = StoryFrame.BUILD_BUILD)
+        
+        buildMenu.Append(StoryFrame.BUILD_REBUILD, '&Rebuild Story\tCtrl-R')
+        self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.BUILD_REBUILD) 
+
+        buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&View Last Build\tCtrl-L')
+        self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.BUILD_VIEW_LAST)
+        
+        self.autobuildmenuitem = buildMenu.Append(StoryFrame.BUILD_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
+        self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
+        buildMenu.Check(StoryFrame.BUILD_AUTO_BUILD, False)
+        
         # Help menu
         
         helpMenu = wx.Menu()
@@ -328,6 +338,7 @@ class StoryFrame (wx.Frame):
         self.menus.Append(editMenu, '&Edit')
         self.menus.Append(viewMenu, '&View')
         self.menus.Append(self.storyMenu, '&Story')
+        self.menus.Append(buildMenu, '&Build')
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
         
@@ -678,20 +689,15 @@ Modernizr: off
             self.rebuild(None, True)
         
         dialog.Destroy()
-                
-    def rebuild (self, event = None, displayAfter = False):
-        """
-        Builds an HTML version of the story. Pass whether to open the destination file afterwards.
-        """        
-        try:
-            # Remember current working dir and set to savefile's dir. InterTwine StoryIncludes are relative to the Twine file.
-            cwd = os.getcwd()
-            if self.saveDestination == '':
-                twinedocdir = cwd
-            else:
-                twinedocdir = os.path.dirname(self.saveDestination)
-                os.chdir(twinedocdir)
     
+    def testBuild(self, event = None, startAt = ''):
+        self.rebuild(temp = True, startAt = startAt, displayAfter = True)
+        
+    def rebuild (self, event = None, temp = False, displayAfter = False, startAt = ''):
+        """
+        Builds an HTML version of the story. Pass whether to use a temp file, and/or open the file afterwards.
+        """      
+        try:
             # assemble our tiddlywiki and write it out
             hasstartpassage = False
             tw = TiddlyWiki()
@@ -711,98 +717,106 @@ Modernizr: off
 
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
-                    lines = widget.passage.text.splitlines()
-                    lines.append('');
-                    # State 0: Look for a filename
-                    ## State 1: have filename, look for filename, EXCEPT, INCLUDE, ALIAS
-                    ## State 2: EXCEPT mode, look for INCLUDE 3, ALIAS 4 or blank line 0
-                    ## State 3: INCLUDE mode, look for EXCEPT 2, ALIAS 4 or blank line 0
-                    ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
-                    state = 0;
-                    state_filename = '';
-                    excludepassages = TiddlyWiki.INFO_PASSAGES + ['Start']
-                    for line in lines:
-                        if state == 0:
-                            state_filename = line
-                            state = 1
-                            continue
-                        elif state == 1:
-                            try:
-                                if state_filename.strip() != '':
-                                    extension = os.path.splitext(state_filename)[1] 
-                                    if extension == '.tws':
-                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                                            openedFile = urllib.urlopen(state_filename)
-                                        else:
-                                            openedFile = open(state_filename, 'r')
-                                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
-                                        openedFile.close()
-                                        for widget in s.storyPanel.widgets:
-                                            if not any(widget.passage.title in t for t in excludepassages) and \
-                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
-                                                tw.addTiddler(widget.passage)
-                                        s.Destroy()
-                                    elif extension == '.tw' or extension == '.txt' or extension == '.twee':
-                                        if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                                            openedFile = urllib.urlopen(state_filename)
-                                            s = openedFile.read()
-                                            openedFile.close()
-                                            t = tempfile.NamedTemporaryFile(delete=False)
-                                            cleanuptempfile = True
-                                            t.write(s)
-                                            t.close()
-                                            filename = t.name
-                                        else:
-                                            filename = state_filename
-                                            cleanuptempfile = False
-                                            
-                                        tw1 = TiddlyWiki()
-                                        tw1.addTweeFromFilename(filename)
-                                        if cleanuptempfile: os.remove(filename)
-                                        tiddlerkeys = tw1.tiddlers.keys()
-                                        for tiddlerkey in tiddlerkeys:
-                                            passage = tw1.tiddlers[tiddlerkey]
-                                            if not any(passage.title == t for t in excludepassages) and \
-                                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
-                                                tw.addTiddler(passage)
-                                    else:
-                                        raise 'File format not recognized'
-                            except:
-                                self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
-                            state_filename = line
-                            state = 1
-                            continue
+                    tw = self.buildIncludes(tw, widget.passage.text.splitlines())
                     break
             
             # Decode story settings
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StorySettings':
                     lines = widget.passage.text.splitlines()
-                    for line in lines:
-                        try:
+                    for line in lines: 
+                        if ':' in line:
                             (skey,svalue) = line.split(':')
                             skey = skey.strip().lower()
                             svalue = svalue.strip().lower()
-                            tw.storysettings[skey] = svalue
-                        except:
-                            tw.storysettings[line.strip().lower()] = "true"
+                            tw.storysettings[skey] = svalue or True
                     break
             
             # Write the output file
-            os.chdir(os.path.dirname(self.buildDestination))
-            dest = open(self.buildDestination, 'w')
-            dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
-            dest.close()
-            os.chdir(cwd)
-            if displayAfter: self.viewBuild()
+            if temp:
+                dest = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False);
+                name = dest.name
+                dest.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
+                dest.close()
+                if displayAfter: self.viewBuild(name = name)
+            else:
+                dest = open(self.buildDestination, 'w')
+                dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
+                dest.close()
+                if displayAfter: self.viewBuild()
         except:
             self.app.displayError('building your story')
+            
+    def buildIncludes(self, tw, lines):
+        """
+        Modify the passed TiddlyWiki object by including passages from the given files.
+        """
+        # State 0: Look for a filename
+        ## State 1: have filename, look for filename, EXCEPT, INCLUDE, ALIAS
+        ## State 2: EXCEPT mode, look for INCLUDE 3, ALIAS 4 or blank line 0
+        ## State 3: INCLUDE mode, look for EXCEPT 2, ALIAS 4 or blank line 0
+        ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
+        state = 0;
+        state_filename = '';
+        excludepassages = TiddlyWiki.INFO_PASSAGES + ['Start']
+        for line in lines:
+            if state == 0:
+                state_filename = line
+                state = 1
+                continue
+            elif state == 1:
+                try:
+                    if state_filename.strip():
+                        extension = os.path.splitext(state_filename)[1] 
+                        if extension == '.tws':
+                            if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                openedFile = urllib.urlopen(state_filename)
+                            else:
+                                openedFile = open(state_filename, 'r')
+                            s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                            openedFile.close()
+                            for widget in s.storyPanel.widgets:
+                                if not any(widget.passage.title in t for t in excludepassages) and \
+                                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                                    tw.addTiddler(widget.passage)
+                            s.Destroy()
+                        elif extension == '.tw' or extension == '.txt' or extension == '.twee':
+                            if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                                openedFile = urllib.urlopen(state_filename)
+                                s = openedFile.read()
+                                openedFile.close()
+                                t = tempfile.NamedTemporaryFile(delete=False)
+                                cleanuptempfile = True
+                                t.write(s)
+                                t.close()
+                                filename = t.name
+                            else:
+                                filename = state_filename
+                                cleanuptempfile = False
+                                
+                            tw1 = TiddlyWiki()
+                            tw1.addTweeFromFilename(filename)
+                            if cleanuptempfile: os.remove(filename)
+                            tiddlerkeys = tw1.tiddlers.keys()
+                            for tiddlerkey in tiddlerkeys:
+                                passage = tw1.tiddlers[tiddlerkey]
+                                if not any(passage.title == t for t in excludepassages) and \
+                                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
+                                    tw.addTiddler(passage)
+                        else:
+                            raise Exception('File format not recognized')
+                except:
+                    self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
+                state_filename = line
+                state = 1
+                continue
+        return tw
     
-    def viewBuild (self, event = None):
+    def viewBuild (self, event = None, name = ''):
         """
         Opens the last built file in a Web browser.
         """
-        path = 'file://' + urllib.pathname2url(self.buildDestination)
+        path = 'file://' + urllib.pathname2url(name or self.buildDestination)
         path = path.replace('file://///', 'file:///')
         wx.LaunchDefaultBrowser(path)
         
@@ -920,7 +934,8 @@ Modernizr: off
         """Adjusts menu items to reflect the current state."""
 
         hasSelection = self.storyPanel.hasSelection()
-
+        multipleSelection = self.storyPanel.hasMultipleSelection()
+        
         canPaste = False
         if wx.TheClipboard.Open():
             canPaste = wx.TheClipboard.IsSupported(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
@@ -980,18 +995,30 @@ Modernizr: off
         snapItem = self.menus.FindItemById(StoryFrame.VIEW_SNAP)
         snapItem.Check(self.storyPanel.snapping)
         
-        # Story menu
+        # Story menu, Build menu
         
         editItem = self.menus.FindItemById(wx.ID_EDIT)
-        editItem.Enable(hasSelection)
+        testItem = self.menus.FindItemById(StoryFrame.BUILD_TEST_HERE)
+        editItem.SetItemLabel("&Edit Passage");
+        editItem.Enable(False)
+        testItem.SetItemLabel("Test Play From Here");
+        testItem.Enable(False)
+        if hasSelection and not multipleSelection:
+            widget = self.storyPanel.selectedWidget();
+            editItem.SetItemLabel("Edit \"" + widget.passage.title + "\"")
+            editItem.Enable(True)
+            # Only allow test plays from story pasages
+            if widget.passage.isStoryPassage(): 
+                testItem.SetItemLabel("Test Play From \"" + widget.passage.title + "\"")
+                testItem.Enable(True)
         
         editFullscreenItem = self.menus.FindItemById(StoryFrame.STORY_EDIT_FULLSCREEN)
-        editFullscreenItem.Enable(hasSelection and not self.storyPanel.hasMultipleSelection())
+        editFullscreenItem.Enable(hasSelection and not multipleSelection)
         
-        rebuildItem = self.menus.FindItemById(StoryFrame.STORY_REBUILD)
+        rebuildItem = self.menus.FindItemById(StoryFrame.BUILD_REBUILD)
         rebuildItem.Enable(self.buildDestination != '')
         
-        viewLastItem = self.menus.FindItemById(StoryFrame.STORY_VIEW_LAST)
+        viewLastItem = self.menus.FindItemById(StoryFrame.BUILD_VIEW_LAST)
         viewLastItem.Enable(self.buildDestination != '')
 
         autoBuildItem = self.menus.FindItemById(StoryFrame.STORY_AUTO_BUILD)
@@ -1063,15 +1090,15 @@ Modernizr: off
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
     
-    [STORY_NEW_PASSAGE, STORY_EDIT_FULLSCREEN, STORY_BUILD, STORY_REBUILD, STORY_VIEW_LAST, STORY_AUTO_BUILD, STORY_STATS, \
+    [STORY_NEW_PASSAGE, STORY_EDIT_FULLSCREEN, STORY_STATS, \
      STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,416)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,412)
     
     STORY_FORMAT_BASE = 501
     
-    HELP_MANUAL = 601
-    HELP_GROUP = 602
-    HELP_GITHUB = 603
+    [BUILD_TEST, BUILD_TEST_HERE, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 607)
+    
+    [HELP_MANUAL, HELP_GROUP, HELP_GITHUB] = range(701,704)
 
     # tooltip labels
     
