@@ -686,7 +686,7 @@ Modernizr: off
     
         if dialog.ShowModal() == wx.ID_OK:
             self.buildDestination = dialog.GetPath()
-            self.rebuild(None, True)
+            self.rebuild(None, displayAfter = True)
         
         dialog.Destroy()
     

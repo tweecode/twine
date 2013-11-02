@@ -50,6 +50,13 @@ class TweeLexer:
         self.ctrl.StyleSetFont(self.MARKUP, bodyFont)
         self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
         
+        self.ctrl.StyleSetFont(self.INLINE_STYLE, bodyFont)
+        self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
+        
+        self.ctrl.StyleSetFont(self.BAD_INLINE_STYLE, bodyFont)
+        self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
+        self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
+        
         self.ctrl.StyleSetFont(self.HTML, bodyFont)
         self.ctrl.StyleSetBold(self.HTML, True)
         self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
@@ -191,7 +198,7 @@ class TweeLexer:
 
             # markup
             if not inSilence and nextToken == self.MARKUP:
-                if (style & m):
+                if (style <= self.THREE_STYLES and style & m):
                     self.applyStyle(styleStart, pos-styleStart+2, style) 
                     style = styleStack.pop() if styleStack else self.DEFAULT 
                     styleStart = pos+2
@@ -199,7 +206,7 @@ class TweeLexer:
                     self.applyStyle(styleStart, pos-styleStart, style)  
                     styleStack.append(style)
                     markup = m
-                    if markup <= self.THREE_STYLES:
+                    if markup <= self.THREE_STYLES and style <= self.THREE_STYLES:
                         style |= markup
                     else:
                         style = markup
@@ -281,17 +288,23 @@ class TweeLexer:
                 styleStart = pos+1
                 
             # Inline styles
-            elif nextToken == self.INLINE_STYLE:
-                length = m.end(0);
-                self.applyStyle(styleStart, pos-styleStart, style)
-                n = re.search("(?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);)",text[pos:pos+m.end(0)],re.I)
-                if n:
-                    self.applyStyle(pos,length,self.MARKUP)
-                    pos += length-1
+            elif not inSilence and nextToken == self.INLINE_STYLE:
+                if (style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE):
+                    self.applyStyle(styleStart, pos-styleStart+2, style) 
+                    style = styleStack.pop() if styleStack else self.DEFAULT 
+                    styleStart = pos+2
                 else:
-                    self.applyStyle(pos,length,self.BAD_LINK)
+                    self.applyStyle(styleStart, pos-styleStart, style)  
+                    styleStack.append(style)
+                    n = re.search("((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);))+",text[pos:],re.I) 
+                    if n:
+                        style = self.INLINE_STYLE
+                        length = len(n.group(0))+2
+                    else:
+                        style = self.BAD_INLINE_STYLE
+                        length = 2
+                    styleStart = pos
                     pos += length-1
-                styleStart = pos+1
                 
             # others
             elif nextToken in [self.HTML, self.HTML_BLOCK, self.COMMENT, self.MONO]:
@@ -321,7 +334,7 @@ class TweeLexer:
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
     GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
-    PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(25)
+    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(26)
     
     # markup constants
     
@@ -333,7 +346,7 @@ class TweeLexer:
     IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
     HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
     HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
-    INLINE_STYLE_REGEX = r"@@(?:[^@]|@(?!@))*@@"
+    INLINE_STYLE_REGEX = "@@"
     MONO_REGEX = r"^\{\{\{\n((?:^[^\n]*\n)+?)(^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
     COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
     
