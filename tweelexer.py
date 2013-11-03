@@ -354,8 +354,8 @@ class TweeLexer:
                       MONO_REGEX, COMMENT_REGEX, "''|//|__|^^|~~|==" ]) + ')'
                       
     # macro param regex - string or number or boolean or variable
-    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\')' \
-        +r'|(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)' \
+    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
+        +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
         +r'|(true|false|null|undefined)' \
         +r'|(\$[^\s]+)' \
         +r')'
@@ -380,7 +380,8 @@ class TweeLexer:
     PARAM_COLOR = '#7f456a'
     PARAM_VAR_COLOR = '#005682'
     PARAM_BOOL_COLOR = '#626262'
-    PARAM_STR_COLOR = '#008141'
+    PARAM_STR_COLOR = '#008282'
     PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
+    
