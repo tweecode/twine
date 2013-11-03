@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!--
-Jonah 2.2 is based on:
+Jonah 3.0 is based on:
 
 TiddlyWiki 1.2.39 by Jeremy Ruston, (jeremy [at] osmosoft [dot] com)
 
@@ -60,18 +60,9 @@ History.prototype.init = function () {
     }
 };
 History.prototype.display = function (E, C, A) {
-    var el, D, F, B = C;
-    while (B && (B.className.indexOf("passage") == -1)) {
-        if (B.parentNode.id != 'passages') {
-            B = B.parentNode
-        } else {
-            B = null;
-            break
-        }
-    }
+    var el, D, F;
     if (el = document.getElementById("passage" + E)) {
-        scrollWindowTo(el);
-        return
+        el.id += (new Date).getTime();
     }
     D = tale.get(E);
     this.history.unshift({
@@ -80,11 +71,7 @@ History.prototype.display = function (E, C, A) {
     });
     F = D.render();
     if (A != "offscreen") {
-        if (B) {
-            document.getElementById("passages").insertBefore(F, B.nextSibling)
-        } else {
-            document.getElementById("passages").appendChild(F)
-        }
+        document.getElementById("passages").appendChild(F)
         if (A != "quietly") {
             scrollWindowTo(F);
             fade(F, {
@@ -105,20 +92,17 @@ History.prototype.rewindTo = function (C) {
     });
 
     function A() {
-        while (B.history[0].passage.title != C.title) {
-            var A = document.getElementById("passage" + B.history.shift().passage.title);
-            if (A) {
-                A.parentNode.removeChild(A)
-            }
+        var p = document.getElementById("passages");
+        while (p.lastChild != C.div) {
+            p.removeChild(p.lastChild);
+            B.history.shift();
         }
         B.history[0].variables = clone(B.history[1].variables);
-        C.reset();
-        var E = document.getElementById("passage" + C.title).childNodes;
-        for (var D = 0; D < E.length; D++) {
-            if (E[D].className == "body") {
-                removeChildren(E[D]);
-                new Wikifier(E[D], C.text)
-            }
+        C.passage.reset();
+        var E = C.div.querySelector(".body");
+        if(E) {
+            removeChildren(E);
+            new Wikifier(E, C.passage.text);
         }
         fade(document.getElementById("passages"), {
             fade: "in"
@@ -151,6 +135,8 @@ Passage.prototype.render = function () {
     E.onmouseout = function () {
         E.className = E.className.replace(' selected', '');
     };
+    var rewind = E.querySelector(".toolbar a:last-child");
+    rewind && (rewind.div = E);
     return E
 };
 Passage.prototype.reset = function () {
@@ -173,7 +159,7 @@ Passage.toolbarItems = [{
     },
     tooltip: function () {},
     activate: function () {
-        state.rewindTo(this.passage)
+        state.rewindTo(this)
     }
 }];
 
