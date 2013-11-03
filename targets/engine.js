@@ -54,8 +54,9 @@ function addStyle(b) {
     }
 }
 
-function throwError(a, b) {
-    new Wikifier(a, "'' @@ " + b + " @@ ''")
+function throwError(a, b, tooltip) {
+    var elem = insertElement(a, "span", null, "marked", b);
+    tooltip && elem.setAttribute("title", tooltip);
 }
 Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
@@ -299,7 +300,7 @@ version.extensions.displayMacro = {
     revision: 0
 };
 macros.display = {
-    handler: function (a, b, c) {
+    handler: function (a, b, c, parser) {
         if (c[0] == "_previous") {
             if (state.history[1]) {
                 for (var d = 1; d <= state.history.length; d++) {
@@ -314,7 +315,7 @@ macros.display = {
             }
         } else {
             if (tale.get(c[0]).id == undefined) {
-                throwError(a, "The " + c[0] + " passage does not exist");
+                throwError(a, "The " + c[0] + " passage does not exist", parser.fullMatch());
                 return
             } else {
                 new Wikifier(a, tale.get(c[0]).text)
@@ -360,7 +361,7 @@ macros['print'] = {
                 new Wikifier(place, output.toString());
             }
         } catch (e) {
-            throwError(place, "printMacro bad expression: " + e.message);
+            throwError(place, "printMacro bad expression: " + e.message, parser.fullMatch());
         }
     }
 };
@@ -370,14 +371,14 @@ version.extensions.setMacro = {
     revision: 0
 };
 macros.set = {
-    handler: function (a, b, c, d) {
-        macros.set.run(a,d.fullArgs())
+    handler: function (a, b, c, parser) {
+        macros.set.run(a,parser.fullArgs())
     },
     run: function (a,expression) {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
-            throwError(a, "bad expression: " + e.message)
+            throwError(a, "bad expression: " + e.message, parser.fullMatch())
         }
     }
 };
@@ -402,14 +403,14 @@ macros["if"] = {
                 nesting--;
                 if (nesting < 0) {
                     endPos = srcOffset + i + 9;
-                    conditions.push(currentCond);
-                    clauses.push(currentClause);
+                    conditions.push(currentCond.trim());
+                    clauses.push(currentClause.trim());
                     break;
                 }
             }
             if ((src.substr(i, 6) == "<<else") && nesting == 0) {
-                conditions.push(currentCond);
-                clauses.push(currentClause);
+                conditions.push(currentCond.trim());
+                clauses.push(currentClause.trim());
                 currentClause="";
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
@@ -429,16 +430,17 @@ macros["if"] = {
             if (endPos != -1) {
                 parser.nextMatch = endPos;
                 for(i=0;i<clauses.length;i++) {
-                    if (eval(conditions.shift())) {
-                        new Wikifier(place, clauses[i].trim());
+                    if (eval(conditions[i])) {
+                        new Wikifier(place, clauses[i]);
                         break;
                     }
                 }
             } else {
-                throwError(place, "can't find matching endif");
+                throwError(place, "can't find matching endif", parser.fullMatch());
             }
         } catch (e) {
-            throwError(place, "bad condition: " + e.message);
+            throwError(place, "bad condition: " + e.message, i == 0 ? parser.fullMatch()
+                : "<<else if " + conditions[i] + ">>");
         }
     }
 };
@@ -466,7 +468,7 @@ macros['remember'] = {
         case "boolean":
             break;
         default:
-            throwError(place, "can't remember $" + variable + " (" + (typeof value) + ")");
+            throwError(place, "can't remember $" + variable + " (" + (typeof value) + ")", parser.fullMatch());
             return;
         }
         if (this.uselocalstorage) {
@@ -516,10 +518,10 @@ version.extensions.SilentlyMacro = {
     revision: 0
 };
 macros.silently = {
-    handler: function (g, e, f, b) {
+    handler: function (g, e, f, parser) {
         var h = insertElement(null, 'div');
-        var k = b.source.indexOf('>>', b.matchStart) + 2;
-        var a = b.source.slice(k);
+        var k = parser.source.indexOf('>>', parser.matchStart) + 2;
+        var a = parser.source.slice(k);
         var d = -1;
         var c = '';
         var l = 0;
@@ -538,9 +540,9 @@ macros.silently = {
         };
         if (d != -1) {
             new Wikifier(h, c);
-            b.nextMatch = d;
+            parser.nextMatch = d;
         } else {
-            throwError(g, "can't find matching endsilently");
+            throwError(g, "can't find matching endsilently", parser.fullMatch());
         }
     }
 };
@@ -779,6 +781,10 @@ Wikifier.prototype.subWikify = function (output, terminator) {
 
 Wikifier.prototype.outputText = function (place, startPos, endPos) {
     insertText(place, this.source.substring(startPos, endPos));
+};
+
+Wikifier.prototype.fullMatch = function() {
+    return this.source.slice(this.matchStart, this.source.indexOf('>>', this.matchStart)+2);
 };
 
 Wikifier.prototype.fullArgs = function () {
@@ -1187,9 +1193,9 @@ Wikifier.formatters = [
             try {
                 var macro = macros[lookaheadMatch[1]];
                 if (macro && macro.handler) macro.handler(w.output, lookaheadMatch[1], params, w);
-                else throwError(w.output, 'Macro not found: ' + lookaheadMatch[1]);
+                else throwError(w.output, 'Macro not found: ' + lookaheadMatch[1], w.fullMatch());
             } catch (e) {
-                throwError(w.output, 'Error executing macro ' + lookaheadMatch[1] + ': ' + e.toString());
+                throwError(w.output, 'Error executing macro ' + lookaheadMatch[1] + ': ' + e.toString(), w.fullMatch());
             }
         }
     }
@@ -1284,9 +1290,10 @@ Wikifier.formatters = [
     handler: function (w) {
         var e = insertElement(w.output, "span", null, null, null);
         var styles = Wikifier.formatHelpers.inlineCssHelper(w);
-        if (styles.length == 0) e.className = "marked";
+        if (styles.length == 0)
+            e.className = "marked";
         else for (var t = 0; t < styles.length; t++)
-        e.style[styles[t].style] = styles[t].value;
+            e.style[styles[t].style] = styles[t].value;
         w.subWikify(e, this.terminator);
     }
 },
@@ -1329,7 +1336,7 @@ Wikifier.formatters = [
                 }
                 a.output.appendChild(e);
             } else {
-                throwError(a.output,"HTML tag '"+tn+"' wasn't closed.");
+                throwError(a.output,"HTML tag '"+tn+"' wasn't closed.", a.matchText);
             }
         }
     }
@@ -1387,7 +1394,7 @@ function visited(e) {
 function main() {
     // Used by old custom scripts.
     // Cedes to jQuery if it exists.
-    var titleSep, $ = window.$ || function(a) {
+    var $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
     tale = window.tale = new Tale();
@@ -1408,7 +1415,7 @@ function main() {
         try {
             eval(scripts[i].text);
         } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but all parts of the story may not work properly.");
+            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but parts of the story may not work properly.");
         }
     }
     for (var macroidx in macros) {
