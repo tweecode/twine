@@ -1387,7 +1387,7 @@ function visited(e) {
 function main() {
     // Used by old custom scripts.
     // Cedes to jQuery if it exists.
-    var $ = window.$ || function(a) {
+    var titleSep, $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
     tale = window.tale = new Tale();
@@ -1396,7 +1396,7 @@ function main() {
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
-        document.getElementById("titleSeparator").innerHTML = "<br>";
+        setPageElement("titleSeparator", null, "\n");
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
