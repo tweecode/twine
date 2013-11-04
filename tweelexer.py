@@ -111,35 +111,35 @@ class TweeLexer:
             return (self.MARKUP, self.MARKUPS[m])
         
         # link
-        m = re.match(self.LINK_REGEX,text,re.I)
+        m = re.match(self.LINK_REGEX,text,re.U|re.I)
         if m: return (self.GOOD_LINK, m)
         
         # macro
-        m = re.match(self.MACRO_REGEX,text,re.I)
+        m = re.match(self.MACRO_REGEX,text,re.U|re.I)
         if m: return (self.MACRO, m)
         
         # image (cannot have interior markup)
-        m = re.match(self.IMAGE_REGEX,text,re.I)
+        m = re.match(self.IMAGE_REGEX,text,re.U|re.I)
         if m: return (self.IMAGE, m)
         
         # Old-version HTML block (cannot have interior markup)
-        m = re.match(self.HTML_BLOCK_REGEX,text,re.I)
+        m = re.match(self.HTML_BLOCK_REGEX,text,re.U|re.I)
         if m: return (self.HTML_BLOCK, m)
         
         # Inline HTML tags
-        m = re.match(self.HTML_REGEX,text,re.I)
+        m = re.match(self.HTML_REGEX,text,re.U|re.I)
         if m: return (self.HTML, m)
         
         # Inline styles
-        m = re.match(self.INLINE_STYLE_REGEX,text,re.I)
+        m = re.match(self.INLINE_STYLE_REGEX,text,re.U|re.I)
         if m: return (self.INLINE_STYLE, m)
         
         # Monospace
-        m = re.match(self.MONO_REGEX,text,re.I)
+        m = re.match(self.MONO_REGEX,text,re.U|re.I)
         if m: return (self.MONO, m)
         
         # Comment
-        m = re.match(self.COMMENT_REGEX,text,re.I)
+        m = re.match(self.COMMENT_REGEX,text,re.U|re.I)
         if m: return (self.COMMENT, m)
         
         return (None, None)
@@ -159,7 +159,7 @@ class TweeLexer:
                 pos2 = pos + m.start(2)
                 self.applyStyle(pos2, len(m.group(2)), self.PARAM)
                 # Do the match
-                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.I)
+                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
                 for param in iterator:
                     if param.group(1):
                         # String
@@ -185,7 +185,7 @@ class TweeLexer:
         
         self.applyStyle(0, len(text), self.DEFAULT);
         
-        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.I), text[pos:]);
+        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.U|re.I), text[pos:]);
         
         for p in iterator:
             prev = pos+1
@@ -296,7 +296,7 @@ class TweeLexer:
                 else:
                     self.applyStyle(styleStart, pos-styleStart, style)  
                     styleStack.append(style)
-                    n = re.search("((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);))+",text[pos:],re.I) 
+                    n = re.search("((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);))+",text[pos:],re.U|re.I) 
                     if n:
                         style = self.INLINE_STYLE
                         length = len(n.group(0))+2
@@ -357,7 +357,7 @@ class TweeLexer:
     MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
         +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
         +r'|(true|false|null|undefined)' \
-        +r'|(\$[^\s]+)' \
+        +r'|(\$[\w\d_\.]+)' \
         +r')'
     
     # nested macros

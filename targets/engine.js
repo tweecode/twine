@@ -444,7 +444,7 @@ macros["if"] = {
         }
     }
 };
-macros["else"] = macros["endif"] = {
+macros["else"] = macros["elseif"] = macros["endif"] = {
     handler: function () {}
 };
 
