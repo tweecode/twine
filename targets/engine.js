@@ -294,35 +294,34 @@ macros.refresh = {
         window.location.reload()
     }
 };
+
 version.extensions.displayMacro = {
-    major: 1,
+    major: 2,
     minor: 0,
     revision: 0
 };
 macros.display = {
-    handler: function (a, b, c, parser) {
-        if (c[0] == "_previous") {
-            if (state.history[1]) {
-                for (var d = 1; d <= state.history.length; d++) {
-                    if (state.history[d].passage.title != state.history[0].passage.title) {
-                        break
-                    }
-                }
-                var e = state.history[d].passage.title;
-                new Wikifier(a, tale.get(e).text)
-            } else {
-                return
-            }
+    handler: function (place, macroName, params, parser) {
+        var output, name = parser.fullArgs();
+        try {
+            output = eval(name);
+        }
+        catch(e) {
+            if (!/["']/.exec(name))
+                e.message += " (did you intend to put a string?)"
+            throwError(place, "bad expression: " + e.message, parser.fullMatch());
+            return
+        }
+        if (!output) {
+            throwError(place, name + " did not evaluate to a passage name", parser.fullMatch());
+        } else if (!tale.get(output).id) {
+            throwError(place, "The " + output + " passage does not exist", parser.fullMatch());
         } else {
-            if (tale.get(c[0]).id == undefined) {
-                throwError(a, "The " + c[0] + " passage does not exist", parser.fullMatch());
-                return
-            } else {
-                new Wikifier(a, tale.get(c[0]).text)
-            }
+            new Wikifier(place, tale.get(output+"").text)
         }
     }
 };
+
 version.extensions.actionsMacro = {
     major: 1,
     minor: 2,
@@ -1381,14 +1380,30 @@ Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.r
     
 /* Functions usable by custom scripts */
 function visited(e) {
-    var ret,c;
-    e || (e = state.history[0].passage.title);
-    for(ret=c=0; c<state.history.length; c++) {
-        if(state.history[c].passage && state.history[c].passage.title == e) {
+    var ret = 0, i = 0, e = e || state.history[0].passage.title;
+    if (arguments.length > 1) {
+        for (ret = state.history.length; i<arguments.length; i++) {
+            ret = Math.min(ret, visited(arguments[i]));
+        }
+    } else for(; i<state.history.length && state.history[i].passage; i++) {
+        if(~e.indexOf(state.history[i].passage.title)) {
             ret++;
         }
     }
     return ret;
+}
+function previous() {
+    if (state.history[1]) {
+        for (var d = 1; d < state.history.length && state.history[d].passage; d++) {
+            if (state.history[d].passage.title != state.history[0].passage.title) {
+                return state.history[d].passage.title
+            }
+        }
+    }
+    return state.history[0].passage.title
+}
+function either() {
+    return arguments[~~(Math.random()*arguments.length)];
 }
 /* Init function */
 function main() {
