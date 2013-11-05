@@ -174,6 +174,15 @@ class TweeLexer:
                         # Variable
                         self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
         
+        def badLinkStyle(dest, external = False):
+            # Apply style for a link destination which does not seem to be an existent passage
+            if external:
+                for t in ['http://', 'https://', 'ftp://']:
+                  if t in dest.lower():
+                    return self.EXTERNAL
+            iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+            return self.PARAM if iscode else self.BAD_LINK
+        
         pos = 0
         prev = 0
         text = self.ctrl.GetTextUTF8()
@@ -222,13 +231,10 @@ class TweeLexer:
                 s2 = self.GOOD_LINK
                 if not m.group(2):
                     if not self.passageExists(m.group(1)):
-                        s2 = self.BAD_LINK
+                        s2 = badLinkStyle(m.group(1), True)
                 else:
                     if not self.passageExists(m.group(2)):
-                        s2 = self.BAD_LINK
-                        for t in ['http://', 'https://', 'ftp://']:
-                          if m.group(2).lower().startswith(t):
-                            s2 = self.EXTERNAL
+                        s2 = badLinkStyle(m.group(2))
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
                 if m.group(2):
@@ -274,10 +280,7 @@ class TweeLexer:
                 if m.group(5):
                     self.applyStyle(pos, m.start(5), self.IMAGE)
                     if not self.passageExists(m.group(5)):
-                        s2 = self.BAD_LINK
-                        for t in ['http://', 'https://', 'ftp://']:
-                          if t in m.group(5).lower():
-                            s2 = self.EXTERNAL
+                        s2 = badLinkStyle(m.group(5))
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, s2)
                     else:
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, self.GOOD_LINK)
@@ -354,12 +357,20 @@ class TweeLexer:
                       MONO_REGEX, COMMENT_REGEX, "''|//|__|^^|~~|==" ]) + ')'
                       
     # macro param regex - string or number or boolean or variable
+    # (Mustn't match all-digit names)
+    MACRO_PARAMS_VAR_REGEX = r'(\$[\w_\.]*[a-zA-Z_\.]+[\w_\.]*)'
+
+    # This isn't included because it's too general - but it's used by the broken link lexer
+    # (Not including whitespace between name and () because of false positives)
+    MACRO_PARAMS_FUNC_REGEX = r'([\w\d_\.]+\((.*?)\))'
+    
     MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
         +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
         +r'|(true|false|null|undefined)' \
-        +r'|(\$[\w\d_\.]+)' \
+        +r'|'+MACRO_PARAMS_VAR_REGEX \
         +r')'
     
+
     # nested macros
     
     NESTED_MACROS = [ "if", "silently" ]

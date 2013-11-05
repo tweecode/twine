@@ -1125,15 +1125,18 @@ Wikifier.formatters = [
         var lookaheadMatch = lookaheadRegExp.exec(w.source)
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketted link
         {
-            var link = Wikifier.createInternalLink(w.output, lookaheadMatch[1]);
-            w.outputText(link, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
+            var title = Wikifier.parsePassageTitle(lookaheadMatch[1]),
+                link = Wikifier.createInternalLink(w.output, title);
+            insertText(link, title);
             w.nextMatch += lookaheadMatch[1].length + 2;
         } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketted link
         {
-            var e;
-            if (tale.has(lookaheadMatch[4])) e = Wikifier.createInternalLink(w.output, lookaheadMatch[4]);
-            else e = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
-            w.outputText(e, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
+            var link, title = Wikifier.parsePassageTitle(lookaheadMatch[4]);
+            if (tale.has(title))
+                link = Wikifier.createInternalLink(w.output, title);
+            else
+                link = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
+            w.outputText(link, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
@@ -1156,10 +1159,10 @@ Wikifier.formatters = [
         var lookaheadMatch = lookaheadRegExp.exec(w.source);
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketted link
         {
-            var e = w.output;
-            if (lookaheadMatch[5]) {
-                if (tale.has(lookaheadMatch[5])) e = Wikifier.createInternalLink(w.output, lookaheadMatch[5]);
-                else e = Wikifier.createExternalLink(w.output, lookaheadMatch[5]);
+            var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
+            if (title) {
+                if (tale.has(title)) e = Wikifier.createInternalLink(w.output, title);
+                else e = Wikifier.createExternalLink(w.output, title);
             }
             var img = insertElement(e, "img");
             if (lookaheadMatch[1]) img.align = "left";
@@ -1341,6 +1344,16 @@ Wikifier.formatters = [
     }
 }
 ];
+Wikifier.parsePassageTitle = function(title) {
+    if (title && !tale.has(title)) {
+        try {
+            title = eval(this.parse(title))
+            title && (title += "");
+        }
+        catch(e) {}
+    }
+    return title;
+}
 Wikifier.createInternalLink = function (place, title) {
     var el = insertElement(place, 'a', title);
     el.href = 'javascript:void(0)';
@@ -1366,17 +1379,22 @@ Wikifier.createExternalLink = function (place, url) {
 
     return el;
 };
-Wikifier.textPrimitives = {};
 if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
-    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de]";
-    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-]";
-    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
+	Wikifier.textPrimitives = {
+		upperLetter: "[A-Z\u00c0-\u00de]",
+		lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
+		anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
+	};
 } else {
-    Wikifier.textPrimitives.upperLetter = "[A-Z\u00c0-\u00de\u0150\u0170]";
-    Wikifier.textPrimitives.lowerLetter = "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]";
-    Wikifier.textPrimitives.anyLetter = "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+	Wikifier.textPrimitives = {
+		upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
+		lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
+		anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+	}
 };
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"|\\[[^\\]]+\\])+)";
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"
+	+Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"
+	+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
     
 /* Functions usable by custom scripts */
 function visited(e) {

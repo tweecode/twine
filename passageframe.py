@@ -237,7 +237,10 @@ class PassageFrame (wx.Frame):
         # reset redraw timer
         
         def reallySync (self):
-            self.widget.parent.Refresh()
+            try:
+                self.widget.parent.Refresh()
+            except:
+                pass
         
         if (self.syncTimer):
             self.syncTimer.cancel()

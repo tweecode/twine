@@ -13,6 +13,7 @@
 #
 
 import re, datetime, time, os, sys, tempfile, codecs
+from tweelexer import TweeLexer
 
 #
 # TiddlyWiki class
@@ -414,15 +415,15 @@ class Tiddler:
 		
 		# regular hyperlinks
 		if includeInternal:
-			links = re.findall(r'\[\[(.+?)\]\]', self.text)
-		
-			# check for [[title|target]] formats
-	
-			def filterPrettyLinks (text):
-				if '|' in text: return re.sub('.*\|', '', text)
-				else: return text
+			iterator = re.finditer(TweeLexer.LINK_REGEX, self.text)
+			for m in iterator:
+				links.append(m.group(2) or m.group(1))
 			
-			links = map(filterPrettyLinks, links)
+			# Include images
+			iterator = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
+			for m in iterator:
+				if m.group(5):
+					links.append(m.group(5))
 			
 			# Remove externals
 			def filterExternals (text):
@@ -431,6 +432,11 @@ class Tiddler:
 				return True
 				
 			links = filter(filterExternals, links)
+			
+			# Remove code parameters
+			links = filter(lambda text:
+				not re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, text, re.U),
+				links)
 
 		if includeMacros:
 			
