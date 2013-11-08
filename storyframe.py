@@ -634,13 +634,15 @@ class StoryFrame (wx.Frame):
             defaultText = "This passage's text will be included in the menu for this story."
         
         elif id == self.STORYSETTINGS_INCLUDES:
-            defaultText = "Put the file paths of any .twee or .tws files that should be merged with this "
+            defaultText = """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
+ 
+You can also include URLs of .tws and .twee files, too."""
         
         elif id == self.STORYSETTINGS_SETTINGS:         
             # Generate a random obfuscateKey
             obfuscateKey = list('anbocpdqerfsgthuivjwkxlymz')
             shuffle(obfuscateKey)
-            defaultText = """--Obfuscate the story's HTML to prevent possible spoilers? (swap / off)
+            defaultText = """--Obfuscate the story's HTML source to prevent possible spoilers? (swap / off)
 Obfuscate: off
 
 --String of letter pairs to use for swap-style obfuscation
@@ -751,65 +753,51 @@ Modernizr: off
         """
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
-        # State 0: Look for a filename
-        ## State 1: have filename, look for filename, EXCEPT, INCLUDE, ALIAS
-        ## State 2: EXCEPT mode, look for INCLUDE 3, ALIAS 4 or blank line 0
-        ## State 3: INCLUDE mode, look for EXCEPT 2, ALIAS 4 or blank line 0
-        ## State 4: ALIAS mode, look for EXCEPT 2, INCLUDE 2 or blank line 0
-        state = 0;
-        state_filename = '';
         excludepassages = TiddlyWiki.INFO_PASSAGES + ['Start']
         for line in lines:
-            if state == 0:
-                state_filename = line
-                state = 1
-                continue
-            elif state == 1:
-                try:
-                    if state_filename.strip():
-                        extension = os.path.splitext(state_filename)[1] 
-                        if extension == '.tws':
-                            if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                                openedFile = urllib.urlopen(state_filename)
-                            else:
-                                openedFile = open(state_filename, 'r')
-                            s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
-                            openedFile.close()
-                            for widget in s.storyPanel.widgets:
-                                if not any(widget.passage.title in t for t in excludepassages) and \
-                                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
-                                    tw.addTiddler(widget.passage)
-                            s.Destroy()
-                        elif extension == '.tw' or extension == '.txt' or extension == '.twee':
-                            if any(state_filename.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                                openedFile = urllib.urlopen(state_filename)
-                                s = openedFile.read()
-                                openedFile.close()
-                                t = tempfile.NamedTemporaryFile(delete=False)
-                                cleanuptempfile = True
-                                t.write(s)
-                                t.close()
-                                filename = t.name
-                            else:
-                                filename = state_filename
-                                cleanuptempfile = False
-                                
-                            tw1 = TiddlyWiki()
-                            tw1.addTweeFromFilename(filename)
-                            if cleanuptempfile: os.remove(filename)
-                            tiddlerkeys = tw1.tiddlers.keys()
-                            for tiddlerkey in tiddlerkeys:
-                                passage = tw1.tiddlers[tiddlerkey]
-                                if not any(passage.title == t for t in excludepassages) and \
-                                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
-                                    tw.addTiddler(passage)
+            try:
+                if line.strip():
+                    extension = os.path.splitext(line)[1] 
+                    if extension == '.tws':
+                        if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                            openedFile = urllib.urlopen(line)
                         else:
-                            raise Exception('File format not recognized')
-                except:
-                    self.app.displayError('opening the Twine file named ' + state_filename + ' which is referred to by the passage StoryIncludes')
-                state_filename = line
-                state = 1
-                continue
+                            openedFile = open(line, 'r')
+                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                        openedFile.close()
+                        for widget in s.storyPanel.widgets:
+                            if not any(widget.passage.title in t for t in excludepassages) and \
+                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                                tw.addTiddler(widget.passage)
+                        s.Destroy()
+                    elif extension == '.tw' or extension == '.txt' or extension == '.twee':
+                        if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                            openedFile = urllib.urlopen(line)
+                            s = openedFile.read()
+                            openedFile.close()
+                            t = tempfile.NamedTemporaryFile(delete=False)
+                            cleanuptempfile = True
+                            t.write(s)
+                            t.close()
+                            filename = t.name
+                        else:
+                            filename = line
+                            cleanuptempfile = False
+                            
+                        tw1 = TiddlyWiki()
+                        tw1.addTweeFromFilename(filename)
+                        if cleanuptempfile: os.remove(filename)
+                        tiddlerkeys = tw1.tiddlers.keys()
+                        for tiddlerkey in tiddlerkeys:
+                            passage = tw1.tiddlers[tiddlerkey]
+                            if not any(passage.title == t for t in excludepassages) and \
+                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
+                                tw.addTiddler(passage)
+                    else:
+                        raise Exception('File format not recognized')
+            except:
+                self.app.displayError('opening the file named ' + line + ' which is referred to by the StoryIncludes passage')
+            continue
         return tw
     
     def viewBuild (self, event = None, name = ''):
@@ -848,12 +836,15 @@ Modernizr: off
             twinedocdir = os.getcwd()
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
-        for f in os.listdir(twinedocdir):
-            extension = os.path.splitext(f)[1] 
-            if extension == '.tws' or extension == '.tw' or extension == '.txt' or extension == '.twee':
-                pathname = os.path.join(twinedocdir, f)
-                mtime = os.stat(pathname).st_mtime
-                self.autobuildfiles[pathname] = mtime
+        
+        for widget in self.storyPanel.widgets:
+            if widget.passage.title == 'StoryIncludes':
+                for line in widget.passage.text.splitlines():
+                    if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                        pathname = os.path.join(twinedocdir, line)
+                        # Include even non-existant files, in case they eventually appear
+                        mtime = os.stat(pathname).st_mtime
+                        self.autobuildfiles[pathname] = mtime
         
     def stats (self, event = None):
         """

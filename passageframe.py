@@ -226,7 +226,10 @@ class PassageFrame (wx.Frame):
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
-            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS : self.widget.passage.tags.append(tag)
+            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS:
+                self.widget.passage.tags.append(tag)
+            if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
+                self.widget.parent.parent.autoBuildStart();
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
         
