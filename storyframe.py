@@ -506,29 +506,7 @@ class StoryFrame (wx.Frame):
             
     def importHtml (self, path):
         """Imports the tiddler objects in a HTML file into the story."""
-        try:
-            # have a TiddlyWiki object parse it for us
-            tw = TiddlyWiki()
-            tw.addHtmlFromFilename(path)
-            
-            # add passages for each of the tiddlers the TiddlyWiki saw
-            if len(tw.tiddlers):
-                lastpos = [0, 0]
-                for t in tw.tiddlers:
-                    tiddler = tw.tiddlers[t]
-                    new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, \
-                                                    pos = tiddler.pos if tiddler.pos != None else lastpos, \
-                                                    logicals = True, quietly = True)
-                    lastpos = new.pos
-                    new.passage.tags = tiddler.tags
-                self.setDirty(True, 'Import')
-            else:
-                dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
-                                          'this is a Twine game file.', 'No Passages Found', \
-                                          wx.ICON_INFORMATION | wx.OK)
-                dialog.ShowModal()
-        except:
-            self.app.displayError('importing from HTML') 
+        self.importSource(path, True)
 
     def importSourceDialog(self, event = None):
         """Asks the user to choose a file to import source from, then imports into the current story."""
@@ -538,29 +516,63 @@ class StoryFrame (wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.importSource(dialog.GetPath())
                          
-    def importSource (self, path):
-        """Imports the tiddler objects in a Twee file into the story."""
-        try:
+    def importSource (self, path, html = False):
+            """Imports the tiddler objects in a Twee file into the story."""
+             
+        #try:
             # have a TiddlyWiki object parse it for us
             tw = TiddlyWiki()
-            tw.addTweeFromFilename(path)
+            if html:
+                tw.addHtmlFromFilename(path)
+            else:
+                tw.addTweeFromFilename(path)
             
             # add passages for each of the tiddlers the TiddlyWiki saw
             if len(tw.tiddlers):
-                lastpos = [0, 0]
+                removedWidgets = []
+                skippedTitles = []
+                
+                # Check for passage title conflicts
                 for t in tw.tiddlers:
-                    tiddler = tw.tiddlers[t]
-                    new = self.storyPanel.newWidget(title = tiddler.title, text = tiddler.text, quietly = True, pos = lastpos)
-                    new.passage.tags = tiddler.tags
+                    other = self.storyPanel.findWidget(t)
+                    if other:
+                        dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
+                                              + '" in this story. Replace it with the imported passage?', 'Passage Title Conflict', \
+                                              wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                        check = dialog.ShowModal();
+                        if check == wx.ID_YES:
+                            removedWidgets.append(other)
+                        elif check == wx.ID_CANCEL:
+                            return
+                        elif check == wx.ID_NO:
+                            skippedTitles.append(t)
+                
+                # Remove widgets elected to be replaced
+                for t in removedWidgets:
+                    self.storyPanel.removeWidget(t)
+                
+                # Insert widgets now
+                lastpos = [0, 0]
+                addedWidgets = []
+                for t in tw.tiddlers:
+                    t = tw.tiddlers[t]
+                    if t.title in skippedTitles:
+                        continue
+                    new = self.storyPanel.newWidget(title = t.title, text = t.text, quietly = True,
+                                                    pos = t.pos if t.pos else lastpos)
+                    new.passage.tags = t.tags
                     lastpos = new.pos
+                    addedWidgets.append(new)
                 self.setDirty(True, 'Import')
+                for t in addedWidgets:
+                    t.clearPaintCache()
             else:
                 dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
                                           'this is a Twee source file.', 'No Passages Found', \
                                           wx.ICON_INFORMATION | wx.OK)
                 dialog.ShowModal()
-        except:
-            self.app.displayError('importing your source code')
+        #except:
+        #    self.app.displayError('importing')
     
     def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
@@ -602,6 +614,17 @@ class StoryFrame (wx.Frame):
         """Imports an image into the story as an image passage."""
         try:
             text, title = self.openImageFileAsBase64(file)
+            
+            # Check for title usage
+            while self.storyPanel.findWidget(title):
+                try:
+                    match = re.search(r'(\s\d+)$', title)
+                    if match:
+                        title = title[:match.start(1)] + " " + str(int(match.group(1)) + 1)
+                    else:
+                        title += " 2"
+                except: pass
+            
             self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
             if showdialog:
                 dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \

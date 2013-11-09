@@ -95,9 +95,13 @@ History.prototype.display = function (d, b, a) {
     return e
 };
 Passage.prototype.render = function () {
-    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
+    var t, b = insertElement(null, 'div', 'passage' + this.title, 'passage');
     b.style.visibility = 'hidden';
-    if (this.tags != null && this.tags.length > 0) b.setAttribute('data-tags', this.tags.join(' '));
+	t = this.tags != null && this.tags.length > 0 ? this.tags.join(' ') : "";
+    if (t) {
+		b.setAttribute('data-tags', this.tags.join(' '));
+	}
+	document.body.setAttribute("data-tags", t);
     insertElement(b, 'div', '', 'header');
     var a = insertElement(b, 'div', '', 'content');
     new Wikifier(a, this.text);

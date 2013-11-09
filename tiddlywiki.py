@@ -253,7 +253,7 @@ class Tiddler:
 
 	def __cmp__ (self, other):
 		"""Compares a Tiddler to another."""
-		return self.text == other.text
+		return hasattr(other, 'text') and self.text == other.text
 	
 	def initTwee (self, source):
 		"""Initializes a Tiddler from Twee source code."""

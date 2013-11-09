@@ -33,6 +33,7 @@ class PassageFrame (wx.Frame):
         self.lastFindRegexp = None
         self.lastFindFlags = None
         self.usingLexer = True
+        self.titleInvalid = False
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
@@ -130,11 +131,11 @@ class PassageFrame (wx.Frame):
         self.topControls = wx.Panel(self.panel)
         topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         
-        titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
+        self.titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
         tagsLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TAGS_LABEL)
         self.tagsInput = wx.TextCtrl(self.topControls)
-        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(tagsLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.tagsInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
@@ -215,10 +216,26 @@ class PassageFrame (wx.Frame):
     
     def syncPassage (self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
-        if len(self.titleInput.GetValue()) > 0:
-            self.widget.passage.title = self.titleInput.GetValue()
-        else:
-            self.widget.passage.title = 'Untitled Passage'
+        title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
+        
+
+        if title:
+        # Check for title conflict
+            otherTitled = self.widget.parent.findWidget(title)
+            if otherTitled and otherTitled != self.widget:
+                self.titleLabel.SetLabel("Title is already in use!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
+            else:
+                if self.titleInvalid:
+                    self.titleLabel.SetLabel(self.TITLE_LABEL)
+                    self.titleInput.SetBackgroundColour((255,255,255))
+                    self.titleInput.Refresh()
+                    self.titleInvalid = False
+                self.widget.passage.title = title
+        
+        # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.modified = time.localtime()
         # Preserve the special (uneditable) tags
