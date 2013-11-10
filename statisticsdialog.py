@@ -10,6 +10,7 @@
 
 import wx, re, locale
 from tweelexer import TweeLexer
+from tiddlywiki import TiddlyWiki
 import metrics
 
 class StatisticsDialog (wx.Dialog):
@@ -83,6 +84,7 @@ class StatisticsDialog (wx.Dialog):
         
         counts = { 'words': 0, 'chars': 0, 'passages': 0, 'links': 0, 'brokenLinks': 0 }
         variables = set()
+        tags = set()
         
         def count (widget, counts):
             if widget.passage.isStoryText():
@@ -99,6 +101,10 @@ class StatisticsDialog (wx.Dialog):
                         for p2 in iterator2:
                             if p2.group(4):
                                 variables.add(p2.group(4));
+                # Find tags
+                for a in widget.passage.tags: 
+                    if a not in TiddlyWiki.INFO_TAGS:
+                        tags.add(a)
         
         self.storyPanel.eachWidget(lambda w: count(w, counts))
         for key in counts:
@@ -113,9 +119,16 @@ class StatisticsDialog (wx.Dialog):
         
         if len(variables):
             text = ', '.join(sorted(variables));
-            variablesCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 90), style=wx.TE_MULTILINE|wx.TE_READONLY)
+            variablesCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
             variablesCtrl.AppendText(text)
             self.panelSizer.Add(variablesCtrl, flag = wx.ALIGN_CENTER)
+            
+        if len(tags):
+            text = ', '.join(sorted(tags));
+            tagsCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
+            tagsCtrl.AppendText(text)
+            self.panelSizer.Add(wx.StaticText(panel, label = str(len(tags)) + " Tags"), flag = wx.ALIGN_CENTER)
+            self.panelSizer.Add(tagsCtrl, flag = wx.ALIGN_CENTER)
 
     MIN_WIDTH = 300
     

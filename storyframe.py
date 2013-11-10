@@ -209,13 +209,27 @@ class StoryFrame (wx.Frame):
 
         self.storyMenu = wx.Menu()
         
-        self.storyMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&New Passage\tCtrl-N')
+        # New Passage submenu
+        
+        self.newPassageMenu = wx.Menu()
+        
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_PASSAGE, '&Passage\tCtrl-N')
         self.Bind(wx.EVT_MENU, self.storyPanel.newWidget, id = StoryFrame.STORY_NEW_PASSAGE)
+        
+        self.newPassageMenu.AppendSeparator()
+        
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'Stylesheet')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
+
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, 'Script')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['script']), id = StoryFrame.STORY_NEW_SCRIPT)
+        
+        self.storyMenu.AppendMenu(wx.ID_ANY, 'New', self.newPassageMenu)
         
         self.storyMenu.Append(wx.ID_EDIT, '&Edit Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e)), id = wx.ID_EDIT)
 
-        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit Passage Text &Fullscreen\tF12')
+        self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit in &Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
         
@@ -1104,9 +1118,9 @@ Modernizr: off
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
     
-    [STORY_NEW_PASSAGE, STORY_EDIT_FULLSCREEN, STORY_STATS, \
+    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_EDIT_FULLSCREEN, STORY_STATS, \
      STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,412)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,414)
     
     STORY_FORMAT_BASE = 501
     
