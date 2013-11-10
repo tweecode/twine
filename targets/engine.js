@@ -580,6 +580,34 @@ Passage.unescapeLineBreaks = function (a) {
         return ""
     }
 };
+Passage.prototype.setTags = function(b) {
+    var t = this.tags != null && this.tags.length ? this.tags.join(' ') : "";
+    if (t) {
+        b.setAttribute('data-tags', this.tags.join(' '));
+    }
+    document.body.setAttribute("data-tags", t);
+};
+Passage.prototype.setCSS = function() {
+    var c, passage, text, i, j, tags = this.tags;
+    if (tags && tags.length) {
+        c = document.getElementById('tagCSS');
+        if (c) {
+            c.innerHTML = text = "";
+            for (i in tale.passages) {
+                passage = tale.passages[i];
+                if (passage && ~passage.tags.indexOf("stylesheet")) {
+                    for (j = 0; j < tags.length; j++) {
+                        if (~passage.tags.indexOf(tags[j])) {
+                            text += passage.text;
+                            break;
+                        }
+                    }
+                }
+            }
+            insertText(c,text);
+        }
+    }
+};
 function Tale() {
     this.passages = {};
     var a,b,c,lines,i,kv,ns,nsc,nope,
@@ -675,7 +703,6 @@ Tale.prototype.lookup = function (h, g, a) {
     var d = [];
     for (var c in this.passages) {
         var f = this.passages[c];
-        var e = false;
         for (var b = 0; b < f[h].length; b++) {
             if (f[h][b] == g) {
                 d.push(f)
@@ -1380,21 +1407,21 @@ Wikifier.createExternalLink = function (place, url) {
     return el;
 };
 if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
-	Wikifier.textPrimitives = {
-		upperLetter: "[A-Z\u00c0-\u00de]",
-		lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
-		anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
-	};
+    Wikifier.textPrimitives = {
+        upperLetter: "[A-Z\u00c0-\u00de]",
+        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
+        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
+    };
 } else {
-	Wikifier.textPrimitives = {
-		upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
-		lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
-		anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
-	}
+    Wikifier.textPrimitives = {
+        upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
+        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
+        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+    }
 };
 Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"
-	+Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"
-	+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
+    +Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"
+    +Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
     
 /* Functions usable by custom scripts */
 function visited(e) {
@@ -1457,9 +1484,10 @@ function main() {
             macro.init();
         }
     }
-    var styles = tale.lookup("tags", "stylesheet");
-    for (var i = 0; i < styles.length; i++) {
-        addStyle(styles[i].text);
+    for (i = 0; i < tale.passages.length; i++) {
+        if (tale.passages[i].tags + "" == "stylesheet") {
+            insertText(document.getElementById("storyCSS"), styles[i].text);
+        }
     }
     state.init();
 };

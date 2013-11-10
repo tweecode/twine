@@ -515,11 +515,11 @@ class StoryFrame (wx.Frame):
         
         if dialog.ShowModal() == wx.ID_OK:
             self.importSource(dialog.GetPath())
-                         
+        
     def importSource (self, path, html = False):
-            """Imports the tiddler objects in a Twee file into the story."""
-             
-        #try:
+        """Imports the tiddler objects in a Twee file into the story."""
+        
+        try:
             # have a TiddlyWiki object parse it for us
             tw = TiddlyWiki()
             if html:
@@ -571,8 +571,8 @@ class StoryFrame (wx.Frame):
                                           'this is a Twee source file.', 'No Passages Found', \
                                           wx.ICON_INFORMATION | wx.OK)
                 dialog.ShowModal()
-        #except:
-        #    self.app.displayError('importing')
+        except:
+            self.app.displayError('importing')
     
     def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
