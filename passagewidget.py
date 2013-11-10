@@ -274,6 +274,20 @@ class PassageWidget:
         """
         start = self.parent.toPixels(self.getCenter())
         end = self.parent.toPixels(otherWidget.getCenter())
+                    
+        # Additional tweak to make overlapping arrows more visible
+        
+        length = min(math.sqrt((start[0]-end[0])**2 + (start[1]-end[1])**2)/32, 16)
+        
+        if start[1] != end[1]:
+            start[0] += length * math.copysign(1, start[1] - end[1]);
+            end[0] += length * math.copysign(1, start[1] - end[1]);
+        if start[0] != end[0]:
+            start[1] += length * math.copysign(1, start[0] - end[0]);
+            end[1] += length * math.copysign(1, start[0] - end[0]);
+        
+        # Clip the end of the arrow
+        
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
                     
         # does it actually need to be drawn?
