@@ -1483,9 +1483,9 @@ function main() {
             macro.init();
         }
     }
-    for (i = 0; i < tale.passages.length; i++) {
+    for (i in tale.passages) {
         if (tale.passages[i].tags + "" == "stylesheet") {
-            insertText(document.getElementById("storyCSS"), styles[i].text);
+            insertText(document.getElementById("storyCSS"), tale.passages[i].text);
         }
     }
     state.init();

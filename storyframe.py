@@ -756,7 +756,7 @@ Modernizr: off
 
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
-                    tw = self.buildIncludes(tw, widget.passage.text.splitlines())
+                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
                     break
             
             # Decode story settings
@@ -790,24 +790,36 @@ Modernizr: off
         """
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
-        excludepassages = TiddlyWiki.INFO_PASSAGES + ['Start']
+        excludepassages = TiddlyWiki.INFO_PASSAGES
         for line in lines:
             try:
                 if line.strip():
                     extension = os.path.splitext(line)[1] 
                     if extension == '.tws':
+                        
                         if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
                             openedFile = urllib.urlopen(line)
                         else:
                             openedFile = open(line, 'r')
                         s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
                         openedFile.close()
+                        
                         for widget in s.storyPanel.widgets:
                             if not any(widget.passage.title in t for t in excludepassages) and \
                             not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                            
+                                # Check for uniqueness
+                                if self.storyPanel.findWidget(widget.passage.title):
+                                    # Not bothering with a Yes/No dialog here.
+                                    raise Exception('A passage titled "'+ widget.passage.title + '" is already present in this story')
+                                elif tw.hasTiddler(widget.passage.title):
+                                    raise Exception('A passage titled "'+ widget.passage.title + '" has been included by a previous StoryIncludes file')
+                                
                                 tw.addTiddler(widget.passage)
                         s.Destroy()
+                        
                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
+                        
                         if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
                             openedFile = urllib.urlopen(line)
                             s = openedFile.read()
@@ -833,8 +845,8 @@ Modernizr: off
                     else:
                         raise Exception('File format not recognized')
             except:
-                self.app.displayError('opening the file named ' + line + ' which is referred to by the StoryIncludes passage')
-            continue
+                self.app.displayError('including the file named "' + line + '" which is referred to by the StoryIncludes passage\n')
+                return None
         return tw
     
     def viewBuild (self, event = None, name = ''):
