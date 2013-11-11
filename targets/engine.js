@@ -588,24 +588,23 @@ Passage.prototype.setTags = function(b) {
     document.body.setAttribute("data-tags", t);
 };
 Passage.prototype.setCSS = function() {
-    var c, passage, text, i, j, tags = this.tags;
-    if (tags && tags.length) {
+    var passage, text, i, j, tags = this.tags || [],
         c = document.getElementById('tagCSS');
-        if (c) {
-            c.innerHTML = text = "";
-            for (i in tale.passages) {
-                passage = tale.passages[i];
-                if (passage && ~passage.tags.indexOf("stylesheet")) {
-                    for (j = 0; j < tags.length; j++) {
-                        if (~passage.tags.indexOf(tags[j])) {
-                            text += passage.text;
-                            break;
-                        }
+    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
+        c.innerHTML = text = "";
+        for (i in tale.passages) {
+            passage = tale.passages[i];
+            if (passage && ~passage.tags.indexOf("stylesheet")) {
+                for (j = 0; j < tags.length; j++) {
+                    if (~passage.tags.indexOf(tags[j])) {
+                        text += passage.text;
+                        break;
                     }
                 }
             }
-            insertText(c,text);
         }
+        insertText(c,text);
+        c.setAttribute('data-tags', tags.join(' '));
     }
 };
 function Tale() {
