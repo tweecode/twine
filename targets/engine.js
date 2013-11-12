@@ -303,7 +303,10 @@ version.extensions.displayMacro = {
 macros.display = {
     handler: function (place, macroName, params, parser) {
         var output, name = parser.fullArgs();
-        try {
+        if (macroName !== "display") {
+            output = macroName;
+        }
+        else try {
             output = eval(name);
         }
         catch(e) {
@@ -352,10 +355,11 @@ version.extensions.printMacro = {
     minor: 1,
     revision: 1
 };
-macros['print'] = {
+macros.print = {
     handler: function (place, macroName, params, parser) {
         try {
-            var output = eval(parser.fullArgs());
+            var args = parser.fullArgs(macroName !== "print"),
+                output = eval(args);
             if (output != null && (typeof output !== "number" || !isNaN(output))) {
                 new Wikifier(place, output.toString());
             }
@@ -371,9 +375,9 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, parser) {
-        macros.set.run(a,parser.fullArgs())
+        macros.set.run(a, parser.fullArgs(), parser)
     },
-    run: function (a,expression) {
+    run: function (a,expression, parser) {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
@@ -812,8 +816,8 @@ Wikifier.prototype.fullMatch = function() {
     return this.source.slice(this.matchStart, this.source.indexOf('>>', this.matchStart)+2);
 };
 
-Wikifier.prototype.fullArgs = function () {
-    var startPos = this.source.indexOf(' ', this.matchStart);
+Wikifier.prototype.fullArgs = function (includeName) {
+    var startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart) + (includeName ? 2 : 1);
     var endPos = this.source.indexOf('>>', this.matchStart);
 
     return Wikifier.parse(this.source.slice(startPos, endPos).trim());
@@ -1218,12 +1222,23 @@ Wikifier.formatters = [
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {
             var params = lookaheadMatch[2].readMacroParams();
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+            var name = lookaheadMatch[1];
             try {
-                var macro = macros[lookaheadMatch[1]];
-                if (macro && macro.handler) macro.handler(w.output, lookaheadMatch[1], params, w);
-                else throwError(w.output, 'Macro not found: ' + lookaheadMatch[1], w.fullMatch());
+                var macro = macros[name];
+                if (macro && macro.handler) {
+                    macro.handler(w.output, name, params, w);
+                }
+                // Variable?
+                else if (name[0] == '$') {
+                    macros.print.handler(w.output, name, [name].concat(params), w);
+                }
+                // Passage
+                else if (tale.has(name)) {
+                    macros.display.handler(w.output, name, [name].concat(params), w);
+                }
+                else throwError(w.output, 'Macro not found: ' + name, w.fullMatch());
             } catch (e) {
-                throwError(w.output, 'Error executing macro ' + lookaheadMatch[1] + ': ' + e.toString(), w.fullMatch());
+                throwError(w.output, 'Error executing macro ' + name + ': ' + e.toString(), w.fullMatch());
             }
         }
     }
