@@ -909,6 +909,7 @@ Wikifier.formatHelpers = {
         }
     }
 };
+var imageFormatter;
 Wikifier.formatters = [
 {
     name: "table",
@@ -1179,12 +1180,12 @@ Wikifier.formatters = [
         w.outputText(e, w.matchStart, w.nextMatch);
     }
 },
-{
+(imageFormatter = {
     name: "image",
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
     lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var lookaheadRegExp = new RegExp(this.lookahead, "mig");
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source);
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketted link
@@ -1210,7 +1211,7 @@ Wikifier.formatters = [
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
-},
+}),
 {
     name: "macro",
     match: "<<",
@@ -1464,6 +1465,19 @@ function previous() {
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
+function addCSS(text) {
+    var imgPassages = tale.lookup("tags", "Twine.image");
+    text = text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
+        for (var i = 0; i < imgPassages.length; i++) {
+            if (imgPassages[i].title == src) {
+                src = imgPassages[i].text;
+                break;
+            }
+        }
+        return "url(" + src + ");"
+    });
+    insertText(document.getElementById("storyCSS"), text);
+}
 /* Init function */
 function main() {
     // Used by old custom scripts.
@@ -1500,7 +1514,7 @@ function main() {
     }
     for (i in tale.passages) {
         if (tale.passages[i].tags + "" == "stylesheet") {
-            insertText(document.getElementById("storyCSS"), tale.passages[i].text);
+            addCSS(tale.passages[i].text);
         }
     }
     state.init();
