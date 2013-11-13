@@ -34,7 +34,7 @@ function removeChildren(a) {
 
 function setPageElement(c, b, a) {
     var place;
-    if (place = document.getElementById(c)) {
+    if (place = (typeof c == "string" ? document.getElementById(c) : c)) {
         removeChildren(place);
         if (tale.has(b)) {
             new Wikifier(place, tale.get(b).text)
@@ -1027,9 +1027,8 @@ Wikifier.formatters = [
 {
     name: "emdash",
     match: "--",
-    handler: function (w) {
-        var e = insertElement(w.output, "span");
-        e.innerHTML = '&mdash;';
+    handler: function (a) {
+        insertElement(a.output, "span", null, "char " + (a.matchText === " " ? "space" : a.matchText), a.matchText);
     }
 },
 {
@@ -1158,7 +1157,7 @@ Wikifier.formatters = [
         {
             var title = Wikifier.parsePassageTitle(lookaheadMatch[1]),
                 link = Wikifier.createInternalLink(w.output, title);
-            insertText(link, title);
+            setPageElement(link, null, title);
             w.nextMatch += lookaheadMatch[1].length + 2;
         } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketted link
         {
@@ -1167,7 +1166,7 @@ Wikifier.formatters = [
                 link = Wikifier.createInternalLink(w.output, title);
             else
                 link = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
-            w.outputText(link, w.nextMatch, w.nextMatch + lookaheadMatch[1].length);
+            setPageElement(link, null, w.source.substring(w.nextMatch, w.nextMatch + lookaheadMatch[1].length));
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
@@ -1383,6 +1382,13 @@ Wikifier.formatters = [
                 throwError(a.output,"HTML tag '"+tn+"' wasn't closed.", a.matchText);
             }
         }
+    }
+},
+{
+    name: "char",
+    match: ".",
+    handler: function (a) {
+        insertElement(a.output, "span", null, "char " + (a.matchText === " " ? "space" : a.matchText), a.matchText);
     }
 }
 ];
