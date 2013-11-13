@@ -25,6 +25,7 @@ class StoryFrame (wx.Frame):
         self.pristine = True    # the user has not added any content to this at all
         self.dirty = False      # the user has not made unsaved changes
         self.storyFormats = {}  # list of available story formats
+        self.lastTestBuild = None
 
         # inner state
         
@@ -247,6 +248,9 @@ class StoryFrame (wx.Frame):
         
         self.storySettingsMenu = wx.Menu()
         
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_START, 'Start')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_START)
+        
         self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_TITLE, 'StoryTitle')
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_TITLE)
         
@@ -409,6 +413,9 @@ class StoryFrame (wx.Frame):
             self.toolbar.Realize()
             self.toolbar.Hide()
             
+    def __del__(self):
+        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
+            os.remove(self.lastTestBuild.name)
         
     def revert (self, event = None):
         """Reverts to the last saved version of the story file."""
@@ -773,11 +780,14 @@ Modernizr: off
             
             # Write the output file
             if temp:
-                dest = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False);
-                name = dest.name
-                dest.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
-                dest.close()
-                if displayAfter: self.viewBuild(name = name)
+                # This implicitly closes the previous test build
+                if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
+                    os.remove(self.lastTestBuild.name)
+                self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
+                    dir = os.path.dirname(self.buildDestination or self.saveDestination) or None)
+                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
+                self.lastTestBuild.close()
+                if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'w')
                 dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
@@ -1131,8 +1141,8 @@ Modernizr: off
     VIEW_TOOLBAR = 303
     
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_EDIT_FULLSCREEN, STORY_STATS, \
-     STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,414)
+     STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,415)
     
     STORY_FORMAT_BASE = 501
     
