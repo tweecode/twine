@@ -47,7 +47,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
 setup(
     name = 'Twine',
     description = 'Twine',
-    version = '1.3.6',
+    version = '1.4',
 
     windows = [{
         'script': 'app.py',

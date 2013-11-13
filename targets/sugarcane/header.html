@@ -120,21 +120,19 @@ Passage.prototype.excerpt = function () {
 var Interface = {
     init: function () {
 		var snapback = document.getElementById("snapback"),
-			restart = document.getElementById("restart"),
-			share = document.getElementById("share");
+			restart = document.getElementById("restart");
         main();
-        snapback && (snapback.onclick = Interface.showSnapback);
+		if (snapback) {
+			if (!tale.lookup("tags", "bookmark").length) {
+				snapback.parentNode.removeChild(snapback);
+			} else snapback.onclick = Interface.showSnapback;
+		}
         restart && (restart.onclick = Interface.restart);
-        share && (share.onclick = Interface.showShare);
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this story?")) {
             window.state.restart()
         }
-    },
-    showShare: function (a) {
-        Interface.hideAllMenus();
-        Interface.showMenu(a, document.getElementById("shareMenu"))
     },
     showSnapback: function (a) {
         Interface.hideAllMenus();
@@ -175,7 +173,6 @@ var Interface = {
         }
     },
     hideAllMenus: function () {
-        document.getElementById("shareMenu").style.display = "none";
         document.getElementById("snapbackMenu").style.display = "none"
     },
     showMenu: function (b, a) {
@@ -357,18 +354,11 @@ body{background-color:#000;color:#fff;font-family:Verdana,sans-serif;font-size:6
 <li id="storyMenu"></li>
 <li id="snapback">Rewind</li>
 <li id="restart">Restart</li>
-<li id="share">Share</li>
 <li id="credits">
-This story was created with <a href="http://gimcrackd.com/etc/src/">Twine</a> and is powered by <a href="http://tiddlywiki.com/">TiddlyWiki</a>
+This story was created with <a href="http://twinery.org/">Twine</a> and is powered by <a href="http://tiddlywiki.com/">TiddlyWiki</a>
 </li>
 </ul>
 <div id="snapbackMenu" class="menu"></div>
-<div id="shareMenu" class="menu">
-<div onclick="javascript:location.href='http://digg.com/submit?phase=2%20&title='+tale.get('StoryTitle').text+'&url='+location.href">Digg</div>
-<div onclick="javascript:location.href='http://del.icio.us/post?title='+tale.get('StoryTitle').text+'&url='+location.href">Delicious</div>
-<div onclick="javascript:location.href='http://facebook.com/share.php?t='+tale.get('StoryTitle').text+'&u='+location.href">Facebook</div>
-<div onclick="javascript:location.href='http://stumbleupon.com/submit?title='+tale.get('StoryTitle').text+'&url='+location.href">StumbleUpon</div>
-</div>
 <noscript><div id="noscript">Please enable Javascript to play this story!</div></noscript>
 <div id="passages"></div>
 <div id="storeArea">

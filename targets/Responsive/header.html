@@ -102,7 +102,7 @@ History.prototype.display = function (d, b, a) {
     return e
 };
 Passage.prototype.render = function () {
-    var t, b = insertElement(null, 'div', 'passage' + this.title, 'passage');
+    var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
     b.style.visibility = 'hidden';
     this.setTags(b);
     this.setCSS();
@@ -127,21 +127,19 @@ Passage.prototype.excerpt = function () {
 var Interface = {
     init: function () {
 		var snapback = document.getElementById("snapback"),
-			restart = document.getElementById("restart"),
-			share = document.getElementById("share");
+			restart = document.getElementById("restart");
         main();
-        snapback && (snapback.onclick = Interface.showSnapback);
+		if (snapback) {
+			if (!tale.lookup("tags", "bookmark").length) {
+				snapback.parentNode.removeChild(snapback);
+			} else snapback.onclick = Interface.showSnapback;
+		}
         restart && (restart.onclick = Interface.restart);
-        share && (share.onclick = Interface.showShare);
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this story?")) {
             window.state.restart()
         }
-    },
-    showShare: function (a) {
-        Interface.hideAllMenus();
-        Interface.showMenu(a, document.getElementById("shareMenu"))
     },
     showSnapback: function (a) {
         Interface.hideAllMenus();
@@ -182,7 +180,6 @@ var Interface = {
         }
     },
     hideAllMenus: function () {
-        document.getElementById("shareMenu").style.display = "none";
         document.getElementById("snapbackMenu").style.display = "none"
     },
     showMenu: function (b, a) {
@@ -709,8 +706,8 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 
 	<div id="footer-container">
 		<footer class="wrapper">
-			<div id="credits">This story was created with <a href="http://gimcrackd.com/etc/src/">Twine</a> and is powered by <a href="http://tiddlywiki.com/">TiddlyWiki</a>. 
-			The Responsive Story Format is by <a href="http://www.eturnerx.com">Emmanuel King Turner</a> Twitter: <a href="http://www.twitter.com/stormrose">@stormrose</a> and it uses <a href="http://www.initializr.com/">Initializr</a>, <a href="http://jquery.com">jQuery</a> and <a href="http://www.modernizr.com">Modernizr</a>. 
+			<div id="credits">This story was created with <a href="http://twinery.org/">Twine</a> and is powered by <a href="http://tiddlywiki.com/">TiddlyWiki</a>. 
+			The Responsive Story Format is by <a href="http://www.eturnerx.com">Emmanuel King Turner</a>. Twitter: <a href="http://www.twitter.com/stormrose">@stormrose</a>
 			</div>
 		</footer>
 	</div>

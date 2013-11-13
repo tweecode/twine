@@ -335,11 +335,8 @@ class StoryFrame (wx.Frame):
         
         helpMenu = wx.Menu()
  
-        helpMenu.Append(StoryFrame.HELP_MANUAL, 'Online &Help')
+        helpMenu.Append(StoryFrame.HELP_MANUAL, 'Twine &Wiki')
         self.Bind(wx.EVT_MENU, self.app.openDocs, id = StoryFrame.HELP_MANUAL)
-
-        helpMenu.Append(StoryFrame.HELP_GROUP, '&Discuss Twine Online')
-        self.Bind(wx.EVT_MENU, self.app.openGroup, id = StoryFrame.HELP_GROUP)
         
         helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine\'s Source Code on &GitHub')
         self.Bind(wx.EVT_MENU, self.app.openGitHub, id = StoryFrame.HELP_GITHUB)
@@ -1005,6 +1002,8 @@ Modernizr: off
 
         self.SetTitle(title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
         
+        if not self.menus: return
+            
         # File menu
         
         revertItem = self.menus.FindItemById(wx.ID_REVERT_TO_SAVED)

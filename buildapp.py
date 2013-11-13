@@ -9,7 +9,7 @@ setup(app = ['app.py'], options = dict(py2app = dict( argv_emulation = True,
                                        iconfile = 'appicons/app.icns', \
                                        resources = 'icons', \
                                        plist = dict( \
-                                       CFBundleShortVersionString = '1.3.6', \
+                                       CFBundleShortVersionString = '1.4', \
                                        CFBundleName = 'Twine', \
                                        CFBundleIconFile = 'app.icns',\
                                        NSHumanReadableCopyright = 'GNU General Public License v2'))))

@@ -61,24 +61,28 @@ function throwError(a, b, tooltip) {
 Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
 };
-String.prototype.readMacroParams = function () {
-    var c = new RegExp("(?:\\s*)(?:(?:\"([^\"]*)\")|(?:'([^']*)')|(?:\\[\\[([^\\]]*)\\]\\])|([^\"'\\s]\\S*))", "mg");
-    var b = [];
+String.prototype.readMacroParams = function (keepquotes) {
+    var re = /(?:\s*)(?:(?:"([^"]*)")|(?:'([^']*)')|(?:\[\[([^\]]*)\]\])|([^"'\s]\S*))/mg,
+        params = [];
     do {
-        var a = c.exec(this);
-        if (a) {
-            if (a[1]) {
-                b.push(a[1]);
-            } else if (a[2]) {
-                b.push(a[2]);
-            } else if (a[3]) {
-                b.push(a[3]);
-            } else if (a[4]) {
-                b.push(a[4]);
+        var val, exec = re.exec(this);
+        if (exec) {
+            if (exec[1]) {
+                val = exec[1];
+                keepquotes && (val = '"' + val + '"');
+            } else if (exec[2]) {
+                val = exec[2];
+                keepquotes && (val = "'" + val + "'");
+            } else if (exec[3]) {
+                val = exec[3];
+                keepquotes && (val = '"' + val.replace('"','\\"') + '"');
+            } else if (exec[4]) {
+                val = exec[4];
             }
+            val && params.push(val);
         }
-    } while (a);
-    return b
+    } while (exec);
+    return params
 };
 String.prototype.readBracketedList = function () {
     var b = "\\[\\[([^\\]]+)\\]\\]";
