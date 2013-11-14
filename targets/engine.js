@@ -123,6 +123,7 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     }
     return -1
 });
+var hasPushState = !!window.history && (typeof window.history.pushState == "function");
 
 function fade(f, c) {
     var h;
@@ -248,16 +249,15 @@ History.prototype.restore = function () {
             if (!tale.has(g)) {
                 return false
             }
-            if (b == a.length - 1) {
-              this.display(g);
-            }
             else {
               c = tale.get(g);
               this.history.unshift({
                 passage: c,
                 variables: clone(this.history[0].variables)
               });
-              c.render();
+              if (b == a.length - 1) {
+                this.display(g, null, "back");
+              } else c.render();
             }
         }
         return true

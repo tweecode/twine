@@ -54,7 +54,6 @@ DAMAGE.
 ** Sugarcane/Responsive specific code follows
 **
 */
-var hasPushState = (typeof window.history.pushState == "function");
 History.prototype.init = function () {
     var a = this;
     if (!this.restore()) {
@@ -76,7 +75,7 @@ History.prototype.display = function (d, b, a) {
 		});
 		this.history[0].hash = this.save();
 		if (hasPushState) {
-			if(this.history.length == 2 && window.history.state === null) {
+			if(this.history.length <= 2 && window.history.state === null) {
 				window.history.replaceState(this.history, document.title);
 			}
 			else {
@@ -99,6 +98,9 @@ History.prototype.display = function (d, b, a) {
 	if (!hasPushState) {
 		this.hash = this.save();
 		window.location.hash = this.hash;
+	} else {
+		var bookmark = document.getElementById("bookmark");
+		bookmark && (bookmark.href = this.save());
 	}
     window.scroll(0, 0)
     return e
@@ -129,12 +131,16 @@ Passage.prototype.excerpt = function () {
 var Interface = {
     init: function () {
 		var snapback = document.getElementById("snapback"),
-			restart = document.getElementById("restart");
+			restart = document.getElementById("restart"),
+			bookmark = document.getElementById("bookmark");
         main();
 		if (snapback) {
 			if (!tale.lookup("tags", "bookmark").length) {
 				snapback.parentNode.removeChild(snapback);
 			} else snapback.onclick = Interface.showSnapback;
+		}
+		if (bookmark && !hasPushState) {
+			bookmark.parentNode.removeChild(bookmark);
 		}
         restart && (restart.onclick = Interface.restart);
     },
@@ -531,6 +537,7 @@ nav a:hover{
 .menu { position:absolute;display:none;background-color:#666;color:#fff;text-align:left;line-height:2em;}
 .menu div{padding:0 .4em;}
 .menu div:hover{cursor:pointer;background-color:#fff;color:#666;}
+nav li:hover{cursor:pointer;}
 
 #main-container { padding-top: 1em; }
 #passages { font-size: 12px; line-height: 16px; }
@@ -550,7 +557,8 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .passage h1 { font-size:2em; line-height:2em; margin-top:1em; }
 .passage h2 { font-size:1.5em; line-height:1.5em; margin-top:0.5em; }
 .passage h3 { font-size:1em; line-height:1.5em; margin-top:0.5em; }
-
+.passage center { max-width:50%; margin:auto; }
+}
 /* =============================================================================
    Media Queries
    ========================================================================== */
@@ -690,11 +698,12 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 				<div class="clearfix"></div>
 				<div id="storyAuthor"></div>
 			</div>
-			<nav>
+			<nav id="sidebar">
 				<ul>
 					<li id="storyMenu"></li>
 					<li><a id="snapback" href="javascript:;">Rewind</a></li>
 					<li><a id="restart" href="javascript:;">Restart</a></li>
+					<li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
 				</ul>
 			</nav>
 		</header>

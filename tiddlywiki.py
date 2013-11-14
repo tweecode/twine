@@ -80,7 +80,7 @@ class TiddlyWiki:
 			
 			# Set up the test play variable
 			if (startAt):
-				startAt = 'var testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
+				startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
 			# Insert the main engine
 			output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
 			if not output: return
