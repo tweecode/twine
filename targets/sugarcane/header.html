@@ -68,11 +68,13 @@ History.prototype.display = function (d, b, a) {
 			variables: clone(this.history[0].variables)
 		});
 		this.history[0].hash = this.save();
-		if(this.history.length == 2 && window.history.state === null) {
-			window.history.replaceState(this.history, document.title);
-		}
-		else {
-			window.history.pushState(this.history, document.title);
+		if (hasPushState) {
+			if(this.history.length == 2 && window.history.state === null) {
+				window.history.replaceState(this.history, document.title);
+			}
+			else {
+				window.history.pushState(this.history, document.title);
+			}
 		}
 	}
     var e = c.render();

@@ -228,6 +228,7 @@ History.prototype.save = function (c) {
     return "#" + a.substr(0, a.length - 1)
 };
 History.prototype.restore = function () {
+    var mt, a, b, g, c;
     try {
         if (testplay) {
             this.display(testplay);
@@ -241,17 +242,23 @@ History.prototype.restore = function () {
             this.display(mt, null, 'quietly');
             return true
         }
-        var a = window.location.hash.replace("#", "").split(".");
-        for (var b = 0; b < a.length; b++) {
-            var g = parseInt(a[b], 36);
+        a = window.location.hash.replace("#", "").split(".");
+        for (b = 0; b < a.length; b++) {
+            g = parseInt(a[b], 36);
             if (!tale.has(g)) {
                 return false
             }
             if (b == a.length - 1) {
               this.display(g);
             }
-            else
-              tale.get(g).render();
+            else {
+              c = tale.get(g);
+              this.history.unshift({
+                passage: c,
+                variables: clone(this.history[0].variables)
+              });
+              c.render();
+            }
         }
         return true
     } catch (d) {
@@ -282,7 +289,7 @@ var version = {
     date: new Date("January 1, 2013"),
     extensions: {}
 };
-var tale, state, macros = window.macros = {};
+var testplay, tale, state, macros = window.macros = {};
 
 window.onpopstate = function(e) {
     if (e.state && e.state.length > 0) {
@@ -599,7 +606,7 @@ Passage.prototype.setCSS = function() {
     var passage, text, i, j, tags = this.tags || [],
         c = document.getElementById('tagCSS');
     if (c && c.getAttribute('data-tags') != tags.join(' ')) {
-        c.innerHTML = text = "";
+        text = "";
         for (i in tale.passages) {
             passage = tale.passages[i];
             if (passage && ~passage.tags.indexOf("stylesheet")) {
@@ -611,7 +618,7 @@ Passage.prototype.setCSS = function() {
                 }
             }
         }
-        insertText(c,text);
+        c.outerHTML = "<style id=tagCSS>" + text + "</style>";
         c.setAttribute('data-tags', tags.join(' '));
     }
 };
