@@ -274,6 +274,20 @@ class PassageWidget:
         """
         start = self.parent.toPixels(self.getCenter())
         end = self.parent.toPixels(otherWidget.getCenter())
+                    
+        # Additional tweak to make overlapping arrows more visible
+        
+        length = min(math.sqrt((start[0]-end[0])**2 + (start[1]-end[1])**2)/32, 16)
+        
+        if start[1] != end[1]:
+            start[0] += length * math.copysign(1, start[1] - end[1]);
+            end[0] += length * math.copysign(1, start[1] - end[1]);
+        if start[0] != end[0]:
+            start[1] += length * math.copysign(1, start[0] - end[0]);
+            end[1] += length * math.copysign(1, start[0] - end[0]);
+        
+        # Clip the end of the arrow
+        
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
                     
         # does it actually need to be drawn?
@@ -371,6 +385,8 @@ class PassageWidget:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
             return 'startTitleBar'
+        elif not self.passage.linksAndDisplays():
+            return 'endTitleBar'
         return 'titleBar'
     
     def cachePaint (self, size):
@@ -581,7 +597,10 @@ class PassageWidget:
                 img = self.bitmap.ConvertToImage();
                 if scale != 1:
                     img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
-                gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1, img.Width, img.Height)
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1, img.GetWidth(), img.GetHeight())
+                else:
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1)
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
@@ -651,6 +670,7 @@ class PassageWidget:
                'bodyStart': (255, 255, 255), \
                'bodyEnd': (228, 228, 226), \
                'startTitleBar': (76, 163, 51), \
+               'endTitleBar': (16, 51, 96), \
                'titleBar': (52, 101, 164), \
                'storyInfoTitleBar': (28, 89, 74), \
                'scriptTitleBar': (89, 66, 28), \
@@ -684,3 +704,9 @@ class PassageWidgetContext (wx.Menu):
         delete = wx.MenuItem(self, wx.NewId(), 'Delete ' + title)
         self.AppendItem(delete)
         self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent), id = delete.GetId())
+        
+        if parent.passage.isStoryPassage():
+            test = wx.MenuItem(self, wx.NewId(), 'Test Play From Here')
+            self.AppendItem(test)
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.parent.testBuild(startAt = parent.passage.title), id = test.GetId())
+    

@@ -50,6 +50,13 @@ class TweeLexer:
         self.ctrl.StyleSetFont(self.MARKUP, bodyFont)
         self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
         
+        self.ctrl.StyleSetFont(self.INLINE_STYLE, bodyFont)
+        self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
+        
+        self.ctrl.StyleSetFont(self.BAD_INLINE_STYLE, bodyFont)
+        self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
+        self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
+        
         self.ctrl.StyleSetFont(self.HTML, bodyFont)
         self.ctrl.StyleSetBold(self.HTML, True)
         self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
@@ -104,35 +111,35 @@ class TweeLexer:
             return (self.MARKUP, self.MARKUPS[m])
         
         # link
-        m = re.match(self.LINK_REGEX,text,re.I)
+        m = re.match(self.LINK_REGEX,text,re.U|re.I)
         if m: return (self.GOOD_LINK, m)
         
         # macro
-        m = re.match(self.MACRO_REGEX,text,re.I)
+        m = re.match(self.MACRO_REGEX,text,re.U|re.I)
         if m: return (self.MACRO, m)
         
         # image (cannot have interior markup)
-        m = re.match(self.IMAGE_REGEX,text,re.I)
+        m = re.match(self.IMAGE_REGEX,text,re.U|re.I)
         if m: return (self.IMAGE, m)
         
         # Old-version HTML block (cannot have interior markup)
-        m = re.match(self.HTML_BLOCK_REGEX,text,re.I)
+        m = re.match(self.HTML_BLOCK_REGEX,text,re.U|re.I)
         if m: return (self.HTML_BLOCK, m)
         
         # Inline HTML tags
-        m = re.match(self.HTML_REGEX,text,re.I)
+        m = re.match(self.HTML_REGEX,text,re.U|re.I)
         if m: return (self.HTML, m)
         
         # Inline styles
-        m = re.match(self.INLINE_STYLE_REGEX,text,re.I)
+        m = re.match(self.INLINE_STYLE_REGEX,text,re.U|re.I)
         if m: return (self.INLINE_STYLE, m)
         
         # Monospace
-        m = re.match(self.MONO_REGEX,text,re.I)
+        m = re.match(self.MONO_REGEX,text,re.U|re.I)
         if m: return (self.MONO, m)
         
         # Comment
-        m = re.match(self.COMMENT_REGEX,text,re.I)
+        m = re.match(self.COMMENT_REGEX,text,re.U|re.I)
         if m: return (self.COMMENT, m)
         
         return (None, None)
@@ -152,7 +159,7 @@ class TweeLexer:
                 pos2 = pos + m.start(2)
                 self.applyStyle(pos2, len(m.group(2)), self.PARAM)
                 # Do the match
-                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.I)
+                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
                 for param in iterator:
                     if param.group(1):
                         # String
@@ -167,6 +174,15 @@ class TweeLexer:
                         # Variable
                         self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
         
+        def badLinkStyle(dest, external = False):
+            # Apply style for a link destination which does not seem to be an existent passage
+            if external:
+                for t in ['http://', 'https://', 'ftp://']:
+                  if t in dest.lower():
+                    return self.EXTERNAL
+            iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+            return self.PARAM if iscode else self.BAD_LINK
+        
         pos = 0
         prev = 0
         text = self.ctrl.GetTextUTF8()
@@ -178,7 +194,7 @@ class TweeLexer:
         
         self.applyStyle(0, len(text), self.DEFAULT);
         
-        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.I), text[pos:]);
+        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.U|re.I), text[pos:]);
         
         for p in iterator:
             prev = pos+1
@@ -191,7 +207,7 @@ class TweeLexer:
 
             # markup
             if not inSilence and nextToken == self.MARKUP:
-                if (style & m):
+                if (style <= self.THREE_STYLES and style & m):
                     self.applyStyle(styleStart, pos-styleStart+2, style) 
                     style = styleStack.pop() if styleStack else self.DEFAULT 
                     styleStart = pos+2
@@ -199,7 +215,7 @@ class TweeLexer:
                     self.applyStyle(styleStart, pos-styleStart, style)  
                     styleStack.append(style)
                     markup = m
-                    if markup <= self.THREE_STYLES:
+                    if markup <= self.THREE_STYLES and style <= self.THREE_STYLES:
                         style |= markup
                     else:
                         style = markup
@@ -215,13 +231,10 @@ class TweeLexer:
                 s2 = self.GOOD_LINK
                 if not m.group(2):
                     if not self.passageExists(m.group(1)):
-                        s2 = self.BAD_LINK
+                        s2 = badLinkStyle(m.group(1), True)
                 else:
                     if not self.passageExists(m.group(2)):
-                        s2 = self.BAD_LINK
-                        for t in ['http://', 'https://', 'ftp://']:
-                          if m.group(2).lower().startswith(t):
-                            s2 = self.EXTERNAL
+                        s2 = badLinkStyle(m.group(2))
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
                 if m.group(2):
@@ -267,10 +280,7 @@ class TweeLexer:
                 if m.group(5):
                     self.applyStyle(pos, m.start(5), self.IMAGE)
                     if not self.passageExists(m.group(5)):
-                        s2 = self.BAD_LINK
-                        for t in ['http://', 'https://', 'ftp://']:
-                          if t in m.group(5).lower():
-                            s2 = self.EXTERNAL
+                        s2 = badLinkStyle(m.group(5))
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, s2)
                     else:
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, self.GOOD_LINK)
@@ -281,17 +291,23 @@ class TweeLexer:
                 styleStart = pos+1
                 
             # Inline styles
-            elif nextToken == self.INLINE_STYLE:
-                length = m.end(0);
-                self.applyStyle(styleStart, pos-styleStart, style)
-                n = re.search("(?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);)",text[pos:pos+m.end(0)],re.I)
-                if n:
-                    self.applyStyle(pos,length,self.MARKUP)
-                    pos += length-1
+            elif not inSilence and nextToken == self.INLINE_STYLE:
+                if (style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE):
+                    self.applyStyle(styleStart, pos-styleStart+2, style) 
+                    style = styleStack.pop() if styleStack else self.DEFAULT 
+                    styleStart = pos+2
                 else:
-                    self.applyStyle(pos,length,self.BAD_LINK)
+                    self.applyStyle(styleStart, pos-styleStart, style)  
+                    styleStack.append(style)
+                    n = re.search("((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);))+",text[pos:],re.U|re.I) 
+                    if n:
+                        style = self.INLINE_STYLE
+                        length = len(n.group(0))+2
+                    else:
+                        style = self.BAD_INLINE_STYLE
+                        length = 2
+                    styleStart = pos
                     pos += length-1
-                styleStart = pos+1
                 
             # others
             elif nextToken in [self.HTML, self.HTML_BLOCK, self.COMMENT, self.MONO]:
@@ -321,7 +337,7 @@ class TweeLexer:
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
     GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
-    PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(25)
+    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(26)
     
     # markup constants
     
@@ -333,7 +349,7 @@ class TweeLexer:
     IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
     HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
     HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
-    INLINE_STYLE_REGEX = r"@@(?:[^@]|@(?!@))*@@"
+    INLINE_STYLE_REGEX = "@@"
     MONO_REGEX = r"^\{\{\{\n((?:^[^\n]*\n)+?)(^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
     COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
     
@@ -341,12 +357,20 @@ class TweeLexer:
                       MONO_REGEX, COMMENT_REGEX, "''|//|__|^^|~~|==" ]) + ')'
                       
     # macro param regex - string or number or boolean or variable
-    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\')' \
-        +r'|(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)' \
+    # (Mustn't match all-digit names)
+    MACRO_PARAMS_VAR_REGEX = r'(\$[\w_\.]*[a-zA-Z_\.]+[\w_\.]*)'
+
+    # This isn't included because it's too general - but it's used by the broken link lexer
+    # (Not including whitespace between name and () because of false positives)
+    MACRO_PARAMS_FUNC_REGEX = r'([\w\d_\.]+\((.*?)\))'
+    
+    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
+        +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
         +r'|(true|false|null|undefined)' \
-        +r'|(\$[^\s]+)' \
+        +r'|'+MACRO_PARAMS_VAR_REGEX \
         +r')'
     
+
     # nested macros
     
     NESTED_MACROS = [ "if", "silently" ]
@@ -367,7 +391,8 @@ class TweeLexer:
     PARAM_COLOR = '#7f456a'
     PARAM_VAR_COLOR = '#005682'
     PARAM_BOOL_COLOR = '#626262'
-    PARAM_STR_COLOR = '#008141'
+    PARAM_STR_COLOR = '#008282'
     PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
+    

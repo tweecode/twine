@@ -47,7 +47,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
 setup(
     name = 'Twine',
     description = 'Twine',
-    version = '1.3.6',
+    version = '1.4',
 
     windows = [{
         'script': 'app.py',
@@ -60,8 +60,10 @@ setup(
         ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
         ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
-        ('targets' + os.sep + 'sugarcube',  ['targets' + os.sep + 'sugarcube'  + os.sep + 'header.html']),
-        ('engine.js', ['targets' + os.sep + 'engine.js']),
+        ('targets', [
+            'targets' + os.sep + 'engine.js',
+            'targets' + os.sep + 'jquery.js',
+            'targets' + os.sep + 'modernizr.js']),
         ('icons', [
             # toolbar icons
             'icons' + os.sep + 'newpassage.png',

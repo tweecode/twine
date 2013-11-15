@@ -16,7 +16,7 @@
 # know what flags to pass to wx.stc.
 #
 
-import sys, os, re, threading, wx, time
+import sys, os, re, threading, wx, wx.animate, base64, time
 import metrics, images
 from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
@@ -33,6 +33,7 @@ class PassageFrame (wx.Frame):
         self.lastFindRegexp = None
         self.lastFindFlags = None
         self.usingLexer = True
+        self.titleInvalid = False
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
@@ -130,11 +131,11 @@ class PassageFrame (wx.Frame):
         self.topControls = wx.Panel(self.panel)
         topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         
-        titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
+        self.titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
         tagsLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TAGS_LABEL)
         self.tagsInput = wx.TextCtrl(self.topControls)
-        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(tagsLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.tagsInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
@@ -215,10 +216,26 @@ class PassageFrame (wx.Frame):
     
     def syncPassage (self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
-        if len(self.titleInput.GetValue()) > 0:
-            self.widget.passage.title = self.titleInput.GetValue()
-        else:
-            self.widget.passage.title = 'Untitled Passage'
+        title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
+        
+
+        if title:
+        # Check for title conflict
+            otherTitled = self.widget.parent.findWidget(title)
+            if otherTitled and otherTitled != self.widget:
+                self.titleLabel.SetLabel("Title is already in use!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
+            else:
+                if self.titleInvalid:
+                    self.titleLabel.SetLabel(self.TITLE_LABEL)
+                    self.titleInput.SetBackgroundColour((255,255,255))
+                    self.titleInput.Refresh()
+                    self.titleInvalid = False
+                self.widget.passage.title = title
+        
+        # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.modified = time.localtime()
         # Preserve the special (uneditable) tags
@@ -226,7 +243,10 @@ class PassageFrame (wx.Frame):
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
-            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS : self.widget.passage.tags.append(tag)
+            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS:
+                self.widget.passage.tags.append(tag)
+            if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
+                self.widget.parent.parent.autoBuildStart();
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
         
@@ -237,17 +257,20 @@ class PassageFrame (wx.Frame):
         # reset redraw timer
         
         def reallySync (self):
-            self.widget.parent.Refresh()
-
+            try:
+                self.widget.parent.Refresh()
+            except:
+                pass
+        
         if (self.syncTimer):
             self.syncTimer.cancel()
-            
+        
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
 		# update links/displays lists
         self.widget.passage.update()
-
+        
         # change our lexer as necessary
         
         self.setLexer()
@@ -607,9 +630,11 @@ class ImageFrame (PassageFrame):
         self.widget = widget
         self.app = app
         self.syncTimer = None
+        self.image = None
+        self.gif = None
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
-                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
         # menus
         
         self.menus = wx.MenuBar()
@@ -638,7 +663,9 @@ class ImageFrame (PassageFrame):
         
         # image pane
         
-        self.image = wx.StaticBitmap(self.panel, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+        self.imageScroller = wx.ScrolledWindow(self.panel)
+        self.imageSizer = wx.GridSizer(1,1)
+        self.imageScroller.SetSizer(self.imageSizer)
         
         # image menu
         
@@ -646,6 +673,9 @@ class ImageFrame (PassageFrame):
         
         passageMenu.Append(self.IMPORT_IMAGE, '&Replace Image...\tCtrl-O')
         self.Bind(wx.EVT_MENU, self.replaceImage, id = self.IMPORT_IMAGE)
+        
+        passageMenu.Append(self.SAVE_IMAGE, '&Save Image...')
+        self.Bind(wx.EVT_MENU, self.saveImage, id = self.SAVE_IMAGE)
 
         passageMenu.AppendSeparator()
         
@@ -680,7 +710,7 @@ class ImageFrame (PassageFrame):
         # finish
         
         allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
-        allSizer.Add(self.image, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
+        allSizer.Add(self.imageScroller, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
         
         # bindings
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
@@ -714,25 +744,82 @@ class ImageFrame (PassageFrame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
+        
     def updateImage(self):
-        """Assigns a bitmap to this frame's StaticBitmap component."""
+        """Assigns a bitmap to this frame's StaticBitmap component,
+        unless it's a GIF, in which case, animate it."""
+        if self.gif:
+            self.gif.Stop()
+        self.imageSizer.Clear(True)
+        self.gif = None
+        self.image = None
+        
+        t = self.widget.passage.text
+        # Get the bitmap (will be used as inactive for GIFs)
         bmp = self.widget.bitmap
-        if bmp:
-            self.image.SetBitmap(bmp)
-            size = bmp.GetSize()
-            self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
-            self.Refresh()
+        size = bmp.GetSize()
+        
+        # GIF animation
+        if t.startswith("data:image/gif"):
+            self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
+            self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
+            
+            # Convert the full GIF to an Animation
+            anim = wx.animate.Animation()
+            data = base64.b64decode(t[t.index("base64,")+7:])
+            anim.Load(cStringIO.StringIO(data))
+            
+            # Load the Animation into the AnimationCtrl
+            self.gif.SetAnimation(anim)
+            self.gif.SetInactiveBitmap(bmp)
+            self.gif.Play()
+        
+        # Static images
+        else:
+            if bmp:
+                self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+                self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+                self.image.SetBitmap(bmp)
+        
+        self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+        self.imageScroller.SetScrollRate(2,2)
+        self.Refresh()
         
     def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
         self.widget.parent.parent.importImageDialog(replace = self.widget)
+        self.widget.parent.parent.setDirty(True)
         self.updateImage()
+        
+    def saveImage(self, event = None):
+        """Saves the base64 image as a file."""
+        t = self.widget.passage.text;
+        # Get the extension
+        extension = images.GetImageType(t)
+        
+        dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
+                               'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+        
+        if dialog.ShowModal() == wx.ID_OK:
+            try:
+                path = dialog.GetPath()
+                
+                dest = open(path, 'wb')
+                
+                data = base64.b64decode(images.RemoveURIPrefix(t))
+                dest.write(data)
+                
+                dest.close()
+            except:
+                self.app.displayError('saving the image')
+        
+        dialog.Destroy()
         
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
         if clip.Open():
-            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap()))
+            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
         
@@ -741,11 +828,15 @@ class ImageFrame (PassageFrame):
         clip = wx.TheClipboard
         bdo = wx.BitmapDataObject()
         pasted = False
+        
+        # Try and read from the clipboard
         if clip.Open():
             pasted = clip.GetData(bdo)
             clip.Close()
         if not pasted:
             return
+        
+        # Convert bitmap to PNG
         bmp = bdo.GetBitmap()
         self.widget.passage.text = images.BitmapToBase64PNG(bmp)
         self.widget.updateBitmap()
@@ -753,5 +844,6 @@ class ImageFrame (PassageFrame):
     
     IMPORT_IMAGE = 1004
     EXPORT_IMAGE = 1005
+    SAVE_IMAGE = 1006
         
-        
+   

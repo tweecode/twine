@@ -9,7 +9,7 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.3.6 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
+    VERSION = '1.4 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
@@ -198,21 +198,17 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\n1.3.6 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
+        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
         info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project and is used under the terms of its license.')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#basic,storyformats')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/about_story_formats')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/')
-        
-    def openGroup (self, event = None):
-        """Opens the Google group."""
-        wx.LaunchDefaultBrowser('http://groups.google.com/group/tweecode/')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/')
         
     def openGitHub (self, event = None):
         """Opens the GitHub page."""

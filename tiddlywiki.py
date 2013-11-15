@@ -13,6 +13,7 @@
 #
 
 import re, datetime, time, os, sys, tempfile, codecs
+from tweelexer import TweeLexer
 
 #
 # TiddlyWiki class
@@ -27,6 +28,9 @@ class TiddlyWiki:
 		self.tiddlers = {}
 		self.storysettings = {}
 
+	def hasTiddler(self, name):
+		return name in self.tiddlers
+	
 	def tryGetting (self, names, default = ''):
 		"""Tries retrieving the text of several tiddlers by name; returns default if none exist."""
 		for name in names:
@@ -45,7 +49,7 @@ class TiddlyWiki:
 		
 		return output
 		
-	def toHtml (self, app, target = None, order = None):
+	def toHtml (self, app, target = None, order = None, startAt = ''):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
@@ -61,32 +65,37 @@ class TiddlyWiki:
 				return
 			
 			
-			def insertEngine(app, output, filename, label):
+			def insertEngine(app, output, filename, label, extra = ''):
 				if output.count(label) > 0:
 					try:
 						engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
 						enginecode = engine.read()
 						engine.close()
-						return output.replace(label,enginecode)
+						return output.replace(label,enginecode + extra)
 					except IOError:
 						app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
 						return None
 				else:
 					return output
 			
+			# Set up the test play variable
+			if (startAt):
+				startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
 			# Insert the main engine
-			output = insertEngine(app, output, 'engine.js', '"ENGINE"')
+			output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
 			if not output: return
 			
+			falseOpts = ["false", "off", "0"]
+			
 			# Insert jQuery
-			if 'jquery' in self.storysettings:
+			if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
 				output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
 				if not output: return
 			else:
 				output = output.replace('"JQUERY"','')
 			
 			# Insert Modernizr
-			if 'modernizr' in self.storysettings:
+			if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
 				output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
 				if not output: return
 			else:
@@ -210,8 +219,10 @@ class TiddlyWiki:
 			self.tiddlers[tiddler.title] = tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
+	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
 	SPECIAL_TAGS = ['Twine.image']
 	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
+	INFO_TAGS = ['script', 'stylesheet'] + SPECIAL_TAGS + NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -245,7 +256,7 @@ class Tiddler:
 
 	def __cmp__ (self, other):
 		"""Compares a Tiddler to another."""
-		return self.text == other.text
+		return hasattr(other, 'text') and self.text == other.text
 	
 	def initTwee (self, source):
 		"""Initializes a Tiddler from Twee source code."""
@@ -352,7 +363,8 @@ class Tiddler:
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
-		output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
+		if hasattr(self, 'pos'):
+			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
 		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
 		
@@ -378,8 +390,12 @@ class Tiddler:
 	
 	def isStoryText(self):
 		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
-			or (self.title in TiddlyWiki.INFO_PASSAGES))
-
+			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
+	
+	def isStoryPassage(self):
+		""" A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
+		return self.isStoryText() and self.title not in TiddlyWiki.INFO_PASSAGES
+	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
 	
@@ -402,15 +418,15 @@ class Tiddler:
 		
 		# regular hyperlinks
 		if includeInternal:
-			links = re.findall(r'\[\[(.+?)\]\]', self.text)
-		
-			# check for [[title|target]] formats
-	
-			def filterPrettyLinks (text):
-				if '|' in text: return re.sub('.*\|', '', text)
-				else: return text
+			iterator = re.finditer(TweeLexer.LINK_REGEX, self.text)
+			for m in iterator:
+				links.append(m.group(2) or m.group(1))
 			
-			links = map(filterPrettyLinks, links)
+			# Include images
+			iterator = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
+			for m in iterator:
+				if m.group(5):
+					links.append(m.group(5))
 			
 			# Remove externals
 			def filterExternals (text):
@@ -419,6 +435,11 @@ class Tiddler:
 				return True
 				
 			links = filter(filterExternals, links)
+			
+			# Remove code parameters
+			links = filter(lambda text:
+				not re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, text, re.U),
+				links)
 
 		if includeMacros:
 			
@@ -458,7 +479,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 	r = ''
 	for c in text:
 		upper = c.isupper()
-		p = obfuscationkey.find(c)
+		p = obfuscationkey.find(c.lower())
 		if p <> -1:
 			if p % 2 == 0:
 				p1 = p + 1
@@ -466,7 +487,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
 					p1 = p
 			else:
 				p1 = p - 1
-			c = obfuscationkey[p1].toupper() if upper else obfuscationkey[p1]
+			c = obfuscationkey[p1].upper() if upper else obfuscationkey[p1]
 		r = r + c
 	return r
 	
