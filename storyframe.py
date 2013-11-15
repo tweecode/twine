@@ -219,11 +219,14 @@ class StoryFrame (wx.Frame):
         
         self.newPassageMenu.AppendSeparator()
         
-        self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'Stylesheet')
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'S&tylesheet')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
 
-        self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, 'Script')
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, '&Script')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['script']), id = StoryFrame.STORY_NEW_SCRIPT)
+        
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_ANNOTATION, '&Annotation')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['annotation']), id = StoryFrame.STORY_NEW_ANNOTATION)
         
         self.storyMenu.AppendMenu(wx.ID_ANY, 'New', self.newPassageMenu)
         
@@ -1139,9 +1142,9 @@ Modernizr: off
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
     
-    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_EDIT_FULLSCREEN, STORY_STATS, \
+    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
      STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,415)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,416)
     
     STORY_FORMAT_BASE = 501
     

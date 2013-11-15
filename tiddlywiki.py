@@ -222,7 +222,7 @@ class TiddlyWiki:
 	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
 	SPECIAL_TAGS = ['Twine.image']
 	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
-	INFO_TAGS = ['script', 'stylesheet'] + SPECIAL_TAGS + NOINCLUDE_TAGS
+	INFO_TAGS = ['script', 'stylesheet', 'annotation'] + SPECIAL_TAGS + NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -388,8 +388,12 @@ class Tiddler:
 	def isImage(self):
 		return 'Twine.image' in self.tags
 	
+	def isAnnotation(self):
+		return 'annotation' in self.tags
+	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) or any('Twine.' in i for i in self.tags) \
+		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
+			or self.isAnnotation() or any('Twine.' in i for i in self.tags) \
 			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
 	
 	def isStoryPassage(self):

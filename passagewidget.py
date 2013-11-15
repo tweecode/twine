@@ -52,6 +52,8 @@ class PassageWidget:
             
     def getSize (self):
         """Returns this instance's logical size."""
+        if "annotation" in self.passage.tags:
+            return (PassageWidget.SIZE+self.parent.GRID_SPACING, PassageWidget.SIZE+self.parent.GRID_SPACING)
         return (PassageWidget.SIZE, PassageWidget.SIZE)
             
     def getCenter (self):
@@ -63,13 +65,14 @@ class PassageWidget:
 
     def getLogicalRect (self):
         """Returns this instance's rectangle in logical coordinates."""
-        return wx.Rect(self.pos[0], self.pos[1], PassageWidget.SIZE, PassageWidget.SIZE)
+        size = self.getSize()
+        return wx.Rect(self.pos[0], self.pos[1], size[0], size[1])
 
     def getPixelRect (self):
         """Returns this instance's rectangle onscreen."""
         origin = self.parent.toPixels(self.pos)
-        size = self.parent.toPixels((PassageWidget.SIZE, -1), scaleOnly = True)[0]
-        return wx.Rect(origin[0], origin[1], size, size)
+        size = self.parent.toPixels(self.getSize(), scaleOnly = True)
+        return wx.Rect(origin[0], origin[1], size[0], size[1])
 
     def getDirtyPixelRect (self):
         """
@@ -346,7 +349,7 @@ class PassageWidget:
             if link in dontDraw: continue
                  
             otherWidget = self.parent.findWidget(link)
-            if not otherWidget: dontDraw.append(link)
+            if not otherWidget or not otherWidget.passage.isStoryPassage(): dontDraw.append(link)
         
             if otherWidget and not otherWidget.dimmed:
                 color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in links else PassageWidget.CONNECTOR_COLOR
@@ -373,7 +376,9 @@ class PassageWidget:
     
     def getTitleColorIndex(self):
         # Find the StartPassages passage
-        if self.passage.isImage():
+        if self.passage.isAnnotation():
+            return 'annotation'
+        elif self.passage.isImage():
             return 'imageTitleBar'
         elif any(t.startswith('Twine.') for t in self.passage.tags):
             return 'privateTitleBar'
@@ -436,7 +441,7 @@ class PassageWidget:
                     c[0] *= a
                     c[1] *= a
                     c[2] *= a
-            return wx.Colour(c[0], c[1], c[2], c[3])
+            return wx.Colour(*c)
 
         # set up our buffer
 
@@ -470,9 +475,13 @@ class PassageWidget:
         # frame
         
         frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
-        frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
+        if self.passage.isAnnotation():
+            c = wx.Colour(*PassageWidget.COLORS['annotation'], alpha = 1)
+            frameInterior = (c,c)
+        else:
+            frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
                          dim(PassageWidget.COLORS['bodyEnd'], self.dimmed))
-
+        
         gc.SetPen(wx.Pen(frameColor, 1))
                 
         if isinstance(gc, wx.GraphicsContext):
@@ -485,7 +494,7 @@ class PassageWidget:
 
         gc.DrawRectangle(0, 0, size.width - 1, size.height - 1)
         
-        if size.width > PassageWidget.MIN_GREEKING_SIZE:
+        if size.width > PassageWidget.MIN_GREEKING_SIZE * (2 if self.passage.isAnnotation() else 1):
             # title bar
             
             titleBarHeight = titleFontHeight + (2 * inset)
@@ -529,7 +538,10 @@ class PassageWidget:
                     gc.DestroyClippingRegion()
                     gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
                 
-                excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
+                if self.passage.isAnnotation():
+                    excerptTextColor = wx.Colour(*PassageWidget.COLORS['annotationText'])
+                else:
+                    excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
     
                 if isinstance(gc, wx.GraphicsContext):
                     gc.SetFont(excerptFont, excerptTextColor)
@@ -541,7 +553,8 @@ class PassageWidget:
                 
                 for line in excerptLines:
                     gc.DrawText(line, inset, excerptTop)
-                    excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING
+                    excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
+                        * min(2,max(1,2.0*size.width/260 if self.passage.isAnnotation() else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
@@ -565,7 +578,8 @@ class PassageWidget:
             # greek body text
             if not self.passage.isImage():
                 
-                gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
+                gc.SetPen(wx.Pen(self.COLORS['annotationText'] \
+                    if self.passage.isAnnotation() else '#666666', PassageWidget.GREEK_HEIGHT))
                 
                 chars = len(self.passage.text)
                 while height < size.height - inset and chars > 0:
@@ -668,7 +682,8 @@ class PassageWidget:
     SHADOW_SIZE = 5
     COLORS = { 'frame': (0, 0, 0), \
                'bodyStart': (255, 255, 255), \
-               'bodyEnd': (228, 228, 226), \
+               'bodyEnd': (212, 212, 212), \
+               'annotation': (85, 87, 83), \
                'startTitleBar': (76, 163, 51), \
                'endTitleBar': (16, 51, 96), \
                'titleBar': (52, 101, 164), \
@@ -678,7 +693,8 @@ class PassageWidget:
                'imageTitleBar': (8, 138, 133), \
                'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
-               'excerptText': (0, 0, 0) }
+               'excerptText': (0, 0, 0),\
+               'annotationText': (255,255,255) }
     DIMMED_ALPHA = 0.5
     LINE_SPACING = 1.2
     CONNECTOR_WIDTH = 2.0

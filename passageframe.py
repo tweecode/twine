@@ -254,6 +254,9 @@ class PassageFrame (wx.Frame):
         
         self.widget.parent.parent.setDirty(True)
         
+        # reposition if changed size
+        self.widget.findSpace()
+        
         # reset redraw timer
         
         def reallySync (self):

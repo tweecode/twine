@@ -18,6 +18,7 @@
 
 import sys, math, wx, re, pickle
 import geometry, time
+from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 
 class StoryPanel (wx.ScrolledWindow):
@@ -85,8 +86,13 @@ class StoryPanel (wx.ScrolledWindow):
         """Adds a new widget to the container."""
                 
         # defaults
-        
-        if not title: title = self.untitledName()
+
+        if not title:
+            if tags and tags[0] in TiddlyWiki.INFO_TAGS:
+                type = tags[0].capitalize()
+            else:
+                type = "Passage"
+            title = self.untitledName(type)
         if not pos: pos = StoryPanel.INSET
         if not logicals: qspos = self.toLogical(pos)
 		
@@ -634,15 +640,15 @@ class StoryPanel (wx.ScrolledWindow):
         
         return pixScroll
         
-    def untitledName (self):
+    def untitledName (self, type = "Passage"):
         """Returns a string for an untitled PassageWidget."""
         number = 1
-        
+                
         for widget in self.widgets:
-            match = re.match(r'Untitled Passage (\d+)', widget.passage.title)
+            match = re.match(r'Untitled ' + type + ' (\d+)', widget.passage.title)
             if match: number = int(match.group(1)) + 1
                 
-        return 'Untitled Passage ' + str(number)
+        return 'Untitled ' + type + ' ' + str(number)
     
     def eachWidget (self, function):
         """Runs a function on every passage in the panel."""
@@ -876,7 +882,8 @@ class StoryPanel (wx.ScrolledWindow):
                 # Including the data URI prefix in the byte count, just because.
                 text = "Image type: " + mimeType + "\nSize: "+ str(len(p.text)/1024)+" KB"
             else:
-                text = p.text[:840]
+                text = "Tags: " + ", ".join(p.tags) + '\n\n' if p.tags else ""
+                text += p.text[:840]
                 if length >= 840:
                     text += "..."
             # Don't show a tooltip for a 0-length passage
