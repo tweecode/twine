@@ -1164,13 +1164,13 @@ Wikifier.formatters = [
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source)
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketted link
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketed link
         {
             var title = Wikifier.parsePassageTitle(lookaheadMatch[1]),
                 link = Wikifier.createInternalLink(w.output, title);
             setPageElement(link, null, title);
             w.nextMatch += lookaheadMatch[1].length + 2;
-        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketted link
+        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketed link
         {
             var link, title = Wikifier.parsePassageTitle(lookaheadMatch[4]);
             if (tale.has(title))
@@ -1421,6 +1421,7 @@ Wikifier.createInternalLink = function (place, title) {
     else el.className = 'brokenLink';
 
     el.onclick = function () {
+        state.history[0].variables["last link"] = (el.textContent || el.innerText);
         state.display(title, el)
     };
 
@@ -1468,6 +1469,9 @@ function visited(e) {
         }
     }
     return ret;
+}
+function lastlink() {
+    return (state.history[1] && state.history[1].variables['last link']) || "";
 }
 function previous() {
     if (state.history[1]) {
