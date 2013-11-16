@@ -399,7 +399,7 @@ class PassageWidget:
         Caches the widget so self.paintBuffer is up-to-date.
         """
 
-        def wordWrap (text, lineWidth, gc):
+        def wordWrap (text, lineWidth, gc, lineBreaks = False):
             """
             Returns a list of lines from a string 
             This is somewhat based on the wordwrap function built into wx.lib.
@@ -409,23 +409,20 @@ class PassageWidget:
             This assumes that you've already set up the font you want on the GC.
             It gloms multiple spaces together, but for our purposes that's ok.
             """
-            words = text.split()
-            lines = []
-            currentWidth = 0
+            words = re.finditer('\S+\s*', text)
+            lines = ''
             currentLine = ''
             
-            for word in words:
-                wordWidth = gc.GetTextExtent(word + ' ')[0]
-                if currentWidth + wordWidth < lineWidth:
-                    currentLine += word + ' '
-                    currentWidth += wordWidth
+            for w in words:
+                word = w.group(0)
+                wordWidth = gc.GetTextExtent(currentLine + word)[0]
+                if wordWidth < lineWidth:
+                    currentLine += word
                 else:
-                    lines.append(currentLine)
-                    currentLine = word + ' '
-                    currentWidth = wordWidth
+                    lines += currentLine + ('\n' if '\n' not in currentLine else '')
+                    currentLine = word
             
-            lines.append(currentLine)
-            return lines
+            return lines.split('\n')
 
         def dim (c, dim):
             """Lowers a color's alpha if dim is true."""
@@ -549,12 +546,12 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(excerptTextColor)
                     
-                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
+                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc, self.passage.isAnnotation())
                 
                 for line in excerptLines:
                     gc.DrawText(line, inset, excerptTop)
                     excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
-                        * min(2,max(1,2.0*size.width/260 if self.passage.isAnnotation() else 1))
+                        * min(1.75,max(1,1.75*size.width/260 if self.passage.isAnnotation() else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title

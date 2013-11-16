@@ -309,6 +309,9 @@ macros['back'] = {
 			  steps--;
 			}
 		}
+		else {
+			state.history[0].variables["last link"] = (el.textContent || el.innerText);
+		}
         state.display(d);
       };
       el.href = "javascript:void(0)";

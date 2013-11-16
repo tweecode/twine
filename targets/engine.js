@@ -356,6 +356,7 @@ macros.actions = {
             insertText(c, g[b]);
             c.onclick = function () {
                 state.history[0].variables["actions clicked"][this.id] = true;
+                state.history[0].variables["last link"] = this.id;
                 state.display(this.id, c)
             }
         }
