@@ -244,6 +244,8 @@ class StoryFrame (wx.Frame):
         
         self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
+        self.storyMenu.Append(StoryFrame.STORY_IMPORT_FONT, '&Import Font...')
+        self.Bind(wx.EVT_MENU, self.importFontDialog, id = StoryFrame.STORY_IMPORT_FONT)
         
         self.storyMenu.AppendSeparator()
         
@@ -612,39 +614,59 @@ class StoryFrame (wx.Frame):
                 self.importImage(file)
             else:
                 try:
-                    replace.passage.text = self.openImageFileAsBase64(file)[0]
+                    replace.passage.text = self.openFileAsBase64(file)[0]
                     replace.updateBitmap()
                 except IOError:
                     self.app.displayError('importing an image')
+    
+    def importFontDialog(self, event = None):
+        """Asks the user to choose a font file to import, then imports into the current story."""
+        dialog = wx.FileDialog(self, 'Import Font File', os.getcwd(), '', \
+                                   'Web Font File|*.ttf;*.otf;*.woff;|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.importFont(dialog.GetPath())
           
-    def openImageFileAsBase64(self, file):
-        """Opens an image file and returns its base64 representation, expressed as a Data URI with MIME type"""
-        image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
+    def openFileAsBase64(self, file):
+        """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
+        file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
         # Remove the extension's dot
         mimeType = mimeType[1:]
+        
+        if mimeType in 'gif|jpg|jpeg|png|webp|svg':
+            mimeGroup = "image/"
+        elif mimeType in 'ttf|woff|otf':
+            mimeGroup = "application/font-"
+        else:
+            # Desperate (probably incorrect) guess
+            mimeGroup = "application/x-"
+        
         # Correct certain MIME types
         if mimeType == "jpg":
             mimeType == "jpeg"
         elif mimeType == "svg":
             mimeType += "+xml"
-        
-        return ("data:image/" + mimeType + ";base64," + image64, title)
+        return ("data:" + mimeGroup + mimeType + ";base64," + file64, title)
+    
+    def newTitle(self, title):
+        """ Check if a title is being used, and increment its number if it is."""
+        while self.storyPanel.findWidget(title):
+            try:
+                match = re.search(r'(\s\d+)$', title)
+                if match:
+                    title = title[:match.start(1)] + " " + str(int(match.group(1)) + 1)
+                else:
+                    title += " 2"
+            except: pass
+        return title
     
     def importImage(self, file, showdialog = True):
         """Imports an image into the story as an image passage."""
         try:
-            text, title = self.openImageFileAsBase64(file)
+            text, title = self.openFileAsBase64(file)
             
             # Check for title usage
-            while self.storyPanel.findWidget(title):
-                try:
-                    match = re.search(r'(\s\d+)$', title)
-                    if match:
-                        title = title[:match.start(1)] + " " + str(int(match.group(1)) + 1)
-                    else:
-                        title += " 2"
-                except: pass
+            title = self.newTitle(title)
             
             self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
             if showdialog:
@@ -656,6 +678,28 @@ class StoryFrame (wx.Frame):
             return True
         except IOError:
             self.app.displayError('importing an image')
+            return False
+        
+    def importFont(self, file, showdialog = True):
+        """Imports a font into the story as a font passage."""
+        try:
+            text, title = self.openFileAsBase64(file)
+
+            title2 = self.newTitle(title)
+            
+            # Wrap in CSS @font-face declaration
+            text = '@font-face { font-family: "' + title + '"; src: url(' + text + ");}"
+            
+            self.storyPanel.newWidget(text = text, title = title2, tags = ['stylesheet'])
+            if showdialog:
+                dialog = wx.MessageDialog(self, 'Font file imported successfully.\n' + \
+                                          'You can use the font in your stylesheets with this CSS attribute syntax:\n\n' + \
+                                          'font-family: '+ title + ";", 'Font added', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+            return True
+        except IOError:
+            self.app.displayError('importing a font')
             return False
     
     def createInfoPassage(self, event = None):
@@ -1145,8 +1189,8 @@ Modernizr: off
     VIEW_TOOLBAR = 303
     
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
-     STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,416)
+     STORY_IMPORT_IMAGE, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,417)
     
     STORY_FORMAT_BASE = 501
     
