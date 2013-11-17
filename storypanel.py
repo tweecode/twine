@@ -942,13 +942,27 @@ class StoryPanelContext (wx.Menu):
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
-
-    def newWidget (self, event):
+        
+        self.AppendSeparator()
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Stylesheet Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['stylesheet']), id = newPassage.GetId())
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Script Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['script']), id = newPassage.GetId())
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Annotation Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['annotation']), id = newPassage.GetId())
+        
+    def newWidget (self, event, tags = []):
         pos = self.pos
         offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
-        self.parent.newWidget(pos = pos)
+        self.parent.newWidget(pos = pos, tags = tags)
         
 # drag and drop listener
 

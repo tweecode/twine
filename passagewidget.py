@@ -409,7 +409,7 @@ class PassageWidget:
             This assumes that you've already set up the font you want on the GC.
             It gloms multiple spaces together, but for our purposes that's ok.
             """
-            words = re.finditer('\S+\s*', text)
+            words = re.finditer('\S+\s*', text.replace('\r',''))
             lines = ''
             currentLine = ''
             
@@ -421,7 +421,7 @@ class PassageWidget:
                 else:
                     lines += currentLine + ('\n' if '\n' not in currentLine else '')
                     currentLine = word
-            
+            lines += currentLine
             return lines.split('\n')
 
         def dim (c, dim):
@@ -551,7 +551,7 @@ class PassageWidget:
                 for line in excerptLines:
                     gc.DrawText(line, inset, excerptTop)
                     excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
-                        * min(1.75,max(1,1.75*size.width/260 if self.passage.isAnnotation() else 1))
+                        * min(1.75,max(1,1.75*size.width/260 if (self.passage.isAnnotation() and line) else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
         else:
             # greek title
