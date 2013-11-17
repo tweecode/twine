@@ -345,10 +345,9 @@ class PassageFrame (wx.Frame):
     def prepDrag (self, event):
         """
         Tells our StoryPanel about us so that it can tell us what to do in response to
-        dropping some text into it. We also force the event into a copy operation, not
-        a move one, so it doesn't trash any existing text.
+        dropping some text into it.
         """
-        event.SetDragAllowMove(False)
+        event.SetDragAllowMove(True)
         self.widget.parent.textDragSource = self
 
     def getSelection (self):
@@ -385,9 +384,8 @@ class PassageFrame (wx.Frame):
         """Transforms the selection into a link by surrounding it with double brackets."""
         selStart = self.bodyInput.GetSelectionStart()
         selEnd = self.bodyInput.GetSelectionEnd()
-        self.bodyInput.InsertText(selStart, '[[')
-        self.bodyInput.InsertText(selEnd + 2, ']]')
-        self.bodyInput.SetSelection(selStart, selEnd + 4)
+        self.bodyInput.SetSelection(selStart, selEnd)
+        self.bodyInput.ReplaceSelection("[["+self.bodyInput.GetSelectedText()+"]]")
 
     def findRegexp (self, regexp, flags):
         """

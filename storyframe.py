@@ -783,8 +783,10 @@ Modernizr: off
                 # This implicitly closes the previous test build
                 if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
                     os.remove(self.lastTestBuild.name)
+                path = (os.path.exists(self.buildDestination) and self.buildDestination) \
+                    or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
-                    dir = os.path.dirname(self.buildDestination or self.saveDestination) or None)
+                    dir = (path and os.path.dirname(path)) or None)
                 self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)

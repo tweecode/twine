@@ -216,6 +216,7 @@ class PassageWidget:
                 if fullscreen: self.passageFrame.openFullscreen()
         else:
             try:
+                self.passageFrame.Iconize(False)
                 self.passageFrame.Raise()
                 if fullscreen and not image: self.passageFrame.openFullscreen()
             except wx._core.PyDeadObjectError:

@@ -991,7 +991,8 @@ class StoryPanelDropTarget (wx.PyDropTarget):
                 # then it won't be set for the destination.)
                 if self.panel.textDragSource:
                     self.panel.textDragSource.linkSelection()
-                self.panel.textDragSource = None
+                    # Cancel the deletion of the source text by returning None
+                    return None
                 
             elif type == wx.DF_FILENAME:
                 
