@@ -882,7 +882,7 @@ class StoryPanel (wx.ScrolledWindow):
                 # Including the data URI prefix in the byte count, just because.
                 text = "Image type: " + mimeType + "\nSize: "+ str(len(p.text)/1024)+" KB"
             else:
-                text = "Tags: " + ", ".join(p.tags) + '\n\n' if p.tags else ""
+                text = "Title: " + p.title + "\n" + ("Tags: " + ", ".join(p.tags) + '\n\n' if p.tags else "")
                 text += p.text[:840]
                 if length >= 840:
                     text += "..."
@@ -922,7 +922,24 @@ class StoryPanel (wx.ScrolledWindow):
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
-    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'   
+    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'  
+    FIRST_CSS = """/* Your story will use the CSS code in this and other stylesheet passages.
+If this passage has any extra tags, it will only apply to passages that have the same tags.
+Example selectors: */
+
+body {
+    /* This affects the entire page */
+    
+    
+} .passage {
+    /* This only affects passages */
+    
+    
+} .internalLink, .externalLink {
+    /* This only affects links */
+    
+    
+}"""
     BACKGROUND_COLOR = '#555753'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
@@ -947,7 +964,7 @@ class StoryPanelContext (wx.Menu):
         
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Stylesheet Here')
         self.AppendItem(newPassage)
-        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['stylesheet']), id = newPassage.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, text = StoryPanel.FIRST_CSS, tags = ['stylesheet']), id = newPassage.GetId())
         
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Script Here')
         self.AppendItem(newPassage)

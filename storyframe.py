@@ -220,7 +220,8 @@ class StoryFrame (wx.Frame):
         self.newPassageMenu.AppendSeparator()
         
         self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'S&tylesheet')
-        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(text = self.storyPanel.FIRST_CSS, \
+                                                                   tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
 
         self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, '&Script')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['script']), id = StoryFrame.STORY_NEW_SCRIPT)
@@ -622,10 +623,10 @@ class StoryFrame (wx.Frame):
     def importFontDialog(self, event = None):
         """Asks the user to choose a font file to import, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import Font File', os.getcwd(), '', \
-                                   'Web Font File|*.ttf;*.otf;*.woff;|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
+                                   'Web Font File (.ttf, .otf, .woff, .svg)|*.ttf;*.otf;*.woff;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             self.importFont(dialog.GetPath())
-          
+        
     def openFileAsBase64(self, file):
         """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
         file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
@@ -633,6 +634,7 @@ class StoryFrame (wx.Frame):
         # Remove the extension's dot
         mimeType = mimeType[1:]
         
+        # SVG MIME-type is the same for both images and fonts
         if mimeType in 'gif|jpg|jpeg|png|webp|svg':
             mimeGroup = "image/"
         elif mimeType in 'ttf|woff|otf':
@@ -688,7 +690,8 @@ class StoryFrame (wx.Frame):
             title2 = self.newTitle(title)
             
             # Wrap in CSS @font-face declaration
-            text = '@font-face { font-family: "' + title + '"; src: url(' + text + ");}"
+            text = '@font-face { font-family: "' + title + '"; src: url(' + text + ");}" \
+                + 'font[face="' + title + '"]{ font-family: "' + title + '";}'
             
             self.storyPanel.newWidget(text = text, title = title2, tags = ['stylesheet'])
             if showdialog:
