@@ -300,12 +300,6 @@ window.onpopstate = function(e) {
     }
     state.display(state.history[0].passage.title,null,"back");
 }
-macros.refresh = {
-    handler: function (a, b, c) {
-        window.location.reload()
-    }
-};
-
 version.extensions.displayMacro = {
     major: 2,
     minor: 0,
@@ -314,7 +308,7 @@ version.extensions.displayMacro = {
 macros.display = {
     handler: function (place, macroName, params, parser) {
         var output, name = parser.fullArgs();
-        if (macroName !== "display") {
+        if (macroName != "display") {
             output = macroName;
         }
         else try {
@@ -356,7 +350,6 @@ macros.actions = {
             insertText(c, g[b]);
             c.onclick = function () {
                 state.history[0].variables["actions clicked"][this.id] = true;
-                state.history[0].variables["last link"] = this.id;
                 state.display(this.id, c)
             }
         }
@@ -370,9 +363,9 @@ version.extensions.printMacro = {
 macros.print = {
     handler: function (place, macroName, params, parser) {
         try {
-            var args = parser.fullArgs(macroName !== "print"),
+            var args = parser.fullArgs(macroName != "print"),
                 output = eval(args);
-            if (output != null && (typeof output !== "number" || !isNaN(output))) {
+            if (output != null && (typeof output != "number" || !isNaN(output))) {
                 new Wikifier(place, output.toString());
             }
         } catch (e) {
@@ -1422,7 +1415,6 @@ Wikifier.createInternalLink = function (place, title) {
     else el.className = 'brokenLink';
 
     el.onclick = function () {
-        state.history[0].variables["last link"] = (el.textContent || el.innerText);
         state.display(title, el)
     };
 
@@ -1470,9 +1462,6 @@ function visited(e) {
         }
     }
     return ret;
-}
-function lastlink() {
-    return (state.history[1] && state.history[1].variables['last link']) || "";
 }
 function previous() {
     if (state.history[1]) {

@@ -85,6 +85,12 @@ class TiddlyWiki:
 			output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
 			if not output: return
 			
+			# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
+			output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"', startAt)
+			if not output: return
+			output = insertEngine(app, output, 'jonah/code.js', '"JONAH"', startAt)
+			if not output: return
+			
 			falseOpts = ["false", "off", "0"]
 			
 			# Insert jQuery
