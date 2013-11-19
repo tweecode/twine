@@ -974,12 +974,12 @@ class StoryPanelContext (wx.Menu):
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['annotation']), id = newPassage.GetId())
         
-    def newWidget (self, event, tags = []):
+    def newWidget (self, event, text = '', tags = []):
         pos = self.pos
         offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
-        self.parent.newWidget(pos = pos, tags = tags)
+        self.parent.newWidget(pos = pos, text = text, tags = tags)
         
 # drag and drop listener
 

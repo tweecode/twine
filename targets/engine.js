@@ -54,6 +54,19 @@ function addStyle(b) {
     }
 }
 
+function alterCSS(text) {
+    var imgPassages = tale.lookup("tags", "Twine.image");
+    return text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
+        for (var i = 0; i < imgPassages.length; i++) {
+            if (imgPassages[i].title == src) {
+                src = imgPassages[i].text;
+                break;
+            }
+        }
+        return "url(" + src + ");"
+    });
+}
+
 function throwError(a, b, tooltip) {
     var elem = insertElement(a, "span", null, "marked", b);
     tooltip && elem.setAttribute("title", tooltip);
@@ -606,7 +619,7 @@ Passage.prototype.setCSS = function() {
             if (passage && ~passage.tags.indexOf("stylesheet")) {
                 for (j = 0; j < tags.length; j++) {
                     if (~passage.tags.indexOf(tags[j])) {
-                        text += passage.text;
+                        text += alterCSS(passage.text);
                         break;
                     }
                 }
@@ -1476,19 +1489,7 @@ function previous() {
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
-function addCSS(text) {
-    var imgPassages = tale.lookup("tags", "Twine.image");
-    text = text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
-        for (var i = 0; i < imgPassages.length; i++) {
-            if (imgPassages[i].title == src) {
-                src = imgPassages[i].text;
-                break;
-            }
-        }
-        return "url(" + src + ");"
-    });
-    insertText(document.getElementById("storyCSS"), text);
-}
+
 /* Init function */
 function main() {
     // Used by old custom scripts.
@@ -1525,7 +1526,7 @@ function main() {
     }
     for (i in tale.passages) {
         if (tale.passages[i].tags + "" == "stylesheet") {
-            addCSS(tale.passages[i].text);
+            insertText(document.getElementById("storyCSS"), alterCSS(tale.passages[i].text));
         }
     }
     state.init();

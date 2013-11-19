@@ -1123,7 +1123,7 @@ Modernizr: off
         viewLastItem.Enable(self.buildDestination != '')
 
         autoBuildItem = self.menus.FindItemById(StoryFrame.BUILD_AUTO_BUILD)
-        autoBuildItem.Enable(self.buildDestination != '')
+        autoBuildItem.Enable(self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") != None)
         
         # Story format submenu
 

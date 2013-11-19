@@ -57,8 +57,10 @@ setup(
     }],
 
     data_files = [
-        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
-        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
+        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html'
+                                             'targets' + os.sep + 'jonah'      + os.sep + 'code.js']),
+        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html',
+                                             'targets' + os.sep + 'sugarcane'  + os.sep + 'code.js']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
         ('targets', [
             'targets' + os.sep + 'engine.js',
