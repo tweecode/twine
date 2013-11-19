@@ -219,11 +219,15 @@ class StoryFrame (wx.Frame):
         
         self.newPassageMenu.AppendSeparator()
         
-        self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'Stylesheet')
-        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_STYLESHEET, 'S&tylesheet')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(text = self.storyPanel.FIRST_CSS, \
+                                                                   tags = ['stylesheet']), id = StoryFrame.STORY_NEW_STYLESHEET)
 
-        self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, 'Script')
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_SCRIPT, '&Script')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['script']), id = StoryFrame.STORY_NEW_SCRIPT)
+        
+        self.newPassageMenu.Append(StoryFrame.STORY_NEW_ANNOTATION, '&Annotation')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.newWidget(tags = ['annotation']), id = StoryFrame.STORY_NEW_ANNOTATION)
         
         self.storyMenu.AppendMenu(wx.ID_ANY, 'New', self.newPassageMenu)
         
@@ -241,6 +245,8 @@ class StoryFrame (wx.Frame):
         
         self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
+        self.storyMenu.Append(StoryFrame.STORY_IMPORT_FONT, '&Import Font...')
+        self.Bind(wx.EVT_MENU, self.importFontDialog, id = StoryFrame.STORY_IMPORT_FONT)
         
         self.storyMenu.AppendSeparator()
         
@@ -609,39 +615,60 @@ class StoryFrame (wx.Frame):
                 self.importImage(file)
             else:
                 try:
-                    replace.passage.text = self.openImageFileAsBase64(file)[0]
+                    replace.passage.text = self.openFileAsBase64(file)[0]
                     replace.updateBitmap()
                 except IOError:
                     self.app.displayError('importing an image')
-          
-    def openImageFileAsBase64(self, file):
-        """Opens an image file and returns its base64 representation, expressed as a Data URI with MIME type"""
-        image64 = open(file, 'rb').read().encode('base64').replace('\n', '')
+    
+    def importFontDialog(self, event = None):
+        """Asks the user to choose a font file to import, then imports into the current story."""
+        dialog = wx.FileDialog(self, 'Import Font File', os.getcwd(), '', \
+                                   'Web Font File (.ttf, .otf, .woff, .svg)|*.ttf;*.otf;*.woff;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.importFont(dialog.GetPath())
+        
+    def openFileAsBase64(self, file):
+        """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
+        file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
         # Remove the extension's dot
         mimeType = mimeType[1:]
+        
+        # SVG MIME-type is the same for both images and fonts
+        if mimeType in 'gif|jpg|jpeg|png|webp|svg':
+            mimeGroup = "image/"
+        elif mimeType in 'ttf|woff|otf':
+            mimeGroup = "application/font-"
+        else:
+            # Desperate (probably incorrect) guess
+            mimeGroup = "application/x-"
+        
         # Correct certain MIME types
         if mimeType == "jpg":
             mimeType == "jpeg"
         elif mimeType == "svg":
             mimeType += "+xml"
-        
-        return ("data:image/" + mimeType + ";base64," + image64, title)
+        return ("data:" + mimeGroup + mimeType + ";base64," + file64, title)
+    
+    def newTitle(self, title):
+        """ Check if a title is being used, and increment its number if it is."""
+        while self.storyPanel.findWidget(title):
+            try:
+                match = re.search(r'(\s\d+)$', title)
+                if match:
+                    title = title[:match.start(1)] + " " + str(int(match.group(1)) + 1)
+                else:
+                    title += " 2"
+            except: pass
+        return title
     
     def importImage(self, file, showdialog = True):
         """Imports an image into the story as an image passage."""
         try:
-            text, title = self.openImageFileAsBase64(file)
+            text, title = self.openFileAsBase64(file)
             
             # Check for title usage
-            while self.storyPanel.findWidget(title):
-                try:
-                    match = re.search(r'(\s\d+)$', title)
-                    if match:
-                        title = title[:match.start(1)] + " " + str(int(match.group(1)) + 1)
-                    else:
-                        title += " 2"
-                except: pass
+            title = self.newTitle(title)
             
             self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
             if showdialog:
@@ -653,6 +680,29 @@ class StoryFrame (wx.Frame):
             return True
         except IOError:
             self.app.displayError('importing an image')
+            return False
+        
+    def importFont(self, file, showdialog = True):
+        """Imports a font into the story as a font passage."""
+        try:
+            text, title = self.openFileAsBase64(file)
+
+            title2 = self.newTitle(title)
+            
+            # Wrap in CSS @font-face declaration
+            text = '@font-face { font-family: "' + title + '"; src: url(' + text + ");}" \
+                + 'font[face="' + title + '"]{ font-family: "' + title + '";}'
+            
+            self.storyPanel.newWidget(text = text, title = title2, tags = ['stylesheet'])
+            if showdialog:
+                dialog = wx.MessageDialog(self, 'Font file imported successfully.\n' + \
+                                          'You can use the font in your stylesheets with this CSS attribute syntax:\n\n' + \
+                                          'font-family: '+ title + ";", 'Font added', \
+                                          wx.ICON_INFORMATION | wx.OK)
+                dialog.ShowModal()
+            return True
+        except IOError:
+            self.app.displayError('importing a font')
             return False
     
     def createInfoPassage(self, event = None):
@@ -780,8 +830,10 @@ Modernizr: off
                 # This implicitly closes the previous test build
                 if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
                     os.remove(self.lastTestBuild.name)
+                path = (os.path.exists(self.buildDestination) and self.buildDestination) \
+                    or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
-                    dir = os.path.dirname(self.buildDestination or self.saveDestination) or None)
+                    dir = (path and os.path.dirname(path)) or None)
                 self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
@@ -1071,7 +1123,7 @@ Modernizr: off
         viewLastItem.Enable(self.buildDestination != '')
 
         autoBuildItem = self.menus.FindItemById(StoryFrame.BUILD_AUTO_BUILD)
-        autoBuildItem.Enable(self.buildDestination != '')
+        autoBuildItem.Enable(self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") != None)
         
         # Story format submenu
 
@@ -1139,9 +1191,9 @@ Modernizr: off
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
     
-    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_EDIT_FULLSCREEN, STORY_STATS, \
-     STORY_IMPORT_IMAGE, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,415)
+    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
+     STORY_IMPORT_IMAGE, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,417)
     
     STORY_FORMAT_BASE = 501
     

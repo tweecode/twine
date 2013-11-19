@@ -54,6 +54,19 @@ function addStyle(b) {
     }
 }
 
+function alterCSS(text) {
+    var imgPassages = tale.lookup("tags", "Twine.image");
+    return text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
+        for (var i = 0; i < imgPassages.length; i++) {
+            if (imgPassages[i].title == src) {
+                src = imgPassages[i].text;
+                break;
+            }
+        }
+        return "url(" + src + ");"
+    });
+}
+
 function throwError(a, b, tooltip) {
     var elem = insertElement(a, "span", null, "marked", b);
     tooltip && elem.setAttribute("title", tooltip);
@@ -300,12 +313,6 @@ window.onpopstate = function(e) {
     }
     state.display(state.history[0].passage.title,null,"back");
 }
-macros.refresh = {
-    handler: function (a, b, c) {
-        window.location.reload()
-    }
-};
-
 version.extensions.displayMacro = {
     major: 2,
     minor: 0,
@@ -314,7 +321,7 @@ version.extensions.displayMacro = {
 macros.display = {
     handler: function (place, macroName, params, parser) {
         var output, name = parser.fullArgs();
-        if (macroName !== "display") {
+        if (macroName != "display") {
             output = macroName;
         }
         else try {
@@ -369,9 +376,9 @@ version.extensions.printMacro = {
 macros.print = {
     handler: function (place, macroName, params, parser) {
         try {
-            var args = parser.fullArgs(macroName !== "print"),
+            var args = parser.fullArgs(macroName != "print"),
                 output = eval(args);
-            if (output != null && (typeof output !== "number" || !isNaN(output))) {
+            if (output != null && (typeof output != "number" || !isNaN(output))) {
                 new Wikifier(place, output.toString());
             }
         } catch (e) {
@@ -612,7 +619,7 @@ Passage.prototype.setCSS = function() {
             if (passage && ~passage.tags.indexOf("stylesheet")) {
                 for (j = 0; j < tags.length; j++) {
                     if (~passage.tags.indexOf(tags[j])) {
-                        text += passage.text;
+                        text += alterCSS(passage.text);
                         break;
                     }
                 }
@@ -1164,13 +1171,13 @@ Wikifier.formatters = [
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source)
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketted link
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketed link
         {
             var title = Wikifier.parsePassageTitle(lookaheadMatch[1]),
                 link = Wikifier.createInternalLink(w.output, title);
             setPageElement(link, null, title);
             w.nextMatch += lookaheadMatch[1].length + 2;
-        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketted link
+        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketed link
         {
             var link, title = Wikifier.parsePassageTitle(lookaheadMatch[4]);
             if (tale.has(title))
@@ -1482,19 +1489,7 @@ function previous() {
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
-function addCSS(text) {
-    var imgPassages = tale.lookup("tags", "Twine.image");
-    text = text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
-        for (var i = 0; i < imgPassages.length; i++) {
-            if (imgPassages[i].title == src) {
-                src = imgPassages[i].text;
-                break;
-            }
-        }
-        return "url(" + src + ");"
-    });
-    insertText(document.getElementById("storyCSS"), text);
-}
+
 /* Init function */
 function main() {
     // Used by old custom scripts.
@@ -1531,7 +1526,7 @@ function main() {
     }
     for (i in tale.passages) {
         if (tale.passages[i].tags + "" == "stylesheet") {
-            addCSS(tale.passages[i].text);
+            insertText(document.getElementById("storyCSS"), alterCSS(tale.passages[i].text));
         }
     }
     state.init();

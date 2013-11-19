@@ -18,6 +18,7 @@
 
 import sys, math, wx, re, pickle
 import geometry, time
+from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 
 class StoryPanel (wx.ScrolledWindow):
@@ -85,8 +86,13 @@ class StoryPanel (wx.ScrolledWindow):
         """Adds a new widget to the container."""
                 
         # defaults
-        
-        if not title: title = self.untitledName()
+
+        if not title:
+            if tags and tags[0] in TiddlyWiki.INFO_TAGS:
+                type = tags[0].capitalize()
+            else:
+                type = "Passage"
+            title = self.untitledName(type)
         if not pos: pos = StoryPanel.INSET
         if not logicals: qspos = self.toLogical(pos)
 		
@@ -634,15 +640,15 @@ class StoryPanel (wx.ScrolledWindow):
         
         return pixScroll
         
-    def untitledName (self):
+    def untitledName (self, type = "Passage"):
         """Returns a string for an untitled PassageWidget."""
         number = 1
-        
+                
         for widget in self.widgets:
-            match = re.match(r'Untitled Passage (\d+)', widget.passage.title)
+            match = re.match(r'Untitled ' + type + ' (\d+)', widget.passage.title)
             if match: number = int(match.group(1)) + 1
                 
-        return 'Untitled Passage ' + str(number)
+        return 'Untitled ' + type + ' ' + str(number)
     
     def eachWidget (self, function):
         """Runs a function on every passage in the panel."""
@@ -876,7 +882,8 @@ class StoryPanel (wx.ScrolledWindow):
                 # Including the data URI prefix in the byte count, just because.
                 text = "Image type: " + mimeType + "\nSize: "+ str(len(p.text)/1024)+" KB"
             else:
-                text = p.text[:840]
+                text = "Title: " + p.title + "\n" + ("Tags: " + ", ".join(p.tags) + '\n\n' if p.tags else "")
+                text += p.text[:840]
                 if length >= 840:
                     text += "..."
             # Don't show a tooltip for a 0-length passage
@@ -915,7 +922,24 @@ class StoryPanel (wx.ScrolledWindow):
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
-    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'   
+    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'  
+    FIRST_CSS = """/* Your story will use the CSS code in this and other stylesheet passages.
+If this passage has any extra tags, it will only apply to passages that have the same tags.
+Example selectors: */
+
+body {
+    /* This affects the entire page */
+    
+    
+} .passage {
+    /* This only affects passages */
+    
+    
+} .internalLink, .externalLink {
+    /* This only affects links */
+    
+    
+}"""
     BACKGROUND_COLOR = '#555753'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
@@ -935,13 +959,27 @@ class StoryPanelContext (wx.Menu):
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
-
-    def newWidget (self, event):
+        
+        self.AppendSeparator()
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Stylesheet Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, text = StoryPanel.FIRST_CSS, tags = ['stylesheet']), id = newPassage.GetId())
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Script Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['script']), id = newPassage.GetId())
+        
+        newPassage = wx.MenuItem(self, wx.NewId(), 'New Annotation Here')
+        self.AppendItem(newPassage)
+        self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['annotation']), id = newPassage.GetId())
+        
+    def newWidget (self, event, text = '', tags = []):
         pos = self.pos
         offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
-        self.parent.newWidget(pos = pos)
+        self.parent.newWidget(pos = pos, text = text, tags = tags)
         
 # drag and drop listener
 
@@ -970,7 +1008,8 @@ class StoryPanelDropTarget (wx.PyDropTarget):
                 # then it won't be set for the destination.)
                 if self.panel.textDragSource:
                     self.panel.textDragSource.linkSelection()
-                self.panel.textDragSource = None
+                    # Cancel the deletion of the source text by returning None
+                    return None
                 
             elif type == wx.DF_FILENAME:
                 
