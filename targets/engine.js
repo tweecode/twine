@@ -313,6 +313,8 @@ window.onpopstate = function(e) {
     }
     state.display(state.history[0].passage.title,null,"back");
 }
+// Used by parameter() and parameterValue()
+var displayParameters = [];
 version.extensions.displayMacro = {
     major: 2,
     minor: 0,
@@ -320,9 +322,20 @@ version.extensions.displayMacro = {
 };
 macros.display = {
     handler: function (place, macroName, params, parser) {
-        var output, name = parser.fullArgs();
+        var j, output, params, name = parser.fullArgs();
+        
         if (macroName != "display") {
             output = macroName;
+            // Shorthand displays can have parameters
+            params = name.readMacroParams(true);
+            try {
+                for(j=0; j < params.length; j++) {
+                    params[j] = eval(Wikifier.parse(params[j]));
+                }
+            } catch (e) {
+                throwError(place, "<<" + macroName + " " + name + ">> bad argument: " + params[j], parser.fullMatch());
+                return
+            }
         }
         else try {
             output = eval(name);
@@ -338,7 +351,10 @@ macros.display = {
         } else if (!tale.get(output).id) {
             throwError(place, "The " + output + " passage does not exist", parser.fullMatch());
         } else {
-            new Wikifier(place, tale.get(output+"").text)
+            var oldDisplayParams = displayParameters;
+            displayParameters = params;
+            new Wikifier(place, tale.get(output+"").text);
+            displayParameters = oldDisplayParams; 
         }
     }
 };
@@ -382,7 +398,7 @@ macros.print = {
                 new Wikifier(place, output.toString());
             }
         } catch (e) {
-            throwError(place, "printMacro bad expression: " + e.message, parser.fullMatch());
+            throwError(place, "<<print>> bad expression: " + e.message, parser.fullMatch());
         }
     }
 };
@@ -1489,7 +1505,12 @@ function previous() {
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
-
+function parameter(n) {
+	if (displayParameters[n]) {
+		return displayParameters[n];
+	}
+	throw new RangeError("there isn't a parameter " + n);
+}
 /* Init function */
 function main() {
     // Used by old custom scripts.
