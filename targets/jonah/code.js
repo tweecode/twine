@@ -96,8 +96,14 @@ Passage.prototype.render = function () {
         C.title = Passage.toolbarItems[B].tooltip(E);
         C.onclick = Passage.toolbarItems[B].activate
     }
-    var A = insertElement(E, 'div', '', 'body');
+    var A = insertElement(E, 'div', '', 'content');
+    for (var i in prerender) {
+        (typeof prerender[i] == "function") && prerender[i].call(this,A);
+    }
     new Wikifier(A, this.text);
+    for (i in postrender) {
+        (typeof postrender[i] == "function") && postrender[i].call(this,A);
+    }
     E.onmouseover = function () {
         E.className += ' selected';
     };

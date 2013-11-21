@@ -303,7 +303,7 @@ var version = {
     date: new Date("January 1, 2013"),
     extensions: {}
 };
-var testplay, tale, state, macros = window.macros = {};
+var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
 
 window.onpopstate = function(e) {
     if (e.state && e.state.length > 0) {
@@ -323,7 +323,7 @@ version.extensions.displayMacro = {
 };
 macros.display = {
     handler: function (place, macroName, params, parser) {
-        var j, output, params, name = parser.fullArgs();
+        var t, j, output, params, name = parser.fullArgs();
         
         if (macroName != "display") {
             output = macroName;
@@ -347,14 +347,20 @@ macros.display = {
             throwError(place, "bad expression: " + e.message, parser.fullMatch());
             return
         }
+        t = tale.get(output+"");
         if (!output) {
             throwError(place, name + " did not evaluate to a passage name", parser.fullMatch());
-        } else if (!tale.get(output).id) {
+        } else if (!t.id) {
             throwError(place, "The " + output + " passage does not exist", parser.fullMatch());
         } else {
-            var oldDisplayParams = displayParameters;
+            var t, oldDisplayParams = displayParameters;
             displayParameters = params;
-            new Wikifier(place, tale.get(output+"").text);
+            if (t.tags.indexOf("script") > -1) {
+                scriptEval(t);
+            }
+            else {
+                new Wikifier(place, tale.get(output+"").text);
+            }
             displayParameters = oldDisplayParams; 
         }
     }
@@ -718,7 +724,7 @@ Tale.prototype.has = function (a) {
     if (typeof a == "string") {
         return (this.passages[a] != null)
     } else {
-        for (i in this.passages) {
+        for (var i in this.passages) {
             if (this.passages[i].id == a) {
                 return true
             }
@@ -730,7 +736,7 @@ Tale.prototype.get = function (a) {
     if (typeof a == "string") {
         return this.passages[a] || new Passage(a)
     } else {
-        for (i in this.passages) {
+        for (var i in this.passages) {
             if (this.passages[i].id == a) {
                 return this.passages[i]
             }
@@ -852,9 +858,11 @@ Wikifier.prototype.fullMatch = function() {
 };
 
 Wikifier.prototype.fullArgs = function (includeName) {
-    var startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart) + (includeName ? 2 : 1);
-    var endPos = this.source.indexOf('>>', this.matchStart);
-
+    var startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart) + (includeName ? 2 : 1),
+        endPos = this.source.indexOf('>>', this.matchStart);
+    if (startPos < this.matchStart || endPos < this.matchStart) {
+        return "";
+    }
     return Wikifier.parse(this.source.slice(startPos, endPos).trim());
 };
 Wikifier.parse = function (input) {
@@ -1511,6 +1519,17 @@ function parameter(n) {
     }
     throw new RangeError("there isn't a parameter " + n);
 }
+function setTransitionCSS(styleText) {
+    var style = document.getElementById("transitionCSS");
+    style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
+}
+function scriptEval(s) {
+    try {
+        eval(s.text);
+    } catch (e) {
+        alert("There is a technical problem with this story (" + s.title + ": " + e.message + "). You may be able to continue reading, but parts of the story may not work properly.");
+    }
+}
 /* Init function */
 function main() {
     // Used by old custom scripts.
@@ -1533,11 +1552,7 @@ function main() {
     }
     var scripts = tale.lookup("tags", "script");
     for (var i = 0; i < scripts.length; i++) {
-        try {
-            eval(scripts[i].text);
-        } catch (e) {
-            alert("There is a technical problem with this story (" + scripts[i].title + ": " + e.message + "). You may be able to continue reading, but parts of the story may not work properly.");
-        }
+        scriptEval(scripts[i]);
     }
     for (var macroidx in macros) {
         var macro = macros[macroidx];

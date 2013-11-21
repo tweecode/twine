@@ -74,8 +74,14 @@ Passage.prototype.render = function () {
     this.setCSS();
     insertElement(b, 'div', '', 'header');
     var a = insertElement(b, 'div', '', 'content');
+    for (var i in prerender) {
+        (typeof prerender[i] == "function") && prerender[i].call(this,a);
+    }
     new Wikifier(a, this.text);
     insertElement(b, 'div', '', 'footer');
+    for (i in postrender) {
+        (typeof postrender[i] == "function") && postrender[i].call(this,a);
+    }
     return b;
 };
 Passage.prototype.excerpt = function () {
