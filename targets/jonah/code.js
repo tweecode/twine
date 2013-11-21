@@ -16,7 +16,7 @@ History.prototype.init = function () {
     }
 };
 History.prototype.display = function (E, C, A) {
-    var el, D, F;
+    var el, D, F, p = document.getElementById("passages");
     if (el = document.getElementById("passage" + E)) {
         el.id += (new Date).getTime();
     }
@@ -26,16 +26,28 @@ History.prototype.display = function (E, C, A) {
         variables: clone(this.history[0].variables)
     });
     F = D.render();
-    if (A != "offscreen") {
-        document.getElementById("passages").appendChild(F)
-        if (A != "quietly") {
-            scrollWindowTo(F);
+    if (A != "offscreen" && A != "quietly") {
+        if (hasTransition) {
+            for(var i = 0; i < p.childNodes.length; i += 1) {
+                var q = p.childNodes[i];
+                q.classList.add("transition-out");
+            }
+            F.classList.add("transition-in");
+            setTimeout(function () {
+                F.classList.remove("transition-in");
+            }, 1);
+            F.style.visibility = "visible"
+            p.appendChild(F);
+        } else {
+            p.appendChild(F);
             fade(F, {
                 fade: "in"
-            })
+            });
         }
+        scrollWindowTo(F);
     }
-    if ((A == "quietly") || (A == "offscreen")) {
+    else {
+        p.appendChild(F);
         F.style.visibility = "visible"
     }
     return F

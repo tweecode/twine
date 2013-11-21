@@ -16,7 +16,7 @@ History.prototype.init = function () {
     }
 };
 History.prototype.display = function (d, b, a) {
-    var c = tale.get(d);
+    var c = tale.get(d), p = document.getElementById("passages");
     if (a != "back") {
         this.history.unshift({
             passage: c,
@@ -33,12 +33,26 @@ History.prototype.display = function (d, b, a) {
         }
     }
     var e = c.render();
-    removeChildren(document.getElementById("passages"));
-    document.getElementById("passages").appendChild(e);
     if (a != "quietly") {
-        fade(e, {
-            fade: "in"
-        })
+        if (hasTransition) {
+            for(var i = 0; i < p.childNodes.length; i += 1) {
+                var q = p.childNodes[i];
+                q.classList.add("transition-out");
+                setTimeout(function () {
+                    if(q.parentNode) q.parentNode.removeChild(q);
+                }, 1000);
+            }
+            e.classList.add("transition-in");
+            setTimeout(function () { e.classList.remove("transition-in"); }, 1);
+            e.style.visibility = "visible"
+            p.appendChild(e);
+        } else {
+            removeChildren(p);
+            p.appendChild(e);
+            fade(e, {
+                fade: "in"
+            })
+        }
     }
     else {
         e.style.visibility = "visible"

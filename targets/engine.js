@@ -136,7 +136,8 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     }
     return -1
 });
-var hasPushState = !!window.history && (typeof window.history.pushState == "function");
+var hasPushState = !!window.history && (typeof window.history.pushState == "function"),
+    hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
 
 function fade(f, c) {
     var h;
@@ -641,7 +642,7 @@ Passage.prototype.setCSS = function() {
                 }
             }
         }
-        c.outerHTML = "<style id=tagCSS>" + text + "</style>";
+        c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
         c.setAttribute('data-tags', tags.join(' '));
     }
 };
@@ -1438,7 +1439,6 @@ Wikifier.parsePassageTitle = function(title) {
 }
 Wikifier.createInternalLink = function (place, title) {
     var el = insertElement(place, 'a', title);
-    el.href = 'javascript:void(0)';
 
     if (tale.has(title)) el.className = 'internalLink';
     else el.className = 'brokenLink';
@@ -1506,10 +1506,10 @@ function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
 function parameter(n) {
-	if (displayParameters[n]) {
-		return displayParameters[n];
-	}
-	throw new RangeError("there isn't a parameter " + n);
+    if (displayParameters[n]) {
+        return displayParameters[n];
+    }
+    throw new RangeError("there isn't a parameter " + n);
 }
 /* Init function */
 function main() {
@@ -1545,10 +1545,12 @@ function main() {
             macro.init();
         }
     }
+    var style = document.getElementById("storyCSS"), styleText = "";
     for (i in tale.passages) {
         if (tale.passages[i].tags + "" == "stylesheet") {
-            insertText(document.getElementById("storyCSS"), alterCSS(tale.passages[i].text));
+            styleText += alterCSS(tale.passages[i].text);
         }
     }
+    style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
     state.init();
 };

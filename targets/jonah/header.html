@@ -105,6 +105,7 @@ a.internalLink,a.externalLink,.body a {
 	color: #4d6ad8;
 	font-weight: bold;
 	text-decoration: none;
+	cursor: pointer;
 }
 a.internalLink:hover,a.externalLink:hover,.body a:hover {
 	text-decoration: underline;
@@ -211,6 +212,16 @@ a.brokenLink {
 #noscript {
 	font-size: 120%;
 	font-weight: bold;
+}
+</style>
+<style id="transitionCSS">
+.transition-in {
+	opacity:0;
+	position:absolute;
+}
+.passage:not(.transition-out) {
+	transition: 1s;
+	-webkit-transition: 1s;
 }
 </style>
 <style id="storyCSS"></style>
