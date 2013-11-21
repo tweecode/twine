@@ -67,6 +67,12 @@ function alterCSS(text) {
     });
 }
 
+function setTransitionCSS(styleText) {
+    styleText = alterCSS(styleText);
+    var style = document.getElementById("transitionCSS");
+    style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
+}
+
 function throwError(a, b, tooltip) {
     var elem = insertElement(a, "span", null, "marked", b);
     tooltip && elem.setAttribute("title", tooltip);
@@ -632,8 +638,10 @@ Passage.prototype.setTags = function(b) {
     }
     document.body.setAttribute("data-tags", t);
 };
+
+var defaultTransitionCSSCache = "";
 Passage.prototype.setCSS = function() {
-    var passage, text, i, j, tags = this.tags || [],
+    var passage, text, i, j, trans = false, tags = this.tags || [],
         c = document.getElementById('tagCSS');
     if (c && c.getAttribute('data-tags') != tags.join(' ')) {
         text = "";
@@ -642,11 +650,22 @@ Passage.prototype.setCSS = function() {
             if (passage && ~passage.tags.indexOf("stylesheet")) {
                 for (j = 0; j < tags.length; j++) {
                     if (~passage.tags.indexOf(tags[j])) {
-                        text += alterCSS(passage.text);
+                        if (~passage.tags.indexOf("transition")) {
+                            if (!defaultTransitionCSSCache)
+                                defaultTransitionCSSCache = document.getElementById('transitionCSS').innerHTML;
+                            setTransitionCSS(passage.text);
+                            trans = true;
+                        }
+                        else text += alterCSS(passage.text);
                         break;
                     }
                 }
             }
+        }
+        if (!trans && defaultTransitionCSSCache) {
+            setTransitionCSS(defaultTransitionCSSCache);
+            trans = false;
+            defaultTransitionCSSCache = "";
         }
         c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
         c.setAttribute('data-tags', tags.join(' '));
@@ -1519,10 +1538,7 @@ function parameter(n) {
     }
     throw new RangeError("there isn't a parameter " + n);
 }
-function setTransitionCSS(styleText) {
-    var style = document.getElementById("transitionCSS");
-    style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
-}
+
 function scriptEval(s) {
     try {
         eval(s.text);
@@ -1562,8 +1578,13 @@ function main() {
     }
     var style = document.getElementById("storyCSS"), styleText = "";
     for (i in tale.passages) {
-        if (tale.passages[i].tags + "" == "stylesheet") {
-            styleText += alterCSS(tale.passages[i].text);
+        i = tale.passages[i];
+        if (i.tags + "" == "stylesheet") {
+            styleText += alterCSS(i.text);
+        }
+        else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1
+                && i.tags.indexOf("stylesheet") >-1) {
+            setTransitionCSS(i.text);
         }
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
