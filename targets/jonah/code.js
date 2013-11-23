@@ -18,7 +18,7 @@ History.prototype.init = function () {
 History.prototype.display = function (E, C, A) {
     var el, D, F, p = document.getElementById("passages");
     if (el = document.getElementById("passage" + E)) {
-        el.id += (new Date).getTime();
+        el.id += "|" + (new Date).getTime();
     }
     D = tale.get(E);
     this.history.unshift({
@@ -28,10 +28,6 @@ History.prototype.display = function (E, C, A) {
     F = D.render();
     if (A != "offscreen" && A != "quietly") {
         if (hasTransition) {
-            for(var i = 0; i < p.childNodes.length; i += 1) {
-                var q = p.childNodes[i];
-                q.classList.add("transition-out");
-            }
             F.classList.add("transition-in");
             setTimeout(function () {
                 F.classList.remove("transition-in");
@@ -52,29 +48,28 @@ History.prototype.display = function (E, C, A) {
     }
     return F
 };
-History.prototype.rewindTo = function (C) {
+History.prototype.rewindTo = function (C, instant) {
     var B = this;
-    fade(document.getElementById("passages"), {
-        fade: "out",
-        onComplete: A
-    });
 
-    function A() {
-        var p = document.getElementById("passages");
-        while (p.lastChild != C.div) {
-            p.removeChild(p.lastChild);
-            B.history.shift();
+    var p2, p = document.getElementById("passages").lastChild;
+    while (p && p != C) {
+        p2 = p.previousSibling;
+        if (instant) {
+            p.parentNode.removeChild(p);
         }
-        B.history[0].variables = clone(B.history[1].variables);
-        C.passage.reset();
-        var E = C.div.querySelector(".body");
-        if(E) {
-            removeChildren(E);
-            new Wikifier(E, C.passage.text);
+        else if (hasTransition) {
+            p.classList.add("transition-out");
+            setTimeout((function(p) { return function () {
+                    if(p.parentNode) p.parentNode.removeChild(p);
+                }}(p)), 1000);
+        } else {
+            fade(p, {
+                fade: "out", 
+                onComplete: function() { this.parentNode.removeChild(this); }
+            });
         }
-        fade(document.getElementById("passages"), {
-            fade: "in"
-        })
+        B.history.shift();
+        p = p2;
     }
 };
 Passage.prototype.render = function () {
@@ -86,15 +81,14 @@ Passage.prototype.render = function () {
     var D = insertElement(F, 'span', '', 'toolbar');
     for (var B = 0; B < Passage.toolbarItems.length; B++) {
         var C = insertElement(D, 'a');
-        insertText(C, Passage.toolbarItems[B].label(E));
+        insertText(C, Passage.toolbarItems[B].label);
         C.passage = this;
         if (Passage.toolbarItems[B].href) {
             C.href = Passage.toolbarItems[B].href(E)
-        } else {
-            C.href = 'javascript:void(0)';
         }
-        C.title = Passage.toolbarItems[B].tooltip(E);
+        C.title = Passage.toolbarItems[B].tooltip;
         C.onclick = Passage.toolbarItems[B].activate
+        C.div = E;
     }
     var A = insertElement(E, 'div', '', 'content');
     for (var i in prerender) {
@@ -110,82 +104,82 @@ Passage.prototype.render = function () {
     E.onmouseout = function () {
         E.className = E.className.replace(' selected', '');
     };
-    var rewind = E.querySelector(".toolbar a:last-child");
-    rewind && (rewind.div = E);
     return E
 };
 Passage.prototype.reset = function () {
     this.text = this.initialText
 };
 Passage.toolbarItems = [{
-    label: function () {
-        return "bookmark"
-    },
-    tooltip: function () {
-        return "Bookmark this point in the story"
-    },
+    label: "bookmark",
+    tooltip: "Bookmark this point in the story",
     href: function (A) {
         return (state.save(A))
     },
     activate: function () {}
 }, {
-    label: function () {
-        return "rewind to here"
-    },
-    tooltip: function () {},
+    label: "rewind to here",
+    tooltip: "Rewind the story to this point",
     activate: function () {
-        state.rewindTo(this)
+        state.rewindTo(this.div)
     }
 }];
+Wikifier.createInternalLink = function (place, title) {
+    var el = insertElement(place, 'a', title);
 
+    if (tale.has(title)) el.className = 'internalLink';
+    else el.className = 'brokenLink';
+
+    el.onclick = function () {
+        var passage = el;
+        while(passage && !~passage.className.indexOf("passage")) {
+            passage = passage.parentNode;
+        }
+        if (passage && passage.parentNode.lastChild != passage) {
+            state.rewindTo(passage, true);
+        }
+        state.display(title, el)
+    };
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
 version.extensions.choiceMacro = {
-    major: 1,
-    minor: 2,
+    major: 2,
+    minor: 0,
     revision: 0
 };
 macros.choice = {
     handler: function (A, C, D) {
-        var B = document.createElement("a");
-        B.href = "javascript:void(0)";
-        B.className = "internalLink choice";
-        if (D[1]) {
-            B.innerHTML = D[1]
-        } else {
-            B.innerHTML = D[0]
+        var passage, id, text = D[1] || D[0],
+            clicked = state.history[0].variables["choice clicked"] 
+                || (state.history[0].variables["choice clicked"] = {}),
+        // Get enclosing passage name
+        passage = A;
+        while(passage && !~passage.className.indexOf("passage")) {
+            passage = passage.parentNode;
         }
-        B.onclick = function () {
-            macros.choice.activate(B, D[0])
-        };
-        A.appendChild(B)
-    },
-    activate: function (E, A) {
-        var H = E.parentNode;
-        while (H.className.indexOf("body") == -1) {
-            H = H.parentNode
+        // Get ID of the "choice clicked" entry
+        id = (passage && passage.id.replace(/\|.*$/,'') + "|" + text);
+        
+        if (id && clicked[id]) {
+            insertElement(A, "span", null, "disabled", text); 
         }
-        var G = H.parentNode.id.substr(7),
-            B = H.getElementsByTagName("a"),
-            F = [];
-        for (var C = 0; C < B.length; C++) {
-            if ((B[C] != E) && (B[C].className.indexOf("choice") != -1)) {
-                var D = document.createElement("span");
-                D.innerHTML = B[C].innerHTML;
-                D.className = "disabled";
-                B[C].parentNode.insertBefore(D, B[C].nextSibling);
-                F.push(B[C])
-            }
+        else {
+            B = Wikifier.createInternalLink(A, D[0]);
+            B.innerHTML = text;
+            B.className += " " + C;
+            B.onclick = (function(B, onclick) { return function() {
+                onclick();
+                clicked[id] = true;
+                B.outerHTML = "<span class=disabled>" + B.innerHTML + "</span>";
+            }}(B, B.onclick));
         }
-        for (var C = 0; C < F.length; C++) {
-            F[C].parentNode.removeChild(F[C])
-        }
-        tale.get(G).text = "<html>" + H.childNodes[0].innerHTML + "</html>";
-        state.display(A, E)
     }
 };
 version.extensions.backMacro={major:1,minor:0,revision:0};
-macros.back={handler:function(a,b,c){return}};
 version.extensions.returnMacro={major:1,minor:0,revision:0};
-macros.return={handler:function(a,b,c){return}};
+macros.back=macros['return']={handler:function(){}};
 
 window.onload = function() {
     document.getElementById("restart").onclick=function() {

@@ -174,6 +174,7 @@ a.brokenLink {
 }
 .toolbar a {
 	margin-left: 12px;
+	cursor:pointer;
 }
 .selected .toolbar {
 	visibility: visible;
@@ -217,11 +218,14 @@ a.brokenLink {
 <style id="transitionCSS">
 .transition-in {
 	opacity:0;
-	position:absolute;
+	position: absolute;
 }
-.passage:not(.transition-out) {
+.passage {
 	transition: 1s;
 	-webkit-transition: 1s;
+}
+#passages .transition-out {
+	opacity:0 !important;
 }
 </style>
 <style id="storyCSS"></style>

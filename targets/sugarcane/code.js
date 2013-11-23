@@ -38,9 +38,9 @@ History.prototype.display = function (d, b, a) {
             for(var i = 0; i < p.childNodes.length; i += 1) {
                 var q = p.childNodes[i];
                 q.classList.add("transition-out");
-                setTimeout(function () {
-                    if(q.parentNode) q.parentNode.removeChild(q);
-                }, 1000);
+                setTimeout((function(a) { return function () {
+                    if(a.parentNode) a.parentNode.removeChild(a);
+                }}(q)), 1000);
             }
             e.classList.add("transition-in");
             setTimeout(function () { e.classList.remove("transition-in"); }, 1);
@@ -94,6 +94,20 @@ Passage.prototype.excerpt = function () {
     if (a.length == 0 || a[0].length == 0) c = this.title;
     else c = a[0].substr(0, 30) + '...';
     return c;
+};
+Wikifier.createInternalLink = function (place, title) {
+    var el = insertElement(place, 'a', title);
+
+    if (tale.has(title)) el.className = 'internalLink';
+    else el.className = 'brokenLink';
+
+    el.onclick = function () {
+        state.display(title, el)
+    };
+
+    if (place) place.appendChild(el);
+
+    return el;
 };
 
 var Interface = {
@@ -304,13 +318,35 @@ macros["return"] = {
   }
 };
 version.extensions.choiceMacro = {
-    major: 1,
+    major: 2,
     minor: 0,
     revision: 0
 };
 macros.choice = {
-    handler: function (a, b, c) {
-        var el = Wikifier.createInternalLink(a, c[0]);
-        el.innerHTML = c[0];
+    handler: function (A, C, D) {
+        var passage, id, text = D[1] || D[0],
+            clicked = state.history[0].variables["choice clicked"] 
+                || (state.history[0].variables["choice clicked"] = {}),
+        // Get enclosing passage name
+        passage = A;
+        while(passage && !~passage.className.indexOf("passage")) {
+            passage = passage.parentNode;
+        }
+        // Get ID of the "choice clicked" entry
+        id = (passage && passage.id.replace(/\|.*$/,'') + "|" + text);
+        
+        if (id && clicked[id]) {
+            insertElement(A, "span", null, "disabled", text); 
+        }
+        else {
+            B = Wikifier.createInternalLink(A, D[0]);
+            B.innerHTML = text;
+            B.className += " " + C;
+            B.onclick = (function(B, onclick) { return function() {
+                onclick();
+                clicked[id] = true;
+                B.outerHTML = "<span class=disabled>" + B.innerHTML + "</span>";
+            }}(B, B.onclick));
+        }
     }
 };

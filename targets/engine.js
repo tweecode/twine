@@ -169,7 +169,7 @@ function fade(f, c) {
             }
             window.clearInterval(a);
             if (c.onComplete) {
-                c.onComplete()
+                c.onComplete.call(f)
             }
         }
     }
@@ -303,10 +303,10 @@ History.prototype.watchHash = function () {
     }
 };
 var version = {
-    major: 2,
-    minor: 1,
+    major: 4,
+    minor: 0,
     revision: 0,
-    date: new Date("January 1, 2013"),
+    date: new Date("November 28, 2013"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -1464,20 +1464,6 @@ Wikifier.parsePassageTitle = function(title) {
     }
     return title;
 }
-Wikifier.createInternalLink = function (place, title) {
-    var el = insertElement(place, 'a', title);
-
-    if (tale.has(title)) el.className = 'internalLink';
-    else el.className = 'brokenLink';
-
-    el.onclick = function () {
-        state.display(title, el)
-    };
-
-    if (place) place.appendChild(el);
-
-    return el;
-};
 Wikifier.createExternalLink = function (place, url) {
     var el = insertElement(place, 'a');
     el.href = url;
