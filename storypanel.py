@@ -1000,7 +1000,16 @@ class StoryPanelDropTarget (wx.PyDropTarget):
             if type in [wx.DF_UNICODETEXT, wx.DF_TEXT]:
                 # add the new widget
                 
-                self.panel.newWidget(title = self.textdrop.GetText(), pos = (x, y))
+                # Check for invalid characters, or non-unique titles
+                text = self.textdrop.GetText()
+                if "|" in text:
+                    return None
+                else:
+                    otherTitled = self.panel.findWidget(text)
+                    if otherTitled and otherTitled.passage.title == text:
+                        return None
+                
+                self.panel.newWidget(title = text, pos = (x, y))
                 
                 # update the source text with a link
                 # this is set by PassageFrame.prepDrag()

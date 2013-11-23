@@ -227,6 +227,11 @@ class PassageFrame (wx.Frame):
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
+            elif "|" in title:
+                self.titleLabel.SetLabel("No | symbols allowed!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
             else:
                 if self.titleInvalid:
                     self.titleLabel.SetLabel(self.TITLE_LABEL)
