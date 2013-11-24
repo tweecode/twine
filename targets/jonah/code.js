@@ -144,39 +144,6 @@ Wikifier.createInternalLink = function (place, title) {
 
     return el;
 };
-version.extensions.choiceMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros.choice = {
-    handler: function (A, C, D) {
-        var passage, id, text = D[1] || D[0],
-            clicked = state.history[0].variables["choice clicked"] 
-                || (state.history[0].variables["choice clicked"] = {}),
-        // Get enclosing passage name
-        passage = A;
-        while(passage && !~passage.className.indexOf("passage")) {
-            passage = passage.parentNode;
-        }
-        // Get ID of the "choice clicked" entry
-        id = (passage && passage.id.replace(/\|.*$/,'') + "|" + text);
-        
-        if (id && clicked[id]) {
-            insertElement(A, "span", null, "disabled", text); 
-        }
-        else {
-            B = Wikifier.createInternalLink(A, D[0]);
-            B.innerHTML = text;
-            B.className += " " + C;
-            B.onclick = (function(B, onclick) { return function() {
-                onclick();
-                clicked[id] = true;
-                B.outerHTML = "<span class=disabled>" + B.innerHTML + "</span>";
-            }}(B, B.onclick));
-        }
-    }
-};
 version.extensions.backMacro={major:1,minor:0,revision:0};
 version.extensions.returnMacro={major:1,minor:0,revision:0};
 macros.back=macros['return']={handler:function(){}};
