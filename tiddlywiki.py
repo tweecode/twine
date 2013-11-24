@@ -453,14 +453,18 @@ class Tiddler:
 
 		if includeMacros:
 			
-			# <<choice ''>>
+			# <<choice>>
+			choices = []
+			choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
+			for block in choiceBlocks:
+				item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|(?:\[\[([^\]]*)\]\])|([^"\'\s]\S*)', block)
+				if item:
+					choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
 			
-			choices = re.findall(r'\<\<choice\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
-
-			# <<actions ''>>
+			# <<actions '' ''>>
 			
 			actions = []
-			actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text, re.IGNORECASE)
+			actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text)
 			for block in actionBlocks:
 				actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
 		
