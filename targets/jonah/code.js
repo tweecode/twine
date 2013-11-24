@@ -33,14 +33,14 @@ History.prototype.display = function (E, C, A) {
                 F.classList.remove("transition-in");
             }, 1);
             F.style.visibility = "visible"
-            p.appendChild(F);
-        } else {
-            p.appendChild(F);
+        }
+        p.appendChild(F);
+        scrollWindowTo(F);
+        if (!hasTransition) {
             fade(F, {
                 fade: "in"
             });
         }
-        scrollWindowTo(F);
     }
     else {
         p.appendChild(F);
