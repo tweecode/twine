@@ -52,7 +52,7 @@ DAMAGE.
 </script>
 <style id="baseCSS">
 body {
-	background-color: #eee;
+	background-color: #f8f8f8;
 	color: #303030;
 	font-family: Verdana,sans-serif;
 	font-size: 62.5%;
@@ -81,10 +81,15 @@ h3 {
 	margin-top: .8em;
 }
 .passage {
-	background-color: #eee;
+	background-color: #f8f8f8;
 	font-size: 1.3em;
 	line-height: 175%;
 	margin-bottom: 2em;
+}
+.passage:not(:last-child):not(:hover) {
+	opacity: 0.4;
+	transition: 0.5s;
+	-webkit-transition: 0.5s;
 }
 .passage center {
 	max-width:50%;
@@ -101,13 +106,13 @@ ul li {
 	text-decoration: underline;
 	color: #8ea6ff;
 }
-a.internalLink,a.externalLink,.body a {
+a.internalLink,a.externalLink,a.back,.content a {
 	color: #4d6ad8;
 	font-weight: bold;
 	text-decoration: none;
 	cursor: pointer;
 }
-a.internalLink:hover,a.externalLink:hover,.body a:hover {
+a.internalLink:hover,a.externalLink:hover,a.back:hover,.content a:hover {
 	text-decoration: underline;
 	color: #8ea6ff;
 }

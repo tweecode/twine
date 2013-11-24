@@ -634,6 +634,91 @@ macros.choice = {
     }
 };
 
+version.extensions.backMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros['back'] = {
+    labeltext: '&#171; back',
+    handler: function (a, b, e) {
+        var labelParam, c, el,
+            labeltouse = this.labeltext,
+            steps = 1,
+            stepsParam = e.indexOf("steps"),
+            stepsParam2 = "";
+        // Steps parameter
+        if(stepsParam > 0) {
+            stepsParam2 = e[stepsParam - 1];
+            if(stepsParam2[0] == '$') {
+                try {
+                    stepsParam2 = eval(Wikifier.parse(stepsParam2));
+                }
+                catch(r) {
+                    throwError(a, b + "Macro bad expression: " + r.message)
+                    return;
+                }
+            }
+            // Previously, trying to go back more steps than were present in the
+            // history would silently revert to just 1 step. 
+            // Instead, let's just go back to the start.
+            steps = +stepsParam2;
+            if(steps >= state.history.length - 1) {
+                steps = state.history.length - 2;
+            }
+            e.splice(stepsParam - 1, 2);
+        }
+        // Label parameter
+        labelParam = e.indexOf("label");
+        if(labelParam == -1) {
+            labelParam = e.indexOf("labeldefault");
+        }
+        if(labelParam > -1) {
+            if(!e[labelParam + 1]) {
+                throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
+                return;
+            }
+            labeltouse = e[labelParam + 1];
+            if(e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
+            e.splice(labelParam, 2);
+        }
+        // What's left is the passage name parameter
+        if(stepsParam <= 0) {
+            if(e[0]) {
+                if(e[0].charAt(0) == '$') {
+                    try {
+                        e = eval(Wikifier.parse(e[0]));
+                    }
+                    catch(r) {
+                        throwError(a, "<<" + b + ">> bad expression: " + r.message)
+                        return;
+                    }
+                }
+                else {
+                    e = e[0];
+                }
+                if(tale.get(e).id == undefined) {
+                    throwError(a, "The " + e + " passage does not exist");
+                    return;
+                }
+                for(c = 0; c < state.history.length; c++) {
+                    if(state.history[c].passage.title == e) {
+                        steps = c;
+                        break;
+                    }
+                }
+            }
+        }
+        el = document.createElement("a");
+        el.className = b;
+        el.onclick = (function(b) { return function () {
+            return macros.back.onclick(b == "back", steps)
+        }}(b));
+        el.innerHTML = labeltouse;
+        a.appendChild(el);
+    }
+};
+
 function Passage(c, b, a, ofunc, okey) {
     this.title = c;
     if (b) {

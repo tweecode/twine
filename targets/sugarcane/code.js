@@ -201,111 +201,22 @@ var Interface = {
 };
 window.onload = Interface.init;
 
-version.extensions.backMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros['back'] = {
-  labeltext: '&#171; back',
-  handler: function (a, b, e) {
-    var d = "",
-        labeltouse = this.labeltext,
-        steps = 1,
-        stepsParam = e.indexOf("steps"),
-        stepsParam2 = "",
-        labelParam,    c, el;
-    // Steps parameter
-    if (stepsParam>0) {
-        stepsParam2 = e[stepsParam-1];
-        if (stepsParam2[0] =='$') {
-            try {
-                stepsParam2=eval(Wikifier.parse(stepsParam2));
-            } catch (r) {
-                throwError(a, b+"Macro bad expression: " + r.message)
-                return;
-            }
-        }
-        // Previously, trying to go back more steps than were present in the
-        // history would silently revert to just 1 step. 
-        // Instead, let's just go back to the start.
-        steps = +stepsParam2;
-        if (steps >= state.history.length-1) {
-          steps = state.history.length-2;
-        }
-        d = state.history[steps].passage.title;
-        e.splice(stepsParam-1,2);
-    }
-    // Label parameter
-    labelParam = e.indexOf("label");
-    if (labelParam == -1) {
-        labelParam = e.indexOf("labeldefault");
-    }
-    if (labelParam >-1) {
-        if (!e[labelParam+1]) {
-            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
-            return;
-        }
-        labeltouse = e[labelParam+1];
-        if (e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
-        e.splice(labelParam,2);
-    }
-    // What's left is the passage name parameter
-    if (!d) {
-      if(e[0]) {
-        if (e[0].charAt(0)=='$') {
-            try {
-                e=eval(Wikifier.parse(e[0]));
-            } catch (r) {
-                throwError(a, b+"Macro bad expression: " + r.message)
-                return;
-            }
-        } 
-        else {
-            e = e[0];
-        }
-        if (tale.get(e).id == undefined) {
-          throwError(a, "The " + e + " passage does not exist");
+macros.back.onclick = function(back, steps) {
+    if (back) {
+        if (hasPushState) {
+          window.history.go(-steps);
           return;
         }
-        for(c = 0; c < state.history.length; c++) {
-            if(state.history[c].passage.title == e) {
-                d = e;
-                steps = c;
-                break;
-            }
+        else while(steps >= 0) {
+          if (state.history.length>1) {
+            state.history.shift();
+          }
+          steps--;
         }
-      }
-      else {
-        d = state.history[1].passage.title;
-      }
+        state.display(state.history[0].passage.title);
     }
-    if (d==undefined) {
-      return;
-    } else {
-      el = document.createElement("a");
-      el.className = "return";
-      el.onclick = function () {
-        if (b=="back") {
-            if (hasPushState) {
-              window.history.back();
-              return;
-            }
-            else while(steps >= 0) {
-              if (state.history.length>1) {
-                state.history.shift();
-              }
-              steps--;
-            }
-        }
-        state.display(d);
-      };
-      el.href = "javascript:void(0)";
-      el.innerHTML = labeltouse;
-      a.appendChild(el);
-    }
-  }
-};
+    else state.display(state.history[steps].passage.title);
+}
 version.extensions.returnMacro = {
     major: 2,
     minor: 0,
@@ -314,6 +225,6 @@ version.extensions.returnMacro = {
 macros["return"] = {
   labeltext: '&#171; return',
   handler: function(a,b,e) { 
-    macros['back'].handler.call(this,a,b,e);
+    macros.back.handler.call(this,a,b,e);
   }
 };

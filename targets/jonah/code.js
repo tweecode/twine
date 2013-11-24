@@ -144,9 +144,20 @@ Wikifier.createInternalLink = function (place, title) {
 
     return el;
 };
-version.extensions.backMacro={major:1,minor:0,revision:0};
-version.extensions.returnMacro={major:1,minor:0,revision:0};
-macros.back=macros['return']={handler:function(){}};
+
+macros.back.onclick = function(back, steps) {
+    var p = document.getElementById("passages").lastChild;
+    while (steps > 0 && p) {
+        p = p.previousSibling;
+        steps--;
+    }
+    state.rewindTo(p);
+};
+macros["return"] = {
+  handler: function(a,b,c,d) { 
+    throwError(a, "<<return>> has no use in Jonah", d.fullMatch());
+  }
+};
 
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
