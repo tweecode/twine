@@ -314,11 +314,8 @@ var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macr
 window.onpopstate = function(e) {
     if (e.state && e.state.length > 0) {
         state.history = e.state;
-    } else {
-        state = new History();
-        state.init();
+        state.display(state.history[0].passage.title,null,"back");
     }
-    state.display(state.history[0].passage.title,null,"back");
 }
 // Used by parameter() and parameterValue()
 var displayParameters = [];

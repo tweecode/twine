@@ -24,7 +24,7 @@ History.prototype.display = function (d, b, a) {
         });
         this.history[0].hash = this.save();
         if (hasPushState && tale.canUndo()) {
-            if(this.history.length <= 2 && window.history.state === null) {
+            if(this.history.length <= 2 && !window.history.state) {
                 window.history.replaceState(this.history, document.title);
             }
             else {

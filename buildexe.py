@@ -57,7 +57,7 @@ setup(
     }],
 
     data_files = [
-        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html'
+        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html',
                                              'targets' + os.sep + 'jonah'      + os.sep + 'code.js']),
         ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html',
                                              'targets' + os.sep + 'sugarcane'  + os.sep + 'code.js']),
