@@ -15,10 +15,23 @@ History.prototype.init = function () {
         }
     }
 };
+History.prototype.closeLinks = function() {
+    var i, p, D, l = document.querySelectorAll("#passages .internalLink");
+    for(i = l.length-1; i >= 0; i--) {
+        D = insertElement(null, "span", null, "disabled");
+        D.innerHTML = l[i].innerHTML;
+        p = l[i].parentNode;
+        p.insertBefore(D, l[i].nextSibling);
+        p.removeChild(l[i]);
+    }
+}
 History.prototype.display = function (E, C, A) {
-    var el, D, F;
+    var el, D, F, p = document.getElementById("passages");
+    if (!tale.canUndo()) {
+        this.closeLinks()
+    }
     if (el = document.getElementById("passage" + E)) {
-        el.id += (new Date).getTime();
+        el.id += "|" + (new Date).getTime();
     }
     D = tale.get(E);
     this.history.unshift({
@@ -26,43 +39,50 @@ History.prototype.display = function (E, C, A) {
         variables: clone(this.history[0].variables)
     });
     F = D.render();
-    if (A != "offscreen") {
-        document.getElementById("passages").appendChild(F)
-        if (A != "quietly") {
-            scrollWindowTo(F);
+    if (A != "offscreen" && A != "quietly") {
+        if (hasTransition) {
+            F.classList.add("transition-in");
+            setTimeout(function () {
+                F.classList.remove("transition-in");
+            }, 1);
+            F.style.visibility = "visible"
+        }
+        p.appendChild(F);
+        scrollWindowTo(F);
+        if (!hasTransition) {
             fade(F, {
                 fade: "in"
-            })
+            });
         }
     }
-    if ((A == "quietly") || (A == "offscreen")) {
+    else {
+        p.appendChild(F);
         F.style.visibility = "visible"
     }
     return F
 };
-History.prototype.rewindTo = function (C) {
+History.prototype.rewindTo = function (C, instant) {
     var B = this;
-    fade(document.getElementById("passages"), {
-        fade: "out",
-        onComplete: A
-    });
 
-    function A() {
-        var p = document.getElementById("passages");
-        while (p.lastChild != C.div) {
-            p.removeChild(p.lastChild);
-            B.history.shift();
+    var p2, p = document.getElementById("passages").lastChild;
+    while (p && p != C) {
+        p2 = p.previousSibling;
+        if (instant) {
+            p.parentNode.removeChild(p);
         }
-        B.history[0].variables = clone(B.history[1].variables);
-        C.passage.reset();
-        var E = C.div.querySelector(".body");
-        if(E) {
-            removeChildren(E);
-            new Wikifier(E, C.passage.text);
+        else if (hasTransition) {
+            p.classList.add("transition-out");
+            setTimeout((function(p) { return function () {
+                    if(p.parentNode) p.parentNode.removeChild(p);
+                }}(p)), 1000);
+        } else {
+            fade(p, {
+                fade: "out", 
+                onComplete: function() { this.parentNode.removeChild(this); }
+            });
         }
-        fade(document.getElementById("passages"), {
-            fade: "in"
-        })
+        B.history.shift();
+        p = p2;
     }
 };
 Passage.prototype.render = function () {
@@ -74,100 +94,83 @@ Passage.prototype.render = function () {
     var D = insertElement(F, 'span', '', 'toolbar');
     for (var B = 0; B < Passage.toolbarItems.length; B++) {
         var C = insertElement(D, 'a');
-        insertText(C, Passage.toolbarItems[B].label(E));
+        insertText(C, Passage.toolbarItems[B].label);
         C.passage = this;
         if (Passage.toolbarItems[B].href) {
             C.href = Passage.toolbarItems[B].href(E)
-        } else {
-            C.href = 'javascript:void(0)';
         }
-        C.title = Passage.toolbarItems[B].tooltip(E);
+        C.title = Passage.toolbarItems[B].tooltip;
         C.onclick = Passage.toolbarItems[B].activate
+        C.div = E;
     }
-    var A = insertElement(E, 'div', '', 'body');
+    var A = insertElement(E, 'div', '', 'content');
+    for (var i in prerender) {
+        (typeof prerender[i] == "function") && prerender[i].call(this,A);
+    }
     new Wikifier(A, this.text);
+    for (i in postrender) {
+        (typeof postrender[i] == "function") && postrender[i].call(this,A);
+    }
     E.onmouseover = function () {
         E.className += ' selected';
     };
     E.onmouseout = function () {
         E.className = E.className.replace(' selected', '');
     };
-    var rewind = E.querySelector(".toolbar a:last-child");
-    rewind && (rewind.div = E);
     return E
 };
 Passage.prototype.reset = function () {
     this.text = this.initialText
 };
 Passage.toolbarItems = [{
-    label: function () {
-        return "bookmark"
-    },
-    tooltip: function () {
-        return "Bookmark this point in the story"
-    },
+    label: "bookmark",
+    tooltip: "Bookmark this point in the story",
     href: function (A) {
         return (state.save(A))
     },
     activate: function () {}
 }, {
-    label: function () {
-        return "rewind to here"
-    },
-    tooltip: function () {},
+    label: "rewind to here",
+    tooltip: "Rewind the story to this point",
     activate: function () {
-        state.rewindTo(this)
+        state.rewindTo(this.div)
     }
 }];
+Wikifier.createInternalLink = function (place, title) {
+    var el = insertElement(place, 'a', title);
 
-version.extensions.choiceMacro = {
-    major: 1,
-    minor: 2,
-    revision: 0
+    if (tale.has(title)) el.className = 'internalLink';
+    else el.className = 'brokenLink';
+
+    el.onclick = function () {
+        var passage = el;
+        while(passage && !~passage.className.indexOf("passage")) {
+            passage = passage.parentNode;
+        }
+        if (passage && passage.parentNode.lastChild != passage) {
+            state.rewindTo(passage, true);
+        }
+        state.display(title, el)
+    };
+
+    if (place) place.appendChild(el);
+
+    return el;
 };
-macros.choice = {
-    handler: function (A, C, D) {
-        var B = document.createElement("a");
-        B.href = "javascript:void(0)";
-        B.className = "internalLink choice";
-        if (D[1]) {
-            B.innerHTML = D[1]
-        } else {
-            B.innerHTML = D[0]
-        }
-        B.onclick = function () {
-            macros.choice.activate(B, D[0])
-        };
-        A.appendChild(B)
-    },
-    activate: function (E, A) {
-        var H = E.parentNode;
-        while (H.className.indexOf("body") == -1) {
-            H = H.parentNode
-        }
-        var G = H.parentNode.id.substr(7),
-            B = H.getElementsByTagName("a"),
-            F = [];
-        for (var C = 0; C < B.length; C++) {
-            if ((B[C] != E) && (B[C].className.indexOf("choice") != -1)) {
-                var D = document.createElement("span");
-                D.innerHTML = B[C].innerHTML;
-                D.className = "disabled";
-                B[C].parentNode.insertBefore(D, B[C].nextSibling);
-                F.push(B[C])
-            }
-        }
-        for (var C = 0; C < F.length; C++) {
-            F[C].parentNode.removeChild(F[C])
-        }
-        tale.get(G).text = "<html>" + H.childNodes[0].innerHTML + "</html>";
-        state.display(A, E)
+
+macros.back.onclick = function(back, steps) {
+    var p = document.getElementById("passages").lastChild;
+    while (steps > 0 && p) {
+        p = p.previousSibling;
+        steps--;
     }
+    state.rewindTo(p);
 };
-version.extensions.backMacro={major:1,minor:0,revision:0};
-macros.back={handler:function(a,b,c){return}};
-version.extensions.returnMacro={major:1,minor:0,revision:0};
-macros.return={handler:function(a,b,c){return}};
+macros["return"] = {
+  handler: function(a,b,c,d) { 
+    throwError(a, "<<return>> has no use in Jonah", d.fullMatch());
+  }
+};
 
 window.onload = function() {
     document.getElementById("restart").onclick=function() {

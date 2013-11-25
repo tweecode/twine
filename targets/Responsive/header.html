@@ -248,7 +248,7 @@ nav li:hover{cursor:pointer;}
 #passages { font-size: 12px; line-height: 16px; }
 .passage ul{padding-top:1.3em;/*text-align:center;*/}
 .passage li{/*display:inline;*/margin-right:6em;}
-a.internalLink,a.externalLink,a.back,a.return{text-decoration:none;}
+a.internalLink,a.externalLink,a.back,a.return{text-decoration:none;cursor: pointer;}
 a.internalLink:hover,a.externalLink:hover,a.back:hover,a.return:hover{text-decoration:underline;}
 a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
@@ -388,6 +388,20 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
   @page { margin: 0.5cm; }
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
+}
+</style>
+<style id="transitionCSS">
+.transition-in {
+	opacity:0;
+	position:absolute;
+}
+.passage:not(.transition-out) {
+	transition: 1s;
+	-webkit-transition: 1s;
+}
+#passages .transition-out {
+	opacity:0 !important;
+	position:absolute;
 }
 </style>
 <style id="storyCSS"></style>

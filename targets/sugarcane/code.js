@@ -16,14 +16,14 @@ History.prototype.init = function () {
     }
 };
 History.prototype.display = function (d, b, a) {
-    var c = tale.get(d);
+    var c = tale.get(d), p = document.getElementById("passages");
     if (a != "back") {
         this.history.unshift({
             passage: c,
             variables: clone(this.history[0].variables)
         });
         this.history[0].hash = this.save();
-        if (hasPushState) {
+        if (hasPushState && tale.canUndo()) {
             if(this.history.length <= 2 && window.history.state === null) {
                 window.history.replaceState(this.history, document.title);
             }
@@ -33,22 +33,38 @@ History.prototype.display = function (d, b, a) {
         }
     }
     var e = c.render();
-    removeChildren(document.getElementById("passages"));
-    document.getElementById("passages").appendChild(e);
     if (a != "quietly") {
-        fade(e, {
-            fade: "in"
-        })
+        if (hasTransition) {
+            for(var i = 0; i < p.childNodes.length; i += 1) {
+                var q = p.childNodes[i];
+                q.classList.add("transition-out");
+                setTimeout((function(a) { return function () {
+                    if(a.parentNode) a.parentNode.removeChild(a);
+                }}(q)), 1000);
+            }
+            e.classList.add("transition-in");
+            setTimeout(function () { e.classList.remove("transition-in"); }, 1);
+            e.style.visibility = "visible"
+            p.appendChild(e);
+        } else {
+            removeChildren(p);
+            p.appendChild(e);
+            fade(e, {
+                fade: "in"
+            })
+        }
     }
     else {
         e.style.visibility = "visible"
     }
-    if (!hasPushState) {
-        this.hash = this.save();
-        window.location.hash = this.hash;
-    } else {
-        var bookmark = document.getElementById("bookmark");
-        bookmark && (bookmark.href = this.save());
+    if (tale.canUndo()) {
+        if (!hasPushState) {
+            this.hash = this.save();
+            window.location.hash = this.hash;
+        } else {
+            var bookmark = document.getElementById("bookmark");
+            bookmark && (bookmark.href = this.save());
+        }
     }
     window.scroll(0, 0)
     return e
@@ -60,8 +76,14 @@ Passage.prototype.render = function () {
     this.setCSS();
     insertElement(b, 'div', '', 'header');
     var a = insertElement(b, 'div', '', 'content');
+    for (var i in prerender) {
+        (typeof prerender[i] == "function") && prerender[i].call(this,a);
+    }
     new Wikifier(a, this.text);
     insertElement(b, 'div', '', 'footer');
+    for (i in postrender) {
+        (typeof postrender[i] == "function") && postrender[i].call(this,a);
+    }
     return b;
 };
 Passage.prototype.excerpt = function () {
@@ -75,6 +97,20 @@ Passage.prototype.excerpt = function () {
     else c = a[0].substr(0, 30) + '...';
     return c;
 };
+Wikifier.createInternalLink = function (place, title) {
+    var el = insertElement(place, 'a', title);
+
+    if (tale.has(title)) el.className = 'internalLink';
+    else el.className = 'brokenLink';
+
+    el.onclick = function () {
+        state.display(title, el)
+    };
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
 
 var Interface = {
     init: function () {
@@ -87,7 +123,7 @@ var Interface = {
                 snapback.parentNode.removeChild(snapback);
             } else snapback.onclick = Interface.showSnapback;
         }
-        if (bookmark && !hasPushState) {
+        if (bookmark && (!hasPushState || !tale.canUndo())) {
             bookmark.parentNode.removeChild(bookmark);
         }
         restart && (restart.onclick = Interface.restart);
@@ -167,111 +203,22 @@ var Interface = {
 };
 window.onload = Interface.init;
 
-version.extensions.backMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros['back'] = {
-  labeltext: '&#171; back',
-  handler: function (a, b, e) {
-    var d = "",
-        labeltouse = this.labeltext,
-        steps = 1,
-        stepsParam = e.indexOf("steps"),
-        stepsParam2 = "",
-        labelParam,    c, el;
-    // Steps parameter
-    if (stepsParam>0) {
-        stepsParam2 = e[stepsParam-1];
-        if (stepsParam2[0] =='$') {
-            try {
-                stepsParam2=eval(Wikifier.parse(stepsParam2));
-            } catch (r) {
-                throwError(a, b+"Macro bad expression: " + r.message)
-                return;
-            }
-        }
-        // Previously, trying to go back more steps than were present in the
-        // history would silently revert to just 1 step. 
-        // Instead, let's just go back to the start.
-        steps = +stepsParam2;
-        if (steps >= state.history.length-1) {
-          steps = state.history.length-2;
-        }
-        d = state.history[steps].passage.title;
-        e.splice(stepsParam-1,2);
-    }
-    // Label parameter
-    labelParam = e.indexOf("label");
-    if (labelParam == -1) {
-        labelParam = e.indexOf("labeldefault");
-    }
-    if (labelParam >-1) {
-        if (!e[labelParam+1]) {
-            throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
-            return;
-        }
-        labeltouse = e[labelParam+1];
-        if (e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
-        e.splice(labelParam,2);
-    }
-    // What's left is the passage name parameter
-    if (!d) {
-      if(e[0]) {
-        if (e[0].charAt(0)=='$') {
-            try {
-                e=eval(Wikifier.parse(e[0]));
-            } catch (r) {
-                throwError(a, b+"Macro bad expression: " + r.message)
-                return;
-            }
-        } 
-        else {
-            e = e[0];
-        }
-        if (tale.get(e).id == undefined) {
-          throwError(a, "The " + e + " passage does not exist");
+macros.back.onclick = function(back, steps) {
+    if (back) {
+        if (tale.canUndo()) {
+          window.history.go(-steps);
           return;
         }
-        for(c = 0; c < state.history.length; c++) {
-            if(state.history[c].passage.title == e) {
-                d = e;
-                steps = c;
-                break;
-            }
+        else while(steps >= 0) {
+          if (state.history.length>1) {
+            state.history.shift();
+          }
+          steps--;
         }
-      }
-      else {
-        d = state.history[1].passage.title;
-      }
+        state.display(state.history[0].passage.title);
     }
-    if (d==undefined) {
-      return;
-    } else {
-      el = document.createElement("a");
-      el.className = "return";
-      el.onclick = function () {
-        if (b=="back") {
-            if (hasPushState) {
-              window.history.back();
-              return;
-            }
-            else while(steps >= 0) {
-              if (state.history.length>1) {
-                state.history.shift();
-              }
-              steps--;
-            }
-        }
-        state.display(d);
-      };
-      el.href = "javascript:void(0)";
-      el.innerHTML = labeltouse;
-      a.appendChild(el);
-    }
-  }
-};
+    else state.display(state.history[steps].passage.title);
+}
 version.extensions.returnMacro = {
     major: 2,
     minor: 0,
@@ -280,17 +227,6 @@ version.extensions.returnMacro = {
 macros["return"] = {
   labeltext: '&#171; return',
   handler: function(a,b,e) { 
-    macros['back'].handler.call(this,a,b,e);
+    macros.back.handler.call(this,a,b,e);
   }
-};
-version.extensions.choiceMacro = {
-    major: 1,
-    minor: 0,
-    revision: 0
-};
-macros.choice = {
-    handler: function (a, b, c) {
-        var el = Wikifier.createInternalLink(a, c[0]);
-        el.innerHTML = c[0];
-    }
 };

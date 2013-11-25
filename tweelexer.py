@@ -28,9 +28,11 @@ class TweeLexer:
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, "Courier")
-
+        
+        self.ctrl.StyleClearAll()
+        
         # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
-        for i in range(1,8):
+        for i in range(0,8):
             self.ctrl.StyleSetFont(i, bodyFont)
             if (i & 1):
                 self.ctrl.StyleSetBold(i, True)
@@ -39,69 +41,57 @@ class TweeLexer:
             if (i & 4):
                 self.ctrl.StyleSetUnderline(i, True)
 
-        self.ctrl.StyleSetFont(self.GOOD_LINK, bodyFont)
+        for i in [self.GOOD_LINK, self.BAD_LINK, self.MARKUP, self.INLINE_STYLE, self.BAD_INLINE_STYLE,
+                  self.HTML, self.HTML_BLOCK, self.MACRO, self.COMMENT, self.SILENT, self.EXTERNAL,
+                  self.IMAGE, self.PARAM, self.PARAM_VAR, self.PARAM_STR, self.PARAM_NUM, self.PARAM_BOOL]:
+            self.ctrl.StyleSetFont(i, bodyFont)
+            
         self.ctrl.StyleSetBold(self.GOOD_LINK, True)
         self.ctrl.StyleSetForeground(self.GOOD_LINK, self.GOOD_LINK_COLOR)
         
-        self.ctrl.StyleSetFont(self.BAD_LINK, bodyFont)
         self.ctrl.StyleSetBold(self.BAD_LINK, True)
         self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
-       
-        self.ctrl.StyleSetFont(self.MARKUP, bodyFont)
+        
         self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
         
-        self.ctrl.StyleSetFont(self.INLINE_STYLE, bodyFont)
         self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
         
-        self.ctrl.StyleSetFont(self.BAD_INLINE_STYLE, bodyFont)
         self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
         self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
         
-        self.ctrl.StyleSetFont(self.HTML, bodyFont)
         self.ctrl.StyleSetBold(self.HTML, True)
         self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
         
-        self.ctrl.StyleSetFont(self.HTML_BLOCK, bodyFont)
         self.ctrl.StyleSetForeground(self.HTML_BLOCK, self.HTML_COLOR)
         
-        self.ctrl.StyleSetFont(self.MACRO, bodyFont)
         self.ctrl.StyleSetBold(self.MACRO, True)
         self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
         
-        self.ctrl.StyleSetFont(self.COMMENT, bodyFont)
         self.ctrl.StyleSetItalic(self.COMMENT, True)
         self.ctrl.StyleSetForeground(self.COMMENT, self.COMMENT_COLOR)
         
-        self.ctrl.StyleSetFont(self.SILENT, bodyFont)
         self.ctrl.StyleSetForeground(self.SILENT, self.COMMENT_COLOR)
         
         self.ctrl.StyleSetFont(self.MONO, monoFont)
         
-        self.ctrl.StyleSetFont(self.EXTERNAL, bodyFont)
         self.ctrl.StyleSetBold(self.EXTERNAL, True)
         self.ctrl.StyleSetForeground(self.EXTERNAL, self.EXTERNAL_COLOR)
         
-        self.ctrl.StyleSetFont(self.IMAGE, bodyFont)
         self.ctrl.StyleSetBold(self.IMAGE, True)
         self.ctrl.StyleSetForeground(self.IMAGE, self.IMAGE_COLOR)
         
-        self.ctrl.StyleSetFont(self.PARAM, bodyFont)
         self.ctrl.StyleSetBold(self.PARAM, True)
         self.ctrl.StyleSetForeground(self.PARAM, self.PARAM_COLOR)
         
-        self.ctrl.StyleSetFont(self.PARAM_VAR, bodyFont)
         self.ctrl.StyleSetBold(self.PARAM_VAR, True)
         self.ctrl.StyleSetForeground(self.PARAM_VAR, self.PARAM_VAR_COLOR)
         
-        self.ctrl.StyleSetFont(self.PARAM_STR, bodyFont)
         self.ctrl.StyleSetBold(self.PARAM_STR, True)
         self.ctrl.StyleSetForeground(self.PARAM_STR, self.PARAM_STR_COLOR)
         
-        self.ctrl.StyleSetFont(self.PARAM_NUM, bodyFont)
         self.ctrl.StyleSetBold(self.PARAM_NUM, True)
         self.ctrl.StyleSetForeground(self.PARAM_NUM, self.PARAM_NUM_COLOR)
         
-        self.ctrl.StyleSetFont(self.PARAM_BOOL, bodyFont)
         self.ctrl.StyleSetBold(self.PARAM_BOOL, True)
         self.ctrl.StyleSetForeground(self.PARAM_BOOL, self.PARAM_BOOL_COLOR)
       
@@ -207,7 +197,7 @@ class TweeLexer:
 
             # markup
             if not inSilence and nextToken == self.MARKUP:
-                if (style <= self.THREE_STYLES and style & m):
+                if (style <= self.THREE_STYLES and style & m) or style == self.MARKUP:
                     self.applyStyle(styleStart, pos-styleStart+2, style) 
                     style = styleStack.pop() if styleStack else self.DEFAULT 
                     styleStart = pos+2
@@ -299,7 +289,7 @@ class TweeLexer:
                 else:
                     self.applyStyle(styleStart, pos-styleStart, style)  
                     styleStack.append(style)
-                    n = re.search("((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;]+);))+",text[pos:],re.U|re.I) 
+                    n = re.match(r"((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;@]+);))+",text[pos+2:],re.U|re.I)
                     if n:
                         style = self.INLINE_STYLE
                         length = len(n.group(0))+2
@@ -337,7 +327,7 @@ class TweeLexer:
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
     GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
-    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(26)
+    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(0,26)
     
     # markup constants
     
@@ -354,7 +344,7 @@ class TweeLexer:
     COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
     
     COMBINED_REGEX = '(' + ')|('.join([ LINK_REGEX, MACRO_REGEX, IMAGE_REGEX, HTML_BLOCK_REGEX, HTML_REGEX, INLINE_STYLE_REGEX,\
-                      MONO_REGEX, COMMENT_REGEX, "''|//|__|^^|~~|==" ]) + ')'
+                      MONO_REGEX, COMMENT_REGEX, r"''|\/\/|__|\^\^|~~|==" ]) + ')'
                       
     # macro param regex - string or number or boolean or variable
     # (Mustn't match all-digit names)
@@ -395,4 +385,3 @@ class TweeLexer:
     PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
-    

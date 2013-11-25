@@ -32,7 +32,7 @@ class PassageFrame (wx.Frame):
         self.syncTimer = None
         self.lastFindRegexp = None
         self.lastFindFlags = None
-        self.usingLexer = True
+        self.usingLexer = self.LEXER_NORMAL
         self.titleInvalid = False
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
@@ -224,6 +224,11 @@ class PassageFrame (wx.Frame):
             otherTitled = self.widget.parent.findWidget(title)
             if otherTitled and otherTitled != self.widget:
                 self.titleLabel.SetLabel("Title is already in use!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
+            elif "|" in title:
+                self.titleLabel.SetLabel("No | symbols allowed!");
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
@@ -465,6 +470,32 @@ class PassageFrame (wx.Frame):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
     
+    def setCssLexer(self):
+        """Basic CSS highlighting"""
+        monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+                           wx.NORMAL, False, "Courier")
+        body = self.bodyInput
+        body.StyleSetFont(0,monoFont);
+        body.StyleClearAll()
+        for i in range(1,17):
+            body.StyleSetFont(i, monoFont)
+        
+        body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeLexer.MACRO_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeLexer.COMMENT_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeLexer.GOOD_LINK_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeLexer.MARKUP_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeLexer.MARKUP_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeLexer.PARAM_BOOL_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR); 
+        body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeLexer.PARAM_VAR_COLOR);
+        body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeLexer.GOOD_LINK_COLOR);
+        
+        for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG, 
+                  wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
+                  wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS]:
+            body.StyleSetBold(i, True)
+        
     def setLexer (self):
         """
         Sets our custom lexer for the body input so long as the passage
@@ -472,17 +503,22 @@ class PassageFrame (wx.Frame):
         """
         oldLexing = self.usingLexer
         
-        if not self.widget.passage.isStoryText():
-            self.usingLexer = False
+        if "stylesheet" in self.widget.passage.tags:
+            if oldLexing != self.LEXER_CSS:
+                self.setCssLexer()
+            self.usingLexer = self.LEXER_CSS
+            self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
+        elif not self.widget.passage.isStoryText():
+            self.usingLexer = self.LEXER_NONE
             self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
         else:
-            self.usingLexer = True
+            self.usingLexer = self.LEXER_NORMAL
             self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
 
         if oldLexing != self.usingLexer:
-            self.bodyInput.StartStyling(0, TweeLexer.TEXT_STYLES)
-            self.bodyInput.SetStyling(len(self.bodyInput.GetText()), TweeLexer.DEFAULT)
-            self.bodyInput.Colourise(0, 0)
+            if oldLexing == self.LEXER_CSS:
+                self.lexer.initStyles()
+            self.bodyInput.Colourise(0, len(self.bodyInput.GetText()))
     
     def updateUI (self, event):
         """Updates menus."""
@@ -619,6 +655,8 @@ class PassageFrame (wx.Frame):
     PASSAGE_FULLSCREEN = 1001
     PASSAGE_EDIT_SELECTION = 1002
     PASSAGE_REBUILD_STORY = 1003
+    
+    [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
     
 #
 # ImageFrame
