@@ -733,7 +733,13 @@ You can also include URLs of .tws and .twee files, too."""
             # Generate a random obfuscateKey
             obfuscateKey = list('anbocpdqerfsgthuivjwkxlymz')
             shuffle(obfuscateKey)
-            defaultText = """--Obfuscate the story's HTML source to prevent possible spoilers? (swap / off)
+            defaultText = """--Let the player undo moves? (on / off)
+--In Sugarcane, this enables the browser's back button.
+--In Jonah, this lets the player click links in previous passages.
+Undo: on
+
+--Obfuscate the story's HTML source to prevent possible
+--spoilers? (swap / off)
 Obfuscate: off
 
 --String of letter pairs to use for swap-style obfuscation

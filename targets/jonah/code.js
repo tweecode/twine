@@ -15,8 +15,21 @@ History.prototype.init = function () {
         }
     }
 };
+History.prototype.closeLinks = function() {
+    var i, p, D, l = document.querySelectorAll("#passages .internalLink");
+    for(i = l.length-1; i >= 0; i--) {
+        D = insertElement(null, "span", null, "disabled");
+        D.innerHTML = l[i].innerHTML;
+        p = l[i].parentNode;
+        p.insertBefore(D, l[i].nextSibling);
+        p.removeChild(l[i]);
+    }
+}
 History.prototype.display = function (E, C, A) {
     var el, D, F, p = document.getElementById("passages");
+    if (!tale.canUndo()) {
+        this.closeLinks()
+    }
     if (el = document.getElementById("passage" + E)) {
         el.id += "|" + (new Date).getTime();
     }

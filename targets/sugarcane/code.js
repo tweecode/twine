@@ -23,7 +23,7 @@ History.prototype.display = function (d, b, a) {
             variables: clone(this.history[0].variables)
         });
         this.history[0].hash = this.save();
-        if (hasPushState) {
+        if (hasPushState && tale.canUndo()) {
             if(this.history.length <= 2 && window.history.state === null) {
                 window.history.replaceState(this.history, document.title);
             }
@@ -57,12 +57,14 @@ History.prototype.display = function (d, b, a) {
     else {
         e.style.visibility = "visible"
     }
-    if (!hasPushState) {
-        this.hash = this.save();
-        window.location.hash = this.hash;
-    } else {
-        var bookmark = document.getElementById("bookmark");
-        bookmark && (bookmark.href = this.save());
+    if (tale.canUndo()) {
+        if (!hasPushState) {
+            this.hash = this.save();
+            window.location.hash = this.hash;
+        } else {
+            var bookmark = document.getElementById("bookmark");
+            bookmark && (bookmark.href = this.save());
+        }
     }
     window.scroll(0, 0)
     return e
@@ -121,7 +123,7 @@ var Interface = {
                 snapback.parentNode.removeChild(snapback);
             } else snapback.onclick = Interface.showSnapback;
         }
-        if (bookmark && !hasPushState) {
+        if (bookmark && (!hasPushState || !tale.canUndo())) {
             bookmark.parentNode.removeChild(bookmark);
         }
         restart && (restart.onclick = Interface.restart);
@@ -203,7 +205,7 @@ window.onload = Interface.init;
 
 macros.back.onclick = function(back, steps) {
     if (back) {
-        if (hasPushState) {
+        if (tale.canUndo()) {
           window.history.go(-steps);
           return;
         }

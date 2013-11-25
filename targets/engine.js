@@ -793,7 +793,11 @@ Passage.prototype.setCSS = function() {
 function Tale() {
     this.passages = {};
     var a,b,c,lines,i,kv,ns,nsc,nope,
-        settings = this.storysettings = {},
+        settings = this.storysettings = {
+            lookup: function(a) {
+                return !~["0", "off", "false"].indexOf((this[a]+"").toLowerCase());
+            }
+        },
         tiddlerTitle = '';
     function deswap(t, k) {
         var i,c,p,p1,up,r = '';
@@ -819,7 +823,7 @@ function Tale() {
         if (c.getAttribute && c.getAttribute("tiddler") == 'StorySettings') {
             lines = new Passage('StorySettings', c, 0, null, null).text.split('\n');
             for (i in lines) {
-                if (lines[i].indexOf(':') > -1) {
+                if (typeof lines[i] == "string" && lines[i].indexOf(':') > -1) {
                     kv = lines[i].split(':');
                     kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
                     kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
@@ -902,6 +906,9 @@ Tale.prototype.lookup = function (h, g, a) {
         }
     });
     return d
+};
+Tale.prototype.canUndo = function() {
+    return this.storysettings.lookup('undo');
 };
 function Wikifier(place, source) {
     this.source = source;
