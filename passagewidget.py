@@ -554,6 +554,28 @@ class PassageWidget:
                     excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
                         * min(1.75,max(1,1.75*size.width/260 if (self.passage.isAnnotation() and line) else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
+                    
+            if self.passage.isStoryText() and self.passage.tags:
+                
+                tagBarHeight = excerptFontHeight + (2 * inset)
+                tagBarColor = dim((226, 201, 162), self.dimmed)
+                gc.SetPen(wx.Pen(tagBarColor, 1))
+                gc.SetBrush(wx.Brush(tagBarColor))
+                gc.DrawRectangle(0, size.height-tagBarHeight-1, size.width, tagBarHeight+1)            
+    
+                # draw tags
+                    
+                tagTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
+                
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.SetFont(excerptFont, tagTextColor)
+                else:
+                    gc.SetFont(excerptFont)
+                    gc.SetTextForeground(tagTextColor)
+                    
+                text = wordWrap(" ".join(self.passage.tags), size.width - (inset * 2), gc)[0]
+                    
+                gc.DrawText(text, inset*2, (size.height-tagBarHeight))
         else:
             # greek title
             titleBarHeight = PassageWidget.GREEK_HEIGHT*3
@@ -595,6 +617,26 @@ class PassageWidget:
                         
                     height += PassageWidget.GREEK_HEIGHT * 2
                     chars -= 80
+            # greek tags
+            
+            if self.passage.isStoryText() and self.passage.tags:
+                
+                tagBarHeight = PassageWidget.GREEK_HEIGHT*3
+                tagBarColor = dim((226, 201, 162), self.dimmed)
+                gc.SetPen(wx.Pen(tagBarColor, 1))
+                gc.SetBrush(wx.Brush(tagBarColor))
+                height = size.height-tagBarHeight-2
+                width = size.width-4
+                gc.DrawRectangle(2, height, width, tagBarHeight)
+                
+                gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
+                height += inset
+                width = (width-inset*2)/2
+                
+                if isinstance(gc, wx.GraphicsContext):
+                    gc.StrokeLine(inset, height, width, height)
+                else:
+                    gc.DrawLine(inset, height, width, height)
                 
         if self.passage.isImage():
             if self.bitmap:

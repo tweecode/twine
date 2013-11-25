@@ -345,10 +345,15 @@ macros.display = {
             output = eval(name);
         }
         catch(e) {
-            if (!/["']/.exec(name))
-                e.message += " (did you intend to put a string?)"
-            throwError(place, "bad expression: " + e.message, parser.fullMatch());
-            return
+            // Last-ditch attempt
+            if (tale.get(name).id) {
+                output = name;
+            }
+            else {
+                throwError(place, "<<" + macroName + ">> bad expression: " + e.message,
+                    parser.fullMatch());
+                return
+            }
         }
         t = tale.get(output+"");
         if (!output) {

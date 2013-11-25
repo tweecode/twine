@@ -103,7 +103,7 @@ Passage.prototype.render = function () {
         C.onclick = Passage.toolbarItems[B].activate
         C.div = E;
     }
-    var A = insertElement(E, 'div', '', 'content');
+    var A = insertElement(E, 'div', '', 'body content');
     for (var i in prerender) {
         (typeof prerender[i] == "function") && prerender[i].call(this,A);
     }

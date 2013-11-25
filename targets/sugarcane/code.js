@@ -75,7 +75,7 @@ Passage.prototype.render = function () {
     this.setTags(b);
     this.setCSS();
     insertElement(b, 'div', '', 'header');
-    var a = insertElement(b, 'div', '', 'content');
+    var a = insertElement(b, 'div', '', 'body content');
     for (var i in prerender) {
         (typeof prerender[i] == "function") && prerender[i].call(this,a);
     }
