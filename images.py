@@ -8,6 +8,24 @@
 
 import sys, cStringIO, wx, re
     
+def AddURIPrefix(text, mimeType):
+    """ Adds the Data URI MIME prefix to the base64 data"""
+    # SVG MIME-type is the same for both images and fonts
+    if mimeType in 'gif|jpg|jpeg|png|webp|svg':
+        mimeGroup = "image/"
+    elif mimeType in 'ttf|woff|otf':
+        mimeGroup = "application/font-"
+    else:
+        # Desperate (probably incorrect) guess
+        mimeGroup = "application/x-"
+    
+    # Correct certain MIME types
+    if mimeType == "jpg":
+        mimeType == "jpeg"
+    elif mimeType == "svg":
+        mimeType += "+xml"
+    return "data:" + mimeGroup + mimeType + ";base64," + text
+
 def RemoveURIPrefix(text):
     """Removes the Data URI part of the base64 data"""
     index = text.find(';base64,')

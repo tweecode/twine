@@ -6,7 +6,7 @@
 # instance of a StoryPanel, but it also has a menu bar and toolbar.
 #
 
-import sys, re, os, urllib, pickle, wx, codecs, time, tempfile
+import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
@@ -243,9 +243,15 @@ class StoryFrame (wx.Frame):
  
         self.storyMenu.AppendSeparator()
         
-        self.storyMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, '&Import Image...')
+        self.importImageMenu = wx.Menu()
+        self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, 'From &File...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
-        self.storyMenu.Append(StoryFrame.STORY_IMPORT_FONT, '&Import Font...')
+        self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE_URL, 'From Web &URL...')
+        self.Bind(wx.EVT_MENU, self.importImageURL, id = StoryFrame.STORY_IMPORT_IMAGE_URL)
+        
+        self.storyMenu.AppendMenu(wx.ID_ANY, 'Import &Image', self.importImageMenu)
+        
+        self.storyMenu.Append(StoryFrame.STORY_IMPORT_FONT, 'Import &Font...')
         self.Bind(wx.EVT_MENU, self.importFontDialog, id = StoryFrame.STORY_IMPORT_FONT)
         
         self.storyMenu.AppendSeparator()
@@ -598,6 +604,30 @@ class StoryFrame (wx.Frame):
         except:
             self.app.displayError('importing')
     
+    def importImageURL(self, event = None):
+        dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, PNGs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
+        if dialog.ShowModal() == wx.ID_OK:
+            try:
+                # Download the file
+                url = dialog.GetValue()
+                urlfile = urllib.urlopen(url)
+                path = urlparse.urlsplit(url)[2]
+                title = os.path.splitext(os.path.basename(path))[0]
+                file = urlfile.read().encode('base64').replace('\n', '')
+                
+                # Now that the file's read, check the info
+                maintype = urlfile.info().getmaintype();
+                if maintype != "image":
+                    raise Exception("The server served "+maintype+" instead of an image.")
+                # Convert the file
+                mimeType = urlfile.info().gettype()
+                print mimeType
+                urlfile.close()
+                text = "data:"+mimeType+";base64,"+file
+                self.importImage(text, title)
+            except:
+                self.app.displayError('importing from the web')
+                            
     def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
            replace is a Tiddler, if any, that will be replaced by the image."""
@@ -611,14 +641,15 @@ class StoryFrame (wx.Frame):
                                    'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             file = dialog.GetFile() if useImageDialog else dialog.GetPath()
-            if not replace:
-                self.importImage(file)
-            else:
-                try:
+            try:
+                if not replace:
+                    text, title = self.openFileAsBase64(file)
+                    self.importImage(text, title)
+                else:
                     replace.passage.text = self.openFileAsBase64(file)[0]
                     replace.updateBitmap()
-                except IOError:
-                    self.app.displayError('importing an image')
+            except IOError:
+                self.app.displayError('importing an image')
     
     def importFontDialog(self, event = None):
         """Asks the user to choose a font file to import, then imports into the current story."""
@@ -631,24 +662,7 @@ class StoryFrame (wx.Frame):
         """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
         file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
-        # Remove the extension's dot
-        mimeType = mimeType[1:]
-        
-        # SVG MIME-type is the same for both images and fonts
-        if mimeType in 'gif|jpg|jpeg|png|webp|svg':
-            mimeGroup = "image/"
-        elif mimeType in 'ttf|woff|otf':
-            mimeGroup = "application/font-"
-        else:
-            # Desperate (probably incorrect) guess
-            mimeGroup = "application/x-"
-        
-        # Correct certain MIME types
-        if mimeType == "jpg":
-            mimeType == "jpeg"
-        elif mimeType == "svg":
-            mimeType += "+xml"
-        return ("data:" + mimeGroup + mimeType + ";base64," + file64, title)
+        return (images.AddURIPrefix(file64, mimeType[1:]), title)
     
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""
@@ -662,25 +676,18 @@ class StoryFrame (wx.Frame):
             except: pass
         return title
     
-    def importImage(self, file, showdialog = True):
-        """Imports an image into the story as an image passage."""
-        try:
-            text, title = self.openFileAsBase64(file)
-            
-            # Check for title usage
-            title = self.newTitle(title)
-            
-            self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
-            if showdialog:
-                dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
-                                          'You can include the image in your passages with this syntax:\n\n' + \
-                                          '[img[' + title + ']]', 'Image added', \
-                                          wx.ICON_INFORMATION | wx.OK)
-                dialog.ShowModal()
-            return True
-        except IOError:
-            self.app.displayError('importing an image')
-            return False
+    def importImage(self, text, title, showdialog = True):
+        """Imports an image into the story as an image passage."""          
+        # Check for title usage
+        title = self.newTitle(title)
+        
+        self.storyPanel.newWidget(text = text, title = title, tags = ['Twine.image'])
+        if showdialog:
+            dialog = wx.MessageDialog(self, 'Image file imported successfully.\n' + \
+                                      'You can include the image in your passages with this syntax:\n\n' + \
+                                      '[img[' + title + ']]', 'Image added', \
+                                      wx.ICON_INFORMATION | wx.OK)
+            dialog.ShowModal()
         
     def importFont(self, file, showdialog = True):
         """Imports a font into the story as a font passage."""
@@ -1198,8 +1205,8 @@ Modernizr: off
     VIEW_TOOLBAR = 303
     
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
-     STORY_IMPORT_IMAGE, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,417)
+     STORY_IMPORT_IMAGE, STORY_IMPORT_IMAGE_URL, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,418)
     
     STORY_FORMAT_BASE = 501
     

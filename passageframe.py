@@ -475,7 +475,7 @@ class PassageFrame (wx.Frame):
         monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, "Courier")
         body = self.bodyInput
-        body.StyleSetFont(0,monoFont);
+        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT,monoFont);
         body.StyleClearAll()
         for i in range(1,17):
             body.StyleSetFont(i, monoFont)
@@ -493,7 +493,7 @@ class PassageFrame (wx.Frame):
         
         for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG, 
                   wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
-                  wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS]:
+                  wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, wx.stc.STC_CSS_DIRECTIVE]:
             body.StyleSetBold(i, True)
         
     def setLexer (self):
@@ -510,13 +510,16 @@ class PassageFrame (wx.Frame):
             self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
         elif not self.widget.passage.isStoryText():
             self.usingLexer = self.LEXER_NONE
+            self.bodyInput.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, wx.Font(self.app.config.ReadInt('windowedFontSize'),
+                                                   wx.MODERN, wx.NORMAL, wx.NORMAL, False, "Courier"))
+            self.bodyInput.StyleClearAll()
             self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
         else:
             self.usingLexer = self.LEXER_NORMAL
             self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
 
         if oldLexing != self.usingLexer:
-            if oldLexing == self.LEXER_CSS:
+            if self.usingLexer == self.LEXER_NORMAL:
                 self.lexer.initStyles()
             self.bodyInput.Colourise(0, len(self.bodyInput.GetText()))
     
@@ -629,7 +632,7 @@ class PassageFrame (wx.Frame):
         
     def applyPrefs (self):
         """Applies user prefs to this frame."""
-        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL,
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         defaultStyle = self.bodyInput.GetStyleAt(0)
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
@@ -792,11 +795,13 @@ class ImageFrame (PassageFrame):
         self.imageSizer.Clear(True)
         self.gif = None
         self.image = None
+        size = (32,32)
         
         t = self.widget.passage.text
         # Get the bitmap (will be used as inactive for GIFs)
         bmp = self.widget.bitmap
-        size = bmp.GetSize()
+        if bmp:
+            size = bmp.GetSize()
         
         # GIF animation
         if t.startswith("data:image/gif"):
@@ -814,15 +819,18 @@ class ImageFrame (PassageFrame):
             self.gif.Play()
         
         # Static images
-        else:
-            if bmp:
-                self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
-                self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
-                self.image.SetBitmap(bmp)
+        elif bmp:
+            self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+            self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+            self.image.SetBitmap(bmp)
         
         self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
         self.imageScroller.SetScrollRate(2,2)
         self.Refresh()
+        
+        # Update copy menu
+        copyItem = self.menus.FindItemById(wx.ID_COPY)
+        copyItem.Enable(not not bmp)
         
     def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
@@ -857,7 +865,7 @@ class ImageFrame (PassageFrame):
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
-        if clip.Open():
+        if clip.Open() and self.image:
             clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
