@@ -198,8 +198,14 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
-        info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project and is used under the terms of its license.')
+        info.SetDescription('\nAn open-source tool for telling interactive, nonlinear stories\nwritten by Chris Klimas\n\n1.4 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
+        info.SetCopyright('The Twine development application is free software: you can redistribute it and/or modify'
+                          + '\nit under the terms of the GNU General Public License as published by the Free Software'
+                          + '\nFoundation, either version 3 of the License, or (at your option) any later version.'
+                          +'\n\nThis program is distributed in the hope that it will be useful, but without any warranty;'
+                          + '\nwithout even the implied warranty of merchantability or fitness for a particular purpose.'
+                          + '\nSee the GNU General Public License for more details.\n\nThe Javascript game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
+                          +'\nand is used under the terms of its license.\n')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):

@@ -621,7 +621,6 @@ class StoryFrame (wx.Frame):
                     raise Exception("The server served "+maintype+" instead of an image.")
                 # Convert the file
                 mimeType = urlfile.info().gettype()
-                print mimeType
                 urlfile.close()
                 text = "data:"+mimeType+";base64,"+file
                 self.importImage(text, title)
@@ -742,20 +741,26 @@ You can also include URLs of .tws and .twee files, too."""
             shuffle(obfuscateKey)
             defaultText = """--Let the player undo moves? (on / off)
 --In Sugarcane, this enables the browser's back button.
---In Jonah, this lets the player click links in previous passages.
+--In Jonah, this lets the player click links in previous
+--passages.
+
 Undo: on
 
 --Obfuscate the story's HTML source to prevent possible
 --spoilers? (swap / off)
+
 Obfuscate: off
 
 --String of letter pairs to use for swap-style obfuscation
+
 ObfuscateKey: """ + ''.join(obfuscateKey) + """
 
 --Include the jQuery script library? (on / off)
+
 jQuery: off
 
 --Include the Modernizr script library? (on / off)
+
 Modernizr: off
 """
         
