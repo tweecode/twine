@@ -95,10 +95,10 @@ class StoryFrame (wx.Frame):
         
         importMenu = wx.Menu()
 
-        importMenu.Append(StoryFrame.FILE_IMPORT_SOURCE, 'Twee Source &Code...')
-        self.Bind(wx.EVT_MENU, self.importSourceDialog, id = StoryFrame.FILE_IMPORT_SOURCE) 
         importMenu.Append(StoryFrame.FILE_IMPORT_HTML, 'Compiled &HTML File...')
         self.Bind(wx.EVT_MENU, self.importHtmlDialog, id = StoryFrame.FILE_IMPORT_HTML) 
+        importMenu.Append(StoryFrame.FILE_IMPORT_SOURCE, 'Twee Source &Code...')
+        self.Bind(wx.EVT_MENU, self.importSourceDialog, id = StoryFrame.FILE_IMPORT_SOURCE) 
         
         fileMenu.AppendMenu(wx.ID_ANY, '&Import', importMenu)
         

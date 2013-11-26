@@ -1661,10 +1661,11 @@ function scriptEval(s) {
     }
 }
 /* Init function */
+var $;
 function main() {
     // Used by old custom scripts.
     // Cedes to jQuery if it exists.
-    var $ = window.$ || function(a) {
+    $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
     tale = window.tale = new Tale();
