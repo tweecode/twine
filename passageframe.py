@@ -227,8 +227,8 @@ class PassageFrame (wx.Frame):
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
-            elif "|" in title:
-                self.titleLabel.SetLabel("No | symbols allowed!");
+            elif "|" in title or "]" in title:
+                self.titleLabel.SetLabel("No | or ] symbols allowed!");
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
@@ -244,7 +244,7 @@ class PassageFrame (wx.Frame):
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.modified = time.localtime()
         # Preserve the special (uneditable) tags
-        self.widget.passage.tags = []#[i for i in self.widget.passage.tags if i in TiddlyWiki.SPECIAL_TAGS]
+        self.widget.passage.tags = []
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):

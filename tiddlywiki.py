@@ -481,9 +481,15 @@ class Tiddler:
 			choices = []
 			choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
 			for block in choiceBlocks:
-				item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|(?:\[\[([^\]]*)\]\])|([^"\'\s]\S*)', block)
+				# New style <<choice>>
+				item = re.match(TweeLexer.LINK_REGEX, block)
 				if item:
-					choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
+					choices.append(m.group(2) or m.group(1))
+				else:
+					# Old style
+					item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\s]\S*)', block)
+					if item:
+						choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
 			
 			# <<actions '' ''>>
 			
