@@ -25,21 +25,22 @@ History.prototype.closeLinks = function() {
         p.removeChild(l[i]);
     }
 }
-History.prototype.display = function (E, C, A) {
+History.prototype.display = function (name, C, type, callback) {
     var el, D, F, p = document.getElementById("passages");
     if (!tale.canUndo()) {
         this.closeLinks()
     }
-    if (el = document.getElementById("passage" + E)) {
+    if (el = document.getElementById("passage" + name)) {
         el.id += "|" + (new Date).getTime();
     }
-    D = tale.get(E);
+    D = tale.get(name);
     this.history.unshift({
         passage: D,
         variables: clone(this.history[0].variables)
     });
+    typeof callback == "function" && callback();
     F = D.render();
-    if (A != "offscreen" && A != "quietly") {
+    if (type != "offscreen" && type != "quietly") {
         if (hasTransition) {
             F.classList.add("transition-in");
             setTimeout(function () {
@@ -136,7 +137,7 @@ Passage.toolbarItems = [{
         state.rewindTo(this.div)
     }
 }];
-Wikifier.createInternalLink = function (place, title) {
+Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
     if (tale.has(title)) el.className = 'internalLink';
@@ -150,7 +151,7 @@ Wikifier.createInternalLink = function (place, title) {
         if (passage && passage.parentNode.lastChild != passage) {
             state.rewindTo(passage, true);
         }
-        state.display(title, el)
+        state.display(title, el, null, callback)
     };
 
     if (place) place.appendChild(el);

@@ -81,7 +81,7 @@ Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
 };
 String.prototype.readMacroParams = function (keepquotes) {
-    var re = /(?:\s*)(?:(?:"([^"]*)")|(?:'([^']*)')|(?:\[\[([^\]]*)\]\])|([^"'\s]\S*))/mg,
+    var re = /(?:\s*)(?:(?:"([^"]*)")|(?:'([^']*)')|(?:\[\[((?:[^\]]|\](?!\]))*)\]\])|([^"'\s]\S*))/mg,
         params = [];
     do {
         var val, exec = re.exec(this);
@@ -430,7 +430,7 @@ macros.set = {
         try {
             return eval(Wikifier.parse(expression))
         } catch (e) {
-            throwError(a, "bad expression: " + e.message, parser.fullMatch())
+            throwError(a, "bad expression: " + e.message, parser ? parser.fullMatch() : expression)
         }
     }
 };
@@ -613,8 +613,9 @@ version.extensions.choiceMacro = {
     revision: 0
 };
 macros.choice = {
-    handler: function (A, C, D) {
-        var passage, id, text = D[1] || D[0].split("|")[0],
+    handler: function (A, C, D, parser) {
+        var passage, onclick, link, id, match, temp,
+            text = D[1] || D[0].split("|")[0],
             clicked = state.history[0].variables["choice clicked"] 
                 || (state.history[0].variables["choice clicked"] = {}),
         // Get enclosing passage name
@@ -623,20 +624,30 @@ macros.choice = {
             passage = passage.parentNode;
         }
         // Get ID of the "choice clicked" entry
-        id = (passage && passage.id.replace(/\|.*$/,'') + "|" + text);
+        id = (passage && passage.id.replace(/\|[^\]]*$/,'') + "|" + text);
         
         if (id && clicked[id]) {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
-            B = Wikifier.createInternalLink(A, D[0].split("|")[1] || D[0]);
-            B.innerHTML = text;
-            B.className += " " + C;
-            B.onclick = (function(B, onclick) { return function() {
-                onclick();
+            match = new RegExp(linkFormatter.lookahead).exec(parser.fullArgs());
+            
+            if (match) {
+                temp = document.createElement("p");
+                new Wikifier(temp, parser.fullArgs());
+                link = temp.firstChild;
+                A.appendChild(link);
+            }
+            else {
+                link = Wikifier.createInternalLink(A, D[0]);
+                setPageElement(link, null, text);
+            }
+            link.onclick = (function(link, onclick) { return function() {
+                onclick && onclick();
                 clicked[id] = true;
-                B.outerHTML = "<span class=disabled>" + B.innerHTML + "</span>";
-            }}(B, B.onclick));
+                link.outerHTML = "<span class=disabled>" + link.innerHTML + "</span>";
+            }}(link, link.onclick));
+            link.className += " " + C;
         }
     }
 };
@@ -1104,7 +1115,7 @@ Wikifier.formatHelpers = {
         }
     }
 };
-var imageFormatter;
+var imageFormatter, linkFormatter;
 Wikifier.formatters = [
 {
     name: "table",
@@ -1339,33 +1350,36 @@ Wikifier.formatters = [
         } while (matched);
     }
 },
-{
+(linkFormatter = {
     name: "prettyLink",
     match: "\\[\\[",
-    lookahead: "\\[\\[([^\\|\\]]*?)(?:(\\]\\])|(\\|(.*?)\\]\\]))",
-    terminator: "\\|",
+    lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
+    callback: function(out, text) { return function() { macros.set.run(out, text); } },
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var title, link, callback, lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source)
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[2]) // Simple bracketed link
-        {
-            var title = Wikifier.parsePassageTitle(lookaheadMatch[1]),
-                link = Wikifier.createInternalLink(w.output, title);
-            setPageElement(link, null, title);
-            w.nextMatch += lookaheadMatch[1].length + 2;
-        } else if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[3]) // Pretty bracketed link
-        {
-            var link, title = Wikifier.parsePassageTitle(lookaheadMatch[4]);
-            if (tale.has(title))
-                link = Wikifier.createInternalLink(w.output, title);
-            else
-                link = Wikifier.createExternalLink(w.output, lookaheadMatch[4]);
-            setPageElement(link, null, w.source.substring(w.nextMatch, w.nextMatch + lookaheadMatch[1].length));
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
+            if (lookaheadMatch[3]) { // Code
+                callback = this.callback(w.output, lookaheadMatch[3]);
+            }
+            if (!lookaheadMatch[2]) // Simple bracketed link
+            {
+                title = Wikifier.parsePassageTitle(lookaheadMatch[1]);
+                link = Wikifier.createInternalLink(w.output, title, callback);
+                setPageElement(link, null, title);
+            } else { // Pretty bracketed link
+                title = Wikifier.parsePassageTitle(lookaheadMatch[2]);
+                if (tale.has(title))
+                    link = Wikifier.createInternalLink(w.output, title, callback);
+                else
+                    link = Wikifier.createExternalLink(w.output, lookaheadMatch[2], callback);
+                setPageElement(link, null, w.source.substring(w.nextMatch, w.nextMatch + lookaheadMatch[1].length));
+            }
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
-},
+}),
 {
     name: "urlLink",
     match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",

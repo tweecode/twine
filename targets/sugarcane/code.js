@@ -15,14 +15,17 @@ History.prototype.init = function () {
         }, 250)
     }
 };
-History.prototype.display = function (d, b, a) {
-    var c = tale.get(d), p = document.getElementById("passages");
-    if (a != "back") {
+History.prototype.display = function (title, b, type, callback) {
+    var c = tale.get(title), p = document.getElementById("passages");
+    if (type != "back") {
         this.history.unshift({
             passage: c,
             variables: clone(this.history[0].variables)
         });
         this.history[0].hash = this.save();
+        // This must come between the history push and the state push
+        // since it executes 'between' the passages.
+        typeof callback == "function" && callback();
         if (hasPushState && tale.canUndo()) {
             if(this.history.length <= 2 && !window.history.state) {
                 window.history.replaceState(this.history, document.title);
@@ -33,7 +36,7 @@ History.prototype.display = function (d, b, a) {
         }
     }
     var e = c.render();
-    if (a != "quietly") {
+    if (type != "quietly") {
         if (hasTransition) {
             for(var i = 0; i < p.childNodes.length; i += 1) {
                 var q = p.childNodes[i];
@@ -44,7 +47,7 @@ History.prototype.display = function (d, b, a) {
             }
             e.classList.add("transition-in");
             setTimeout(function () { e.classList.remove("transition-in"); }, 1);
-            e.style.visibility = "visible"
+            e.style.visibility = "visible";
             p.appendChild(e);
         } else {
             removeChildren(p);
@@ -97,14 +100,14 @@ Passage.prototype.excerpt = function () {
     else c = a[0].substr(0, 30) + '...';
     return c;
 };
-Wikifier.createInternalLink = function (place, title) {
+Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
     if (tale.has(title)) el.className = 'internalLink';
     else el.className = 'brokenLink';
 
     el.onclick = function () {
-        state.display(title, el)
+        state.display(title, el, null, callback)
     };
 
     if (place) place.appendChild(el);

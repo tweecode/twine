@@ -140,6 +140,22 @@ class TweeLexer:
         wx.stc.EVT_STC_STYLENEEDED event.
         """
         
+        def applyParamStyle(pos2, contents):
+            iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
+            for param in iterator:
+                if param.group(1):
+                    # String
+                    self.applyStyle(pos2 + param.start(1), len(param.group(1)), self.PARAM_STR)
+                elif param.group(2):
+                    # Number
+                    self.applyStyle(pos2 + param.start(2), len(param.group(2)), self.PARAM_NUM)
+                elif param.group(3):
+                    # Boolean or null
+                    self.applyStyle(pos2 + param.start(3), len(param.group(3)), self.PARAM_BOOL)
+                elif param.group(4):
+                    # Variable
+                    self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
+        
         def applyMacroStyle(pos, m):
             length = m.end(0)
             self.applyStyle(pos, length, self.MACRO)
@@ -148,21 +164,7 @@ class TweeLexer:
             if contents:
                 pos2 = pos + m.start(2)
                 self.applyStyle(pos2, len(m.group(2)), self.PARAM)
-                # Do the match
-                iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
-                for param in iterator:
-                    if param.group(1):
-                        # String
-                        self.applyStyle(pos2 + param.start(1), len(param.group(1)), self.PARAM_STR)
-                    elif param.group(2):
-                        # Number
-                        self.applyStyle(pos2 + param.start(2), len(param.group(2)), self.PARAM_NUM)
-                    elif param.group(3):
-                        # Boolean or null
-                        self.applyStyle(pos2 + param.start(3), len(param.group(3)), self.PARAM_BOOL)
-                    elif param.group(4):
-                        # Variable
-                        self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
+                applyParamStyle(pos2, contents)
         
         def badLinkStyle(dest, external = False):
             # Apply style for a link destination which does not seem to be an existent passage
@@ -229,6 +231,9 @@ class TweeLexer:
                 # Apply a plainer style to the text, if any
                 if m.group(2):
                     self.applyStyle(pos + m.start(1), len(m.group(1)), self.BOLD)
+                if m.group(3):
+                    self.applyStyle(pos + m.start(3), len(m.group(3)), self.PARAM)
+                    applyParamStyle(pos + m.start(3), m.group(3))
                 pos += length-1
                 styleStart = pos+1
                  
@@ -334,7 +339,7 @@ class TweeLexer:
     MARKUPS = {"''" : BOLD, "//" : ITALIC, "__" : UNDERLINE, "^^" : MARKUP, "~~" : MARKUP, "==" : MARKUP}
     
     # regexes
-    LINK_REGEX = r"\[\[([^\|\]]*?)(?:(?:\]\])|(?:\|(.*?)\]\]))"
+    LINK_REGEX = r"\[\[([^\|\]]*?)(?:\|(.*?))?\](\[.*?\])?\]"
     MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
     IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
     HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
