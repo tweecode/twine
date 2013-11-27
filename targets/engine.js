@@ -566,35 +566,40 @@ macros['remember'] = {
 
 version.extensions.SilentlyMacro = {
     major: 1,
-    minor: 0,
+    minor: 1,
     revision: 0
 };
-macros.silently = {
-    handler: function (g, e, f, parser) {
-        var h = insertElement(null, 'div');
-        var k = parser.source.indexOf('>>', parser.matchStart) + 2;
-        var a = parser.source.slice(k);
-        var d = -1;
-        var c = '';
-        var l = 0;
-        for (var i = 0; i < a.length; i++) {
-            if (a.substr(i, 15) == '<<endsilently>>') {
+macros.nobr = macros.silently = {
+    handler: function (place, macroName, f, parser) {
+        var i, h = insertElement(null, 'div'),
+            k = parser.source.indexOf('>>', parser.matchStart) + 2,
+            a = parser.source.slice(k),
+            d = -1,
+            c = '',
+            l = 0;
+        for (i = 0; i < a.length; i++) {
+            if (a.substr(i, 15) == '<<end' + macroName + '>>') {
                 if (l == 0) {
                     d = k + i + 15;
                     break;
                 } else {
                     l--;
                 }
-            } else if (a.substr(i, 12) == '<<silently>>') {
+            } else if (a.substr(i, 12) == '<<' + macroName + '>>') {
                 l++;
             }
-            c += a.charAt(i);
+            if (macroName == "nobr" && a.charAt(i) == '\n') {
+                c += "\u200c"; // Zero-width space
+            }
+            else {
+                c += a.charAt(i);
+            }
         };
         if (d != -1) {
-            new Wikifier(h, c);
+            new Wikifier(macroName == "nobr" ? place : h, c);
             parser.nextMatch = d;
         } else {
-            throwError(g, "can't find matching endsilently", parser.fullMatch());
+            throwError(place, "can't find matching end" + macroName, parser.fullMatch());
         }
     }
 };
