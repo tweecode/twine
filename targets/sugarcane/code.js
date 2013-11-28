@@ -82,7 +82,7 @@ Passage.prototype.render = function () {
     for (var i in prerender) {
         (typeof prerender[i] == "function") && prerender[i].call(this,a);
     }
-    new Wikifier(a, this.text);
+    new Wikifier(a, this.processText());
     insertElement(b, 'div', '', 'footer');
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,a);

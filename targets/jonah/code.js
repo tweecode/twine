@@ -108,7 +108,7 @@ Passage.prototype.render = function () {
     for (var i in prerender) {
         (typeof prerender[i] == "function") && prerender[i].call(this,A);
     }
-    new Wikifier(A, this.text);
+    new Wikifier(A, this.processText());
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }

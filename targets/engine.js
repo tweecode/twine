@@ -367,7 +367,7 @@ macros.display = {
                 scriptEval(t);
             }
             else {
-                new Wikifier(place, tale.get(output+"").text);
+                new Wikifier(place, tale.get(output+"").processText());
             }
             displayParameters = oldDisplayParams; 
         }
@@ -456,13 +456,13 @@ macros["if"] = {
                 if (nesting < 0) {
                     endPos = srcOffset + i + 9;
                     conditions.push(currentCond.trim());
-                    clauses.push(currentClause.trim());
+                    clauses.push(currentClause);
                     break;
                 }
             }
             if ((src.substr(i, 6) == "<<else") && nesting == 0) {
                 conditions.push(currentCond.trim());
-                clauses.push(currentClause.trim());
+                clauses.push(currentClause);
                 currentClause="";
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
@@ -808,6 +808,17 @@ Passage.prototype.setCSS = function() {
         c.setAttribute('data-tags', tags.join(' '));
     }
 };
+Passage.prototype.processText = function() {
+	var ret = this.text;
+	if (~this.tags.indexOf("nobr")) {
+		ret = ret.replace(/\n/g,'\u200c');
+	}
+	if (~this.tags.indexOf("Twine.image")) {
+		ret = "[img[" + ret + "]]"
+	}
+	return ret;
+};
+
 function Tale() {
     this.passages = {};
     var a,b,c,lines,i,kv,ns,nsc,nope,
