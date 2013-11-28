@@ -508,7 +508,7 @@ class PassageFrame (wx.Frame):
                 self.setCodeLexer(css = True)
                 self.usingLexer = self.LEXER_CSS
                 self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
-        elif not self.widget.passage.isStoryText() and "annotation" not in self.widget.passage.tags:
+        elif not self.widget.passage.isStoryText() and not self.widget.passage.isAnnotation():
             if oldLexing != self.LEXER_NONE:
                 self.usingLexer = self.LEXER_NONE
                 self.setCodeLexer()

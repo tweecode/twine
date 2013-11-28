@@ -419,6 +419,9 @@ class PassageWidget:
                 wordWidth = gc.GetTextExtent(currentLine + word)[0]
                 if wordWidth < lineWidth:
                     currentLine += word
+                    if '\n' in word:
+                        lines += currentLine
+                        currentLine = ''
                 else:
                     lines += currentLine + ('\n' if '\n' not in currentLine else '')
                     currentLine = word

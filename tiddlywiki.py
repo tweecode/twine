@@ -438,7 +438,7 @@ class Tiddler:
 		Update the lists of all passages linked/displayed by this one. By default,
 		returns internal links and <<choice>>/<<actions>> macros.
 		"""
-		if not self.isStoryText():
+		if not self.isStoryText() and not self.isAnnotation():
 			self.displays = []
 			self.links = []
 			return
