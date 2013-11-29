@@ -241,44 +241,83 @@ History.prototype.restart = function () {
     window.location.reload();
 };
 History.prototype.save = function (c) {
-    var a = "";
-    for (var b = this.history.length - 1; b >= 0; b--) {
-        if ((this.history[b].passage) && (this.history[b].passage.id)) {
-            a += this.history[b].passage.id.toString(36) + "."
+    var vars, hist, type, b, a = "";
+    function vtob(str) {
+        try {
+            return window.btoa(unescape(encodeURIComponent(JSON.stringify(str))));
+        } catch(e) {
+            return "0";
         }
+    }
+    for (b = this.history.length - 1; b > 0; b--) {
+        hist = this.history[b];
+        if (!hist) {
+            break;
+        }
+        if (hist.passage && hist.passage.id) {
+            a += hist.passage.id.toString(36)
+        }
+        if (this.history[b+1]) {
+            for (vars in hist.variables) {
+                type = typeof hist.variables[vars];
+                if (type != "function" && type != "undefined" &&
+                        hist.variables[vars] != this.history[b+1].variables[vars]) {
+                    a += "$" + vtob(vars) + "," + vtob(hist.variables[vars]);
+                }
+            }
+        }
+        a += "."
     }
     return "#" + a.substr(0, a.length - 1)
 };
 History.prototype.restore = function () {
-    var mt, a, b, g, c;
+    var a, b, c, d, match, variable, vars, name;
+    function btov(str) {
+        try {
+            return JSON.parse(decodeURIComponent(escape(window.atob(str))));
+        } catch(e) {
+            return 0;
+        }
+    }
     try {
         if (testplay) {
             this.display(testplay);
             return true
         }
-        if (window.location.hash || (window.location.hash == "#")) {
+        if (!window.location.hash || (window.location.hash == "#")) {
             return false
         }
         if (window.location.hash.substr(0, 2) == '#!') {
-            mt = window.location.hash.substr(2).split('_').join(' ');
-            this.display(mt, null, 'quietly');
+            c = window.location.hash.substr(2).split('_').join(' ');
+            this.display(c, null, 'quietly');
             return true
         }
         a = window.location.hash.replace("#", "").split(".");
         for (b = 0; b < a.length; b++) {
-            g = parseInt(a[b], 36);
-            if (!tale.has(g)) {
-                return false
-            }
-            else {
-              c = tale.get(g);
-              this.history.unshift({
-                passage: c,
-                variables: clone(this.history[0].variables)
-              });
-              if (b == a.length - 1) {
-                this.display(g, null, "back");
-              } else c.render();
+            match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(a[b]);
+            if (match) {
+                name = parseInt(match[1], 36);
+                if (!tale.has(name)) {
+                    return false
+                }
+                if (match[2]) {
+                    vars = match[2].split("$");
+                    for (c = 0; c < vars.length; c++) {
+                        variable = vars[c].split(",");
+                        d = btov(variable[0]);
+                        if (d) {
+                            this.history[0].variables[btov(variable[0])]=btov(variable[1]);
+                        }
+                    }
+                }
+                this.history.unshift({
+                    passage: tale.get(name),
+                    variables: clone(this.history[0].variables)
+                });
+                console.log(this.history[0].variables)
+                if (b == a.length - 1) {
+                    this.display(name, null, "back");
+                }
             }
         }
         return true
@@ -1174,8 +1213,8 @@ Wikifier.formatters = [
     },
     rowHandler: function (w, e, prevColumns) {
         var cellMatch, matched, col = 0,
-        var currColCount = 1,
-        var cellRegExp = new RegExp(this.cellPattern, "mg"),
+        currColCount = 1,
+        cellRegExp = new RegExp(this.cellPattern, "mg");
         
         do {
             cellRegExp.lastIndex = w.nextMatch;
