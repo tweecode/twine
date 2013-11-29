@@ -81,10 +81,11 @@ Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
 };
 String.prototype.readMacroParams = function (keepquotes) {
-    var re = /(?:\s*)(?:(?:"([^"]*)")|(?:'([^']*)')|(?:\[\[((?:[^\]]|\](?!\]))*)\]\])|([^"'\s]\S*))/mg,
+    var exec, re = /(?:\s*)(?:(?:"([^"]*)")|(?:'([^']*)')|(?:\[\[((?:[^\]]|\](?!\]))*)\]\])|([^"'\s]\S*))/mg,
         params = [];
     do {
-        var val, exec = re.exec(this);
+        var val;
+        exec = re.exec(this);
         if (exec) {
             if (exec[1]) {
                 val = exec[1];
@@ -104,13 +105,13 @@ String.prototype.readMacroParams = function (keepquotes) {
     return params
 };
 String.prototype.readBracketedList = function () {
-    var b = "\\[\\[([^\\]]+)\\]\\]";
-    var a = "[^\\s$]+";
-    var e = "(?:" + b + ")|(" + a + ")";
-    var d = new RegExp(e, "mg");
-    var f = [];
+    var c, b = "\\[\\[([^\\]]+)\\]\\]",
+        a = "[^\\s$]+",
+        e = "(?:" + b + ")|(" + a + ")",
+        d = new RegExp(e, "mg"),
+        f = [];
     do {
-        var c = d.exec(this);
+        c = d.exec(this);
         if (c) {
             if (c[1]) {
                 f.push(c[1])
@@ -255,11 +256,11 @@ History.prototype.restore = function () {
             this.display(testplay);
             return true
         }
-        if ((window.location.hash == "") || (window.location.hash == "#")) {
+        if (window.location.hash || (window.location.hash == "#")) {
             return false
         }
         if (window.location.hash.substr(0, 2) == '#!') {
-            var mt = window.location.hash.substr(2).split('_').join(' ');
+            mt = window.location.hash.substr(2).split('_').join(' ');
             this.display(mt, null, 'quietly');
             return true
         }
@@ -287,7 +288,7 @@ History.prototype.restore = function () {
 };
 History.prototype.watchHash = function () {
     if (window.location.hash != this.hash) {
-        if ((window.location.hash != "") && (window.location.hash != "#")) {
+        if (window.location.hash && (window.location.hash != "#")) {
             this.history = [{
                 passage: null,
                 variables: {}
@@ -326,7 +327,7 @@ version.extensions.displayMacro = {
 };
 macros.display = {
     handler: function (place, macroName, params, parser) {
-        var t, j, output, params, name = parser.fullArgs();
+        var t, j, output, oldDisplayParams, name = parser.fullArgs();
         
         if (macroName != "display") {
             output = macroName;
@@ -361,7 +362,7 @@ macros.display = {
         } else if (!t.id) {
             throwError(place, "The " + output + " passage does not exist", parser.fullMatch());
         } else {
-            var t, oldDisplayParams = displayParameters;
+            oldDisplayParams = displayParameters;
             displayParameters = params;
             if (t.tags.indexOf("script") > -1) {
                 scriptEval(t);
@@ -382,6 +383,10 @@ version.extensions.actionsMacro = {
 macros.actions = {
     handler: function (a, f, g) {
         var e = insertElement(a, "ul");
+        function onclick() {
+            state.history[0].variables["actions clicked"][this.id] = true;
+            state.display(this.id, this);
+        }
         if (!state.history[0].variables["actions clicked"]) {
             state.history[0].variables["actions clicked"] = {}
         }
@@ -392,10 +397,7 @@ macros.actions = {
             var d = insertElement(e, "li");
             var c = Wikifier.createInternalLink(d, g[b]);
             insertText(c, g[b]);
-            c.onclick = function () {
-                state.history[0].variables["actions clicked"][this.id] = true;
-                state.display(this.id, c)
-            }
+            c.onclick = onclick;
         }
     }
 };
@@ -460,7 +462,7 @@ macros["if"] = {
                     break;
                 }
             }
-            if ((src.substr(i, 6) == "<<else") && nesting == 0) {
+            if ((src.substr(i, 6) == "<<else") && !nesting) {
                 conditions.push(currentCond.trim());
                 clauses.push(currentClause);
                 currentClause="";
@@ -491,12 +493,12 @@ macros["if"] = {
                 throwError(place, "can't find matching endif", parser.fullMatch());
             }
         } catch (e) {
-            throwError(place, "bad condition: " + e.message, i == 0 ? parser.fullMatch()
+            throwError(place, "bad condition: " + e.message, !i ? parser.fullMatch()
                 : "<<else if " + conditions[i] + ">>");
         }
     }
 };
-macros["else"] = macros["elseif"] = macros["endif"] = {
+macros["else"] = macros.elseif = macros.endif = {
     handler: function () {}
 };
 
@@ -505,7 +507,7 @@ version.extensions.rememberMacro = {
     minor: 0,
     revision: 0
 };
-macros['remember'] = {
+macros.remember = {
     handler: function (place, macroName, params, parser) {
         var statement = parser.fullArgs();
         var variable, value;
@@ -530,7 +532,7 @@ macros['remember'] = {
         }
     },
     init: function () {
-        var expiredate = new Date();
+        var i,expiredate = new Date();
         expiredate.setYear(expiredate.getFullYear() + 1);
         this.expire = expiredate.toGMTString();
         if (tale.has("StoryTitle")) {
@@ -540,7 +542,7 @@ macros['remember'] = {
         }
         if (typeof localStorage != 'undefined' && localStorage !== null) {
             this.uselocalstorage = true;
-            for (var i in localStorage) {
+            for (i in localStorage) {
                 if (i.indexOf(this.prefix) == 0) {
                     var variable = i.substr(this.prefix.length);
                     var value = localStorage[i];
@@ -550,7 +552,7 @@ macros['remember'] = {
         } else {
             this.uselocalstorage = false;
             var cookies = document.cookie.split(";");
-            for (var i = 0; i < cookies.length; i++) {
+            for (i = 0; i < cookies.length; i++) {
                 var bits = cookies[i].split("=");
                 if (bits[0].trim().indexOf(this.prefix) == 0) {
                     var statement = cookies[i].replace(this.prefix, "$");
@@ -561,7 +563,7 @@ macros['remember'] = {
     },
     expire: null,
     uselocalstorage: null,
-    prefix: null,
+    prefix: null
 };
 
 version.extensions.SilentlyMacro = {
@@ -594,7 +596,7 @@ macros.nobr = macros.silently = {
             else {
                 c += a.charAt(i);
             }
-        };
+        }
         if (d != -1) {
             new Wikifier(macroName == "nobr" ? place : h, c);
             parser.nextMatch = d;
@@ -614,12 +616,11 @@ version.extensions.choiceMacro = {
 };
 macros.choice = {
     handler: function (A, C, D, parser) {
-        var passage, onclick, link, id, match, temp,
+        var link, id, match, temp,
             text = D[1] || D[0].split("|")[0],
-            clicked = state.history[0].variables["choice clicked"] 
-                || (state.history[0].variables["choice clicked"] = {}),
-        // Get enclosing passage name
-        passage = A;
+            clicked = state.history[0].variables["choice clicked"] || 
+                (state.history[0].variables["choice clicked"] = {}),
+            passage = A;
         while(passage && !~passage.className.indexOf("passage")) {
             passage = passage.parentNode;
         }
@@ -657,7 +658,7 @@ version.extensions.backMacro = {
     minor: 0,
     revision: 0
 };
-macros['back'] = {
+macros.back = {
     labeltext: '&#171; back',
     handler: function (a, b, e) {
         var labelParam, c, el,
@@ -762,7 +763,7 @@ function Passage(c, b, a, ofunc, okey) {
     }
 }
 Passage.unescapeLineBreaks = function (a) {
-    if (a && a != "") {
+    if (a && typeof a == "string") {
         return a.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
     } else {
         return ""
@@ -809,14 +810,14 @@ Passage.prototype.setCSS = function() {
     }
 };
 Passage.prototype.processText = function() {
-	var ret = this.text;
-	if (~this.tags.indexOf("nobr")) {
-		ret = ret.replace(/\n/g,'\u200c');
-	}
-	if (~this.tags.indexOf("Twine.image")) {
-		ret = "[img[" + ret + "]]"
-	}
-	return ret;
+    var ret = this.text;
+    if (~this.tags.indexOf("nobr")) {
+        ret = ret.replace(/\n/g,'\u200c');
+    }
+    if (~this.tags.indexOf("Twine.image")) {
+        ret = "[img[" + ret + "]]"
+    }
+    return ret;
 };
 
 function Tale() {
@@ -843,7 +844,7 @@ function Tale() {
             r = r + c;
         }
         return r
-    };
+    }
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
     a = document.getElementById("storeArea").childNodes;
@@ -862,23 +863,23 @@ function Tale() {
         }
     }
     //Load in the passages
-    if (settings['obfuscate'] == 'swap' && settings['obfuscatekey']) {
+    if (settings.obfuscate == 'swap' && settings.obfuscatekey) {
         ns = '';
         nope = ":\\\"n0";
-        if (settings['obfuscatekey'] == 'rot13') {
-            settings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
+        if (settings.obfuscatekey == 'rot13') {
+            settings.obfuscatekey = "anbocpdqerfsgthuivjwkxlymz";
         }
-        for (i = 0; i < settings['obfuscatekey'].length; i++) {
-            nsc = settings['obfuscatekey'][i];
+        for (i = 0; i < settings.obfuscatekey.length; i++) {
+            nsc = settings.obfuscatekey[i];
             if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
         }
-        settings['obfuscatekey'] = ns;
+        settings.obfuscatekey = ns;
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
                 if (tiddlerTitle != 'StorySettings') 
-                    tiddlerTitle = deswap(tiddlerTitle, settings['obfuscatekey']);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, settings['obfuscatekey']);
+                    tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, settings.obfuscatekey);
             }
         }
     } else {
@@ -945,7 +946,7 @@ function Wikifier(place, source) {
     this.nextMatch = 0;
     this.assembleFormatterMatches(Wikifier.formatters);
     this.subWikify(this.output);
-};
+}
 
 Wikifier.prototype.assembleFormatterMatches = function (formatters) {
     this.formatters = [];
@@ -961,7 +962,7 @@ Wikifier.prototype.assembleFormatterMatches = function (formatters) {
 
 Wikifier.prototype.subWikify = function (output, terminator) {
     // Temporarily replace the output pointer
-    var oldOutput = this.output;
+    var terminatorMatch, formatterMatch, oldOutput = this.output;
     this.output = output;
 
     // Prepare the terminator RegExp
@@ -973,8 +974,8 @@ Wikifier.prototype.subWikify = function (output, terminator) {
         if (terminatorRegExp) terminatorRegExp.lastIndex = this.nextMatch;
 
         // Get the first matches
-        var formatterMatch = this.formatterRegExp.exec(this.source);
-        var terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
+        formatterMatch = this.formatterRegExp.exec(this.source);
+        terminatorMatch = terminatorRegExp ? terminatorRegExp.exec(this.source) : null;
 
         // Check for a terminator match
         if (terminatorMatch && (!formatterMatch || terminatorMatch.index <= formatterMatch.index)) {
@@ -1017,7 +1018,7 @@ Wikifier.prototype.subWikify = function (output, terminator) {
     if (this.nextMatch < this.source.length) {
         this.outputText(this.output, this.nextMatch, this.source.length);
         this.nextMatch = this.source.length;
-    };
+    }
 
     // Restore the output pointer
     this.output = oldOutput;
@@ -1077,16 +1078,16 @@ Wikifier.formatHelpers = {
         a.subWikify(b, this.terminator)
     },
     inlineCssHelper: function (w) {
-        var styles = [];
-        var lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)";
-        var lookaheadRegExp = new RegExp(lookahead, "mg");
-        var hadStyle = false;
+        var s, v, lookaheadMatch, gotMatch,
+            styles = [],
+            lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
+            lookaheadRegExp = new RegExp(lookahead, "mg"),
+            hadStyle = false;
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            lookaheadMatch = lookaheadRegExp.exec(w.source);
+            gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (gotMatch) {
-                var s, v;
                 hadStyle = true;
                 if (lookaheadMatch[1]) {
                     s = lookaheadMatch[1].unDash();
@@ -1100,7 +1101,7 @@ Wikifier.formatHelpers = {
                     s = "backgroundColor";
                     break;
                 case "float":
-                    j = "cssFloat";
+                    s = "cssFloat";
                     break
                 }
                 styles.push({
@@ -1142,18 +1143,18 @@ Wikifier.formatters = [
         "f": "tfoot"
     },
     handler: function (w) {
-        var table = insertElement(w.output, "table");
+        var rowContainer, rowElement,lookaheadMatch, matched,
+            table = insertElement(w.output, "table"),
+            lookaheadRegExp = new RegExp(this.lookahead, "mg"),
+            currRowType = null,
+            nextRowType,
+            prevColumns = [],
+            rowCount = 0;
         w.nextMatch = w.matchStart;
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
-        var currRowType = null,
-            nextRowType;
-        var rowContainer, rowElement;
-        var prevColumns = [];
-        var rowCount = 0;
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source),
-                matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            lookaheadMatch = lookaheadRegExp.exec(w.source),
+            matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
                 nextRowType = lookaheadMatch[2];
                 if (nextRowType != currRowType) rowContainer = insertElement(table, this.rowTypes[nextRowType]);
@@ -1172,13 +1173,14 @@ Wikifier.formatters = [
         } while (matched);
     },
     rowHandler: function (w, e, prevColumns) {
-        var col = 0;
-        var currColCount = 1;
-        var cellRegExp = new RegExp(this.cellPattern, "mg");
+        var cellMatch, matched, col = 0,
+        var currColCount = 1,
+        var cellRegExp = new RegExp(this.cellPattern, "mg"),
+        
         do {
             cellRegExp.lastIndex = w.nextMatch;
-            var cellMatch = cellRegExp.exec(w.source),
-                matched = cellMatch && cellMatch.index == w.nextMatch;
+            cellMatch = cellRegExp.exec(w.source);
+            matched = cellMatch && cellMatch.index == w.nextMatch;
             if (matched) {
                 if (cellMatch[1] == "~") {
                     var last = prevColumns[col];
@@ -1193,7 +1195,7 @@ Wikifier.formatters = [
                     currColCount++;
                     w.nextMatch = cellMatch.index + cellMatch[0].length - 1;
                 } else if (cellMatch[2]) {
-                    w.nextMatch = cellMatch.index + cellMatch[0].length;;
+                    w.nextMatch = cellMatch.index + cellMatch[0].length;
                     break;
                 } else {
                     var spaceLeft = false,
@@ -1245,7 +1247,7 @@ Wikifier.formatters = [
     name: "emdash",
     match: "--",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText === " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
     }
 },
 {
@@ -1581,7 +1583,6 @@ Wikifier.formatters = [
     voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
     handler: function (a) {
         var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
-          doit = false,
           re = new RegExp(this.tagname).exec(a.matchText),
           tn = re && re[1];
         if(tn && tn.toLowerCase() != "html") {
@@ -1608,7 +1609,7 @@ Wikifier.formatters = [
     name: "char",
     match: ".",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText === " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
     }
 }
 ];
@@ -1637,7 +1638,7 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
         upperLetter: "[A-Z\u00c0-\u00de]",
         lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
         anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
-    };
+    }
 } else {
     Wikifier.textPrimitives = {
         upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
@@ -1645,13 +1646,14 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
         anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
     }
 };
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"
-    +Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"
-    +Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
+    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
     
 /* Functions usable by custom scripts */
 function visited(e) {
-    var ret = 0, i = 0, e = e || state.history[0].passage.title;
+    var ret = 0, i = 0;
+    e = e || state.history[0].passage.title;
     if (arguments.length > 1) {
         for (ret = state.history.length; i<arguments.length; i++) {
             ret = Math.min(ret, visited(arguments[i]));
@@ -1727,11 +1729,11 @@ function main() {
         if (i.tags + "" == "stylesheet") {
             styleText += alterCSS(i.text);
         }
-        else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1
-                && i.tags.indexOf("stylesheet") >-1) {
+        else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1 &&
+                i.tags.indexOf("stylesheet") >-1) {
             setTransitionCSS(i.text);
         }
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
     state.init();
-};
+}

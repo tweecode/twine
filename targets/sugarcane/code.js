@@ -142,7 +142,7 @@ var Interface = {
         Interface.showMenu(a, document.getElementById("snapbackMenu"))
     },
     buildSnapback: function () {
-        var c = false,
+        var b, c = false,
             state = window.state,
             menuelem = document.getElementById("snapbackMenu");
         while (menuelem.hasChildNodes()) {
@@ -150,7 +150,7 @@ var Interface = {
         }
         for(var a = state.history.length - 1; a >= 0; a--) {
             if(state.history[a].passage && state.history[a].passage.tags.indexOf("bookmark") != -1) {
-                var b = document.createElement("div");
+                b = document.createElement("div");
                 b.pos = a;
                 b.onclick = function () {
                     var p = this.pos;
@@ -169,7 +169,7 @@ var Interface = {
             }
         }
         if(!c) {
-            var b = document.createElement("div");
+            b = document.createElement("div");
             b.innerHTML = "<i>No passages available</i>";
             document.getElementById("snapbackMenu").appendChild(b)
         }
