@@ -281,7 +281,7 @@ History.prototype.restore = function () {
     }
     try {
         if (testplay) {
-            this.display(testplay);
+            this.display(testplay, null, 'quietly');
             return true
         }
         if (!window.location.hash || (window.location.hash == "#")) {

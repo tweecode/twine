@@ -18,21 +18,17 @@ History.prototype.init = function () {
 History.prototype.display = function (title, b, type, callback) {
     var c = tale.get(title), p = document.getElementById("passages");
     if (type != "back") {
+        typeof callback == "function" && callback();
         this.history.unshift({
             passage: c,
             variables: clone(this.history[0].variables)
         });
         this.history[0].hash = this.save();
-        // This must come between the history push and the state push
-        // since it executes 'between' the passages.
-        typeof callback == "function" && callback();
-        if (hasPushState && tale.canUndo()) {
-            if(this.history.length <= 2 && !window.history.state) {
-                window.history.replaceState(this.history, document.title);
-            }
-            else {
-                window.history.pushState(this.history, document.title);
-            }
+        if(this.history.length <= 2 && !window.history.state) {
+            window.history.replaceState(this.history, document.title);
+        }
+        else {
+            window.history.pushState(this.history, document.title);
         }
     }
     var e = c.render();

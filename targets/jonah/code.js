@@ -25,7 +25,7 @@ History.prototype.closeLinks = function() {
         p.removeChild(l[i]);
     }
 }
-History.prototype.display = function (name, C, type, callback) {
+History.prototype.display = function (name, source, type, callback) {
     var el, D, F, p = document.getElementById("passages");
     if (!tale.canUndo()) {
         this.closeLinks()
@@ -33,12 +33,20 @@ History.prototype.display = function (name, C, type, callback) {
     if (el = document.getElementById("passage" + name)) {
         el.id += "|" + (new Date).getTime();
     }
+    
+    if (typeof callback == "function") {
+        while(source && (!~source.className.indexOf("passage"))) {
+            source = source.parentNode;
+        }
+        source && (source.rewindVars = clone(this.history[0].variables))
+        callback();
+    }
+    
     D = tale.get(name);
     this.history.unshift({
         passage: D,
         variables: clone(this.history[0].variables)
     });
-    typeof callback == "function" && callback();
     F = D.render();
     if (type != "offscreen" && type != "quietly") {
         if (hasTransition) {
@@ -85,6 +93,7 @@ History.prototype.rewindTo = function (C, instant) {
         B.history.shift();
         p = p2;
     }
+    C.rewindVars && (B.history[0].variables = C.rewindVars);
 };
 Passage.prototype.render = function () {
     var t, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
