@@ -746,6 +746,11 @@ You can also include URLs of .tws and .twee files, too."""
 
 Undo: on
 
+--Let the player use bookmarks? (on / off)
+--This enables the Bookmark links in Jonah and Sugarcane
+--(If the player can't undo, bookmarks are always disabled.)
+Bookmark: on
+
 --Obfuscate the story's HTML source to prevent possible
 --spoilers? (swap / off)
 

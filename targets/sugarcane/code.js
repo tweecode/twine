@@ -18,17 +18,21 @@ History.prototype.init = function () {
 History.prototype.display = function (title, b, type, callback) {
     var c = tale.get(title), p = document.getElementById("passages");
     if (type != "back") {
-        typeof callback == "function" && callback();
         this.history.unshift({
             passage: c,
             variables: clone(this.history[0].variables)
         });
-        this.history[0].hash = this.save();
-        if(this.history.length <= 2 && !window.history.state) {
-            window.history.replaceState(this.history, document.title);
+        if (typeof callback == "function") {
+            callback();
+            this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
         }
-        else {
-            window.history.pushState(this.history, document.title);
+        if (hasPushState && tale.canUndo()) {
+            if(this.history.length <= 2 && window.history.state == "") {
+                window.history.replaceState(this.history, document.title);
+            }
+            else {
+                window.history.pushState(this.history, document.title);
+            }
         }
     }
     var e = c.render();
@@ -57,10 +61,10 @@ History.prototype.display = function (title, b, type, callback) {
         e.style.visibility = "visible"
     }
     if (tale.canUndo()) {
-        if (!hasPushState) {
+        if (!hasPushState && type != "back") {
             this.hash = this.save();
             window.location.hash = this.hash;
-        } else {
+        } else if (tale.canBookmark()) {
             var bookmark = document.getElementById("bookmark");
             bookmark && (bookmark.href = this.save());
         }
@@ -122,7 +126,7 @@ var Interface = {
                 snapback.parentNode.removeChild(snapback);
             } else snapback.onclick = Interface.showSnapback;
         }
-        if (bookmark && (!hasPushState || !tale.canUndo())) {
+        if (bookmark && (!tale.canBookmark() || !hasPushState)) {
             bookmark.parentNode.removeChild(bookmark);
         }
         restart && (restart.onclick = Interface.restart);

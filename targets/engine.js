@@ -143,6 +143,9 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     }
     return -1
 });
+/* btoa/atob polyfill by github.com/davidchambers */
+(function(){function t(t){this.message=t}var e=window,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";t.prototype=Error(),t.prototype.name="InvalidCharacterError",e.btoa||(e.btoa=function(e){for(var o,n,a=0,i=r,c="";e.charAt(0|a)||(i="=",a%1);c+=i.charAt(63&o>>8-8*(a%1))){if(n=e.charCodeAt(a+=.75),n>255)throw new t();o=o<<8|n}return c}),e.atob||(e.atob=function(e){if(e=e.replace(/=+$/,""),1==e.length%4)throw new t();for(var o,n,a=0,i=0,c="";n=e.charAt(i++);~n&&(o=a%4?64*o+n:n,a++%4)?c+=String.fromCharCode(255&o>>(6&-2*a)):0)n=r.indexOf(n);return c})})();
+
 var hasPushState = !!window.history && (typeof window.history.pushState == "function"),
     hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
 
@@ -230,6 +233,18 @@ function scrollWindowTo(e) {
     }
 }
 
+function delta(old,neu) {
+    var vars, ret = {};
+    if (old && neu) {
+        for (vars in neu) {
+            if (neu[vars] !== old[vars]) {
+                ret[vars] = neu[vars];
+            }
+        }
+    }
+    return ret;
+}
+
 function History() {
     this.history = [{
         passage: null,
@@ -237,11 +252,15 @@ function History() {
         hash: null
     }]
 }
+
 History.prototype.restart = function () {
     window.location.reload();
 };
-History.prototype.save = function (c) {
-    var vars, hist, type, b, a = "";
+
+History.prototype.encodeHistory = function(b, noVars) {
+    var ret = ".", vars, type, hist = this.history[b],
+        d = /*this.history[b+1] ? delta(this.history[b+1].variables, hist.variables) :*/ hist.variables;
+    
     function vtob(str) {
         try {
             return window.btoa(unescape(encodeURIComponent(JSON.stringify(str))));
@@ -249,29 +268,38 @@ History.prototype.save = function (c) {
             return "0";
         }
     }
-    for (b = this.history.length - 1; b > 0; b--) {
-        hist = this.history[b];
-        if (!hist) {
-            break;
-        }
-        if (hist.passage && hist.passage.id) {
-            a += hist.passage.id.toString(36)
-        }
-        if (this.history[b+1]) {
-            for (vars in hist.variables) {
-                type = typeof hist.variables[vars];
-                if (type != "function" && type != "undefined" &&
-                        hist.variables[vars] != this.history[b+1].variables[vars]) {
-                    a += "$" + vtob(vars) + "," + vtob(hist.variables[vars]);
-                }
-            }
-        }
-        a += "."
+    
+    if (!hist.passage || hist.passage.id == undefined) {
+        return ""
     }
-    return "#" + a.substr(0, a.length - 1)
-};
-History.prototype.restore = function () {
-    var a, b, c, d, match, variable, vars, name;
+    ret += hist.passage.id.toString(36)
+    
+    //console.log("encoding passage "+ret);
+    if (noVars) {
+        return ret;
+    }
+    for (vars in d) {
+        type = typeof d[vars];
+        if (type != "function" && type != "undefined") {
+            //console.log("variable "+ vars + " is " + d[vars]);
+            ret += "$" + vtob(vars) + "," + vtob(d[vars]);
+        }
+    }
+    for (vars in hist.linkVars) {
+        type = typeof hist.linkVars[vars];
+        if (type != "function" && type != "undefined") {
+            //console.log("linkvar " + vars + " is " + hist.linkVars[vars]);
+            ret += "[" + vtob(vars) + "," + vtob(hist.linkVars[vars]);
+        }
+    }
+    return ret
+}
+
+History.prototype.decodeHistory = function(str) {
+    var name, splits, variable, c, d, 
+        ret = {},
+        match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
+    
     function btov(str) {
         try {
             return JSON.parse(decodeURIComponent(escape(window.atob(str))));
@@ -279,6 +307,59 @@ History.prototype.restore = function () {
             return 0;
         }
     }
+    
+    if (match) {
+        //console.log("decoding? "+match[0]);
+        name = parseInt(match[1], 36);
+        if (!tale.has(name)) {
+            return false
+        }
+        if (match[2]) {
+            ret.variables || (ret.variables = {});
+            splits = match[2].split('$');
+            for (c = 0; c < splits.length; c++) {
+                variable = splits[c].split(",");
+                d = btov(variable[0]);
+                if (d) {
+                    //console.log("variable "+ d + " is " + btov(variable[1]));
+                    ret.variables[d]=btov(variable[1]);
+                }
+            }
+        }
+        if (match[3]) {
+            ret.linkVars || (ret.linkVars = {});
+            splits = match[3].split('[');
+            for (c = 0; c < splits.length; c++) {
+                variable = splits[c].split(",");
+                d = btov(variable[0]);
+                if (d) {
+                    //console.log("linkvar " + d + " is " + btov(variable[1]));
+                    ret.linkVars[d]=btov(variable[1]);
+                }
+            }
+        }
+        //console.log(ret.variables);
+        //console.log(ret.linkVars);
+        ret.passage = tale.get(name);
+        return ret;
+    }
+}
+
+History.prototype.save = function (c) {
+    var hist, b, a = "";
+
+    for (b = this.history.length - 1; b >= 0; b--) {
+        hist = this.history[b];
+        if (!hist) {
+            break;
+        }
+        a += this.encodeHistory(b);
+    }
+    return "#" + a
+};
+History.prototype.restore = function () {
+    var a, b, c, vars;
+
     try {
         if (testplay) {
             this.display(testplay, null, 'quietly');
@@ -294,29 +375,18 @@ History.prototype.restore = function () {
         }
         a = window.location.hash.replace("#", "").split(".");
         for (b = 0; b < a.length; b++) {
-            match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(a[b]);
-            if (match) {
-                name = parseInt(match[1], 36);
-                if (!tale.has(name)) {
-                    return false
-                }
-                if (match[2]) {
-                    vars = match[2].split("$");
-                    for (c = 0; c < vars.length; c++) {
-                        variable = vars[c].split(",");
-                        d = btov(variable[0]);
-                        if (d) {
-                            this.history[0].variables[btov(variable[0])]=btov(variable[1]);
-                        }
-                    }
-                }
-                this.history.unshift({
-                    passage: tale.get(name),
-                    variables: clone(this.history[0].variables)
-                });
-                console.log(this.history[0].variables)
+            vars = this.decodeHistory(a[b], this.history[0] || {});
+            if (vars) {
                 if (b == a.length - 1) {
-                    this.display(name, null, "back");
+                    vars.variables = this.history[0].variables;
+                    for (c in this.history[0].linkVars) {
+                        vars.variables[c] = this.history[0].linkVars[c];
+                    }
+                    this.history.unshift(vars);
+                    this.display(vars.passage.title, null, "back");
+                }
+                else {
+                    this.history.unshift(vars);
                 }
             }
         }
@@ -886,7 +956,7 @@ function Tale() {
     }
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
-    a = document.getElementById("storeArea").childNodes;
+    a = document.getElementById("storeArea").children;
     for (b = 0; b < a.length; b++) {
         c = a[b];
         if (c.getAttribute && c.getAttribute("tiddler") == 'StorySettings') {
@@ -918,7 +988,7 @@ function Tale() {
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
                 if (tiddlerTitle != 'StorySettings') 
                     tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, deswap, settings.obfuscatekey);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, deswap, settings.obfuscatekey);
             }
         }
     } else {
@@ -978,6 +1048,9 @@ Tale.prototype.lookup = function (h, g, a) {
 };
 Tale.prototype.canUndo = function() {
     return this.storysettings.lookup('undo');
+};
+Tale.prototype.canBookmark = function() {
+    return this.canUndo() && (this.storysettings.lookup('bookmark') || !hasPushState);
 };
 function Wikifier(place, source) {
     this.source = source;

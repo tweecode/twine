@@ -33,20 +33,15 @@ History.prototype.display = function (name, source, type, callback) {
     if (el = document.getElementById("passage" + name)) {
         el.id += "|" + (new Date).getTime();
     }
-    
-    if (typeof callback == "function") {
-        while(source && (!~source.className.indexOf("passage"))) {
-            source = source.parentNode;
-        }
-        source && (source.rewindVars = clone(this.history[0].variables))
-        callback();
-    }
-    
     D = tale.get(name);
     this.history.unshift({
         passage: D,
         variables: clone(this.history[0].variables)
     });
+    if (typeof callback == "function") {
+        callback();
+        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+    }
     F = D.render();
     if (type != "offscreen" && type != "quietly") {
         if (hasTransition) {
@@ -93,7 +88,6 @@ History.prototype.rewindTo = function (C, instant) {
         B.history.shift();
         p = p2;
     }
-    C.rewindVars && (B.history[0].variables = C.rewindVars);
 };
 Passage.prototype.render = function () {
     var t, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
