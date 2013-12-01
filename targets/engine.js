@@ -254,7 +254,11 @@ function History() {
 }
 
 History.prototype.restart = function () {
-    window.location.reload();
+    if (!hasPushState) {
+        window.location.hash = "";
+    } else {
+        window.location.reload();
+    }
 };
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -1813,6 +1817,14 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
+    var scripts, macroidx, macro, style, i, p = document.getElementById("passages");
+    
+    if (!window.JSON) {
+        return (p.innerHTML = "This story requires a newer web browser. Sorry.");
+    } else {
+        p.innerHTML = "";
+    }
+    
     tale = window.tale = new Tale();
     state = window.state = new History();
     document.title = tale.title;
@@ -1826,17 +1838,17 @@ function main() {
         document.getElementById("storyMenu").style.display = "inline";
         setPageElement("storyMenu", "StoryMenu", "");
     }
-    var scripts = tale.lookup("tags", "script");
-    for (var i = 0; i < scripts.length; i++) {
+    scripts = tale.lookup("tags", "script");
+    for (i = 0; i < scripts.length; i++) {
         scriptEval(scripts[i]);
     }
-    for (var macroidx in macros) {
-        var macro = macros[macroidx];
+    for (macroidx in macros) {
+        macro = macros[macroidx];
         if (typeof macro.init == "function") {
             macro.init();
         }
     }
-    var style = document.getElementById("storyCSS"), styleText = "";
+    style = document.getElementById("storyCSS"), styleText = "";
     for (i in tale.passages) {
         i = tale.passages[i];
         if (i.tags + "" == "stylesheet") {
