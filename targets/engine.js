@@ -259,7 +259,7 @@ History.prototype.restart = function () {
 
 History.prototype.encodeHistory = function(b, noVars) {
     var ret = ".", vars, type, hist = this.history[b],
-        d = /*this.history[b+1] ? delta(this.history[b+1].variables, hist.variables) :*/ hist.variables;
+        d = this.history[b+1] ? delta(this.history[b+1].variables, hist.variables) : hist.variables;
     
     function vtob(str) {
         try {
@@ -295,9 +295,9 @@ History.prototype.encodeHistory = function(b, noVars) {
     return ret
 }
 
-History.prototype.decodeHistory = function(str) {
+History.prototype.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
-        ret = {},
+        ret = { variables: prev.variables || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
     
     function btov(str) {
@@ -309,7 +309,8 @@ History.prototype.decodeHistory = function(str) {
     }
     
     if (match) {
-        //console.log("decoding? "+match[0]);
+        //console.log("decoding "+match[0]);
+        //console.log(ret.variables);
         name = parseInt(match[1], 36);
         if (!tale.has(name)) {
             return false
@@ -338,8 +339,7 @@ History.prototype.decodeHistory = function(str) {
                 }
             }
         }
-        //console.log(ret.variables);
-        //console.log(ret.linkVars);
+        //console.log(JSON.stringify(ret.variables));
         ret.passage = tale.get(name);
         return ret;
     }
@@ -357,6 +357,7 @@ History.prototype.save = function (c) {
     }
     return "#" + a
 };
+
 History.prototype.restore = function () {
     var a, b, c, vars;
 
@@ -375,7 +376,7 @@ History.prototype.restore = function () {
         }
         a = window.location.hash.replace("#", "").split(".");
         for (b = 0; b < a.length; b++) {
-            vars = this.decodeHistory(a[b], this.history[0] || {});
+            vars = this.decodeHistory(a[b], vars || {});
             if (vars) {
                 if (b == a.length - 1) {
                     vars.variables = this.history[0].variables;
