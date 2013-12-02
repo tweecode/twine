@@ -503,7 +503,7 @@ class PassageFrame (wx.Frame):
         """
         oldLexing = self.usingLexer
                 
-        if "stylesheet" in self.widget.passage.tags:
+        if self.widget.passage.isStylesheet():
             if oldLexing != self.LEXER_CSS:
                 self.setCodeLexer(css = True)
                 self.usingLexer = self.LEXER_CSS

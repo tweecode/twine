@@ -658,6 +658,10 @@ class StoryPanel (wx.ScrolledWindow):
     def sortedWidgets (self):
         """Returns a sorted list of widgets, left to right, top to bottom."""
         return sorted(self.widgets, PassageWidget.sort)
+    
+    def taggedWidgets (self, tag):
+        """Returns widgets that have the given tag"""
+        return (a for a in self.widgets if tag in a.passage.tags)
 
     def selectedWidget(self):
         """Returns any one selected widget."""
@@ -806,7 +810,8 @@ class StoryPanel (wx.ScrolledWindow):
         # widgets
         
         for widget in self.widgets:
-            if updateRegion.IntersectRect(widget.getPixelRect()): widget.paint(gc)
+            if updateRegion.IntersectRect(widget.getPixelRect()): 
+                widget.paint(gc)
         
         # marquee selection
         # with slow drawing, use alpha blending for interior
@@ -814,6 +819,7 @@ class StoryPanel (wx.ScrolledWindow):
         if self.draggingMarquee:
             if self.app.config.ReadBool('fastStoryPanel'):
                 gc.SetPen(wx.Pen('#ffffff', 1, wx.DOT))
+                gc.SetBrush(wx.Brush(wx.WHITE, wx.TRANSPARENT))
             else:
                 gc = wx.GraphicsContext.Create(gc)
                 marqueeColor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
@@ -923,19 +929,21 @@ class StoryPanel (wx.ScrolledWindow):
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
     FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'  
-    FIRST_CSS = """/* Your story will use the CSS code in this and other stylesheet passages.
-If this passage has any extra tags, it will only apply to passages that have the same tags.
+    FIRST_CSS = """/* Your story will use the CSS in this passage to style the page.
+Give this passage more tags, and it will only affect passages with those tags.
 Example selectors: */
 
 body {
     /* This affects the entire page */
     
     
-} .passage {
+}
+.passage {
     /* This only affects passages */
     
     
-} .internalLink, .externalLink {
+}
+.internalLink, .externalLink {
     /* This only affects links */
     
     

@@ -258,6 +258,7 @@ class Tiddler:
 		# cache of passage names linked from this one
 		self.links = []
 		self.displays = []
+		self.images = []
 		
 		"""Pass source code, and optionally 'twee' or 'html'"""
 		if type == 'twee':
@@ -421,9 +422,12 @@ class Tiddler:
 	def isAnnotation(self):
 		return 'annotation' in self.tags
 	
+	def isStylesheet(self):
+		return 'stylesheet' in self.tags
+	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
-			or self.isAnnotation() or any('Twine.' in i for i in self.tags) \
+		return not (('script' in self.tags) or self.isStylesheet()
+			or self.isAnnotation() or any('Twine.' in i for i in self.tags)
 			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
 	
 	def isStoryPassage(self):
@@ -438,9 +442,10 @@ class Tiddler:
 		Update the lists of all passages linked/displayed by this one. By default,
 		returns internal links and <<choice>>/<<actions>> macros.
 		"""
-		if not self.isStoryText() and not self.isAnnotation():
+		if not self.isStoryText() and not self.isAnnotation() and not self.isStylesheet():
 			self.displays = []
 			self.links = []
+			self.images = []
 			return
 		
 		# <<display>>
@@ -449,6 +454,7 @@ class Tiddler:
 		links = []
 		actions = []
 		choices = []
+		images = []
 		
 		# regular hyperlinks
 		if includeInternal:
@@ -501,6 +507,14 @@ class Tiddler:
 		# remove duplicates by converting to a set
 		
 		self.links = list(set(links + choices + actions))
+		
+		# Images
+		
+		imageBlocks = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
+		for block in imageBlocks:
+			images.append(block.group(4))
+		
+		self.images = images
 
 #
 # Helper functions

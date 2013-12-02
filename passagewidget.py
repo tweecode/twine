@@ -181,10 +181,16 @@ class PassageWidget:
             
             # Figure out the dirty rect
             dirtyRect = self.getPixelRect()
-            for link in self.passage.linksAndDisplays():
+            for link in self.passage.linksAndDisplays() + self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
                     dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+            if self.passage.isStylesheet():
+                for t in self.passage.tags: 
+                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                        for widget in self.parent.taggedWidgets(t):
+                            if widget:
+                                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
             self.parent.Refresh(True, dirtyRect)
         
     def setDimmed (self, value):
@@ -295,11 +301,11 @@ class PassageWidget:
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
                     
         # does it actually need to be drawn?
-        
-        if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
+                
+        if otherWidget == self:
             return
         
-        if otherWidget == self:
+        if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
             return
             
         # ok, really draw the line
@@ -341,21 +347,38 @@ class PassageWidget:
         
         As with other paint calls, you may pass either a wx.GraphicsContext
         or wx.PaintDC.
-        """        
+        """       
+        
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
         
-        links = self.passage.links
         for link in self.passage.linksAndDisplays():
             if link in dontDraw: continue
-                 
+            
             otherWidget = self.parent.findWidget(link)
             if not otherWidget or not otherWidget.passage.isStoryPassage(): dontDraw.append(link)
         
             if otherWidget and not otherWidget.dimmed:
-                color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in links else PassageWidget.CONNECTOR_COLOR
+                color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in self.passage.links else PassageWidget.CONNECTOR_COLOR
                 width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
                 self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+        
+        for i in self.passage.images:
+            if i not in dontDraw:
+                otherWidget = self.parent.findWidget(i)
+                if otherWidget and not otherWidget.dimmed:
+                    color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                    width = (2 if self.selected else 1)
+                    self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+        
+        if self.passage.isStylesheet():
+            for t in self.passage.tags: 
+                if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                    for otherWidget in self.parent.taggedWidgets(t):
+                        if not otherWidget.dimmed:
+                            color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                            width = (2 if self.selected else 1)
+                            self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
         return dontDraw
     
@@ -385,7 +408,7 @@ class PassageWidget:
             return 'privateTitleBar'
         elif 'script' in self.passage.tags:
             return 'scriptTitleBar'
-        elif 'stylesheet' in self.passage.tags:
+        elif self.passage.isStylesheet():
             return 'stylesheetTitleBar'
         elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
             return 'storyInfoTitleBar'
@@ -558,7 +581,8 @@ class PassageWidget:
                         * min(1.75,max(1,1.75*size.width/260 if (self.passage.isAnnotation() and line) else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
                     
-            if self.passage.isStoryText() and self.passage.tags:
+            if (self.passage.isStoryText() and self.passage.tags) or \
+                    (self.passage.isStylesheet() and len(self.passage.tags) > 1):
                 
                 tagBarHeight = excerptFontHeight + (2 * inset)
                 tagBarColor = dim((226, 201, 162), self.dimmed)
@@ -576,8 +600,9 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(tagTextColor)
                     
-                text = wordWrap(" ".join(self.passage.tags), size.width - (inset * 2), gc)[0]
-                    
+                text = wordWrap(" ".join(a for a in self.passage.tags if a not in tiddlywiki.TiddlyWiki.INFO_TAGS),
+                                size.width - (inset * 2), gc)[0]
+                
                 gc.DrawText(text, inset*2, (size.height-tagBarHeight))
         else:
             # greek title
@@ -620,9 +645,11 @@ class PassageWidget:
                         
                     height += PassageWidget.GREEK_HEIGHT * 2
                     chars -= 80
+            
             # greek tags
             
-            if self.passage.isStoryText() and self.passage.tags:
+            if (self.passage.isStoryText() and self.passage.tags) or \
+                    (self.passage.isStylesheet() and len(self.passage.tags) > 1) :
                 
                 tagBarHeight = PassageWidget.GREEK_HEIGHT*3
                 tagBarColor = dim((226, 201, 162), self.dimmed)
@@ -742,6 +769,7 @@ class PassageWidget:
     LINE_SPACING = 1.2
     CONNECTOR_WIDTH = 2.0
     CONNECTOR_COLOR = '#babdb6'
+    CONNECTOR_RESOURCE_COLOR = '#6e706b'
     CONNECTOR_DISPLAY_COLOR = '#84a4bd'
     CONNECTOR_SELECTED_WIDTH = 5.0
     ARROWHEAD_LENGTH = 10
