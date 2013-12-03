@@ -198,7 +198,7 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nAn open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
+        info.SetDescription('\nAn open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nLeon Arnott, Emmanuel Turner, Henry Soule, Phillip Sutton, Misty De Meo, Thomas M. Edwards, and others.')
         info.SetCopyright('The Twine development application is free software: you can redistribute it and/or modify'
                           + '\nit under the terms of the GNU General Public License as published by the Free Software'
                           + '\nFoundation, either version 3 of the License, or (at your option) any later version.'

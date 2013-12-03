@@ -456,25 +456,27 @@ macros.display = {
                 return
             }
         }
-        else try {
-            output = eval(name);
-        }
-        catch(e) {
-            // Last-ditch attempt
-            if (tale.get(name).id) {
-                output = name;
+        else {
+            try {
+                output = eval(name);
             }
-            else {
-                throwError(place, "<<" + macroName + ">> bad expression: " + e.message,
-                    parser.fullMatch());
-                return
+            catch(e) {
+                // Last-ditch attempt
+                if (tale.get(name).id) {
+                    output = name;
+                }
+                else {
+                    throwError(place, "<<" + macroName + ">> bad expression: " + e.message,
+                        parser.fullMatch());
+                    return
+                }
             }
         }
         t = tale.get(output+"");
         if (!output) {
-            throwError(place, name + " did not evaluate to a passage name", parser.fullMatch());
-        } else if (!t.id) {
-            throwError(place, "The " + output + " passage does not exist", parser.fullMatch());
+            throwError(place, '"' +name + "\" did not evaluate to a passage name", parser.fullMatch());
+        } else if (t.id === undefined) {
+            throwError(place, "The \"" + output + "\" passage does not exist", parser.fullMatch());
         } else {
             oldDisplayParams = displayParameters;
             displayParameters = params;
@@ -607,7 +609,7 @@ macros["if"] = {
                 throwError(place, "can't find matching endif", parser.fullMatch());
             }
         } catch (e) {
-            throwError(place, "bad condition: " + e.message, !i ? parser.fullMatch()
+            throwError(place, "<<if>> bad condition: " + e.message, !i ? parser.fullMatch()
                 : "<<else if " + conditions[i] + ">>");
         }
     }
@@ -623,63 +625,63 @@ version.extensions.rememberMacro = {
 };
 macros.remember = {
     handler: function (place, macroName, params, parser) {
-        var statement = parser.fullArgs();
-        var variable, value;
-        macros.set.run(place,statement);
-        variable = statement.match(Wikifier.textPrimitives.variable)[1];
-        value = eval(Wikifier.parse("$" + variable));
-        switch (typeof value) {
-        case "string":
-            value = '"' + value.replace(/"/g, '\\"') + '"';
-            break;
-        case "number":
-        case "boolean":
-            break;
-        default:
-            throwError(place, "can't remember $" + variable + " (" + (typeof value) + ")", parser.fullMatch());
-            return;
-        }
-        if (this.uselocalstorage) {
-            localStorage[this.prefix + variable] = value;
-        } else {
-            document.cookie = this.prefix + variable + "=" + value + "; expires=" + this.expire;
+        var variable, value, re, match,
+            statement = params.join(" ");
+        macros.set.run(place, parser.fullArgs());
+        re = new RegExp(Wikifier.textPrimitives.variable, "g");
+        while (match = re.exec(statement)) {
+            variable = match[1];
+            value = state.history[0].variables[variable];
+            try {
+                value = JSON.stringify(value);
+            } catch (e) {
+                throwError(place, "can't remember $" + variable + " (" + (typeof value) + ")", parser.fullMatch());
+                return;
+            }
+            window.localStorage[this.prefix + variable] = value;
         }
     },
     init: function () {
-        var i,expiredate = new Date();
-        expiredate.setYear(expiredate.getFullYear() + 1);
-        this.expire = expiredate.toGMTString();
+        var i;
         if (tale.has("StoryTitle")) {
-            this.prefix = tale.get("StoryTitle").text + "_";
+            this.prefix = "Twine." + tale.get("StoryTitle").text + ".";
         } else {
-            this.prefix = "__twineremember_";
+            this.prefix = "Twine.Untitled Story.";
         }
-        if (typeof localStorage != 'undefined' && localStorage !== null) {
-            this.uselocalstorage = true;
-            for (i in localStorage) {
-                if (i.indexOf(this.prefix) == 0) {
-                    var variable = i.substr(this.prefix.length);
-                    var value = localStorage[i];
-                    eval(Wikifier.parse('$' + variable + ' = ' + value));
-                }
-            }
-        } else {
-            this.uselocalstorage = false;
-            var cookies = document.cookie.split(";");
-            for (i = 0; i < cookies.length; i++) {
-                var bits = cookies[i].split("=");
-                if (bits[0].trim().indexOf(this.prefix) == 0) {
-                    var statement = cookies[i].replace(this.prefix, "$");
-                    eval(Wikifier.parse(statement));
+        for (i in window.localStorage) {
+            if (i.indexOf(this.prefix) == 0) {
+                variable = i.substr(this.prefix.length);
+                value = localStorage[i];
+                try {
+                    value = JSON.parse(value);
+                    state.history[0].variables[variable]=value;
+                } catch (e) {
                 }
             }
         }
     },
     expire: null,
-    uselocalstorage: null,
     prefix: null
 };
 
+version.extensions.forgetMacro = {
+    major: 1,
+    minor: 0,
+    revision: 0
+};
+macros.forget = {
+    handler: function (place, macroName, params) {
+        var re, match, variable,
+            statement = params.join(" ");
+        re = new RegExp(Wikifier.textPrimitives.variable, "g");
+        while (match = re.exec(statement)) {
+            variable = match[1] + ""
+            delete state.history[0].variables[variable];
+            delete window.localStorage[macros.remember.prefix + variable];
+        }
+    }
+};
+            
 version.extensions.SilentlyMacro = {
     major: 1,
     minor: 1,
@@ -831,7 +833,7 @@ macros.back = {
                     e = e[0];
                 }
                 if(tale.get(e).id == undefined) {
-                    throwError(a, "The " + e + " passage does not exist");
+                    throwError(a, "The \"" + e + "\" passage does not exist");
                     return;
                 }
                 for(c = 0; c < state.history.length; c++) {
