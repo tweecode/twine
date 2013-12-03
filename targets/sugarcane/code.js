@@ -222,14 +222,3 @@ macros.back.onclick = function(back, steps) {
     }
     else state.display(state.history[steps].passage.title);
 }
-version.extensions.returnMacro = {
-    major: 2,
-    minor: 0,
-    revision: 0
-};
-macros["return"] = {
-  labeltext: '&#171; return',
-  handler: function(a,b,e) { 
-    macros.back.handler.call(this,a,b,e);
-  }
-};

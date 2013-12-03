@@ -446,7 +446,7 @@ class PassageWidget:
                         lines += currentLine
                         currentLine = ''
                 else:
-                    lines += currentLine + ('\n' if '\n' not in currentLine else '')
+                    lines += currentLine + '\n'
                     currentLine = word
             lines += currentLine
             return lines.split('\n')

@@ -628,6 +628,11 @@ macros.remember = {
         var variable, value, re, match,
             statement = params.join(" ");
         macros.set.run(place, parser.fullArgs());
+        if (!window.localStorage) {
+            throwError(place, "<<remember>> can't be used "
+                + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.");
+            return;
+        }
         re = new RegExp(Wikifier.textPrimitives.variable, "g");
         while (match = re.exec(statement)) {
             variable = match[1];
@@ -651,7 +656,7 @@ macros.remember = {
         for (i in window.localStorage) {
             if (i.indexOf(this.prefix) == 0) {
                 variable = i.substr(this.prefix.length);
-                value = localStorage[i];
+                value = window.localStorage[i];
                 try {
                     value = JSON.parse(value);
                     state.history[0].variables[variable]=value;
@@ -852,6 +857,18 @@ macros.back = {
         el.innerHTML = labeltouse;
         a.appendChild(el);
     }
+};
+
+version.extensions.returnMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros["return"] = {
+  labeltext: '&#171; return',
+  handler: function(a,b,e) { 
+    macros.back.handler.call(this,a,b,e);
+  }
 };
 
 function Passage(c, b, a, ofunc, okey) {

@@ -163,17 +163,14 @@ Wikifier.createInternalLink = function (place, title, callback) {
 };
 
 macros.back.onclick = function(back, steps) {
-    var p = document.getElementById("passages").lastChild;
-    while (steps > 0 && p) {
-        p = p.previousSibling;
-        steps--;
-    }
-    state.rewindTo(p);
-};
-macros["return"] = {
-  handler: function(a,b,c,d) { 
-    throwError(a, "<<return>> has no use in Jonah", d.fullMatch());
-  }
+    if (back) {
+        var p = document.getElementById("passages").lastChild;
+        while (steps > 0 && p) {
+            p = p.previousSibling;
+            steps--;
+        }
+        state.rewindTo(p);
+    } else state.display(state.history[steps].passage.title);
 };
 
 window.onload = function() {
