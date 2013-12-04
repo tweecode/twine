@@ -375,7 +375,7 @@ class PassageWidget:
             for t in self.passage.tags: 
                 if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
                     for otherWidget in self.parent.taggedWidgets(t):
-                        if not otherWidget.dimmed:
+                        if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
                             color = PassageWidget.CONNECTOR_RESOURCE_COLOR
                             width = (2 if self.selected else 1)
                             self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
@@ -545,7 +545,8 @@ class PassageWidget:
                 gc.SetFont(titleFont)
                 gc.SetTextForeground(titleTextColor)
                 
-            gc.DrawText(self.passage.title, inset, inset)
+            if self.passage.title:
+                gc.DrawText(self.passage.title, inset, inset)
             
             # draw excerpt
     

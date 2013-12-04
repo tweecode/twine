@@ -757,7 +757,7 @@ class ImageFrame (PassageFrame):
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
         
         self.SetIcon(self.app.icon)
-        self.updateImage()      
+        self.updateImage()
         self.Show(True)
     
     def syncPassage (self, event = None):
@@ -802,26 +802,28 @@ class ImageFrame (PassageFrame):
         if bmp:
             size = bmp.GetSize()
         
-        # GIF animation
-        if t.startswith("data:image/gif"):
-            self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
-            self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
-            
-            # Convert the full GIF to an Animation
-            anim = wx.animate.Animation()
-            data = base64.b64decode(t[t.index("base64,")+7:])
-            anim.Load(cStringIO.StringIO(data))
-            
-            # Load the Animation into the AnimationCtrl
-            self.gif.SetAnimation(anim)
-            self.gif.SetInactiveBitmap(bmp)
-            self.gif.Play()
-        
-        # Static images
-        elif bmp:
-            self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
-            self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
-            self.image.SetBitmap(bmp)
+            # GIF animation
+            if t.startswith("data:image/gif"):
+                
+                self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
+                self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
+                
+                # Convert the full GIF to an Animation
+                anim = wx.animate.Animation()
+                data = base64.b64decode(t[t.index("base64,")+7:])
+                anim.Load(cStringIO.StringIO(data))
+                
+                # Load the Animation into the AnimationCtrl
+                
+                self.gif.SetInactiveBitmap(bmp)
+                self.gif.SetAnimation(anim)
+                self.gif.Play()
+                
+            # Static images
+            else:
+                self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+                self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+                self.image.SetBitmap(bmp)
         
         self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
         self.imageScroller.SetScrollRate(2,2)

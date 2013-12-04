@@ -56,7 +56,7 @@ function addStyle(b) {
 
 function alterCSS(text) {
     var imgPassages = tale.lookup("tags", "Twine.image");
-    return text.replace(new RegExp(imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
+    return text.replace(new RegExp(Wikifier.imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
         for (var i = 0; i < imgPassages.length; i++) {
             if (imgPassages[i].title == src) {
                 src = imgPassages[i].text;
@@ -432,14 +432,15 @@ window.onpopstate = function(e) {
         state.display(state.history[0].passage.title,null,"back");
     }
 }
-// Used by parameter() and parameterValue()
-var displayParameters = [];
+
 version.extensions.displayMacro = {
     major: 2,
     minor: 0,
     revision: 0
 };
 macros.display = {
+    // Used by parameter() and parameterValue()
+    parameters: [],
     handler: function (place, macroName, params, parser) {
         var t, j, output, oldDisplayParams, name = parser.fullArgs();
         
@@ -478,15 +479,15 @@ macros.display = {
         } else if (t.id === undefined) {
             throwError(place, "The \"" + output + "\" passage does not exist", parser.fullMatch());
         } else {
-            oldDisplayParams = displayParameters;
-            displayParameters = params;
+            oldDisplayParams = this.parameters;
+            this.parameters = params;
             if (t.tags.indexOf("script") > -1) {
                 scriptEval(t);
             }
             else {
                 new Wikifier(place, tale.get(output+"").processText());
             }
-            displayParameters = oldDisplayParams; 
+            this.parameters = oldDisplayParams; 
         }
     }
 };
@@ -752,7 +753,7 @@ macros.choice = {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
-            match = new RegExp(linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
             
             if (match) {
                 temp = document.createElement("p");
@@ -910,7 +911,8 @@ Passage.prototype.setTags = function(b) {
     document.body.setAttribute("data-tags", t);
 };
 
-var defaultTransitionCSSCache = "";
+Passage.transitionCache = "";
+
 Passage.prototype.setCSS = function() {
     var passage, text, i, j, trans = false, tags = this.tags || [],
         c = document.getElementById('tagCSS');
@@ -922,8 +924,8 @@ Passage.prototype.setCSS = function() {
                 for (j = 0; j < tags.length; j++) {
                     if (~passage.tags.indexOf(tags[j])) {
                         if (~passage.tags.indexOf("transition")) {
-                            if (!defaultTransitionCSSCache)
-                                defaultTransitionCSSCache = document.getElementById('transitionCSS').innerHTML;
+                            if (!Passage.transitionCache)
+                                Passage.transitionCache = document.getElementById('transitionCSS').innerHTML;
                             setTransitionCSS(passage.text);
                             trans = true;
                         }
@@ -933,10 +935,10 @@ Passage.prototype.setCSS = function() {
                 }
             }
         }
-        if (!trans && defaultTransitionCSSCache) {
-            setTransitionCSS(defaultTransitionCSSCache);
+        if (!trans && Passage.transitionCache) {
+            setTransitionCSS(Passage.transitionCache);
             trans = false;
-            defaultTransitionCSSCache = "";
+            Passage.transitionCache = "";
         }
         c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
         c.setAttribute('data-tags', tags.join(' '));
@@ -1176,6 +1178,7 @@ Wikifier.prototype.fullArgs = function (includeName) {
     }
     return Wikifier.parse(this.source.slice(startPos, endPos).trim());
 };
+
 Wikifier.parse = function (input) {
     var m, re, b = input, found = [],
         g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
@@ -1263,7 +1266,6 @@ Wikifier.formatHelpers = {
         }
     }
 };
-var imageFormatter, linkFormatter;
 Wikifier.formatters = [
 {
     name: "table",
@@ -1499,7 +1501,7 @@ Wikifier.formatters = [
         } while (matched);
     }
 },
-(linkFormatter = {
+(Wikifier.linkFormatter = {
     name: "prettyLink",
     match: "\\[\\[",
     lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
@@ -1537,7 +1539,7 @@ Wikifier.formatters = [
         w.outputText(e, w.matchStart, w.nextMatch);
     }
 },
-(imageFormatter = {
+(Wikifier.imageFormatter = {
     name: "image",
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
     lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
@@ -1815,8 +1817,8 @@ function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
 function parameter(n) {
-    if (displayParameters[n]) {
-        return displayParameters[n];
+    if (macros.display.parameters[n]) {
+        return macros.display.parameters[n];
     }
     throw new RangeError("there isn't a parameter " + n);
 }

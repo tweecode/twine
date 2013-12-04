@@ -16,7 +16,7 @@
 # coordinates as soon as possible.
 #
 
-import sys, math, wx, re, pickle
+import sys, math, wx, re, os, pickle
 import geometry, time
 from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
@@ -1054,7 +1054,8 @@ class StoryPanelDropTarget (wx.PyDropTarget):
                     elif fname.endswith(".html") or fname.endswith(".htm"):
                         self.panel.parent.importHtml(file)
                     elif re.search(imageRegex, fname):
-                        imagesImported += self.panel.parent.importImage(file, not multipleImages)
+                        text, title = self.panel.parent.openFileAsBase64(fname)
+                        imagesImported += 1 if self.panel.parent.importImage(text, title, showdialog = not multipleImages) else 0
                 
                 if imagesImported > 1:
                     dialog = wx.MessageDialog(self.panel.parent, 'Multiple image files imported successfully.', 'Images added', \

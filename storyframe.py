@@ -687,6 +687,7 @@ class StoryFrame (wx.Frame):
                                       '[img[' + title + ']]', 'Image added', \
                                       wx.ICON_INFORMATION | wx.OK)
             dialog.ShowModal()
+        return True
         
     def importFont(self, file, showdialog = True):
         """Imports a font into the story as a font passage."""
