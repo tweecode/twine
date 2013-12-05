@@ -3,6 +3,11 @@
 ** Sugarcane/Responsive specific code follows
 **
 */
+var hasPushState = !!window.history && (typeof window.history.pushState == "function");
+
+Tale.prototype.canBookmark = function() {
+    return this.canUndo() && (this.storysettings.lookup('bookmark') || !hasPushState);
+};
 History.prototype.init = function () {
     var a = this;
     if (!this.restore()) {
@@ -71,6 +76,13 @@ History.prototype.display = function (title, b, type, callback) {
     }
     window.scroll(0, 0)
     return e
+};
+History.prototype.restart = function () {
+    if (!hasPushState) {
+        window.location.hash = "";
+    } else {
+        window.location.reload();
+    }
 };
 Passage.prototype.render = function () {
     var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
@@ -221,4 +233,11 @@ macros.back.onclick = function(back, steps) {
         state.display(state.history[0].passage.title);
     }
     else state.display(state.history[steps].passage.title);
+}
+
+window.onpopstate = function(e) {
+    if (e.state && e.state.length > 0) {
+        state.history = e.state;
+        state.display(state.history[0].passage.title,null,"back");
+    }
 }

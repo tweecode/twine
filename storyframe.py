@@ -697,8 +697,15 @@ class StoryFrame (wx.Frame):
             title2 = self.newTitle(title)
             
             # Wrap in CSS @font-face declaration
-            text = '@font-face { font-family: "' + title + '"; src: url(' + text + ");}" \
-                + 'font[face="' + title + '"]{ font-family: "' + title + '";}'
+            text = \
+"""font[face=\"""" + title + """\"] {
+    font-family: \"""" + title + """\";
+}
+@font-face {
+    font-family: \"""" + title + """\";
+    
+    src: url(""" + text + """);
+}"""
             
             self.storyPanel.newWidget(text = text, title = title2, tags = ['stylesheet'])
             if showdialog:

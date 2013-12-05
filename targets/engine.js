@@ -146,8 +146,7 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
 /* btoa/atob polyfill by github.com/davidchambers */
 (function(){function t(t){this.message=t}var e=window,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";t.prototype=Error(),t.prototype.name="InvalidCharacterError",e.btoa||(e.btoa=function(e){for(var o,n,a=0,i=r,c="";e.charAt(0|a)||(i="=",a%1);c+=i.charAt(63&o>>8-8*(a%1))){if(n=e.charCodeAt(a+=.75),n>255)throw new t();o=o<<8|n}return c}),e.atob||(e.atob=function(e){if(e=e.replace(/=+$/,""),1==e.length%4)throw new t();for(var o,n,a=0,i=0,c="";n=e.charAt(i++);~n&&(o=a%4?64*o+n:n,a++%4)?c+=String.fromCharCode(255&o>>(6&-2*a)):0)n=r.indexOf(n);return c})})();
 
-var hasPushState = !!window.history && (typeof window.history.pushState == "function"),
-    hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
+var hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
 
 function fade(f, c) {
     var h;
@@ -252,14 +251,6 @@ function History() {
         hash: null
     }]
 }
-
-History.prototype.restart = function () {
-    if (!hasPushState) {
-        window.location.hash = "";
-    } else {
-        window.location.reload();
-    }
-};
 
 History.prototype.encodeHistory = function(b, noVars) {
     var ret = ".", vars, type, hist = this.history[b],
@@ -425,13 +416,6 @@ var version = {
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
-
-window.onpopstate = function(e) {
-    if (e.state && e.state.length > 0) {
-        state.history = e.state;
-        state.display(state.history[0].passage.title,null,"back");
-    }
-}
 
 version.extensions.displayMacro = {
     major: 2,
@@ -1074,9 +1058,6 @@ Tale.prototype.lookup = function (h, g, a) {
 };
 Tale.prototype.canUndo = function() {
     return this.storysettings.lookup('undo');
-};
-Tale.prototype.canBookmark = function() {
-    return this.canUndo() && (this.storysettings.lookup('bookmark') || !hasPushState);
 };
 function Wikifier(place, source) {
     this.source = source;
