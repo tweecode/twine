@@ -94,13 +94,12 @@ class StatisticsDialog (wx.Dialog):
                 counts['links'] += len(widget.passage.links)
                 counts['brokenLinks'] += len(widget.getBrokenLinks())
                 # Find variables
-                iterator = re.finditer(TweeLexer.MACRO_REGEX, widget.passage.text, re.U|re.I);
+                iterator = re.finditer(TweeLexer.MACRO_REGEX + "|" + TweeLexer.LINK_REGEX, widget.passage.text, re.U|re.I);
                 for p in iterator:
-                    if p.group(2):
-                        iterator2 = re.finditer(TweeLexer.MACRO_PARAMS_REGEX, p.group(2), re.U|re.I)
-                        for p2 in iterator2:
-                            if p2.group(4):
-                                variables.add(p2.group(4));
+                    iterator2 = re.finditer(TweeLexer.MACRO_PARAMS_REGEX, p.group(0), re.U|re.I)
+                    for p2 in iterator2:
+                        if p2.group(4):
+                            variables.add(p2.group(4));
                 # Find tags
                 for a in widget.passage.tags: 
                     if a not in TiddlyWiki.INFO_TAGS:

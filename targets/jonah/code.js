@@ -24,22 +24,30 @@ History.prototype.closeLinks = function() {
         p.insertBefore(D, l[i].nextSibling);
         p.removeChild(l[i]);
     }
-}
-History.prototype.display = function (E, C, A) {
+    l = document.querySelectorAll(".toolbar");
+    for(i = l.length-1; i >= 0; i--) {
+        l[i].parentNode.removeChild(l[i]);
+    }
+};
+History.prototype.display = function (name, source, type, callback) {
     var el, D, F, p = document.getElementById("passages");
     if (!tale.canUndo()) {
         this.closeLinks()
     }
-    if (el = document.getElementById("passage" + E)) {
+    if (el = document.getElementById("passage" + name)) {
         el.id += "|" + (new Date).getTime();
     }
-    D = tale.get(E);
+    D = tale.get(name);
     this.history.unshift({
         passage: D,
         variables: clone(this.history[0].variables)
     });
+    if (typeof callback == "function") {
+        callback();
+        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+    }
     F = D.render();
-    if (A != "offscreen" && A != "quietly") {
+    if (type != "offscreen" && type != "quietly") {
         if (hasTransition) {
             F.classList.add("transition-in");
             setTimeout(function () {
@@ -86,28 +94,29 @@ History.prototype.rewindTo = function (C, instant) {
     }
 };
 Passage.prototype.render = function () {
-    var t, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
+    var F, D, A, t, i, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
     E.style.visibility = 'hidden';
     this.setTags(E);
     this.setCSS();
-    var F = insertElement(E, 'div', '', 'title', this.title);
-    var D = insertElement(F, 'span', '', 'toolbar');
-    for (var B = 0; B < Passage.toolbarItems.length; B++) {
-        var C = insertElement(D, 'a');
-        insertText(C, Passage.toolbarItems[B].label);
+    F = insertElement(E, 'div', '', 'title', this.title);
+    D = insertElement(F, 'span', '', 'toolbar');
+    for (i = 0; i < Passage.toolbarItems.length; i++) {
+        t = Passage.toolbarItems[i];
+        var C = insertElement(D, 'a', null, "toolbar-" + t.label);
+        insertText(C, t.label);
         C.passage = this;
-        if (Passage.toolbarItems[B].href) {
-            C.href = Passage.toolbarItems[B].href(E)
+        if (t.href) {
+            C.href = t.href(E)
         }
-        C.title = Passage.toolbarItems[B].tooltip;
-        C.onclick = Passage.toolbarItems[B].activate
+        C.title = t.tooltip;
+        C.onclick = t.activate
         C.div = E;
     }
-    var A = insertElement(E, 'div', '', 'content');
-    for (var i in prerender) {
+    A = insertElement(E, 'div', '', 'body content');
+    for (i in prerender) {
         (typeof prerender[i] == "function") && prerender[i].call(this,A);
     }
-    new Wikifier(A, this.text);
+    new Wikifier(A, this.processText());
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }
@@ -136,7 +145,7 @@ Passage.toolbarItems = [{
         state.rewindTo(this.div)
     }
 }];
-Wikifier.createInternalLink = function (place, title) {
+Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
     if (tale.has(title)) el.className = 'internalLink';
@@ -150,7 +159,7 @@ Wikifier.createInternalLink = function (place, title) {
         if (passage && passage.parentNode.lastChild != passage) {
             state.rewindTo(passage, true);
         }
-        state.display(title, el)
+        state.display(title, el, null, callback)
     };
 
     if (place) place.appendChild(el);
@@ -159,17 +168,14 @@ Wikifier.createInternalLink = function (place, title) {
 };
 
 macros.back.onclick = function(back, steps) {
-    var p = document.getElementById("passages").lastChild;
-    while (steps > 0 && p) {
-        p = p.previousSibling;
-        steps--;
-    }
-    state.rewindTo(p);
-};
-macros["return"] = {
-  handler: function(a,b,c,d) { 
-    throwError(a, "<<return>> has no use in Jonah", d.fullMatch());
-  }
+    if (back) {
+        var p = document.getElementById("passages").lastChild;
+        while (steps > 0 && p) {
+            p = p.previousSibling;
+            steps--;
+        }
+        state.rewindTo(p);
+    } else state.display(state.history[steps].passage.title);
 };
 
 window.onload = function() {

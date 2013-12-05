@@ -19,13 +19,18 @@ class PreferenceFrame (wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(6, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(7, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
         self.editorFont.SetSelectedFont(self.getPrefFont('windowed'))
         self.editorFont.Bind(wx.EVT_FONTPICKER_CHANGED, lambda e: self.saveFontPref('windowed', \
                              self.editorFont.GetSelectedFont()))
+        
+        self.monoFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
+        self.monoFont.SetSelectedFont(self.getPrefFont('monospace'))
+        self.monoFont.Bind(wx.EVT_FONTPICKER_CHANGED, lambda e: self.saveFontPref('monospace', \
+                             self.monoFont.GetSelectedFont()))
         
         self.fsFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)        
         self.fsFont.SetSelectedFont(self.getPrefFont('fs'))
@@ -58,8 +63,10 @@ class PreferenceFrame (wx.Frame):
                                                                           self.fastStoryPanel.GetValue()))
         self.fastStoryPanel.SetValue(self.app.config.ReadBool('fastStoryPanel'))
 
-        panelSizer.Add(wx.StaticText(panel, label = 'Windowed Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
+        panelSizer.Add(wx.StaticText(panel, label = 'Monospace Font'), flag = wx.ALIGN_CENTER_VERTICAL)
+        panelSizer.Add(self.monoFont)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.fsFont)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Text Color'), flag = wx.ALIGN_CENTER_VERTICAL)
@@ -75,6 +82,8 @@ class PreferenceFrame (wx.Frame):
         borderSizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
+        self.panelSizer = panelSizer
+        self.borderSizer = borderSizer
         
     def getPrefFont (self, key):
         """
@@ -105,3 +114,6 @@ class PreferenceFrame (wx.Frame):
         self.app.config.Write(key + 'FontFace', font.GetFaceName())
         self.app.config.WriteInt(key + 'FontSize', font.GetPointSize())
         self.app.applyPrefs()
+        self.panelSizer.Fit(self)
+        self.borderSizer.Fit(self)
+        

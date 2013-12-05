@@ -198,8 +198,12 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nEmmanuel Turner, Henry Soule, Leon Arnott, Phillip Sutton, Misty De Meo, and others.')
-        info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project and is used under the terms of its license.')
+        info.SetDescription('\nAn open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nLeon Arnott, Emmanuel Turner, Henry Soule, Phillip Sutton, Misty De Meo, Thomas M. Edwards, and others.')
+        info.SetCopyright('The Twine development application is free software: you can redistribute it and/or modify'
+                          + '\nit under the terms of the GNU General Public License as published by the Free Software'
+                          + '\nFoundation, either version 3 of the License, or (at your option) any later version.'
+                          + '\nSee the GNU General Public License for more details.\n\nThe Javascript game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
+                          +'\nand is used under the terms of its license.\n')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):
@@ -234,8 +238,12 @@ class App (wx.App):
             self.config.WriteInt('fsLineHeight', 120)
         if not self.config.HasEntry('windowedFontFace'):
             self.config.Write('windowedFontFace', metrics.face('mono'))
+        if not self.config.HasEntry('monospaceFontFace'):
+            self.config.Write('monospaceFontFace', metrics.face('mono2'))
         if not self.config.HasEntry('windowedFontSize'):
             self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
+        if not self.config.HasEntry('monospaceFontSize'):
+            self.config.WriteInt('monospaceFontSize', metrics.size('editorBody'))
         if not self.config.HasEntry('storyFrameToolbar'):
             self.config.WriteBool('storyFrameToolbar', True)
         if not self.config.HasEntry('storyPanelSnap'):

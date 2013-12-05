@@ -186,13 +186,30 @@ class TiddlyWiki:
 			self.addTiddler(Tiddler('::' + i))
 			
 	def addHtml (self, source):
-		"""Adds HTML source code to this TiddlyWiki."""
-		divs_re = re.compile(r'<div id="storeArea">(.*)</div>',
-												 re.DOTALL)
-		divs = divs_re.search(source)
+		
+		"""Adds HTML source code to this TiddlyWiki."""	
+		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
+						re.DOTALL)
 		if divs:
+			# HTML may be obfuscated.
+			obfuscationkey = ''
+			storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
+			storysettings = re.search(r'<div'+storysettings_re, divs.group(1), re.DOTALL)
+			if storysettings:
+				storysettings = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
+				if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', storysettings.text, re.I):
+					match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', storysettings.text, re.I)
+					if match:
+						obfuscationkey = match.group(1)
+						nss = u''
+						for nsc in obfuscationkey:
+							if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
+								nss = nss + nsc
+						obfuscationkey = nss
+			
 			for div in divs.group(1).split('<div'):
-				self.addTiddler(Tiddler('<div' + div, 'html'))
+				if div.strip() and not re.search(storysettings_re, div, re.DOTALL):
+					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
 				
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
@@ -223,6 +240,7 @@ class TiddlyWiki:
 				self.tiddlers[tiddler.title] = tiddler
 		else:
 			self.tiddlers[tiddler.title] = tiddler
+		return tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
 	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
@@ -236,16 +254,17 @@ class TiddlyWiki:
 class Tiddler:
 	"""A single tiddler in a TiddlyWiki."""
 	
-	def __init__ (self, source, type = 'twee'):
+	def __init__ (self, source, type = 'twee', obfuscationkey = ""):
 		# cache of passage names linked from this one
 		self.links = []
 		self.displays = []
+		self.images = []
 		
 		"""Pass source code, and optionally 'twee' or 'html'"""
 		if type == 'twee':
 			self.initTwee(source)
 		else:
-			self.initHtml(source)
+			self.initHtml(source, obfuscationkey)
 
 	def __getstate__ (self):
 		"""Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
@@ -300,16 +319,18 @@ class Tiddler:
 		self.text = self.text.strip()
 		
 		
-	def initHtml (self, source):
+	def initHtml (self, source, obfuscationkey = ""):
 		"""Initializes a Tiddler from HTML source code."""
 		
 		# title
 		
-		self.title = 'untitled passage'
+		self.title = 'Untitled Passage'
 		title_re = re.compile(r'(?:data\-)?(?:tiddler|name)="([^"]*?)"')
 		title = title_re.search(source)
 		if title:
 			self.title = title.group(1)
+			if obfuscationkey:
+				self.title = encode_obfuscate_swap(self.title, obfuscationkey);
 					
 		# tags
 		
@@ -317,7 +338,9 @@ class Tiddler:
 		tags_re = re.compile(r'(?:data\-)?tags="([^"]*?)"')
 		tags = tags_re.search(source)
 		if tags and tags.group(1) != '':
-			self.tags = tags.group(1).split(' ')
+			if obfuscationkey:
+				self.tags = encode_obfuscate_swap(tags.group(1), obfuscationkey).split(' ');
+			else: self.tags = tags.group(1).split(' ')
 					
 		# creation date
 		
@@ -349,7 +372,9 @@ class Tiddler:
 		text = text_re.search(source)
 		if (text):
 			self.text = decode_text(text.group(1))
-				
+			if obfuscationkey:
+				self.text = encode_obfuscate_swap(self.text, obfuscationkey);
+		
 		
 	def toHtml (self, author = 'twee', insensitive = False, obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""
@@ -373,7 +398,7 @@ class Tiddler:
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
 		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
-		
+		 
 		return output
 		
 		
@@ -397,9 +422,12 @@ class Tiddler:
 	def isAnnotation(self):
 		return 'annotation' in self.tags
 	
+	def isStylesheet(self):
+		return 'stylesheet' in self.tags
+	
 	def isStoryText(self):
-		return not (('script' in self.tags) or ('stylesheet' in self.tags) \
-			or self.isAnnotation() or any('Twine.' in i for i in self.tags) \
+		return not (('script' in self.tags) or self.isStylesheet()
+			or self.isAnnotation() or any('Twine.' in i for i in self.tags)
 			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
 	
 	def isStoryPassage(self):
@@ -414,9 +442,10 @@ class Tiddler:
 		Update the lists of all passages linked/displayed by this one. By default,
 		returns internal links and <<choice>>/<<actions>> macros.
 		"""
-		if not self.isStoryText():
+		if not self.isStoryText() and not self.isAnnotation() and not self.isStylesheet():
 			self.displays = []
 			self.links = []
+			self.images = []
 			return
 		
 		# <<display>>
@@ -425,6 +454,7 @@ class Tiddler:
 		links = []
 		actions = []
 		choices = []
+		images = []
 		
 		# regular hyperlinks
 		if includeInternal:
@@ -457,9 +487,15 @@ class Tiddler:
 			choices = []
 			choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
 			for block in choiceBlocks:
-				item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|(?:\[\[([^\]]*)\]\])|([^"\'\s]\S*)', block)
+				# New style <<choice>>
+				item = re.match(TweeLexer.LINK_REGEX, block)
 				if item:
-					choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
+					choices.append(m.group(2) or m.group(1))
+				else:
+					# Old style
+					item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\s]\S*)', block)
+					if item:
+						choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
 			
 			# <<actions '' ''>>
 			
@@ -471,6 +507,14 @@ class Tiddler:
 		# remove duplicates by converting to a set
 		
 		self.links = list(set(links + choices + actions))
+		
+		# Images
+		
+		imageBlocks = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
+		for block in imageBlocks:
+			images.append(block.group(4))
+		
+		self.images = images
 
 #
 # Helper functions

@@ -227,8 +227,8 @@ class PassageFrame (wx.Frame):
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
-            elif "|" in title:
-                self.titleLabel.SetLabel("No | symbols allowed!");
+            elif "|" in title or "]" in title:
+                self.titleLabel.SetLabel("No | or ] symbols allowed!");
                 self.titleInput.SetBackgroundColour((240,130,130))
                 self.titleInput.Refresh()
                 self.titleInvalid = True
@@ -244,7 +244,7 @@ class PassageFrame (wx.Frame):
         self.widget.passage.text = self.bodyInput.GetText()
         self.widget.passage.modified = time.localtime()
         # Preserve the special (uneditable) tags
-        self.widget.passage.tags = []#[i for i in self.widget.passage.tags if i in TiddlyWiki.SPECIAL_TAGS]
+        self.widget.passage.tags = []
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
@@ -470,31 +470,31 @@ class PassageFrame (wx.Frame):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
     
-    def setCssLexer(self):
+    def setCodeLexer(self, css = False):
         """Basic CSS highlighting"""
         monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
-                           wx.NORMAL, False, "Courier")
+                           wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         body = self.bodyInput
-        body.StyleSetFont(0,monoFont);
+        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
         body.StyleClearAll()
-        for i in range(1,17):
-            body.StyleSetFont(i, monoFont)
-        
-        body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeLexer.MACRO_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeLexer.COMMENT_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeLexer.GOOD_LINK_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeLexer.MARKUP_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeLexer.MARKUP_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeLexer.PARAM_BOOL_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR); 
-        body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeLexer.PARAM_VAR_COLOR);
-        body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeLexer.GOOD_LINK_COLOR);
-        
-        for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG, 
-                  wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
-                  wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS]:
-            body.StyleSetBold(i, True)
+        if css:
+            for i in range(1,17):
+                body.StyleSetFont(i, monoFont)
+            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeLexer.MACRO_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeLexer.COMMENT_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeLexer.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeLexer.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeLexer.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeLexer.PARAM_BOOL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR); 
+            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeLexer.PARAM_VAR_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeLexer.GOOD_LINK_COLOR);
+            
+            for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG, 
+                      wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
+                      wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, wx.stc.STC_CSS_DIRECTIVE]:
+                body.StyleSetBold(i, True)
         
     def setLexer (self):
         """
@@ -502,21 +502,23 @@ class PassageFrame (wx.Frame):
         is part of the story.
         """
         oldLexing = self.usingLexer
-        
-        if "stylesheet" in self.widget.passage.tags:
+                
+        if self.widget.passage.isStylesheet():
             if oldLexing != self.LEXER_CSS:
-                self.setCssLexer()
-            self.usingLexer = self.LEXER_CSS
-            self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
-        elif not self.widget.passage.isStoryText():
-            self.usingLexer = self.LEXER_NONE
-            self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
-        else:
+                self.setCodeLexer(css = True)
+                self.usingLexer = self.LEXER_CSS
+                self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
+        elif not self.widget.passage.isStoryText() and not self.widget.passage.isAnnotation():
+            if oldLexing != self.LEXER_NONE:
+                self.usingLexer = self.LEXER_NONE
+                self.setCodeLexer()
+                self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
+        elif oldLexing != self.LEXER_NORMAL:
             self.usingLexer = self.LEXER_NORMAL
             self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
 
         if oldLexing != self.usingLexer:
-            if oldLexing == self.LEXER_CSS:
+            if self.usingLexer == self.LEXER_NORMAL:
                 self.lexer.initStyles()
             self.bodyInput.Colourise(0, len(self.bodyInput.GetText()))
     
@@ -629,7 +631,7 @@ class PassageFrame (wx.Frame):
         
     def applyPrefs (self):
         """Applies user prefs to this frame."""
-        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL,
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         defaultStyle = self.bodyInput.GetStyleAt(0)
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
@@ -755,7 +757,7 @@ class ImageFrame (PassageFrame):
         self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
         
         self.SetIcon(self.app.icon)
-        self.updateImage()      
+        self.updateImage()
         self.Show(True)
     
     def syncPassage (self, event = None):
@@ -792,30 +794,33 @@ class ImageFrame (PassageFrame):
         self.imageSizer.Clear(True)
         self.gif = None
         self.image = None
+        size = (32,32)
         
         t = self.widget.passage.text
         # Get the bitmap (will be used as inactive for GIFs)
         bmp = self.widget.bitmap
-        size = bmp.GetSize()
+        if bmp:
+            size = bmp.GetSize()
         
-        # GIF animation
-        if t.startswith("data:image/gif"):
-            self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
-            self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
-            
-            # Convert the full GIF to an Animation
-            anim = wx.animate.Animation()
-            data = base64.b64decode(t[t.index("base64,")+7:])
-            anim.Load(cStringIO.StringIO(data))
-            
-            # Load the Animation into the AnimationCtrl
-            self.gif.SetAnimation(anim)
-            self.gif.SetInactiveBitmap(bmp)
-            self.gif.Play()
-        
-        # Static images
-        else:
-            if bmp:
+            # GIF animation
+            if t.startswith("data:image/gif"):
+                
+                self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
+                self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
+                
+                # Convert the full GIF to an Animation
+                anim = wx.animate.Animation()
+                data = base64.b64decode(t[t.index("base64,")+7:])
+                anim.Load(cStringIO.StringIO(data))
+                
+                # Load the Animation into the AnimationCtrl
+                
+                self.gif.SetInactiveBitmap(bmp)
+                self.gif.SetAnimation(anim)
+                self.gif.Play()
+                
+            # Static images
+            else:
                 self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
                 self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
                 self.image.SetBitmap(bmp)
@@ -823,6 +828,10 @@ class ImageFrame (PassageFrame):
         self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
         self.imageScroller.SetScrollRate(2,2)
         self.Refresh()
+        
+        # Update copy menu
+        copyItem = self.menus.FindItemById(wx.ID_COPY)
+        copyItem.Enable(not not bmp)
         
     def replaceImage(self, event = None):
         """Replace the image with a new file, if possible."""
@@ -857,7 +866,7 @@ class ImageFrame (PassageFrame):
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
-        if clip.Open():
+        if clip.Open() and self.image:
             clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
