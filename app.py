@@ -238,8 +238,12 @@ class App (wx.App):
             self.config.WriteInt('fsLineHeight', 120)
         if not self.config.HasEntry('windowedFontFace'):
             self.config.Write('windowedFontFace', metrics.face('mono'))
+        if not self.config.HasEntry('monospaceFontFace'):
+            self.config.Write('monospaceFontFace', metrics.face('mono2'))
         if not self.config.HasEntry('windowedFontSize'):
             self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
+        if not self.config.HasEntry('monospaceFontSize'):
+            self.config.WriteInt('monospaceFontSize', metrics.size('editorBody'))
         if not self.config.HasEntry('storyFrameToolbar'):
             self.config.WriteBool('storyFrameToolbar', True)
         if not self.config.HasEntry('storyPanelSnap'):

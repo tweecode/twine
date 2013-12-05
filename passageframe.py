@@ -473,7 +473,7 @@ class PassageFrame (wx.Frame):
     def setCodeLexer(self, css = False):
         """Basic CSS highlighting"""
         monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
-                           wx.NORMAL, False, "Courier")
+                           wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         body = self.bodyInput
         body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
         body.StyleClearAll()

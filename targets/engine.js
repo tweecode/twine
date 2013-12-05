@@ -1838,17 +1838,27 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var scripts, macroidx, macro, style, i, p = document.getElementById("passages");
+    var imgs, scripts, macro, style, i, p = document.getElementById("passages");
     
     if (!window.JSON) {
         return (p.innerHTML = "This story requires a newer web browser. Sorry.");
     } else {
         p.innerHTML = "";
-    }
-    
+    }   
     tale = window.tale = new Tale();
     state = window.state = new History();
     document.title = tale.title;
+    
+    if (~document.documentElement.className.indexOf("lt-ie9")) {
+        imgs = tale.lookup("tags", "Twine.image");
+        for (i = 0; i < imgs.length; i++) {
+            if (imgs[i].text.length >= 32768) {
+                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display.");
+                break;
+            }
+        }
+    }
+    
     setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
@@ -1863,8 +1873,8 @@ function main() {
     for (i = 0; i < scripts.length; i++) {
         scriptEval(scripts[i]);
     }
-    for (macroidx in macros) {
-        macro = macros[macroidx];
+    for (macro in macros) {
+        macro = macros[macro];
         if (typeof macro.init == "function") {
             macro.init();
         }
