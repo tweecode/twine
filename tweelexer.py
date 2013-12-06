@@ -345,7 +345,7 @@ class TweeLexer:
     HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
     HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
     INLINE_STYLE_REGEX = "@@"
-    MONO_REGEX = r"^\{\{\{\n((?:^[^\n]*\n)+?)(^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
+    MONO_REGEX = r"^\{\{\{\n(?:(?:^[^\n]*\n)+?)(?:^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
     COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
     
     COMBINED_REGEX = '(' + ')|('.join([ LINK_REGEX, MACRO_REGEX, IMAGE_REGEX, HTML_BLOCK_REGEX, HTML_REGEX, INLINE_STYLE_REGEX,\

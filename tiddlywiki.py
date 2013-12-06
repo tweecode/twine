@@ -155,8 +155,8 @@ class TiddlyWiki:
 		# preamble
 		
  		output = r'{\rtf1\ansi\ansicpg1251' + '\n'
-		output += r'{\fonttbl\f0\fswiss\fcharset0 Arial;}' + '\n'
-		output += r'{\colortbl;\red128\green128\blue128;}' + '\n'
+		output += r'{\fonttbl\f0\fswiss\fcharset0 Arial;\f1\fmodern\fcharset0 Courier;}' + '\n'
+		output += r'{\colortbl;\red128\green128\blue128;\red51\green51\blue204;}' + '\n'
 		output += r'\margl1440\margr1440\vieww9000\viewh8400\viewkind0' + '\n'
 		output += r'\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx792' + '\n'
 		output += r'\tx8640\ql\qnatural\pardirnatural\pgnx720\pgny720' + '\n'
@@ -166,9 +166,16 @@ class TiddlyWiki:
 		for i in order:
 			text = rtf_encode(self.tiddlers[i].text)
 			text = re.sub(r'\n', '\\\n', text) # newlines
-			text = re.sub(r'\[\[(.*?)\]\]', r'\ul \1\ulnone ', text) # links
+			text = re.sub(TweeLexer.LINK_REGEX, r'\\b\cf2 \ul \1\ulnone \cf0 \\b0', text) # links
+			text = re.sub(r"''(.*?)''", r'\\b \1\\b0 ', text) # bold
 			text = re.sub(r'\/\/(.*?)\/\/', r'\i \1\i0 ', text) # italics
-			text = re.sub(r'(\<\<.*?\>\>)', r'\cf1 \i \1\i0 \cf0', text) # macros
+			text = re.sub(r"\^\^(.*?)\^\^", r'\\super \1\\nosupersub ', text) # sup
+			text = re.sub(r"~~(.*?)~~", r'\\sub \1\\nosupersub ', text) # sub
+			text = re.sub(r"==(.*?)==", r'\\strike \1\\strike0 ', text) # strike
+			text = re.sub(r'(\<\<.*?\>\>)', r'\\f1\cf1 \1\cf0\\f0', text) # macros
+			text = re.sub(TweeLexer.HTML_REGEX, r'\\f1\cf1 \g<0>\cf0\\f0', text) # macros
+			text = re.sub(TweeLexer.MONO_REGEX, r'\\f1 \1\\f0', text) # monospace
+			text = re.sub(TweeLexer.COMMENT_REGEX, '', text) # comments
 
 			output += r'\fs24\b1' + rtf_encode(self.tiddlers[i].title) + r'\b0\fs20' + '\\\n'
 			output += text + '\\\n\\\n'

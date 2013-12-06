@@ -82,6 +82,7 @@ History.prototype.restart = function () {
     if (!hasPushState) {
         window.location.hash = "";
     } else {
+        window.history.replaceState(this.history, document.title, window.location.href.replace(/#.*$/,''));
         window.location.reload();
     }
 };
