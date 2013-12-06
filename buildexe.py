@@ -51,7 +51,7 @@ setup(
 
     windows = [{
         'script': 'app.py',
-        'icon_resources': [(0x0004, 'icons\\app.ico'), (0x0005, 'icons\\doc.ico')],
+        'icon_resources': [(0x0004, 'appicons\\app.ico'), (0x0005, 'appicons\\doc.ico')],
         'dest_base': 'twine',
         'other_resources': [(24, 1, manifest % dict(prog='Twine'))],
     }],

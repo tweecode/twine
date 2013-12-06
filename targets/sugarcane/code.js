@@ -63,6 +63,7 @@ History.prototype.display = function (title, b, type, callback) {
         }
     }
     else {
+        p.appendChild(e);
         e.style.visibility = "visible"
     }
     if (tale.canUndo()) {
