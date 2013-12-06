@@ -50,7 +50,8 @@ class StoryPanel (wx.ScrolledWindow):
             self.scale = state['scale']
             for widget in state['widgets']:
                 self.widgets.append(PassageWidget(self, self.app, state = widget))
-            if (hasattr(state, 'snapping')) and state['snapping']: self.snapping = True
+            if ('snapping' in state):
+                self.snapping = state['snapping']
         else:
             self.scale = 1
             self.newWidget(title = StoryPanel.FIRST_TITLE, text = StoryPanel.FIRST_TEXT, quietly = True)
@@ -848,7 +849,7 @@ class StoryPanel (wx.ScrolledWindow):
     
     def serialize (self):
         """Returns a dictionary of state suitable for pickling."""
-        state = { 'scale': self.scale, 'widgets': [] }
+        state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
                 
         for widget in self.widgets:
             state['widgets'].append(widget.serialize())
@@ -857,7 +858,7 @@ class StoryPanel (wx.ScrolledWindow):
     
     def serialize_noprivate (self):
         """Returns a dictionary of state suitable for pickling without passage marked with a Twine.private tag."""
-        state = { 'scale': self.scale, 'widgets': [] }
+        state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
                 
         for widget in self.widgets:
             if not any('Twine.private' in t for t in widget.passage.tags):

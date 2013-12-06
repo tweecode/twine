@@ -202,9 +202,12 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n'
-                          + '1.4 contributors:\nLeon Arnott, Emmanuel Turner, Henry Soule, Misty De Meo, Phillip Sutton, Thomas M. Edwards, and others.\n\n'
-                          + 'The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
+        info.SetIcon(self.icon)
+        info.SetWebSite('http://twinery.org/')
+        info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas')
+        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','and others.'])
+                          
+        info.SetLicense('The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
                           + ' it under the terms of the GNU General Public License as published by the Free Software'
                           + ' Foundation, either version 3 of the License, or (at your option) any later version.'
                           + ' See the GNU General Public License for more details.\n\nThe Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
