@@ -1494,7 +1494,7 @@ Wikifier.formatters = [
                 setPageElement(link, null, title);
             } else { // Pretty bracketed link
                 title = Wikifier.parsePassageTitle(lookaheadMatch[2]);
-                if (tale.has(title))
+                if (tale.has(title) || !title)
                     link = Wikifier.createInternalLink(w.output, title, callback);
                 else
                     link = Wikifier.createExternalLink(w.output, lookaheadMatch[2], callback);
@@ -1520,7 +1520,7 @@ Wikifier.formatters = [
         var lookaheadRegExp = new RegExp(this.lookahead, "mig");
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source);
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketted link
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketed link
         {
             var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
             if (title) {
@@ -1784,7 +1784,7 @@ function previous() {
             }
         }
     }
-    return state.history[0].passage.title
+    return ""
 }
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
