@@ -120,24 +120,29 @@ class TiddlyWiki:
 					nss = nss + nsc
 			self.storysettings['obfuscatekey'] = nss
 		
+		storycode = u''
 		for i in order:
 			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
 				if (self.tiddlers[i].title == 'StorySettings'):
-					output += self.tiddlers[i].toHtml(self.author, insensitive = True)
+					storycode += self.tiddlers[i].toHtml(self.author, insensitive = True)
 				elif (not obfuscate):
-					output += self.tiddlers[i].toHtml(self.author)
+					storycode += self.tiddlers[i].toHtml(self.author)
 				else:
-					output += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
+					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
 		
-		if (target):
-			footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
-			if os.path.exists(footername):
-				footer = open(footername,'r')
-				output += footer.read()
-				footer.close()
-			else:
-				output += '</div></body></html>'
-		
+		if output.count('"STORY"') > 0:
+			output = output.replace('"STORY"', storycode)
+		else:
+			output += storycode
+			if (target):
+				footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
+				if os.path.exists(footername):
+					footer = open(footername,'r')
+					output += footer.read()
+					footer.close()
+				else:
+					output += '</div></body></html>'
+
 		return output
 	
 	def toRtf (self, order = None):

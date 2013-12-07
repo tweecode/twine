@@ -944,8 +944,13 @@ body {
     
     
 }
-.internalLink, .externalLink {
+.passage a {
     /* This only affects links */
+    
+    
+}
+.passage a:hover {
+    /* This only affects links while the cursor is over them */
     
     
 }"""
