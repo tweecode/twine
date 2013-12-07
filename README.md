@@ -9,7 +9,7 @@ A visual tool for creating interactive stories for the Web, based on the
 primarily in Python and Javascript, with UI widgets provided by wxPython.
 Twine was written by Chris Klimas. Further information is available at:
 
-[http://gimcrackd.com/etc/src/](http://gimcrackd.com/etc/src/)
+http://twinery.org/
 
 Installation
 ------------
@@ -47,39 +47,11 @@ You should now have a working Twine setup. To start Twine:
 
 	python app.py
 
-Special instructions for Mac OS X
----------------------------------
-
-The version of python distributed with Mac OS X requires a 64-bit version
-of wxPython. As of today, the stable version of wxPython (2.8.*) does not 
-work in 64 bit mode on the Mac. There are several ways to work around this
-issue. Two common approaches are:
-
-### force python to run in 32-bit mode
-
-Add an executable file named `python_32` to your/virtualenv/path/bin/ 
-containing:
-
-	#! /bin/bash
-	export VERSIONER_PYTHON_PREFER_32_BIT=yes
-	/usr/bin/python "$@"
-
-You should now be able to run Twine using a command like this:
-
-	python_32 app.py
-
-### use a 64-bit compatible version of wxPthon and python 2.7
-
-The current development version of wxPython (2.9.*) includes support for 
-Cocoa, making it possible to run it in 64-bit mode. See the 
-[wxPython download page](http://www.wxpython.org/download.php).
-
 Contributing to Twine development
 ---------------------------------
 
-If you have bug fixes for [Twine](https://github.com/tweecode/twine) -- or
-any of the other  [related projects](https://github.com/tweecode) -- the 
-easiest way to contribute them back is as follows:
+If you have bug fixes for Twine, the easiest
+way to contribute them back is as follows:
 
 * fork this repository (see link at top of the project page on github)
 * make your fixes and push them to your own fork on github

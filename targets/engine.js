@@ -269,21 +269,18 @@ History.prototype.encodeHistory = function(b, noVars) {
     }
     ret += hist.passage.id.toString(36)
     
-    //console.log("encoding passage "+ret);
     if (noVars) {
         return ret;
     }
     for (vars in d) {
         type = typeof d[vars];
         if (type != "function" && type != "undefined") {
-            //console.log("variable "+ vars + " is " + d[vars]);
             ret += "$" + vtob(vars) + "," + vtob(d[vars]);
         }
     }
     for (vars in hist.linkVars) {
         type = typeof hist.linkVars[vars];
         if (type != "function" && type != "undefined") {
-            //console.log("linkvar " + vars + " is " + hist.linkVars[vars]);
             ret += "[" + vtob(vars) + "," + vtob(hist.linkVars[vars]);
         }
     }
@@ -304,8 +301,6 @@ History.prototype.decodeHistory = function(str, prev) {
     }
     
     if (match) {
-        //console.log("decoding "+match[0]);
-        //console.log(ret.variables);
         name = parseInt(match[1], 36);
         if (!tale.has(name)) {
             return false
@@ -317,7 +312,6 @@ History.prototype.decodeHistory = function(str, prev) {
                 variable = splits[c].split(",");
                 d = btov(variable[0]);
                 if (d) {
-                    //console.log("variable "+ d + " is " + btov(variable[1]));
                     ret.variables[d]=btov(variable[1]);
                 }
             }
@@ -329,12 +323,10 @@ History.prototype.decodeHistory = function(str, prev) {
                 variable = splits[c].split(",");
                 d = btov(variable[0]);
                 if (d) {
-                    //console.log("linkvar " + d + " is " + btov(variable[1]));
                     ret.linkVars[d]=btov(variable[1]);
                 }
             }
         }
-        //console.log(JSON.stringify(ret.variables));
         ret.passage = tale.get(name);
         return ret;
     }
@@ -1690,7 +1682,7 @@ Wikifier.formatters = [
 },
 {
     name: "continuedLine",
-    match: "\\\\\\n",
+    match: "\\\\\\s*?\\n",
     handler: function(a) {
         a.nextMatch = a.matchStart+2;
     }
@@ -1798,6 +1790,7 @@ function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
 function parameter(n) {
+    n = n || 0;
     if (macros.display.parameters[n]) {
         return macros.display.parameters[n];
     }
