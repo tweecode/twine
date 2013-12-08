@@ -44,6 +44,29 @@ DAMAGE.
 
 "JONAH"
 
+// CssLexer/CssParser
+// Copyright (C) 2010 Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+var lexCss;var decodeCss;(function(){function w(W){var S=parseInt(W.substring(1),16);if(S>65535){return S-=65536,String.fromCharCode(55296+(S>>10),56320+(S&1023))}else{if(S==S){return String.fromCharCode(S)}else{if(W[1]<" "){return""}else{return W[1]}}}}function L(W,S){return'"'+W.replace(/[\u0000-\u001f\\\"<>]/g,S)+'"'}function u(S){return v[S]||(v[S]="\\"+S.charCodeAt(0).toString(16)+" ")}function c(S){return y[S]||(y[S]=(S<"\x10"?"%0":"%")+S.charCodeAt(0).toString(16))}var v={"\\":"\\\\"},y={"\\":"%5c"},V="[\\t\\n\\f ]",e=V+"*",J="[\\n\\f]",q="[\\ud800-\\udbff][\\udc00-\\udfff]",z="[\\u0080-\\ud7ff\\ue000-\\ufffd]|"+q,O="[0-9a-fA-F]{1,6}"+V+"?",X="\\\\"+O,m="(?:"+O+"|[\\u0020-\\u007e\\u0080-\\ud7ff\\ue000\\ufffd]|"+q+")",a="\\\\"+m,N="(?:[\\t\\x21\\x23-\\x26\\x28-\\x5b\\x5d-\\x7e]|"+z+"|"+a+")",B="[^'\"\\n\\f\\\\]|\\\\[\\s\\S]",P="\"(?:'|"+B+')*"|\'(?:"|'+B+")*'",t="[-+]?(?:[0-9]+(?:[.][0-9]+)?|[.][0-9]+)",A="(?:[a-zA-Z_]|"+z+"|"+a+")",p="(?:[a-zA-Z0-9_-]|"+z+"|"+a+")",F=p+"+",D="-?"+A+p+"*",M="@"+D,n="#"+F,C=t,x="(?:@?-?"+A+"|#)"+p+"*",U=t+"%",l=t+D,j=t+"(?:%|"+D+")?",E="url[(]"+e+"(?:"+P+"|"+N+"*)"+e+"[)]",R="U[+][0-9A-F?]{1,6}(?:-[0-9A-F]{1,6})?",o="<!--",s="-->",h=V+"+",i="/(?:[*][^*]*[*]+(?:[^/][^*]*[*]+)*/|/[^\\n\\f]*)",b="(?!url[(])"+D+"[(]",r="~=",G="[|]=",I="[^]=",d="[$]=",g="[*]=",Q="[~|^$*]=",f="[^\"'\\\\/]|/(?![/*])",K="\\uFEFF",H=new RegExp([K,R,E,b,x,P,j,o,s,h,i,Q,f].join("|"),"gi"),T=new RegExp("\\\\(?:"+m+"|"+J+")","g"),k=new RegExp("^url\\("+e+"[\"']?|[\"']?"+e+"\\)$","gi");decodeCss=function(S){return S.replace(T,w)};lexCss=function(Y){Y=""+Y;var ac=Y.replace(/\r\n?/g,"\n").match(H)||[];var Z=0;var ad=" ";for(var aa=0,S=ac.length;aa<S;++aa){var ae=decodeCss(ac[aa]);var ab=ae.length;var W=ae.charCodeAt(0);ae=(W=='"'.charCodeAt(0)||W=="'".charCodeAt(0))?L(ae.substring(1,ab-1),u):(W=="/".charCodeAt(0)&&ab>1||ae=="\\"||ae==s||ae==o||ae=="\ufeff"||W<=" ".charCodeAt(0))?" ":/url\(/i.test(ae)?"url("+L(ae.replace(k,""),c)+")":ae;if(ad!=ae||ae!=" "){ac[Z++]=ad=ae}}ac.length=Z;return ac}})();
+
+var parseCssStylesheet,parseCssDeclarations;
+(function(){function l(b,a,f,c,e){for(var d=a++;a<f&&"{"!==b[a]&&";"!==b[a];)++a;if(a<f&&(e||";"===b[a])){e=d+1;var g=a;e<f&&" "===b[e]&&++e;g>e&&" "===b[g-1]&&--g;c.startAtrule&&c.startAtrule(b[d].toLowerCase(),b.slice(e,g));a="{"===b[a]?m(b,a,f,c):a+1;c.endAtrule&&c.endAtrule()}return a}function m(b,a,f,c){++a;for(c.startBlock&&c.startBlock();a<f;){var e=b[a].charAt(0);if("}"==e){++a;break}a=" "===e||";"===e?a+1:"@"===e?l(b,a,f,c,!1):"{"===e?m(b,a,f,c):n(b,a,f,c)}c.endBlock&&c.endBlock();return a}
+function n(b,a,f,c){var e=a,d=p(b,a,f,!0);if(0>d)return d=~d,d===e?d+1:d;var g=b[d];if("{"!==g)return d===e?d+1:d;a=d+1;d>e&&" "===b[d-1]&&--d;for(c.startRuleset&&c.startRuleset(b.slice(e,d));a<f;){g=b[a];if("}"===g){++a;break}a=" "===g?a+1:q(b,a,f,c)}c.endRuleset&&c.endRuleset();return a}function p(b,a,f,c){for(var e,d=[],g=-1;a<f;++a)if(e=b[a].charAt(0),"["===e||"("===e)d[++g]=e;else if("]"===e&&"["===d[g]||")"===e&&"("===d[g])--g;else if("{"===e||"}"===e||";"===e||"@"===e||":"===e&&!c)break;0<=
+g&&(a=~(a+1));return a}function r(b,a,f){for(;a<f&&";"!==b[a]&&"}"!==b[a];)++a;return a<f&&";"===b[a]?a+1:a}function q(b,a,f,c){var e=b[a++];if(!s.test(e))return r(b,a,f);var d;a<f&&" "===b[a]&&++a;if(a==f||":"!==b[a])return r(b,a,f);++a;a<f&&" "===b[a]&&++a;d=a;a=p(b,a,f,!1);if(0>a)a=~a;else{for(var g=[],h=0,k=d;k<a;++k)d=b[k]," "!==d&&(g[h++]=d);if(a<f){do{d=b[a];if(";"===d||"}"===d)break;h=0}while(++a<f);";"===d&&++a}h&&c.declaration&&c.declaration(e.toLowerCase(),g)}return a}parseCssStylesheet=
+function(b,a){var f=lexCss(b);a.startStylesheet&&a.startStylesheet();for(var c=0,e=f.length;c<e;){var d;if(" "===f[c])d=c+1;else{d=f;var g=e,h=a;d=c<g?"@"===d[c].charAt(0)?l(d,c,g,h,!0):n(d,c,g,h):c}c=d}a.endStylesheet&&a.endStylesheet()};var s=/^-?[a-z]/i;parseCssDeclarations=function(b,a){for(var f=lexCss(b),c=0,e=f.length;c<e;)c=" "!==f[c]?q(f,c,e,a):c+1}})();
+
 }());
 </script>
 <script title="modules">
@@ -181,7 +204,7 @@ a.brokenLink {
 	margin-left: 12px;
 	cursor:pointer;
 }
-.selected .toolbar {
+.passage:hover .toolbar {
 	visibility: visible;
 }
 .passage ul {

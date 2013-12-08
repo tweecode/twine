@@ -43,7 +43,7 @@ function setPageElement(c, b, a) {
         }
     }
 }
-
+// Kept for custom script use
 function addStyle(b) {
     if (document.createStyleSheet) {
         document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "&nbsp;<style>" + b + "</style>")
@@ -56,6 +56,9 @@ function addStyle(b) {
 
 function alterCSS(text) {
     var imgPassages = tale.lookup("tags", "Twine.image");
+    // Remove comments
+    text = text.replace(/\/\*(?:[^\*]|\*(?!\/))*\*\//g,'');
+    // Add images
     return text.replace(new RegExp(Wikifier.imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
         for (var i = 0; i < imgPassages.length; i++) {
             if (imgPassages[i].title == src) {
@@ -885,40 +888,6 @@ Passage.prototype.setTags = function(b) {
         b.setAttribute('data-tags', this.tags.join(' '));
     }
     document.body.setAttribute("data-tags", t);
-};
-
-Passage.transitionCache = "";
-
-Passage.prototype.setCSS = function() {
-    var passage, text, i, j, trans = false, tags = this.tags || [],
-        c = document.getElementById('tagCSS');
-    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
-        text = "";
-        for (i in tale.passages) {
-            passage = tale.passages[i];
-            if (passage && ~passage.tags.indexOf("stylesheet")) {
-                for (j = 0; j < tags.length; j++) {
-                    if (~passage.tags.indexOf(tags[j])) {
-                        if (~passage.tags.indexOf("transition")) {
-                            if (!Passage.transitionCache)
-                                Passage.transitionCache = document.getElementById('transitionCSS').innerHTML;
-                            setTransitionCSS(passage.text);
-                            trans = true;
-                        }
-                        else text += alterCSS(passage.text);
-                        break;
-                    }
-                }
-            }
-        }
-        if (!trans && Passage.transitionCache) {
-            setTransitionCSS(Passage.transitionCache);
-            trans = false;
-            Passage.transitionCache = "";
-        }
-        c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
-        c.setAttribute('data-tags', tags.join(' '));
-    }
 };
 Passage.prototype.processText = function() {
     var ret = this.text;

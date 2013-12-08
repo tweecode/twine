@@ -114,6 +114,39 @@ Passage.prototype.excerpt = function () {
     else c = a[0].substr(0, 30) + '...';
     return c;
 };
+Passage.transitionCache = "";
+Passage.prototype.setCSS = function() {
+    var passage, text, i, j, trans = false, tags = this.tags || [],
+        c = document.getElementById('tagCSS');
+    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
+        text = "";
+        for (i in tale.passages) {
+            passage = tale.passages[i];
+            if (passage && ~passage.tags.indexOf("stylesheet")) {
+                for (j = 0; j < tags.length; j++) {
+                    if (~passage.tags.indexOf(tags[j])) {
+                        if (~passage.tags.indexOf("transition")) {
+                            if (!Passage.transitionCache)
+                                Passage.transitionCache = document.getElementById('transitionCSS').innerHTML;
+                            setTransitionCSS(passage.text);
+                            trans = true;
+                        }
+                        else text += alterCSS(passage.text);
+                        break;
+                    }
+                }
+            }
+        }
+        if (!trans && Passage.transitionCache) {
+            setTransitionCSS(Passage.transitionCache);
+            trans = false;
+            Passage.transitionCache = "";
+        }
+        c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
+        c.setAttribute('data-tags', tags.join(' '));
+    }
+};
+
 Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
