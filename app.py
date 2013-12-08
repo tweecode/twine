@@ -9,8 +9,8 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.3.5 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
-    RECENT_FILES = 5
+    VERSION = '1.4 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
+    RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
         """Initializes the application."""
@@ -18,6 +18,13 @@ class App (wx.App):
         locale.setlocale(locale.LC_ALL, '')
         self.stories = []
         self.loadPrefs()
+        
+        # Determine the path to the executing script or application.
+        self.scriptPath = os.path.realpath(sys.path[0])
+        # OS X py2app'd apps will direct us right into the app bundle
+        self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+        # Windows py2exe'd apps add an extraneous library.zip at the end
+        self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
 
         # try to load our app icon under win32
         # if it doesn't work, we continue anyway
@@ -70,7 +77,7 @@ class App (wx.App):
         """Opens a story file of the user's choice."""
         opened = False
         dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
-                               wx.OPEN | wx.FD_CHANGE_DIR)
+                               wx.FD_OPEN | wx.FD_CHANGE_DIR)
                                                 
         if dialog.ShowModal() == wx.ID_OK:
             opened = True
@@ -191,25 +198,25 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nA tool for creating interactive stories\nwritten by Chris Klimas\n\nhttp://gimcrackd.com/etc/src/')
-        info.SetCopyright('The Twee compiler and associated JavaScript files in this application are released under the GNU Public License.\n\nThe files in the targets directory are derivative works of Jeremy Ruston\'s TiddlyWiki project and are used under the terms of its license.')
+        info.SetDescription('\nAn open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nLeon Arnott, Emmanuel Turner, Henry Soule, Phillip Sutton, Misty De Meo, Thomas M. Edwards, and others.')
+        info.SetCopyright('The Twine development application is free software: you can redistribute it and/or modify'
+                          + '\nit under the terms of the GNU General Public License as published by the Free Software'
+                          + '\nFoundation, either version 3 of the License, or (at your option) any later version.'
+                          + '\nSee the GNU General Public License for more details.\n\nThe Javascript game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
+                          +'\nand is used under the terms of its license.\n')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/#simple,storyformats')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/about_story_formats')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
-        wx.LaunchDefaultBrowser('http://gimcrackd.com/etc/doc/')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/')
         
-    def openGroup (self, event = None):
-        """Opens the Google group."""
-        wx.LaunchDefaultBrowser('http://groups.google.com/group/tweecode/')
-        
-    def reportBug (self, event = None):
-        """Opens the online bug report form."""
-        wx.LaunchDefaultBrowser('http://code.google.com/p/twee/issues/entry')
+    def openGitHub (self, event = None):
+        """Opens the GitHub page."""
+        wx.LaunchDefaultBrowser('https://github.com/tweecode/twine')
 
     def loadPrefs (self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
@@ -231,8 +238,12 @@ class App (wx.App):
             self.config.WriteInt('fsLineHeight', 120)
         if not self.config.HasEntry('windowedFontFace'):
             self.config.Write('windowedFontFace', metrics.face('mono'))
+        if not self.config.HasEntry('monospaceFontFace'):
+            self.config.Write('monospaceFontFace', metrics.face('mono2'))
         if not self.config.HasEntry('windowedFontSize'):
             self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
+        if not self.config.HasEntry('monospaceFontSize'):
+            self.config.WriteInt('monospaceFontSize', metrics.size('editorBody'))
         if not self.config.HasEntry('storyFrameToolbar'):
             self.config.WriteBool('storyFrameToolbar', True)
         if not self.config.HasEntry('storyPanelSnap'):
@@ -257,20 +268,7 @@ class App (wx.App):
 
     def getPath (self):
         """Returns the path to the executing script or application."""
-        scriptPath = os.path.realpath(sys.path[0])
-        
-        # OS X py2app'd apps will direct us right into the app bundle
-        
-        scriptPath = re.sub('[^/]+.app/Contents/Resources', '', scriptPath)
-        
-        # Windows py2exe'd apps add an extraneous library.zip at the end
-        
-        scriptPath = scriptPath.replace('\\library.zip', '')
-        return scriptPath
-    
-    NAME = 'Twine'
-    VERSION = '1.3.5'
-    RECENT_FILES = 10
+        return self.scriptPath
 
 # start things up if we were called directly
 if __name__ == "__main__":

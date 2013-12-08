@@ -86,3 +86,7 @@ def face (type):
         if sys.platform == 'win32': return 'Consolas'
         if sys.platform == 'darwin': return 'Monaco'
         return 'Fixed'
+    
+    if type == 'mono2':
+        if sys.platform in ['win32', 'darwin']: return 'Courier New'
+        return 'Fixed'

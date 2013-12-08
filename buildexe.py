@@ -47,7 +47,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
 setup(
     name = 'Twine',
     description = 'Twine',
-    version = '1.3.6',
+    version = '1.4',
 
     windows = [{
         'script': 'app.py',
@@ -57,11 +57,15 @@ setup(
     }],
 
     data_files = [
-        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html']),
-        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw',         ['targets' + os.sep + 'tw'         + os.sep + 'header.html']),
-        ('targets' + os.sep + 'tw2',        ['targets' + os.sep + 'tw2'        + os.sep + 'header.html']),
+        ('targets' + os.sep + 'jonah',      ['targets' + os.sep + 'jonah'      + os.sep + 'header.html',
+                                             'targets' + os.sep + 'jonah'      + os.sep + 'code.js']),
+        ('targets' + os.sep + 'sugarcane',  ['targets' + os.sep + 'sugarcane'  + os.sep + 'header.html',
+                                             'targets' + os.sep + 'sugarcane'  + os.sep + 'code.js']),
         ('targets' + os.sep + 'Responsive', ['targets' + os.sep + 'Responsive' + os.sep + 'header.html']),
+        ('targets', [
+            'targets' + os.sep + 'engine.js',
+            'targets' + os.sep + 'jquery.js',
+            'targets' + os.sep + 'modernizr.js']),
         ('icons', [
             # toolbar icons
             'icons' + os.sep + 'newpassage.png',

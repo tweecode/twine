@@ -9,6 +9,8 @@
 #
 
 import wx, re, locale
+from tweelexer import TweeLexer
+from tiddlywiki import TiddlyWiki
 import metrics
 
 class StatisticsDialog (wx.Dialog):
@@ -20,13 +22,13 @@ class StatisticsDialog (wx.Dialog):
         # layout
         
         panel = wx.Panel(parent = self)
-        panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panel.SetSizer(panelSizer)
+        self.panelSizer = wx.BoxSizer(wx.VERTICAL)
+        panel.SetSizer(self.panelSizer)
         
         # count controls
         
         countPanel = wx.Panel(parent = panel)
-        countPanelSizer = wx.FlexGridSizer(5, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        countPanelSizer = wx.FlexGridSizer(6, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         countPanel.SetSizer(countPanelSizer)
         
         self.characters = wx.StaticText(countPanel)
@@ -48,26 +50,31 @@ class StatisticsDialog (wx.Dialog):
         self.brokenLinks = wx.StaticText(countPanel)
         countPanelSizer.Add(self.brokenLinks, flag = wx.ALIGN_RIGHT)
         countPanelSizer.Add(wx.StaticText(countPanel, label = 'Broken Links'))
+        
+        self.variablesCount = wx.StaticText(countPanel)
+        countPanelSizer.Add(self.variablesCount, flag = wx.ALIGN_RIGHT)
+        countPanelSizer.Add(wx.StaticText(countPanel, label = 'Variables Used'))
 
-        panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
+        self.panelSizer.Add(countPanel, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
+        
+        self.count(panel)
         
         okButton = wx.Button(parent = panel, label = 'OK')
         okButton.Bind(wx.EVT_BUTTON, lambda e: self.Close())
-        panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
+        self.panelSizer.Add(okButton, flag = wx.ALL | wx.ALIGN_CENTER, border = metrics.size('relatedControls'))
         
-        panelSizer.Fit(self)
+        self.panelSizer.Fit(self)
         
         size = self.GetSize()
         if size.width < StatisticsDialog.MIN_WIDTH:
             size.width = StatisticsDialog.MIN_WIDTH
             self.SetSize(size)
 
-        self.count()
-        panelSizer.Layout()
+        self.panelSizer.Layout()
         self.SetIcon(app.icon)
         self.Show()
         
-    def count (self):
+    def count (self, panel):
         """
         Sets values for the various counts.
         """
@@ -76,13 +83,27 @@ class StatisticsDialog (wx.Dialog):
         # closures the way JavaScript does
         
         counts = { 'words': 0, 'chars': 0, 'passages': 0, 'links': 0, 'brokenLinks': 0 }
+        variables = set()
+        tags = set()
         
         def count (widget, counts):
-            counts['chars'] += len(widget.passage.text)
-            counts['words'] += len(widget.passage.text.split(None))
-            counts['passages'] += 1
-            counts['links'] += len(widget.passage.links())
-            counts['brokenLinks'] += len(widget.getBrokenLinks())
+            if widget.passage.isStoryText():
+                counts['chars'] += len(widget.passage.text)
+                counts['words'] += len(widget.passage.text.split(None))
+                counts['passages'] += 1
+                counts['links'] += len(widget.passage.links)
+                counts['brokenLinks'] += len(widget.getBrokenLinks())
+                # Find variables
+                iterator = re.finditer(TweeLexer.MACRO_REGEX + "|" + TweeLexer.LINK_REGEX, widget.passage.text, re.U|re.I);
+                for p in iterator:
+                    iterator2 = re.finditer(TweeLexer.MACRO_PARAMS_REGEX, p.group(0), re.U|re.I)
+                    for p2 in iterator2:
+                        if p2.group(4):
+                            variables.add(p2.group(4));
+                # Find tags
+                for a in widget.passage.tags: 
+                    if a not in TiddlyWiki.INFO_TAGS:
+                        tags.add(a)
         
         self.storyPanel.eachWidget(lambda w: count(w, counts))
         for key in counts:
@@ -93,5 +114,20 @@ class StatisticsDialog (wx.Dialog):
         self.passages.SetLabel(str(counts['passages']))
         self.links.SetLabel(str(counts['links']))
         self.brokenLinks.SetLabel(str(counts['brokenLinks']))
+        self.variablesCount.SetLabel(str(len(variables)))
+        
+        if len(variables):
+            text = ', '.join(sorted(variables));
+            variablesCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
+            variablesCtrl.AppendText(text)
+            self.panelSizer.Add(variablesCtrl, flag = wx.ALIGN_CENTER)
+            
+        if len(tags):
+            text = ', '.join(sorted(tags));
+            tagsCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
+            tagsCtrl.AppendText(text)
+            self.panelSizer.Add(wx.StaticText(panel, label = str(len(tags)) + " Tags"), flag = wx.ALIGN_CENTER)
+            self.panelSizer.Add(tagsCtrl, flag = wx.ALIGN_CENTER)
 
-    MIN_WIDTH = 200     # total guesstimate
+    MIN_WIDTH = 300
+    

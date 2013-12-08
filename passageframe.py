@@ -6,7 +6,7 @@
 # of a passage. This must be paired with a PassageWidget; it gets to the
 # underlying passage via it, and also notifies it of changes made here.
 #
-# This doesn't require the user to save his changes -- as he makes changes,
+# This doesn't require the user to save their changes -- as they make changes,
 # they are automatically updated everywhere.
 #
 # nb: This does not make use of wx.stc's built-in find/replace functions.
@@ -16,11 +16,13 @@
 # know what flags to pass to wx.stc.
 #
 
-import sys, os, re, threading, wx, wx.stc
-import metrics
+import sys, os, re, threading, wx, wx.animate, base64, time
+import metrics, images
 from tweelexer import TweeLexer
+from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
+import cStringIO
 
 class PassageFrame (wx.Frame):
     
@@ -30,7 +32,8 @@ class PassageFrame (wx.Frame):
         self.syncTimer = None
         self.lastFindRegexp = None
         self.lastFindFlags = None
-        self.usingLexer = True
+        self.usingLexer = self.LEXER_NORMAL
+        self.titleInvalid = False
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE)
@@ -72,7 +75,12 @@ class PassageFrame (wx.Frame):
         editMenu.Append(wx.ID_UNDO, '&Undo\tCtrl-Z')
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Undo(), id = wx.ID_UNDO)
 
-        editMenu.Append(wx.ID_REDO, '&Redo\tCtrl-Y')
+        if sys.platform == 'darwin':
+            shortcut = 'Ctrl-Shift-Z'
+        else:
+            shortcut = 'Ctrl-Y'
+            
+        editMenu.Append(wx.ID_REDO, '&Redo\t' + shortcut)
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Redo(), id = wx.ID_REDO)
         
         editMenu.AppendSeparator()
@@ -123,11 +131,11 @@ class PassageFrame (wx.Frame):
         self.topControls = wx.Panel(self.panel)
         topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         
-        titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
+        self.titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
         tagsLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TAGS_LABEL)
         self.tagsInput = wx.TextCtrl(self.topControls)
-        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(tagsLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.tagsInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
@@ -143,6 +151,26 @@ class PassageFrame (wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+
+        # The default keyboard shortcuts for StyledTextCtrl are
+        # nonstandard on Mac OS X
+        if sys.platform == "darwin":
+            # cmd-left/right to move to beginning/end of line
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_HOMEDISPLAY)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_HOMEDISPLAYEXTEND)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_LINEENDDISPLAY)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_LINEENDDISPLAYEXTEND)
+            # opt-left/right to move forward/back a word
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_WORDLEFT)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_LEFT, wx.stc.STC_SCMOD_ALT | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_WORDLEFTEXTEND)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_WORDRIGHT)
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_RIGHT, wx.stc.STC_SCMOD_ALT | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_WORDRIGHTEXTEND)
+            # cmd-delete to delete from the cursor to beginning of line
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_BACK, wx.stc.STC_SCMOD_CTRL, wx.stc.STC_CMD_DELLINELEFT)
+            # opt-delete to delete the previous/current word
+            self.bodyInput.CmdKeyAssign(wx.stc.STC_KEY_BACK, wx.stc.STC_SCMOD_ALT, wx.stc.STC_CMD_DELWORDLEFT)
+            # cmd-shift-z to redo
+            self.bodyInput.CmdKeyAssign(ord('Z'), wx.stc.STC_SCMOD_CTRL | wx.stc.STC_SCMOD_SHIFT, wx.stc.STC_CMD_REDO)
                 
         # final layout
         
@@ -188,16 +216,42 @@ class PassageFrame (wx.Frame):
     
     def syncPassage (self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
-        if len(self.titleInput.GetValue()) > 0:
-            self.widget.passage.title = self.titleInput.GetValue()
-        else:
-            self.widget.passage.title = 'Untitled Passage'
+        title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
+        
+
+        if title:
+        # Check for title conflict
+            otherTitled = self.widget.parent.findWidget(title)
+            if otherTitled and otherTitled != self.widget:
+                self.titleLabel.SetLabel("Title is already in use!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
+            elif "|" in title or "]" in title:
+                self.titleLabel.SetLabel("No | or ] symbols allowed!");
+                self.titleInput.SetBackgroundColour((240,130,130))
+                self.titleInput.Refresh()
+                self.titleInvalid = True
+            else:
+                if self.titleInvalid:
+                    self.titleLabel.SetLabel(self.TITLE_LABEL)
+                    self.titleInput.SetBackgroundColour((255,255,255))
+                    self.titleInput.Refresh()
+                    self.titleInvalid = False
+                self.widget.passage.title = title
+        
+        # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
+        self.widget.passage.modified = time.localtime()
+        # Preserve the special (uneditable) tags
         self.widget.passage.tags = []
         self.widget.clearPaintCache()
         
         for tag in self.tagsInput.GetValue().split(' '):
-            if tag != '': self.widget.passage.tags.append(tag)
+            if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS:
+                self.widget.passage.tags.append(tag)
+            if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
+                self.widget.parent.parent.autoBuildStart();
         
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
         
@@ -205,16 +259,25 @@ class PassageFrame (wx.Frame):
         
         self.widget.parent.parent.setDirty(True)
         
+        # reposition if changed size
+        self.widget.findSpace()
+        
         # reset redraw timer
         
         def reallySync (self):
-            self.widget.parent.Refresh()
-
+            try:
+                self.widget.parent.Refresh()
+            except:
+                pass
+        
         if (self.syncTimer):
             self.syncTimer.cancel()
-            
+        
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
+        
+		# update links/displays lists
+        self.widget.passage.update()
         
         # change our lexer as necessary
         
@@ -242,7 +305,6 @@ class PassageFrame (wx.Frame):
         it is a wx.CommandEvent, and uses the exact text of the menu as the title.
         """
 
-        # this is a bit retarded
         # we seem to be receiving CommandEvents, not MenuEvents,
         # so we can only see menu item IDs
         # unfortunately all our menu items are dynamically generated
@@ -288,10 +350,9 @@ class PassageFrame (wx.Frame):
     def prepDrag (self, event):
         """
         Tells our StoryPanel about us so that it can tell us what to do in response to
-        dropping some text into it. We also force the event into a copy operation, not
-        a move one, so it doesn't trash any existing text.
+        dropping some text into it.
         """
-        event.SetDragAllowMove(False)
+        event.SetDragAllowMove(True)
         self.widget.parent.textDragSource = self
 
     def getSelection (self):
@@ -328,9 +389,8 @@ class PassageFrame (wx.Frame):
         """Transforms the selection into a link by surrounding it with double brackets."""
         selStart = self.bodyInput.GetSelectionStart()
         selEnd = self.bodyInput.GetSelectionEnd()
-        self.bodyInput.InsertText(selStart, '[[')
-        self.bodyInput.InsertText(selEnd + 2, ']]')
-        self.bodyInput.SetSelection(selStart, selEnd + 4)
+        self.bodyInput.SetSelection(selStart, selEnd)
+        self.bodyInput.ReplaceSelection("[["+self.bodyInput.GetSelectedText()+"]]")
 
     def findRegexp (self, regexp, flags):
         """
@@ -410,26 +470,57 @@ class PassageFrame (wx.Frame):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
     
+    def setCodeLexer(self, css = False):
+        """Basic CSS highlighting"""
+        monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+                           wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
+        body = self.bodyInput
+        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
+        body.StyleClearAll()
+        if css:
+            for i in range(1,17):
+                body.StyleSetFont(i, monoFont)
+            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeLexer.MACRO_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeLexer.COMMENT_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeLexer.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeLexer.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeLexer.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeLexer.PARAM_BOOL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR); 
+            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeLexer.PARAM_VAR_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeLexer.GOOD_LINK_COLOR);
+            
+            for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG, 
+                      wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
+                      wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, wx.stc.STC_CSS_DIRECTIVE]:
+                body.StyleSetBold(i, True)
+        
     def setLexer (self):
         """
         Sets our custom lexer for the body input so long as the passage
-        does not have the tag "stylesheet" or "script" or is StoryIncludes.
+        is part of the story.
         """
         oldLexing = self.usingLexer
-        
-        if re.search(r'\bstylesheet\b', self.tagsInput.GetValue()) or \
-           re.search(r'\bscript\b', self.tagsInput.GetValue()) or \
-           self.widget.passage.title == 'StoryIncludes':
-            self.usingLexer = False
-            self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
-        else:
-            self.usingLexer = True
+                
+        if self.widget.passage.isStylesheet():
+            if oldLexing != self.LEXER_CSS:
+                self.setCodeLexer(css = True)
+                self.usingLexer = self.LEXER_CSS
+                self.bodyInput.SetLexer(wx.stc.STC_LEX_CSS)
+        elif not self.widget.passage.isStoryText() and not self.widget.passage.isAnnotation():
+            if oldLexing != self.LEXER_NONE:
+                self.usingLexer = self.LEXER_NONE
+                self.setCodeLexer()
+                self.bodyInput.SetLexer(wx.stc.STC_LEX_NULL)
+        elif oldLexing != self.LEXER_NORMAL:
+            self.usingLexer = self.LEXER_NORMAL
             self.bodyInput.SetLexer(wx.stc.STC_LEX_CONTAINER)
 
         if oldLexing != self.usingLexer:
-            self.bodyInput.StartStyling(0, TweeLexer.TEXT_STYLES)
-            self.bodyInput.SetStyling(len(self.bodyInput.GetText()), TweeLexer.DEFAULT)
-            self.bodyInput.Colourise(0, 0)
+            if self.usingLexer == self.LEXER_NORMAL:
+                self.lexer.initStyles()
+            self.bodyInput.Colourise(0, len(self.bodyInput.GetText()))
     
     def updateUI (self, event):
         """Updates menus."""
@@ -490,7 +581,7 @@ class PassageFrame (wx.Frame):
         incoming = []
         broken = []
         
-        for link in self.widget.passage.links():
+        for link in self.widget.passage.links:
             if len(link) > 0:
                 found = False
                 
@@ -505,7 +596,7 @@ class PassageFrame (wx.Frame):
         # incoming links
 
         for widget in self.widget.parent.widgets:
-            if self.widget.passage.title in widget.passage.links() \
+            if self.widget.passage.title in widget.passage.links \
             and len(widget.passage.title) > 0:
                 incoming.append(widget.passage.title)
                 
@@ -540,7 +631,7 @@ class PassageFrame (wx.Frame):
         
     def applyPrefs (self):
         """Applies user prefs to this frame."""
-        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL,
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         defaultStyle = self.bodyInput.GetStyleAt(0)
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
@@ -566,3 +657,241 @@ class PassageFrame (wx.Frame):
     PASSAGE_FULLSCREEN = 1001
     PASSAGE_EDIT_SELECTION = 1002
     PASSAGE_REBUILD_STORY = 1003
+    
+    [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
+    
+#
+# ImageFrame
+# Special type of PassageFrame which only displays passages whose text consists of base64
+# encoded images - the image is converted to a bitmap and displayed, if possible.
+#
+class ImageFrame (PassageFrame):
+    
+    def __init__ (self, parent, widget, app):
+        self.widget = widget
+        self.app = app
+        self.syncTimer = None
+        self.image = None
+        self.gif = None
+        
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
+                          size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
+        # menus
+        
+        self.menus = wx.MenuBar()
+        self.SetMenuBar(self.menus)
+        
+        # controls
+        
+        self.panel = wx.Panel(self)
+        allSizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(allSizer)
+        
+        # title control
+        
+        self.topControls = wx.Panel(self.panel)
+        topSizer = wx.FlexGridSizer(3, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        
+        titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
+        self.titleInput = wx.TextCtrl(self.topControls)
+        self.titleInput.SetValue(self.widget.passage.title)
+        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        
+        topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
+        topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
+        topSizer.AddGrowableCol(1, 1)
+        self.topControls.SetSizer(topSizer)
+        
+        # image pane
+        
+        self.imageScroller = wx.ScrolledWindow(self.panel)
+        self.imageSizer = wx.GridSizer(1,1)
+        self.imageScroller.SetSizer(self.imageSizer)
+        
+        # image menu
+        
+        passageMenu = wx.Menu()
+        
+        passageMenu.Append(self.IMPORT_IMAGE, '&Replace Image...\tCtrl-O')
+        self.Bind(wx.EVT_MENU, self.replaceImage, id = self.IMPORT_IMAGE)
+        
+        passageMenu.Append(self.SAVE_IMAGE, '&Save Image...')
+        self.Bind(wx.EVT_MENU, self.saveImage, id = self.SAVE_IMAGE)
+
+        passageMenu.AppendSeparator()
+        
+        passageMenu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
+        self.Bind(wx.EVT_MENU, self.widget.parent.parent.save, id = wx.ID_SAVE)
+        
+        passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
+        self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
+
+        passageMenu.AppendSeparator()
+
+        passageMenu.Append(wx.ID_CLOSE, '&Close Image\tCtrl-W')
+        self.Bind(wx.EVT_MENU, lambda e: self.Destroy(), id = wx.ID_CLOSE)   
+        
+        # edit menu
+        
+        editMenu = wx.Menu()
+        
+        editMenu.Append(wx.ID_COPY, '&Copy\tCtrl-C')
+        self.Bind(wx.EVT_MENU, self.copyImage, id = wx.ID_COPY)
+
+        editMenu.Append(wx.ID_PASTE, '&Paste\tCtrl-V')
+        self.Bind(wx.EVT_MENU, self.pasteImage, id = wx.ID_PASTE)
+        
+        # menu bar
+        
+        self.menus = wx.MenuBar()
+        self.menus.Append(passageMenu, '&Image')
+        self.menus.Append(editMenu, '&Edit')
+        self.SetMenuBar(self.menus)
+        
+        # finish
+        
+        allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
+        allSizer.Add(self.imageScroller, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
+        
+        # bindings
+        self.titleInput.Bind(wx.EVT_TEXT, self.syncPassage)
+        
+        self.SetIcon(self.app.icon)
+        self.updateImage()
+        self.Show(True)
+    
+    def syncPassage (self, event = None):
+        """Updates the image based on the title input; asks our matching widget to repaint."""
+        if len(self.titleInput.GetValue()) > 0:
+            self.widget.passage.title = self.titleInput.GetValue()
+        else:
+            self.widget.passage.title = 'Untitled Image'
+        self.widget.clearPaintCache()
+        
+        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        
+        # immediately mark the story dirty
+        
+        self.widget.parent.parent.setDirty(True)
+        
+        # reset redraw timer
+        
+        def reallySync (self):
+            self.widget.parent.Refresh()
+
+        if (self.syncTimer):
+            self.syncTimer.cancel()
+            
+        self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
+        self.syncTimer.start()
+        
+        
+    def updateImage(self):
+        """Assigns a bitmap to this frame's StaticBitmap component,
+        unless it's a GIF, in which case, animate it."""
+        if self.gif:
+            self.gif.Stop()
+        self.imageSizer.Clear(True)
+        self.gif = None
+        self.image = None
+        size = (32,32)
+        
+        t = self.widget.passage.text
+        # Get the bitmap (will be used as inactive for GIFs)
+        bmp = self.widget.bitmap
+        if bmp:
+            size = bmp.GetSize()
+        
+            # GIF animation
+            if t.startswith("data:image/gif"):
+                
+                self.gif = wx.animate.AnimationCtrl(self.imageScroller, size = size)
+                self.imageSizer.Add(self.gif, 1, wx.ALIGN_CENTER)
+                
+                # Convert the full GIF to an Animation
+                anim = wx.animate.Animation()
+                data = base64.b64decode(t[t.index("base64,")+7:])
+                anim.Load(cStringIO.StringIO(data))
+                
+                # Load the Animation into the AnimationCtrl
+                
+                self.gif.SetInactiveBitmap(bmp)
+                self.gif.SetAnimation(anim)
+                self.gif.Play()
+                
+            # Static images
+            else:
+                self.image = wx.StaticBitmap(self.imageScroller, style = wx.TE_PROCESS_TAB | wx.BORDER_SUNKEN)
+                self.imageSizer.Add(self.image, 1, wx.ALIGN_CENTER)
+                self.image.SetBitmap(bmp)
+        
+        self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
+        self.imageScroller.SetScrollRate(2,2)
+        self.Refresh()
+        
+        # Update copy menu
+        copyItem = self.menus.FindItemById(wx.ID_COPY)
+        copyItem.Enable(not not bmp)
+        
+    def replaceImage(self, event = None):
+        """Replace the image with a new file, if possible."""
+        self.widget.parent.parent.importImageDialog(replace = self.widget)
+        self.widget.parent.parent.setDirty(True)
+        self.updateImage()
+        
+    def saveImage(self, event = None):
+        """Saves the base64 image as a file."""
+        t = self.widget.passage.text;
+        # Get the extension
+        extension = images.GetImageType(t)
+        
+        dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
+                               'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
+        
+        if dialog.ShowModal() == wx.ID_OK:
+            try:
+                path = dialog.GetPath()
+                
+                dest = open(path, 'wb')
+                
+                data = base64.b64decode(images.RemoveURIPrefix(t))
+                dest.write(data)
+                
+                dest.close()
+            except:
+                self.app.displayError('saving the image')
+        
+        dialog.Destroy()
+        
+    def copyImage(self, event = None):
+        """Copy the bitmap to the clipboard"""
+        clip = wx.TheClipboard
+        if clip.Open() and self.image:
+            clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
+            clip.Flush()
+            clip.Close()
+        
+    def pasteImage(self, event = None):
+        """Paste from the clipboard, converting to a PNG"""
+        clip = wx.TheClipboard
+        bdo = wx.BitmapDataObject()
+        pasted = False
+        
+        # Try and read from the clipboard
+        if clip.Open():
+            pasted = clip.GetData(bdo)
+            clip.Close()
+        if not pasted:
+            return
+        
+        # Convert bitmap to PNG
+        bmp = bdo.GetBitmap()
+        self.widget.passage.text = images.BitmapToBase64PNG(bmp)
+        self.widget.updateBitmap()
+        self.updateImage()
+    
+    IMPORT_IMAGE = 1004
+    EXPORT_IMAGE = 1005
+    SAVE_IMAGE = 1006
+        
+   
