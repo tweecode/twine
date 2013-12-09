@@ -20,9 +20,7 @@ class App (wx.App):
         self.loadPrefs()
         
         # Determine the path to the executing script or application.
-        self.scriptPath = os.path.realpath(sys.path[0])
-        # OS X py2app'd apps will direct us right into the app bundle
-        self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+        self.scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
         # Windows py2exe'd apps add an extraneous library.zip at the end
         self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
 
