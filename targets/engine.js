@@ -188,19 +188,20 @@ function fade(f, c) {
     }
 }
 
+var scrollWindowInterval;
 function scrollWindowTo(e) {
     var d = window.scrollY ? window.scrollY : document.body.scrollTop;
     var g = k(e);
     var c = Math.abs(d - g);
     var b = 0;
     var j = (d > g) ? -1 : 1;
-    var f = window.setInterval(h, 25);
+    scrollWindowInterval = window.setInterval(h, 25);
 
     function h() {
         b += 0.1;
         window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
         if (b >= 1) {
-            window.clearInterval(f)
+            window.clearInterval(scrollWindowInterval)
         }
     }
 
