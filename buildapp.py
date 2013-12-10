@@ -7,9 +7,17 @@ import py2app
 
 setup(app = ['app.py'], options = dict(py2app = dict( argv_emulation = True,
                                        iconfile = 'appicons/app.icns', \
-                                       resources = 'icons', \
+                                       resources = ['icons', 'appicons/doc.icns'], \
                                        plist = dict( \
                                        CFBundleShortVersionString = '1.4', \
                                        CFBundleName = 'Twine', \
+                                       CFBundleSignature = 'twee', \
                                        CFBundleIconFile = 'app.icns',\
-                                       NSHumanReadableCopyright = 'GNU General Public License v2'))))
+                                       CFBundleGetInfoString = 'An open-source tool for telling interactive stories',\
+                                       CFBundleDocumentTypes = [dict( \
+                                           CFBundleTypeIconFile = 'doc.icns',\
+                                           CFBundleTypeName = 'Twine story',\
+                                           CFBundleTypeRole = 'Editor',\
+                                           CFBundleTypeExtensions=["tws"]\
+                                       )],\
+                                       NSHumanReadableCopyright = 'GNU General Public License v3'))))

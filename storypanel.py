@@ -50,7 +50,8 @@ class StoryPanel (wx.ScrolledWindow):
             self.scale = state['scale']
             for widget in state['widgets']:
                 self.widgets.append(PassageWidget(self, self.app, state = widget))
-            if (hasattr(state, 'snapping')) and state['snapping']: self.snapping = True
+            if ('snapping' in state):
+                self.snapping = state['snapping']
         else:
             self.scale = 1
             self.newWidget(title = StoryPanel.FIRST_TITLE, text = StoryPanel.FIRST_TEXT, quietly = True)
@@ -89,9 +90,9 @@ class StoryPanel (wx.ScrolledWindow):
 
         if not title:
             if tags and tags[0] in TiddlyWiki.INFO_TAGS:
-                type = tags[0].capitalize()
+                type = "Untitled " + tags[0].capitalize()
             else:
-                type = "Passage"
+                type = "Untitled Passage"
             title = self.untitledName(type)
         if not pos: pos = StoryPanel.INSET
         if not logicals: qspos = self.toLogical(pos)
@@ -173,7 +174,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.eachWidget(lambda w: w.setSelected(False, False))
             
             for widget in data:
-                newPassage = PassageWidget(self, self.app, state = widget)
+                newPassage = PassageWidget(self, self.app, state = widget, title = self.untitledName(widget['passage'].title))
                 newPassage.findSpace()
                 newPassage.setSelected(True, False)
                 self.widgets.append(newPassage)
@@ -640,15 +641,19 @@ class StoryPanel (wx.ScrolledWindow):
         
         return pixScroll
         
-    def untitledName (self, type = "Passage"):
+    def untitledName (self, base = "Untitled Passage"):
         """Returns a string for an untitled PassageWidget."""
         number = 1
-                
+        
+        if not "Untitled " in base:
+            if not self.findWidget(base):
+                return base
+        
         for widget in self.widgets:
-            match = re.match(r'Untitled ' + type + ' (\d+)', widget.passage.title)
+            match = re.match(re.escape(base) + ' (\d+)', widget.passage.title)
             if match: number = int(match.group(1)) + 1
-                
-        return 'Untitled ' + type + ' ' + str(number)
+        
+        return base + ' ' + str(number)
     
     def eachWidget (self, function):
         """Runs a function on every passage in the panel."""
@@ -848,7 +853,7 @@ class StoryPanel (wx.ScrolledWindow):
     
     def serialize (self):
         """Returns a dictionary of state suitable for pickling."""
-        state = { 'scale': self.scale, 'widgets': [] }
+        state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
                 
         for widget in self.widgets:
             state['widgets'].append(widget.serialize())
@@ -857,7 +862,7 @@ class StoryPanel (wx.ScrolledWindow):
     
     def serialize_noprivate (self):
         """Returns a dictionary of state suitable for pickling without passage marked with a Twine.private tag."""
-        state = { 'scale': self.scale, 'widgets': [] }
+        state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
                 
         for widget in self.widgets:
             if not any('Twine.private' in t for t in widget.passage.tags):
@@ -934,19 +939,24 @@ Give this passage more tags, and it will only affect passages with those tags.
 Example selectors: */
 
 body {
-    /* This affects the entire page */
-    
-    
+\t/* This affects the entire page */
+\t
+\t
 }
 .passage {
-    /* This only affects passages */
-    
-    
+\t/* This only affects passages */
+\t
+\t  
 }
-.internalLink, .externalLink {
-    /* This only affects links */
-    
-    
+.passage a {
+\t/* This affects passage links */
+\t
+\t
+}
+.passage a:hover {
+\t/* This affects links while the cursor is over them */
+\t
+\t
 }"""
     BACKGROUND_COLOR = '#555753'
     MARQUEE_ALPHA = 32 # out of 256

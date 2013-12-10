@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, locale, re, pickle, wx
+import sys, os, locale, re, pickle, wx, platform
 import metrics
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
@@ -9,7 +9,7 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.4 (running on Python %s.%s)' % (sys.version_info[0], sys.version_info[1]) #Named attributes not available in Python 2.6
+    VERSION = '1.4 (running on %s %s)' % (platform.system(), platform.release()) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
@@ -95,6 +95,10 @@ class App (wx.App):
         else:
             self.open(filename)
             self.addRecentFile(filename)
+    
+    def MacOpenFile(self, path):
+    	"""OS X support"""
+    	self.open(path)
     
     def open (self, path):
         """Opens a specific story file."""
@@ -198,12 +202,16 @@ class App (wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
         info.SetVersion(self.VERSION)
-        info.SetDescription('\nAn open-source tool for telling interactive stories\nwritten by Chris Klimas\n\n1.4 contributors:\nLeon Arnott, Emmanuel Turner, Henry Soule, Phillip Sutton, Misty De Meo, Thomas M. Edwards, and others.')
-        info.SetCopyright('The Twine development application is free software: you can redistribute it and/or modify'
-                          + '\nit under the terms of the GNU General Public License as published by the Free Software'
-                          + '\nFoundation, either version 3 of the License, or (at your option) any later version.'
-                          + '\nSee the GNU General Public License for more details.\n\nThe Javascript game engine is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
-                          +'\nand is used under the terms of its license.\n')
+        info.SetIcon(self.icon)
+        info.SetWebSite('http://twinery.org/')
+        info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas')
+        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','and others.'])
+                          
+        info.SetLicense('The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
+                          + ' it under the terms of the GNU General Public License as published by the Free Software'
+                          + ' Foundation, either version 3 of the License, or (at your option) any later version.'
+                          + ' See the GNU General Public License for more details.\n\nThe Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
+                          + ' and is used under the terms of the MIT license.')
         wx.AboutBox(info)
     
     def storyFormatHelp (self, event = None):
@@ -265,10 +273,14 @@ class App (wx.App):
         text += str(exception[1]) + ').'
         error = wx.MessageDialog(None, text, 'Error', wx.OK | wx.ICON_ERROR)
         error.ShowModal()
-
+	
     def getPath (self):
         """Returns the path to the executing script or application."""
         return self.scriptPath
+    
+    def MacReopenApp(self):
+        """OS X support"""
+        self.GetTopWindow().Raise()
 
 # start things up if we were called directly
 if __name__ == "__main__":

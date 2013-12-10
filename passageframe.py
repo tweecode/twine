@@ -815,7 +815,8 @@ class ImageFrame (PassageFrame):
                 
                 # Load the Animation into the AnimationCtrl
                 
-                self.gif.SetInactiveBitmap(bmp)
+                # Crashes OS X..
+                #self.gif.SetInactiveBitmap(bmp)
                 self.gif.SetAnimation(anim)
                 self.gif.Play()
                 

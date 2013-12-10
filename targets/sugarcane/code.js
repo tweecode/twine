@@ -16,12 +16,12 @@ History.prototype.init = function () {
     if (!hasPushState) {
         this.hash = window.location.hash;
         this.interval = window.setInterval(function () {
-            a.watchHash.apply(a)
+            a.watchHash()
         }, 250)
     }
 };
 History.prototype.display = function (title, b, type, callback) {
-    var c = tale.get(title), p = document.getElementById("passages");
+    var bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
     if (type != "back") {
         this.history.unshift({
             passage: c,
@@ -40,6 +40,7 @@ History.prototype.display = function (title, b, type, callback) {
             }
         }
     }
+    bookmarkhref = this.save();
     var e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
@@ -63,24 +64,43 @@ History.prototype.display = function (title, b, type, callback) {
         }
     }
     else {
+        p.appendChild(e);
         e.style.visibility = "visible"
     }
     if (tale.canUndo()) {
         if (!hasPushState && type != "back") {
-            this.hash = this.save();
+            this.hash = bookmarkhref;
             window.location.hash = this.hash;
         } else if (tale.canBookmark()) {
             var bookmark = document.getElementById("bookmark");
-            bookmark && (bookmark.href = this.save());
+            bookmark && (bookmark.href = bookmarkhref);
         }
     }
     window.scroll(0, 0)
     return e
 };
+History.prototype.watchHash = function () {
+    if (window.location.hash != this.hash) {
+        if (window.location.hash && (window.location.hash != "#")) {
+            this.history = [{
+                passage: null,
+                variables: {}
+            }];
+            removeChildren(document.getElementById("passages"));
+            if (!this.restore()) {
+                alert("The passage you had previously visited could not be found.")
+            }
+        } else {
+            window.location.reload()
+        }
+        this.hash = window.location.hash
+    }
+};
 History.prototype.restart = function () {
     if (!hasPushState) {
         window.location.hash = "";
     } else {
+        window.history.replaceState(this.history, document.title, window.location.href.replace(/#.*$/,''));
         window.location.reload();
     }
 };
@@ -112,6 +132,32 @@ Passage.prototype.excerpt = function () {
     else c = a[0].substr(0, 30) + '...';
     return c;
 };
+Passage.transitionCache = "";
+Passage.prototype.setCSS = function() {
+    var trans = false, text = "", tags = this.tags || [],
+        c = document.getElementById('tagCSS'),
+        c2 = document.getElementById('transitionCSS');
+    
+    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
+        tale.forEachStylesheet(tags, function(passage) {
+            if (~passage.tags.indexOf("transition")) {
+                if (!Passage.transitionCache && c2)
+                    Passage.transitionCache = c2.innerHTML;
+                setTransitionCSS(passage.text);
+                trans = true;
+            }
+            else text += alterCSS(passage.text);
+        });
+        if (!trans && Passage.transitionCache && c2) {
+            setTransitionCSS(Passage.transitionCache);
+            trans = false;
+            Passage.transitionCache = "";
+        }
+        c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
+        c.setAttribute('data-tags', tags.join(' '));
+    }
+};
+
 Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 

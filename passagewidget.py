@@ -40,11 +40,12 @@ class PassageWidget:
             self.selected = state['selected']
         else:
             self.passage = tiddlywiki.Tiddler('')
-            self.passage.title = title
-            self.passage.text = text
-            self.passage.tags += tags
             self.selected = False
             self.pos = list(pos)
+        
+        if title: self.passage.title = title
+        if text: self.passage.text = text
+        if tags: self.passage.tags += tags
         
         self.bitmap = None
         self.updateBitmap()

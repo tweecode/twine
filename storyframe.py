@@ -605,7 +605,7 @@ class StoryFrame (wx.Frame):
             self.app.displayError('importing')
     
     def importImageURL(self, event = None):
-        dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, PNGs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
+        dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 # Download the file
@@ -804,7 +804,7 @@ Modernizr: off
 
     def build (self, event = None):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
-        dialog = wx.FileDialog(self, 'Build Story', os.getcwd(), "", \
+        dialog = wx.FileDialog(self, 'Build Story', self.buildDestination or os.getcwd(), "", \
                          "Web Page (*.html)|*.html", \
                            wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
     

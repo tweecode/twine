@@ -1,4 +1,4 @@
-/app.py
 /.pydevproject
 /.project
 /*.pyc
+/build/vcredist_x86.exe

@@ -3,6 +3,9 @@
 ** Jonah specific code follows
 **
 */
+Tale.prototype.canBookmark = function() {
+    return this.canUndo() && (this.storysettings.lookup('bookmark'));
+};
 History.prototype.init = function () {
     if (!this.restore()) {
         if (tale.has("StartPassages")) {
@@ -100,8 +103,11 @@ Passage.prototype.render = function () {
     this.setCSS();
     F = insertElement(E, 'div', '', 'title', this.title);
     D = insertElement(F, 'span', '', 'toolbar');
-    for (i = 0; i < Passage.toolbarItems.length; i++) {
+    for (i = 0; i < Passage.toolbarItems.length && tale.canUndo(); i++) {
         t = Passage.toolbarItems[i];
+        if (t.label == "bookmark" && !tale.canBookmark()) {
+            continue;
+        }
         var C = insertElement(D, 'a', null, "toolbar-" + t.label);
         insertText(C, t.label);
         C.passage = this;
@@ -120,12 +126,6 @@ Passage.prototype.render = function () {
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }
-    E.onmouseover = function () {
-        E.className += ' selected';
-    };
-    E.onmouseout = function () {
-        E.className = E.className.replace(' selected', '');
-    };
     return E
 };
 Passage.prototype.reset = function () {
@@ -145,6 +145,29 @@ Passage.toolbarItems = [{
         state.rewindTo(this.div)
     }
 }];
+Passage.transitionCache = "";
+Passage.prototype.setCSS = function() {
+    var trans = false, text = "", tags = this.tags || [],
+        c = document.getElementById('transitionCSS');
+    
+    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
+        tale.forEachStylesheet(tags, function(passage) {
+            if (~passage.tags.indexOf("transition")) {
+                if (!Passage.transitionCache && c)
+                    Passage.transitionCache = c.innerHTML;
+                setTransitionCSS(passage.text);
+                trans = true;
+            }
+        });
+        if (!trans && Passage.transitionCache && c) {
+            setTransitionCSS(Passage.transitionCache);
+            trans = false;
+            Passage.transitionCache = "";
+            c.setAttribute('data-tags', tags.join(' '));
+        }
+    }
+};
+
 Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
@@ -178,11 +201,73 @@ macros.back.onclick = function(back, steps) {
     } else state.display(state.history[steps].passage.title);
 };
 
+function setupTagCSS() {
+    var passage, tags, i, j, text = "", 
+        c = document.getElementById('tagCSS'),
+        openBrace = function() { text += "{"; },
+        closeBrace = function() { text += "}"; },
+        handler = {
+            tag: null,
+            keyframes: false,
+            startAtrule: function(a,b) {
+                this.keyframes = (a.indexOf("keyframes")>=0);
+                text += a + " " + b;
+            },
+            startBlock: openBrace,
+            endBlock: closeBrace,
+            endAtrule: function() {
+                this.keyframes = false;
+                closeBrace();
+            },
+            startRuleset: function(a) { 
+                var i, rules = a.join('').split(','),
+                    passageRegex = /\.passage/,
+                    bodyRegex = /(?:^|\s)body/;
+                if (!this.keyframes) {
+                    for (i = 0; i < rules.length; i++) {
+                        if (rules[i].search(passageRegex)>=0) {
+                            rules[i] = rules[i].replace(passageRegex,".passage[data-tags~=" + this.tag + "]");
+                        }
+                        else if (rules[i].search(bodyRegex)>=0) {
+                            rules[i] = rules[i].replace(bodyRegex,"body[data-tags~=" + this.tag + "]");
+                        }
+                        else {
+                            rules[i] = "body[data-tags~=" + this.tag + "] "+rules[i];
+                        }
+                    }
+                }
+                text+= rules.join(",")+"{";
+            },
+            declaration: function(a, b) { text+= a + " : " + b.join(" ")+";"; },
+            endRuleset: closeBrace
+        };
+    for (i in tale.passages) {
+        passage = tale.passages[i];
+        if (passage && ~passage.tags.indexOf("stylesheet")) {
+            for (j = 0; j < passage.tags.length; j++) {
+                if (passage.tags[j] != "transition" && passage.tags[j] != "stylesheet") {
+                    handler.tag = passage.tags[j];
+                    parseCssStylesheet(passage.text,handler);
+                }
+            }
+        }
+    }
+    c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
+};
+
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
         if (confirm("Are you sure you want to restart this story?")) {
+            if (typeof window.history.replaceState == "function") {
+                window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
+            }
+            else {
+                window.location.hash = "";
+            }
             window.location.reload()
         }
     };
     main();
+    setupTagCSS();
 };
+
