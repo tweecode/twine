@@ -100,6 +100,7 @@ Passage.prototype.render = function () {
     var F, D, A, t, i, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
     E.style.visibility = 'hidden';
     this.setTags(E);
+    this.setCSS();
     F = insertElement(E, 'div', '', 'title', this.title);
     D = insertElement(F, 'span', '', 'toolbar');
     for (i = 0; i < Passage.toolbarItems.length && tale.canUndo(); i++) {
@@ -144,6 +145,29 @@ Passage.toolbarItems = [{
         state.rewindTo(this.div)
     }
 }];
+Passage.transitionCache = "";
+Passage.prototype.setCSS = function() {
+    var trans = false, text = "", tags = this.tags || [],
+        c = document.getElementById('transitionCSS');
+    
+    if (c && c.getAttribute('data-tags') != tags.join(' ')) {
+        tale.forEachStylesheet(tags, function(passage) {
+            if (~passage.tags.indexOf("transition")) {
+                if (!Passage.transitionCache && c)
+                    Passage.transitionCache = c.innerHTML;
+                setTransitionCSS(passage.text);
+                trans = true;
+            }
+        });
+        if (!trans && Passage.transitionCache && c) {
+            setTransitionCSS(Passage.transitionCache);
+            trans = false;
+            Passage.transitionCache = "";
+            c.setAttribute('data-tags', tags.join(' '));
+        }
+    }
+};
+
 Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
@@ -234,6 +258,12 @@ function setupTagCSS() {
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
         if (confirm("Are you sure you want to restart this story?")) {
+            if (typeof window.history.replaceState == "function") {
+                window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
+            }
+            else {
+                window.location.hash = "";
+            }
             window.location.reload()
         }
     };

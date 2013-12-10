@@ -645,11 +645,14 @@ class StoryPanel (wx.ScrolledWindow):
         """Returns a string for an untitled PassageWidget."""
         number = 1
         
+        if not "Untitled " in base:
+            if not self.findWidget(base):
+                return base
+        
         for widget in self.widgets:
             match = re.match(re.escape(base) + ' (\d+)', widget.passage.title)
             if match: number = int(match.group(1)) + 1
-            
-        print base + ' ' + str(number)
+        
         return base + ' ' + str(number)
     
     def eachWidget (self, function):
