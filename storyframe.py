@@ -377,10 +377,7 @@ class StoryFrame (wx.Frame):
                                                       ]))
 
         # add toolbar
-        if sys.platform == 'darwin':
-            iconPath = re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep
-        else:
-            iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
+        iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
         
         self.toolbar = self.CreateToolBar(style = wx.TB_FLAT | wx.TB_NODIVIDER)
         self.toolbar.SetToolBitmapSize((StoryFrame.TOOLBAR_ICON_SIZE, StoryFrame.TOOLBAR_ICON_SIZE))
