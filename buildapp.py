@@ -7,7 +7,7 @@ import py2app
 
 setup(app = ['app.py'], options = dict(py2app = dict( argv_emulation = True,
                                        iconfile = 'appicons/app.icns', \
-                                       resources = ['icons', 'appicons/doc.icns'], \
+                                       resources = ['icons', 'targets', 'appicons/doc.icns'], \
                                        plist = dict( \
                                        CFBundleShortVersionString = '1.4', \
                                        CFBundleName = 'Twine', \

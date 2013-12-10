@@ -26,10 +26,7 @@ class PassageWidget:
         self.parent = parent
         self.app = app
         self.dimmed = False
-        if sys.platform == 'darwin':
-            self.brokenEmblem = wx.Bitmap(re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep + 'brokenemblem.png')
-        else:
-            self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
+        self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
         self.paintBuffer = wx.MemoryDC()
         self.paintBufferBounds = None
         pos = list(pos)

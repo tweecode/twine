@@ -296,22 +296,31 @@ class StoryFrame (wx.Frame):
         storyFormatMenu = wx.Menu()
         storyFormatCounter = StoryFrame.STORY_FORMAT_BASE
         storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
+        	
         for sfdir in os.listdir(storyFormatPath):
-            if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                if sfdir == 'jonah':
-                    sfdirlabel = 'Jonah'
-                elif sfdir == 'sugarcane': 
-                    sfdirlabel = 'Sugarcane'
-                elif sfdir == 'sugarcube': 
-                    sfdirlabel = 'SugarCube'
-                else: 
-                    sfdirlabel = sfdir.capitalize()
-                storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
-                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
-                self.storyFormats[storyFormatCounter] = sfdir
-                storyFormatCounter = storyFormatCounter + 1
+            try:
+                if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
+                    storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
+                    self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                    self.storyFormats[storyFormatCounter] = sfdir
+                    storyFormatCounter += 1
+            except:
+                pass
         
-        storyFormatMenu.AppendSeparator()
+        if sys.platform == "darwin":
+            try:
+                externalFormatPath = re.sub('[^/]+.app/.*', '', app.getPath()) + os.sep + 'targets' + os.sep        
+                for sfdir in os.listdir(externalFormatPath):
+                    if os.access(externalFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
+                        storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
+                        self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                        self.storyFormats[storyFormatCounter] = sfdir
+                        storyFormatCounter += 1
+            except:
+                pass
+                
+        if storyFormatCounter:
+            storyFormatMenu.AppendSeparator()
        
         storyFormatMenu.Append(StoryFrame.STORY_FORMAT_HELP, '&About Story Formats')        
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
@@ -376,11 +385,7 @@ class StoryFrame (wx.Frame):
                                     (wx.ACCEL_CTRL, wx.WXK_RETURN, StoryFrame.STORY_EDIT_FULLSCREEN) \
                                                       ]))
 
-        # add toolbar
-        if sys.platform == 'darwin':
-            iconPath = re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep
-        else:
-            iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
+        iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
         
         self.toolbar = self.CreateToolBar(style = wx.TB_FLAT | wx.TB_NODIVIDER)
         self.toolbar.SetToolBitmapSize((StoryFrame.TOOLBAR_ICON_SIZE, StoryFrame.TOOLBAR_ICON_SIZE))

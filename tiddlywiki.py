@@ -60,7 +60,17 @@ class TiddlyWiki:
 			return
 		
 		try:
-			header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
+			headerPath = os.sep + 'targets' + os.sep + target + os.sep + 'header.html'
+			
+			if sys.platform == "darwin":
+				externalFormatDir = re.sub('[^/]+.app/.*', '', app.getPath())
+				if os.access(externalFormatDir + headerPath, os.R_OK):
+					headerPath = externalFormatDir + headerPath
+				else:
+					headerPath = app.getPath() + headerPath
+			else:
+				headerPath = app.getPath() + headerPath
+			header = open(headerPath)
 			output = header.read()
 			header.close()
 		except IOError:

@@ -247,7 +247,7 @@ function setupTagCSS() {
             for (j = 0; j < passage.tags.length; j++) {
                 if (passage.tags[j] != "transition" && passage.tags[j] != "stylesheet") {
                     handler.tag = passage.tags[j];
-                    parseCssStylesheet(passage.text,handler);
+                    parseCssStylesheet(alterCSS(passage.text),handler);
                 }
             }
         }
