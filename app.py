@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, locale, re, pickle, wx
+import sys, os, locale, re, pickle, wx, platform
 import metrics
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
@@ -9,7 +9,7 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.4 (running on wxPython %s)\n' % wx.version() #Named attributes not available in Python 2.6
+    VERSION = '1.4 (running on %s %s)' % (platform.system(), platform.release()) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
     def __init__ (self, redirect = False):

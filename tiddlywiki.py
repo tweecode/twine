@@ -54,58 +54,65 @@ class TiddlyWiki:
 		if not order: order = self.tiddlers.keys()
 		output = u''
 		
-		if (target):
-			try:
-				header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
-				output = header.read()
-				header.close()
-			except IOError:
-				app.displayError("building: the story format '" + target + "' isn't available.\n"
-					+ "Please select another format from the Story Format submenu.\n\n")
-				return
-			
-			
-			def insertEngine(app, output, filename, label, extra = ''):
-				if output.count(label) > 0:
-					try:
-						engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
-						enginecode = engine.read()
-						engine.close()
-						return output.replace(label,enginecode + extra)
-					except IOError:
-						app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
-						return None
-				else:
-					return output
-			
-			# Set up the test play variable
-			if (startAt):
-				startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
-			# Insert the main engine
-			output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
-			if not output: return
-			
-			# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
-			output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"', startAt)
-			if not output: return
-			output = insertEngine(app, output, 'jonah/code.js', '"JONAH"', startAt)
-			if not output: return
-			
-			falseOpts = ["false", "off", "0"]
-			
-			# Insert jQuery
-			if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
-				output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
-				if not output: return
+		if not target:
+			app.displayError("building: no story format was specified.\n"
+							+ "Please select another format from the Story Format submenu.\n\n")
+			return
+		
+		try:
+			header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
+			output = header.read()
+			header.close()
+		except IOError:
+			app.displayError("building: the story format '" + target + "' isn't available.\n"
+				+ "Please select another format from the Story Format submenu.\n\n")
+			return
+		
+		
+		def insertEngine(app, output, filename, label, extra = ''):
+			if output.count(label) > 0:
+				try:
+					engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
+					enginecode = engine.read()
+					engine.close()
+					return output.replace(label,enginecode + extra)
+				except IOError:
+					app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
+					return None
 			else:
-				output = output.replace('"JQUERY"','')
-			
-			# Insert Modernizr
-			if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
-				output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
-				if not output: return
-			else:
-				output = output.replace('"MODERNIZR"','')
+				return output
+		
+		# Insert version number
+		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
+		
+		# Set up the test play variable
+		if (startAt):
+			startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
+		# Insert the main engine
+		output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
+		if not output: return
+		
+		# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
+		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"', startAt)
+		if not output: return
+		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"', startAt)
+		if not output: return
+		
+		falseOpts = ["false", "off", "0"]
+		
+		# Insert jQuery
+		if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
+			output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
+			if not output: return
+		else:
+			output = output.replace('"JQUERY"','')
+		
+		# Insert Modernizr
+		if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
+			output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
+			if not output: return
+		else:
+			output = output.replace('"MODERNIZR"','')
 		
 		obfuscate = 'obfuscate' in self.storysettings and \
 			self.storysettings['obfuscate'] == 'swap' and 'obfuscatekey' in self.storysettings;

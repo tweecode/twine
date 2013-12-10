@@ -605,7 +605,7 @@ class StoryFrame (wx.Frame):
             self.app.displayError('importing')
     
     def importImageURL(self, event = None):
-        dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, PNGs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
+        dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
         if dialog.ShowModal() == wx.ID_OK:
             try:
                 # Download the file
