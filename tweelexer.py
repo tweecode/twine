@@ -223,10 +223,10 @@ class TweeLexer:
                 s2 = self.GOOD_LINK
                 if not m.group(2):
                     if not self.passageExists(m.group(1)):
-                        s2 = badLinkStyle(m.group(1), True)
+                        s2 = badLinkStyle(m.group(1))
                 else:
                     if not self.passageExists(m.group(2)):
-                        s2 = badLinkStyle(m.group(2))
+                        s2 = badLinkStyle(m.group(2),True)
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
                 if m.group(2):

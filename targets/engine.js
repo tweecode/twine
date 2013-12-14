@@ -667,14 +667,14 @@ macros.nobr = macros.silently = {
             c = '',
             l = 0;
         for (i = 0; i < a.length; i++) {
-            if (a.substr(i, 15) == '<<end' + macroName + '>>') {
+            if (a.substr(i, macroName.length+7) == '<<end' + macroName + '>>') {
                 if (l == 0) {
                     d = k + i + 15;
                     break;
                 } else {
                     l--;
                 }
-            } else if (a.substr(i, 12) == '<<' + macroName + '>>') {
+            } else if (a.substr(i, macroName.length+4) == '<<' + macroName + '>>') {
                 l++;
             }
             if (macroName == "nobr" && a.charAt(i) == '\n') {

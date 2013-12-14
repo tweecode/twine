@@ -213,7 +213,7 @@ class App (wx.App):
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://twinery.org/wiki/about_story_formats')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/story_format')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
