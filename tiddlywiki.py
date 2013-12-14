@@ -49,6 +49,22 @@ class TiddlyWiki:
 		
 		return output
 		
+	def read(self, filename):
+		try:
+			source = codecs.open(filename, 'r', 'utf8', 'strict')
+			w = source.read()
+		except UnicodeDecodeError:
+			try:
+				source = codecs.open(filename, 'r', 'utf16', 'strict')
+				w = source.read()
+			except:
+				source = open(filename, 'rb')
+				w = source.read()
+		source.close()
+		# Normalise line endings
+		w = w.replace('\r\n','\n')
+		return w
+	
 	def toHtml (self, app, target = None, order = None, startAt = ''):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
@@ -70,9 +86,7 @@ class TiddlyWiki:
 					headerPath = app.getPath() + headerPath
 			else:
 				headerPath = app.getPath() + headerPath
-			header = open(headerPath)
-			output = header.read()
-			header.close()
+			output = self.read(headerPath)
 		except IOError:
 			app.displayError("building: the story format '" + target + "' isn't available.\n"
 				+ "Please select another format from the Story Format submenu.\n\n")
@@ -82,9 +96,7 @@ class TiddlyWiki:
 		def insertEngine(app, output, filename, label, extra = ''):
 			if output.count(label) > 0:
 				try:
-					engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
-					enginecode = engine.read()
-					engine.close()
+					enginecode = self.read(app.getPath() + os.sep + 'targets' + os.sep + filename)
 					return output.replace(label,enginecode + extra)
 				except IOError:
 					app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
@@ -154,9 +166,7 @@ class TiddlyWiki:
 			if (target):
 				footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
 				if os.path.exists(footername):
-					footer = open(footername,'r')
-					output += footer.read()
-					footer.close()
+					output += self.read(footername)
 				else:
 					output += '</div></body></html>'
 
@@ -244,17 +254,7 @@ class TiddlyWiki:
 		self.addTweeFromFilename(filename, True)
 		
 	def addTweeFromFilename(self, filename, html = False):
-		try:
-			source = codecs.open(filename, 'r', 'utf-8-sig', 'strict')
-			w = source.read()
-		except UnicodeDecodeError:
-			try:
-				source = codecs.open(filename, 'r', 'utf16', 'strict')
-				w = source.read()
-			except:
-				source = open(filename, 'rb')
-				w = source.read()
-		source.close()
+		w = self.read(filename)
 		if html:
 			self.addHtml(w)
 		else:
@@ -411,12 +411,12 @@ class Tiddler:
 		now = time.localtime()
 		output = ''
 		if not obfuscation:
-			output = '<div tiddler="' + self.title + '" tags="'
+			output = u'<div tiddler="' + self.title + '" tags="'
 			for tag in self.tags:
 				output += tag + ' '
 			output = output.strip()
 		else:
-			output = '<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			output = u'<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
 			for tag in self.tags:
 				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
 			output = output.strip()
