@@ -160,10 +160,11 @@ class TweeLexer:
             length = m.end(0)
             self.applyStyle(pos, length, self.MACRO)
             # Apply different style to the macro contents
-            contents = m.group(2)
+            group = 2 if m.group(1)[0] != '$' else 1
+            contents = m.group(group)
             if contents:
-                pos2 = pos + m.start(2)
-                self.applyStyle(pos2, len(m.group(2)), self.PARAM)
+                pos2 = pos + m.start(group)
+                self.applyStyle(pos2, len(m.group(group)), self.PARAM)
                 applyParamStyle(pos2, contents)
         
         def badLinkStyle(dest, external = False):

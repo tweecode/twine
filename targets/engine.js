@@ -1742,7 +1742,7 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
 };
 Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
     
 /* Functions usable by custom scripts */
 function visited(e) {
