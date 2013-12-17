@@ -111,7 +111,7 @@ class TiddlyWiki:
 		if (startAt):
 			output = output.replace('"START_AT"', '"' + startAt.replace('\\', r'\\').replace('"', '\"') + '"')
 		else:
-			output = output.replace('"START_AT"', '')
+			output = output.replace('"START_AT"', '""')
 		
 		# Insert the main engine
 		output = insertEngine(app, output, 'engine.js', '"ENGINE"')
