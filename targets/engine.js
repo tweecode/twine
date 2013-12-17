@@ -1489,7 +1489,7 @@ Wikifier.formatters = [
 }),
 {
     name: "urlLink",
-    match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",
+    match: "(?:http|https|mailto|javascript|ftp):[^\\s'\"]+(?:/|\\b)",
     handler: function (w) {
         var e = Wikifier.createExternalLink(w.output, w.matchText);
         w.outputText(e, w.matchStart, w.nextMatch);
@@ -1795,15 +1795,14 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var imgs, scripts, macro, style, styleText = "", i, p = document.getElementById("passages");
+    var imgs, scripts, macro, style, styleText = "", i, passages = document.getElementById("passages");
     
     if (!window.JSON) {
-        return (p.innerHTML = "This story requires a newer web browser. Sorry.");
+        return (passages.innerHTML = "This story requires a newer web browser. Sorry.");
     } else {
-        p.innerHTML = "";
-    }   
+        passages.innerHTML = "";
+    }
     tale = window.tale = new Tale();
-    state = window.state = new History();
     document.title = tale.title;
     
     if (~document.documentElement.className.indexOf("lt-ie9")) {
@@ -1848,5 +1847,7 @@ function main() {
         }
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
+	
+    state = window.state = new History();
     state.init();
 }

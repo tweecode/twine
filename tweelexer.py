@@ -170,7 +170,7 @@ class TweeLexer:
         def badLinkStyle(dest, external = False):
             # Apply style for a link destination which does not seem to be an existent passage
             if external:
-                for t in ['http://', 'https://', 'ftp://']:
+                for t in ['http://', 'https://', 'ftp://', 'mailto:', 'javascript:']:
                   if t in dest.lower():
                     return self.EXTERNAL
             iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
