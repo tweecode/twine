@@ -1089,8 +1089,12 @@ Wikifier.prototype.subWikify = function (output, terminator) {
 
             // Figure out which formatter matched
             var matchingFormatter = -1;
-            for (var t = 1; t < formatterMatch.length; t++)
-            if (formatterMatch[t]) matchingFormatter = t - 1;
+            for (var t = 1; t < formatterMatch.length; t++) {
+                if (formatterMatch[t]) {
+                    matchingFormatter = t - 1;
+                    break;
+                }
+            }
 
             // Call the formatter
             if (matchingFormatter != -1) { this.formatters[matchingFormatter].handler(this); }
