@@ -1447,10 +1447,24 @@ Wikifier.formatters = [
         } while (matched);
     }
 },
+(Wikifier.urlFormatter = {
+    name: "urlLink",
+    match: "(?:http|https|mailto|javascript|ftp):[^\\s'\"]+(?:/|\\b)",
+    handler: function (w) {
+        var e = Wikifier.createExternalLink(w.output, w.matchText);
+        w.outputText(e, w.matchStart, w.nextMatch);
+    }
+}),
 (Wikifier.linkFormatter = {
     name: "prettyLink",
     match: "\\[\\[",
     lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
+    makeInternalOrExternal: function(out,title,callback) {
+        if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match) || ~title.search(/[\.\\\/#]/)))
+            return Wikifier.createExternalLink(out, title, callback); 
+        else
+            return Wikifier.createInternalLink(out, title, callback);
+    },
     makeLink: function(match, out, callback2) {
         var link, title, callback;
         if (match[3]) { // Code
@@ -1462,19 +1476,9 @@ Wikifier.formatters = [
         else {
             typeof callback2 == "function" && (callback = callback2);
         }
-        if (!match[2]) // Simple bracketed link
-        {
-            title = Wikifier.parsePassageTitle(match[1]);
-            link = Wikifier.createInternalLink(out, title, callback);
-            setPageElement(link, null, title);
-        } else { // Pretty bracketed link
-            title = Wikifier.parsePassageTitle(match[2]);
-            if (tale.has(title) || !title)
-                link = Wikifier.createInternalLink(out, title, callback);
-            else
-                link = Wikifier.createExternalLink(out, match[2], callback);
-            setPageElement(link, null, match[1]);
-        }
+        title = Wikifier.parsePassageTitle(match[2] || match[1]);
+        link = this.makeInternalOrExternal(out,title,callback);
+        setPageElement(link, null, match[2] ? match[1] : title);
         return link;
     },
     handler: function (w) {
@@ -1487,14 +1491,6 @@ Wikifier.formatters = [
         }
     }
 }),
-{
-    name: "urlLink",
-    match: "(?:http|https|mailto|javascript|ftp):[^\\s'\"]+(?:/|\\b)",
-    handler: function (w) {
-        var e = Wikifier.createExternalLink(w.output, w.matchText);
-        w.outputText(e, w.matchStart, w.nextMatch);
-    }
-},
 (Wikifier.imageFormatter = {
     name: "image",
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
@@ -1507,8 +1503,7 @@ Wikifier.formatters = [
         {
             var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
             if (title) {
-                if (tale.has(title)) e = Wikifier.createInternalLink(w.output, title);
-                else e = Wikifier.createExternalLink(w.output, title);
+                e = Wikifier.linkFormatter.makeInternalOrExternal(w.output, title);
             }
             var img = insertElement(e, "img");
             if (lookaheadMatch[1]) img.align = "left";
@@ -1847,7 +1842,7 @@ function main() {
         }
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
-	
+    
     state = window.state = new History();
     state.init();
 }

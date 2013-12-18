@@ -167,11 +167,10 @@ class TweeLexer:
                 self.applyStyle(pos2, len(m.group(group)), self.PARAM)
                 applyParamStyle(pos2, contents)
         
-        def badLinkStyle(dest, external = False):
+        def badLinkStyle(dest):
             # Apply style for a link destination which does not seem to be an existent passage
-            if external:
-                for t in ['http://', 'https://', 'ftp://', 'mailto:', 'javascript:']:
-                  if t in dest.lower():
+            for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', '.', '/', '\\', '#']:
+                if t in dest.lower():
                     return self.EXTERNAL
             iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
             return self.PARAM if iscode else self.BAD_LINK
@@ -227,7 +226,7 @@ class TweeLexer:
                         s2 = badLinkStyle(m.group(1))
                 else:
                     if not self.passageExists(m.group(2)):
-                        s2 = badLinkStyle(m.group(2),True)
+                        s2 = badLinkStyle(m.group(2))
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
                 if m.group(2):
