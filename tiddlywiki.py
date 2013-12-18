@@ -107,17 +107,20 @@ class TiddlyWiki:
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
 		
-		# Set up the test play variable
+		# Insert the test play "start at passage" value
 		if (startAt):
-			startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
+			output = output.replace('"START_AT"', '"' + startAt.replace('\\', r'\\').replace('"', '\"') + '"')
+		else:
+			output = output.replace('"START_AT"', '""')
+		
 		# Insert the main engine
-		output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
+		output = insertEngine(app, output, 'engine.js', '"ENGINE"')
 		if not output: return
 		
 		# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
-		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"', startAt)
+		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"')
 		if not output: return
-		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"', startAt)
+		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"')
 		if not output: return
 		
 		falseOpts = ["false", "off", "0"]
