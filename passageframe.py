@@ -556,12 +556,12 @@ class PassageFrame (wx.Frame):
         if selection != '':
             if not re.match(r'^\[\[.*\]\]$', selection):
                 if len(selection) < 25:
-                    editSelected.SetText('Create &Link Named "' + selection + '"\tCtrl-L')
+                    editSelected.SetText('Create &Link "' + selection + '"\tCtrl-L')
                 else:
                     editSelected.SetText('Create &Link From Selected Text\tCtrl-L')
             else:
                 if len(selection) < 25:
-                    editSelected.SetText('&Edit Passage Named "' + self.stripCrud(selection) + '"\tCtrl-L')
+                    editSelected.SetText('&Edit Passage "' + self.stripCrud(selection) + '"\tCtrl-L')
                 else:
                     editSelected.SetText('&Edit Passage From Selected Text\tCtrl-L')
             editSelected.Enable(True)

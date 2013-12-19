@@ -13,6 +13,7 @@
 #
 
 import re, datetime, time, os, sys, tempfile, codecs
+import tweelexer
 from tweelexer import TweeLexer
 
 #
@@ -468,7 +469,7 @@ class Tiddler:
 	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
-	
+    
 	def update(self, includeInternal = True, includeMacros = True):
 		"""
 		Update the lists of all passages linked/displayed by this one. By default,
@@ -479,7 +480,7 @@ class Tiddler:
 			self.links = []
 			self.images = []
 			return
-		
+        
 		# <<display>>
 		self.displays = re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 		
@@ -501,17 +502,10 @@ class Tiddler:
 					links.append(m.group(5))
 			
 			# Remove externals
-			def filterExternals (text):
-				for t in ['http://', 'https://', 'ftp://']:
-					if text.lower().startswith(t): return False
-				return True
-				
-			links = filter(filterExternals, links)
+			def filterExternals(text):
+			    return tweelexer.badLinkStyle(text) == TweeLexer.BAD_LINK
 			
-			# Remove code parameters
-			links = filter(lambda text:
-				not re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, text, re.U),
-				links)
+			links = filter(filterExternals, links)
 
 		if includeMacros:
 			

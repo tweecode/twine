@@ -169,7 +169,7 @@ class StoryFrame (wx.Frame):
         else:
             shortcut = 'Ctrl-H'
         
-        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\t' + shortcut)
+        editMenu.Append(wx.ID_REPLACE, 'Replace Across Story...\t' + shortcut)
         self.Bind(wx.EVT_MENU, self.showReplace, id = wx.ID_REPLACE)
 
         editMenu.AppendSeparator()
@@ -237,9 +237,6 @@ class StoryFrame (wx.Frame):
         self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit in &Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
-        
-        self.storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
-        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.removeWidgets(e, saveUndo = True), id = wx.ID_DELETE)
  
         self.storyMenu.AppendSeparator()
         

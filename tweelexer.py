@@ -133,7 +133,7 @@ class TweeLexer:
         if m: return (self.COMMENT, m)
         
         return (None, None)
-    
+        
     def lex (self, event):
         """
         Lexes, or applies syntax highlighting, to text based on a
@@ -166,14 +166,6 @@ class TweeLexer:
                 pos2 = pos + m.start(group)
                 self.applyStyle(pos2, len(m.group(group)), self.PARAM)
                 applyParamStyle(pos2, contents)
-        
-        def badLinkStyle(dest):
-            # Apply style for a link destination which does not seem to be an existent passage
-            for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', '.', '/', '\\', '#']:
-                if t in dest.lower():
-                    return self.EXTERNAL
-            iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
-            return self.PARAM if iscode else self.BAD_LINK
         
         pos = 0
         prev = 0
@@ -390,3 +382,11 @@ class TweeLexer:
     PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
+ 
+def badLinkStyle(dest):
+    # Apply style for a link destination which does not seem to be an existent passage
+    for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', '.', '/', '\\', '#']:
+        if t in dest.lower():
+            return TweeLexer.EXTERNAL
+    iscode = re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+    return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK

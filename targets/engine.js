@@ -1117,12 +1117,12 @@ Wikifier.prototype.fullMatch = function() {
 };
 
 Wikifier.prototype.fullArgs = function (includeName) {
-    var startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart) + (includeName ? 2 : 1),
-        endPos = this.source.indexOf('>>', this.matchStart);
-    if (startPos < this.matchStart || endPos < this.matchStart) {
+    var endPos = this.source.indexOf('>>', this.matchStart),
+        startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart);
+    if (~startPos || ~endPos || endPos <= startPos) {
         return "";
     }
-    return Wikifier.parse(this.source.slice(startPos, endPos).trim());
+    return Wikifier.parse(this.source.slice(startPos + (includeName ? 2 : 1), endPos).trim());
 };
 
 Wikifier.parse = function (input) {
@@ -1449,7 +1449,7 @@ Wikifier.formatters = [
 },
 (Wikifier.urlFormatter = {
     name: "urlLink",
-    match: "(?:http|https|mailto|javascript|ftp):[^\\s'\"]+(?:/|\\b)",
+    match: "(?:http|https|mailto|javascript|ftp|data):[^\\s'\"]+(?:/|\\b)",
     handler: function (w) {
         var e = Wikifier.createExternalLink(w.output, w.matchText);
         w.outputText(e, w.matchStart, w.nextMatch);
@@ -1754,6 +1754,12 @@ function visited(e) {
     }
     return ret;
 }
+function passage() {
+    return state.history[0].passage.title
+}
+function tags() {
+    return state.history[0].passage.tags
+}
 function previous() {
     if (state.history[1]) {
         for (var d = 1; d < state.history.length && state.history[d].passage; d++) {
@@ -1772,7 +1778,9 @@ function parameter(n) {
     if (macros.display.parameters[n]) {
         return macros.display.parameters[n];
     }
-    throw new RangeError("there isn't a parameter " + n);
+    // Silently pass 0 when n is 0
+    if (n) throw new RangeError("there isn't a parameter " + n);
+    return 0
 }
 
 function scriptEval(s) {
