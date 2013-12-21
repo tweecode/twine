@@ -1123,7 +1123,7 @@ Wikifier.prototype.fullMatch = function() {
 Wikifier.prototype.fullArgs = function (includeName) {
     var endPos = this.source.indexOf('>>', this.matchStart),
         startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart);
-    if (~startPos || ~endPos || endPos <= startPos) {
+    if (!~startPos || !~endPos || endPos <= startPos) {
         return "";
     }
     return Wikifier.parse(this.source.slice(startPos + (includeName ? 2 : 1), endPos).trim());
@@ -1761,8 +1761,16 @@ function visited(e) {
 function passage() {
     return state.history[0].passage.title
 }
-function tags() {
-    return state.history[0].passage.tags
+function tags(e) {
+    var ret = [], i = 0;
+    e = e || state.history[0].passage.title;
+    if (arguments.length > 1) {
+        for (i = arguments.length-1; i >= 1; i--) {
+            ret = ret.concat(tags(arguments[i]));
+        }
+    }
+    ret = ret.concat(tale.get(e).tags);
+    return ret;
 }
 function previous() {
     if (state.history[1]) {
@@ -1782,8 +1790,6 @@ function parameter(n) {
     if (macros.display.parameters[n]) {
         return macros.display.parameters[n];
     }
-    // Silently pass 0 when n is 0
-    if (n) throw new RangeError("there isn't a parameter " + n);
     return 0
 }
 

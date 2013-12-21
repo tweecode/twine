@@ -496,11 +496,12 @@ class PassageWidget:
         
         # frame
         
-        frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
         if self.passage.isAnnotation():
-            c = wx.Colour(*PassageWidget.COLORS['annotation'], alpha = 1)
+            frameColor = PassageWidget.COLORS['frame']
+            c = wx.Colour(*PassageWidget.COLORS['annotation'])
             frameInterior = (c,c)
         else:
+            frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
             frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
                          dim(PassageWidget.COLORS['bodyEnd'], self.dimmed))
         
@@ -520,7 +521,10 @@ class PassageWidget:
             # title bar
             
             titleBarHeight = titleFontHeight + (2 * inset)
-            titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
+            if self.passage.isAnnotation():
+                titleBarColor = frameInterior[0]
+            else:
+                titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
             gc.DrawRectangle(1, 1, size.width - 3, titleBarHeight)            
@@ -556,10 +560,10 @@ class PassageWidget:
         
                 if isinstance(gc, wx.GraphicsContext):
                     gc.ResetClip()
-                    gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2))
+                    gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2)-1)
                 else:
                     gc.DestroyClippingRegion()
-                    gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
+                    gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)-1))
                 
                 if self.passage.isAnnotation():
                     excerptTextColor = wx.Colour(*PassageWidget.COLORS['annotationText'])
