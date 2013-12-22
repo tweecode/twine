@@ -265,18 +265,24 @@ var Interface = {
 window.onload = Interface.init;
 
 macros.back.onclick = function(back, steps) {
+    var title;
     if (back) {
         if (tale.canUndo()) {
           window.history.go(-steps);
           return;
         }
-        else while(steps >= 0) {
-          if (state.history.length>1) {
+        while(steps >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
             state.history.shift();
-          }
-          steps--;
+            steps--;
         }
-        state.display(state.history[0].passage.title);
+        state.display(title, null, "", (function(a) {
+            if (a) return function() {
+                for(var i in a) {
+                    state.history[0].variables[i] = a[i];
+                }
+            }
+        }(state.history[0].linkVars)));
     }
     else state.display(state.history[steps].passage.title);
 }

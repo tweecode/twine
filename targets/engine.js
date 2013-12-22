@@ -1,5 +1,8 @@
 function clone(a) {
     var b = {};
+    if (!a || typeof a != "object") {
+        return a;
+    }
     for (var property in a) {
         if (typeof a[property] == "object") {
             try {
@@ -275,7 +278,7 @@ History.prototype.encodeHistory = function(b, noVars) {
         }
     }
     
-    if (!hist.passage || hist.passage.id == undefined) {
+    if (!hist.passage || hist.passage.id == null) {
         return ""
     }
     ret += hist.passage.id.toString(36)
@@ -299,7 +302,7 @@ History.prototype.encodeHistory = function(b, noVars) {
 
 History.prototype.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
-        ret = { variables: prev.variables || {} },
+        ret = { variables: clone(prev.variables) || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
     
     function btov(str) {
@@ -375,9 +378,9 @@ History.prototype.restore = function () {
             vars = this.decodeHistory(a[b], vars || {});
             if (vars) {
                 if (b == a.length - 1) {
-                    vars.variables = this.history[0].variables;
+                    vars.variables = clone(this.history[0].variables);
                     for (c in this.history[0].linkVars) {
-                        vars.variables[c] = this.history[0].linkVars[c];
+                        vars.variables[c] = clone(this.history[0].linkVars[c]);
                     }
                     this.history.unshift(vars);
                     this.display(vars.passage.title, null, "back");
@@ -817,7 +820,7 @@ macros.back = {
         el = document.createElement("a");
         el.className = b;
         el.onclick = (function(b) { return function () {
-            return macros.back.onclick(b == "back", steps)
+            return macros.back.onclick(b == "back", steps, el)
         }}(b));
         el.innerHTML = labeltouse;
         a.appendChild(el);

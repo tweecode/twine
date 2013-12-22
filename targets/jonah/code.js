@@ -41,16 +41,18 @@ History.prototype.display = function (name, source, type, callback) {
         el.id += "|" + (new Date).getTime();
     }
     D = tale.get(name);
-    this.history.unshift({
-        passage: D,
-        variables: clone(this.history[0].variables)
-    });
-    if (typeof callback == "function") {
-        callback();
-        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+    if (type != "back") {
+        this.history.unshift({
+            passage: D,
+            variables: clone(this.history[0].variables)
+        });
+        if (typeof callback == "function") {
+            callback();
+            this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+        }
     }
     F = D.render();
-    if (type != "offscreen" && type != "quietly") {
+    if (type != "quietly") {
         if (hasTransition) {
             F.classList.add("transition-in");
             setTimeout(function () {
@@ -192,15 +194,38 @@ Wikifier.createInternalLink = function (place, title, callback) {
     return el;
 };
 
-macros.back.onclick = function(back, steps) {
+macros.back.onclick = function(back, steps, el) {
+    var title, q, p = document.getElementById("passages");
     if (back) {
-        var p = document.getElementById("passages").lastChild;
-        while (steps > 0 && p) {
-            p = p.previousSibling;
+        q = p.querySelectorAll(".passage");
+        while(el && !~el.className.indexOf("passage")) {
+            el = el.parentNode;
+        }
+        if (q[0] != el) {
+            p = el;
+            while (p && steps > 0) {
+                p = p.previousSibling;
+                steps--;
+            }
+            state.rewindTo(p);
+            return;
+        }
+        steps += q.length-1;
+        removeChildren(p);
+        while(steps >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
+            state.history.shift();
             steps--;
         }
-        state.rewindTo(p);
-    } else state.display(state.history[steps].passage.title);
+        state.display(title, null, "", (function(a) {
+            if (a) return function() {
+                for(var i in a) {
+                    state.history[0].variables[i] = a[i];
+                }
+            }
+        }(state.history[0].linkVars)));
+    }
+    else state.display(state.history[steps].passage.title);
 };
 
 function setupTagCSS() {
