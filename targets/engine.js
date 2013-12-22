@@ -200,11 +200,11 @@ function fade(f, c) {
 
 var scrollWindowInterval;
 function scrollWindowTo(e) {
-    var d = window.scrollY ? window.scrollY : document.body.scrollTop;
-    var g = k(e);
-    var c = Math.abs(d - g);
-    var b = 0;
-    var j = (d > g) ? -1 : 1;
+    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        g = k(e),
+        c = Math.abs(d - g),
+        b = 0,
+        j = (d > g) ? -1 : 1;
     scrollWindowInterval = window.setInterval(h, 25);
 
     function h() {
@@ -218,8 +218,8 @@ function scrollWindowTo(e) {
     function k(o) {
         var p = a(o);
         var q = p + o.offsetHeight;
-        var l = window.scrollY ? window.scrollY : document.body.scrollTop;
-        var m = window.innerHeight ? window.innerHeight : document.body.clientHeight;
+        var l = window.scrollY ? window.scrollY : document.documentElement.scrollTop;
+        var m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
         var n = l + m;
         if (p < l) {
             return p
