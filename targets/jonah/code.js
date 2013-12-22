@@ -101,6 +101,7 @@ Passage.prototype.render = function () {
     E.style.visibility = 'hidden';
     this.setTags(E);
     this.setCSS();
+    insertElement(E, 'div', '', 'header');
     F = insertElement(E, 'div', '', 'title', this.title);
     D = insertElement(F, 'span', '', 'toolbar');
     for (i = 0; i < Passage.toolbarItems.length && tale.canUndo(); i++) {
@@ -123,6 +124,7 @@ Passage.prototype.render = function () {
         (typeof prerender[i] == "function") && prerender[i].call(this,A);
     }
     new Wikifier(A, this.processText());
+    insertElement(E, 'div', '', 'footer');
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }

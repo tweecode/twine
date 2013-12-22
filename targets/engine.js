@@ -842,8 +842,7 @@ function Passage(c, b, a, ofunc, okey) {
         this.id = a;
         if (ofunc != null && typeof ofunc == 'function' && okey != null) {
             var t = b.firstChild ? b.firstChild.nodeValue : "";
-            t = ofunc(t, okey);
-            this.initialText = this.text = Passage.unescapeLineBreaks(t);
+            this.initialText = this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
             this.tags = b.getAttribute("tags");
             if (typeof this.tags == "string") {
                 this.tags = ofunc(this.tags, okey);
