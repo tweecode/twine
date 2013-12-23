@@ -68,6 +68,10 @@ function alterCSS(text) {
     var imgPassages = tale.lookup("tags", "Twine.image");
     // Remove comments
     text = text.replace(/\/\*(?:[^\*]|\*(?!\/))*\*\//g,'');
+    // Replace :link
+    text = text.replace(/:link/g,"[class*=Link]");
+    // Replace :visited
+    text = text.replace(/:visited/g,".visitedLink");
     // Add images
     return text.replace(new RegExp(Wikifier.imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
         for (var i = 0; i < imgPassages.length; i++) {
@@ -892,7 +896,7 @@ function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
             lookup: function(a) {
-                return !~["0", "off", "false"].indexOf((this[a]+"").toLowerCase());
+                return !~["0", "off", "false"].indexOf((this[a]+""));
             }
         },
         tiddlerTitle = '';
@@ -921,7 +925,7 @@ function Tale() {
             lines = new Passage('StorySettings', c, 0, null, null).text.split('\n');
             for (i in lines) {
                 if (typeof lines[i] == "string" && lines[i].indexOf(':') > -1) {
-                    kv = lines[i].split(':');
+                    kv = lines[i].toLowerCase().split(':');
                     kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
                     kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
                     settings[kv[0]] = kv[1];
@@ -1754,7 +1758,7 @@ function visited(e) {
             ret = Math.min(ret, visited(arguments[i]));
         }
     } else for(; i<state.history.length && state.history[i].passage; i++) {
-        if(~e.indexOf(state.history[i].passage.title)) {
+        if(e == state.history[i].passage.title) {
             ret++;
         }
     }

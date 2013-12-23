@@ -161,7 +161,10 @@ Passage.prototype.setCSS = function() {
 Wikifier.createInternalLink = function (place, title, callback) {
     var el = insertElement(place, 'a', title);
 
-    if (tale.has(title)) el.className = 'internalLink';
+    if (tale.has(title)) {
+        el.className = 'internalLink';
+        if (visited(title)) el.className += ' visitedLink';
+    }
     else el.className = 'brokenLink';
 
     el.onclick = function () {

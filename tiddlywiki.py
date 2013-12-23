@@ -156,9 +156,7 @@ class TiddlyWiki:
 		storycode = u''
 		for i in order:
 			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
-				if (self.tiddlers[i].title == 'StorySettings'):
-					storycode += self.tiddlers[i].toHtml(self.author, insensitive = True)
-				elif (not obfuscate):
+				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
 					storycode += self.tiddlers[i].toHtml(self.author)
 				else:
 					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
@@ -409,7 +407,7 @@ class Tiddler:
 				self.text = encode_obfuscate_swap(self.text, obfuscationkey);
 		
 		
-	def toHtml (self, author = 'twee', insensitive = False, obfuscation = False, obfuscationkey = ''):
+	def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""
 			
 		now = time.localtime()
@@ -430,7 +428,7 @@ class Tiddler:
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
-		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
+		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		 
 		return output
 		
