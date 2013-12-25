@@ -42,6 +42,13 @@ function removeChildren(a) {
     }
 }
 
+function findPassageParent(el) {
+    while(el && !~el.className.indexOf("passage")) {
+        el = el.parentNode;
+    }
+    return el;
+}
+
 function setPageElement(c, b, a) {
     var place;
     if (place = (typeof c == "string" ? document.getElementById(c) : c)) {
@@ -53,6 +60,7 @@ function setPageElement(c, b, a) {
         }
     }
 }
+
 // Kept for custom script use
 function addStyle(b) {
     if (document.createStyleSheet) {
@@ -91,8 +99,10 @@ function setTransitionCSS(styleText) {
 }
 
 function throwError(a, b, tooltip) {
-    var elem = insertElement(a, "span", null, "marked", b);
-    tooltip && elem.setAttribute("title", tooltip);
+    if (a) {
+        var elem = insertElement(a, "span", null, "marked", b);
+        tooltip && elem.setAttribute("title", tooltip);
+    }
 }
 Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
@@ -302,7 +312,7 @@ History.prototype.encodeHistory = function(b, noVars) {
         }
     }
     return ret
-}
+};
 
 History.prototype.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
@@ -346,7 +356,7 @@ History.prototype.decodeHistory = function(str, prev) {
         ret.passage = tale.get(name);
         return ret;
     }
-}
+};
 
 History.prototype.save = function (c) {
     var hist, b, a = "";
@@ -399,11 +409,37 @@ History.prototype.restore = function () {
         return false
     }
 };
+History.prototype.saveVariables = function(c, el, callback) {
+    var i, inputs, diff = false;
+    this.history.unshift({
+        passage: c,
+        variables: clone(this.history[0].variables)
+    });
+    // Setter links
+    if (typeof callback == "function") {
+        callback();
+        diff = true;
+    }
+    // <input> elements
+    el = findPassageParent(el);
+    if (el) {
+        inputs = el.querySelectorAll("input");
+        for (i = 0; i < inputs.length; i++) {
+            if (!((inputs[i].type=="radio" || inputs[i].type=="checkbox") && !inputs[i].checked)) {
+                macros.set.run(null, Wikifier.parse(inputs[i].name+' = "'+inputs[i].value.replace(/"/g,'\\"')+'"'));
+            }
+        }
+        diff = diff || ~inputs.length;
+    }
+    // Save to linkVars
+    diff && this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+};
+
 var version = {
     major: 4,
-    minor: 0,
+    minor: 1,
     revision: 0,
-    date: new Date("November 28, 2013"),
+    date: new Date("December 25, 2013"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -519,7 +555,7 @@ macros.set = {
     },
     run: function (a,expression, parser) {
         try {
-            return eval(Wikifier.parse(expression));
+            return eval(expression);
         } catch (e) {
             throwError(a, "bad expression: " + e.message, parser ? parser.fullMatch() : expression)
         }
@@ -714,10 +750,7 @@ macros.choice = {
             text = D[1] || D[0].split("|")[0],
             clicked = function() { return state.history[0].variables["choice clicked"] || 
                     (state.history[0].variables["choice clicked"] = {})},
-            passage = A;
-        while(passage && !~passage.className.indexOf("passage")) {
-            passage = passage.parentNode;
-        }
+            passage = findPassageParent(A);
         // Get ID of the "choice clicked" entry
         id = (passage && passage.id.replace(/\|[^\]]*$/,''));
         if (id && clicked()[id]) {
@@ -735,7 +768,7 @@ macros.choice = {
             match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
             
             if (match) {
-                link = Wikifier.linkFormatter.makeLink(match,A,callback);
+                link = Wikifier.linkFormatter.makeLink(A,match,callback);
             }
             else {
                 link = Wikifier.createInternalLink(A, D[0], callback);
@@ -841,6 +874,33 @@ macros["return"] = {
   handler: function(a,b,e) { 
     macros.back.handler.call(this,a,b,e);
   }
+};
+
+version.extensions.textInputMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros.textinput = {
+    handler: function (A, C, D, parser) {
+        var button, link, match,
+            input = insertElement(A,'input','','textInput');
+        input.name=D[0];
+        input.type='text';
+        
+        if (D[1]) {
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            
+            if (match) {
+                link = Wikifier.linkFormatter.makeLink(null,match);
+                link.onclick.reassign(insertElement(A,'button'));
+            }
+            else {
+                button = insertElement(A,'button','','textInputButton', D[2] || D[1]);
+                button.onclick = Wikifier.linkFunction(D[1], button);
+            }
+        }
+    }
 };
 
 function Passage(c, b, a, ofunc, okey) {
@@ -1474,11 +1534,11 @@ Wikifier.formatters = [
         else
             return Wikifier.createInternalLink(out, title, callback);
     },
-    makeLink: function(match, out, callback2) {
+    makeLink: function(out, match, callback2) {
         var link, title, callback;
         if (match[3]) { // Code
             callback = function() {
-                macros.set.run(out, match[3]); 
+                macros.set.run(out, Wikifier.parse(match[3])); 
                 typeof callback2 == "function" && callback2();
             };
         }
@@ -1495,7 +1555,7 @@ Wikifier.formatters = [
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source)
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
-            this.makeLink(lookaheadMatch, w.output)
+            this.makeLink(w.output, lookaheadMatch)
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
@@ -1720,7 +1780,43 @@ Wikifier.parsePassageTitle = function(title) {
         catch(e) {}
     }
     return title;
-}
+};
+
+Wikifier.linkFunction = function(title, el, callback) {
+    var fn = function() {
+        if (state.rewindTo) {
+            var passage = findPassageParent(fn.el);
+            if (passage && passage.parentNode.lastChild != passage) {
+                state.rewindTo(passage, true);
+            }
+        }
+        state.display(title, fn.el, null, callback);
+    };
+    fn.el = el;
+    fn.reassign = function(el2) {
+        el2.onclick = fn;
+        el2.innerHTML = fn.el.innerHTML;
+        fn.el = el2;
+    };
+    return fn;
+};
+
+Wikifier.createInternalLink = function (place, title, callback) {
+    var el = insertElement(place, 'a', title);
+
+    if (tale.has(title)) {
+        el.className = 'internalLink';
+        if (visited(title)) el.className += ' visitedLink';
+    }
+    else el.className = 'brokenLink';
+
+    el.onclick = Wikifier.linkFunction(title, el, callback);
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
+
 Wikifier.createExternalLink = function (place, url) {
     var el = insertElement(place, 'a');
     el.href = url;
@@ -1797,6 +1893,7 @@ function parameter(n) {
     }
     return 0
 }
+
 var softErrorMessage = " You may be able to continue reading, but parts of the story may not work properly.";
 function scriptEval(s) {
     try {

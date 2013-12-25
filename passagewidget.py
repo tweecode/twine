@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import sys, os, copy, math, re, wx, storypanel, tiddlywiki
+import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame
 
@@ -489,7 +489,8 @@ class PassageWidget:
         excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
-                
+        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(hash("".join(self.passage.tags))%256/256.0, 0.28, 0.88)), self.dimmed)    
+         
         # inset for text (we need to know this for layout purposes)
         
         inset = titleFontHeight / 3
@@ -588,7 +589,6 @@ class PassageWidget:
                     (self.passage.isStylesheet() and len(self.passage.tags) > 1):
                 
                 tagBarHeight = excerptFontHeight + (2 * inset)
-                tagBarColor = dim((226, 201, 162), self.dimmed)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
                 gc.DrawRectangle(0, size.height-tagBarHeight-1, size.width, tagBarHeight+1)            
@@ -655,7 +655,6 @@ class PassageWidget:
                     (self.passage.isStylesheet() and len(self.passage.tags) > 1) :
                 
                 tagBarHeight = PassageWidget.GREEK_HEIGHT*3
-                tagBarColor = dim((226, 201, 162), self.dimmed)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
                 height = size.height-tagBarHeight-2

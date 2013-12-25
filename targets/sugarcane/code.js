@@ -20,17 +20,10 @@ History.prototype.init = function () {
         }, 250)
     }
 };
-History.prototype.display = function (title, b, type, callback) {
+History.prototype.display = function (title, source, type, callback) {
     var bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
     if (type != "back") {
-        this.history.unshift({
-            passage: c,
-            variables: clone(this.history[0].variables)
-        });
-        if (typeof callback == "function") {
-            callback();
-            this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
-        }
+        this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
             if(this.history.length <= 2 && window.history.state == "") {
                 window.history.replaceState(this.history, document.title);
@@ -156,24 +149,6 @@ Passage.prototype.setCSS = function() {
         c.styleSheet ? (c.styleSheet.cssText = text) : (c.innerHTML = text);
         c.setAttribute('data-tags', tags.join(' '));
     }
-};
-
-Wikifier.createInternalLink = function (place, title, callback) {
-    var el = insertElement(place, 'a', title);
-
-    if (tale.has(title)) {
-        el.className = 'internalLink';
-        if (visited(title)) el.className += ' visitedLink';
-    }
-    else el.className = 'brokenLink';
-
-    el.onclick = function () {
-        state.display(title, el, null, callback)
-    };
-
-    if (place) place.appendChild(el);
-
-    return el;
 };
 
 var Interface = {

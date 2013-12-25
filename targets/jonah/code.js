@@ -42,14 +42,7 @@ History.prototype.display = function (name, source, type, callback) {
     }
     D = tale.get(name);
     if (type != "back") {
-        this.history.unshift({
-            passage: D,
-            variables: clone(this.history[0].variables)
-        });
-        if (typeof callback == "function") {
-            callback();
-            this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
-        }
+        this.saveVariables(D, source, callback);
     }
     F = D.render();
     if (type != "quietly") {
@@ -172,38 +165,11 @@ Passage.prototype.setCSS = function() {
     }
 };
 
-Wikifier.createInternalLink = function (place, title, callback) {
-    var el = insertElement(place, 'a', title);
-
-    if (tale.has(title)) {
-        el.className = 'internalLink';
-        if (visited(title)) el.className += ' visitedLink';
-    }
-    else el.className = 'brokenLink';
-
-    el.onclick = function () {
-        var passage = el;
-        while(passage && !~passage.className.indexOf("passage")) {
-            passage = passage.parentNode;
-        }
-        if (passage && passage.parentNode.lastChild != passage) {
-            state.rewindTo(passage, true);
-        }
-        state.display(title, el, null, callback)
-    };
-
-    if (place) place.appendChild(el);
-
-    return el;
-};
-
 macros.back.onclick = function(back, steps, el) {
     var title, q, p = document.getElementById("passages");
     if (back) {
         q = p.querySelectorAll(".passage");
-        while(el && !~el.className.indexOf("passage")) {
-            el = el.parentNode;
-        }
+        el = findPassageParent(el);
         if (q[0] != el) {
             p = el;
             while (p && steps > 0) {
@@ -228,7 +194,7 @@ macros.back.onclick = function(back, steps, el) {
             }
         }(state.history[0].linkVars)));
     }
-    else state.display(state.history[steps].passage.title);
+    else state.display(state.history[steps].passage.title, null);
 };
 
 function setupTagCSS() {
