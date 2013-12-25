@@ -26,7 +26,8 @@ class StoryFrame (wx.Frame):
         self.dirty = False      # the user has not made unsaved changes
         self.storyFormats = {}  # list of available story formats
         self.lastTestBuild = None
-
+        self.title = ""
+        
         # inner state
         
         if (state):
@@ -559,6 +560,10 @@ class StoryFrame (wx.Frame):
             else:
                 tw.addTweeFromFilename(path)
             
+            allWidgetTitles = []
+            
+            self.storyPanel.eachWidget(lambda e: allWidgetTitles.append(e.passage.title))
+            
             # add passages for each of the tiddlers the TiddlyWiki saw
             if len(tw.tiddlers):
                 removedWidgets = []
@@ -566,14 +571,14 @@ class StoryFrame (wx.Frame):
                 
                 # Check for passage title conflicts
                 for t in tw.tiddlers:
-                    other = self.storyPanel.findWidget(t)
-                    if other:
+                    
+                    if t in allWidgetTitles:
                         dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
                                               + '" in this story. Replace it with the imported passage?', 'Passage Title Conflict', \
                                               wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
                         check = dialog.ShowModal();
                         if check == wx.ID_YES:
-                            removedWidgets.append(other)
+                            removedWidgets.append(t)
                         elif check == wx.ID_CANCEL:
                             return
                         elif check == wx.ID_NO:
@@ -590,11 +595,11 @@ class StoryFrame (wx.Frame):
                     t = tw.tiddlers[t]
                     if t.title in skippedTitles:
                         continue
-                    new = self.storyPanel.newWidget(title = t.title, text = t.text, quietly = True,
+                    new = self.storyPanel.newWidget(title = t.title, tags = t.tags, text = t.text, quietly = True,
                                                     pos = t.pos if t.pos else lastpos)
-                    new.passage.tags = t.tags
                     lastpos = new.pos
                     addedWidgets.append(new)
+                    
                 self.setDirty(True, 'Import')
                 for t in addedWidgets:
                     t.clearPaintCache()
@@ -867,12 +872,12 @@ Modernizr: off
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
                     dir = (path and os.path.dirname(path)) or None)
-                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
+                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt, defaultName = self.title).encode('utf-8'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'w')
-                dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
+                dest.write(tw.toHtml(self.app, self.target, defaultName = self.title).encode('utf-8'))
                 dest.close()
                 if displayAfter: self.viewBuild()
         except:
@@ -1076,16 +1081,16 @@ Modernizr: off
         # window title
         
         if self.saveDestination == '':
-            title = StoryFrame.DEFAULT_TITLE
+            self.title = StoryFrame.DEFAULT_TITLE
         else:
             bits = os.path.splitext(self.saveDestination)
-            title = os.path.basename(bits[0])
+            self.title = os.path.basename(bits[0])
         
         percent = str(int(round(self.storyPanel.scale * 100)))
         dirty = ''
         if self.dirty: dirty = ' *'
 
-        self.SetTitle(title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
+        self.SetTitle(self.title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
         
         if not self.menus: return
             

@@ -66,7 +66,7 @@ class TiddlyWiki:
 		w = w.replace('\r\n','\n')
 		return w
 	
-	def toHtml (self, app, target = None, order = None, startAt = ''):
+	def toHtml (self, app, target = None, order = None, startAt = '', defaultName = ''):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
@@ -123,6 +123,10 @@ class TiddlyWiki:
 		if not output: return
 		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"')
 		if not output: return
+		
+		# Insert the Backup Story Title
+		if defaultName:
+			output = output.replace('"Untitled Story"', '"'+defaultName.replace('"',r'\"')+'"')
 		
 		falseOpts = ["false", "off", "0"]
 		
@@ -232,14 +236,15 @@ class TiddlyWiki:
 		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
 						re.DOTALL)
 		if divs:
+			divs = divs.group(1);
 			# HTML may be obfuscated.
 			obfuscationkey = ''
 			storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
-			storysettings = re.search(r'<div'+storysettings_re, divs.group(1), re.DOTALL)
+			storysettings = re.search(r'<div'+storysettings_re, divs, re.DOTALL)
 			if storysettings:
-				storysettings = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
-				if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', storysettings.text, re.I):
-					match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', storysettings.text, re.I)
+				ssTiddler = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
+				if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', ssTiddler.text, re.I):
+					match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', ssTiddler.text, re.I)
 					if match:
 						obfuscationkey = match.group(1)
 						nss = u''
@@ -247,11 +252,12 @@ class TiddlyWiki:
 							if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
 								nss = nss + nsc
 						obfuscationkey = nss
+				divs = divs[:storysettings.start(0)] + divs[storysettings.end(0)+1:]
 			
-			for div in divs.group(1).split('<div'):
-				if div.strip() and not re.search(storysettings_re, div, re.DOTALL):
-					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
-				
+			for div in divs.split('<div'):
+				div.strip()
+				self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+			
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
 		
@@ -271,6 +277,7 @@ class TiddlyWiki:
 				self.tiddlers[tiddler.title] = tiddler
 		else:
 			self.tiddlers[tiddler.title] = tiddler
+		
 		return tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
@@ -362,7 +369,7 @@ class Tiddler:
 			self.title = title.group(1)
 			if obfuscationkey:
 				self.title = encode_obfuscate_swap(self.title, obfuscationkey);
-					
+				
 		# tags
 		
 		self.tags = []
@@ -372,7 +379,7 @@ class Tiddler:
 			if obfuscationkey:
 				self.tags = encode_obfuscate_swap(tags.group(1), obfuscationkey).split(' ');
 			else: self.tags = tags.group(1).split(' ')
-					
+				
 		# creation date
 		
 		self.created = time.localtime()
@@ -380,7 +387,7 @@ class Tiddler:
 		created = created_re.search(source)
 		if created:
 			self.created = decode_date(created.group(1))
-		
+			
 		# modification date
 		
 		self.modified = time.localtime()
@@ -405,7 +412,6 @@ class Tiddler:
 			self.text = decode_text(text.group(1))
 			if obfuscationkey:
 				self.text = encode_obfuscate_swap(self.text, obfuscationkey);
-		
 		
 	def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""

@@ -622,7 +622,7 @@ macros.remember = {
     init: function () {
         var i, variable, value;
         if (tale.has("StoryTitle")) {
-            this.prefix = "Twine." + tale.get("StoryTitle").text + ".";
+            this.prefix = "Twine." + tale.title + ".";
         } else {
             this.prefix = "Twine.Untitled Story.";
         }
@@ -961,7 +961,6 @@ function Tale() {
             }
         }
     }
-    this.title = (this.passages.StoryTitle ? this.passages.StoryTitle.text : document.title);
 }
 Tale.prototype.has = function (a) {
     if (typeof a == "string") {
@@ -1798,12 +1797,12 @@ function parameter(n) {
     }
     return 0
 }
-
+var softErrorMessage = " You may be able to continue reading, but parts of the story may not work properly.";
 function scriptEval(s) {
     try {
         eval(s.text);
     } catch (e) {
-        alert("There is a technical problem with this story (" + s.title + ": " + e.message + "). You may be able to continue reading, but parts of the story may not work properly.");
+        alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
 /* Init function */
@@ -1814,27 +1813,38 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var imgs, scripts, macro, style, styleText = "", i, passages = document.getElementById("passages");
+    var imgs, scripts, macro, style, styleText = "", i, storyTitle, defaultTitle = "Untitled Story", passages = document.getElementById("passages");
     
-    if (!window.JSON) {
+    function sanityCheck(thing) {
+        // Warn if display() was replaced improperly
+        if (!sanityCheck.display) {
+            if (History.prototype.display.length < 4 && !~History.prototype.display.toString().indexOf("arguments")) {
+                alert("NOTE: The " + thing + " contains a function that patches History.prototype.display, but takes the wrong number of arguments."+softErrorMessage);
+            }
+            sanityCheck.display = true;
+        }
+    }
+    
+    if (!window.JSON || !document.querySelector) {
         return (passages.innerHTML = "This story requires a newer web browser. Sorry.");
     } else {
         passages.innerHTML = "";
     }
     tale = window.tale = new Tale();
-    document.title = tale.title;
     
     if (~document.documentElement.className.indexOf("lt-ie9")) {
         imgs = tale.lookup("tags", "Twine.image");
         for (i = 0; i < imgs.length; i++) {
             if (imgs[i].text.length >= 32768) {
-                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display.");
+                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
                 break;
             }
         }
     }
+    setPageElement("storyTitle", "StoryTitle", defaultTitle);
+    storyTitle = document.getElementById("storyTitle");
+    document.title = tale.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || defaultTitle;
     
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
         setPageElement("titleSeparator", null, "\n");
@@ -1847,13 +1857,16 @@ function main() {
     scripts = tale.lookup("tags", "script");
     for (i = 0; i < scripts.length; i++) {
         scriptEval(scripts[i]);
+        sanityCheck('script passage "'+scripts[i].title+'"');
     }
-    for (macro in macros) {
-        macro = macros[macro];
+    for (i in macros) {
+        macro = macros[i];
         if (typeof macro.init == "function") {
             macro.init();
+            sanityCheck('init() of the custom macro "'+i+'"');
         }
     }
+    
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];
