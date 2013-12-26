@@ -160,6 +160,10 @@ String.prototype.unDash = function () {
     s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
     return s.join("");
 }
+// New prettyprint
+Array.prototype.toString = function() {
+    return "[ "+this.join(", ")+" ]";
+};
 Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     d = (d == null) ? 0 : d;
     var a = this.length;
@@ -410,26 +414,15 @@ History.prototype.restore = function () {
     }
 };
 History.prototype.saveVariables = function(c, el, callback) {
-    var i, inputs, diff = false;
+    var i, diff = false;
     this.history.unshift({
         passage: c,
         variables: clone(this.history[0].variables)
     });
     // Setter links
     if (typeof callback == "function") {
-        callback();
+        callback.call(el);
         diff = true;
-    }
-    // <input> elements
-    el = findPassageParent(el);
-    if (el) {
-        inputs = el.querySelectorAll("input");
-        for (i = 0; i < inputs.length; i++) {
-            if (!((inputs[i].type=="radio" || inputs[i].type=="checkbox") && !inputs[i].checked)) {
-                macros.set.run(null, Wikifier.parse(inputs[i].name+' = "'+inputs[i].value.replace(/"/g,'\\"')+'"'));
-            }
-        }
-        diff = diff || ~inputs.length;
     }
     // Save to linkVars
     diff && this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
@@ -745,34 +738,35 @@ version.extensions.choiceMacro = {
     revision: 0
 };
 macros.choice = {
+    callback: function() {
+        var i, other, passage = findPassageParent(this);
+        
+        if (passage) {
+            other = passage.querySelectorAll(".choice");
+            for (i = 0; i < other.length; i++) {
+                other[i].outerHTML = "<span class=disabled>" + other[i].innerHTML + "</span>";
+            }
+        }
+        state.history[0].variables["choice clicked"][id] = true;
+    },
     handler: function (A, C, D, parser) {
-        var link, id, match, temp, callback,
+        var link, id, match,
             text = D[1] || D[0].split("|")[0],
-            clicked = function() { return state.history[0].variables["choice clicked"] || 
-                    (state.history[0].variables["choice clicked"] = {})},
             passage = findPassageParent(A);
         // Get ID of the "choice clicked" entry
         id = (passage && passage.id.replace(/\|[^\]]*$/,''));
-        if (id && clicked()[id]) {
+        if (id && (state.history[0].variables["choice clicked"] || 
+                (state.history[0].variables["choice clicked"] = {}))[id]) {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
-            callback = function() {
-                var i, other = passage.querySelectorAll(".choice");
-                onclick && onclick();
-                for (i = 0; i < other.length; i++) {
-                    other[i].outerHTML = "<span class=disabled>" + other[i].innerHTML + "</span>";
-                }
-                clicked()[id] = true;
-            };
             match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
             
             if (match) {
-                link = Wikifier.linkFormatter.makeLink(A,match,callback);
+                link = Wikifier.linkFormatter.makeLink(A,match,this.callback);
             }
             else {
-                link = Wikifier.createInternalLink(A, D[0], callback);
-                setPageElement(link, null, text);
+                link = Wikifier.linkFormatter.makeLink(A,"[["+text+"|"+D[0]+"]]",this.callback);
             }
             link.className += " " + C;
         }
@@ -881,24 +875,68 @@ version.extensions.textInputMacro = {
     minor: 0,
     revision: 0
 };
-macros.textinput = {
+macros.checkbox = macros.radio = macros.textinput = {
     handler: function (A, C, D, parser) {
-        var button, link, match,
-            input = insertElement(A,'input','','textInput');
-        input.name=D[0];
-        input.type='text';
+        var match,
+            class_ = C.replace('input','Input'),
+            q = A.querySelectorAll('input'),
+            id = class_ + "|" + ((q && q.length) || 0);
+            input = insertElement(null, 'input', id, class_);
         
-        if (D[1]) {
+        input.name=D[0];
+        input.type=C.replace('input','');
+        // IE 8 support - delay insertion until now
+        A.appendChild(input);
+        
+        if (C == "textinput" && D[1]) {
             match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
             
             if (match) {
-                link = Wikifier.linkFormatter.makeLink(null,match);
-                link.onclick.reassign(insertElement(A,'button'));
+                Wikifier.linkFormatter.makeLink(A,match, macros.button.callback, 'button');
             }
             else {
-                button = insertElement(A,'button','','textInputButton', D[2] || D[1]);
-                button.onclick = Wikifier.linkFunction(D[1], button);
+                Wikifier.linkFormatter.makeLink(A,'[['+(D[2] || D[1])+"|"+D[1]+"]]", macros.button.callback, 'button');
             }
+        }
+        else if ((C == "radio" || C == "checkbox") && D[1]) {
+            input.value = D[1];
+            insertElement(A, 'label','', '', D[1]).setAttribute('for',id);
+        }
+    }
+};
+
+version.extensions.buttonMacro = {
+    major: 1,
+    minor: 0,
+    revision: 0
+};
+macros.button = {
+    callback: function() {
+        var el = findPassageParent(this);
+        if (el) {
+            var inputs = el.querySelectorAll("input");
+            for (i = 0; i < inputs.length; i++) {
+                if (inputs[i].type!="checkbox" && (inputs[i].type!="radio" || inputs[i].checked)) {
+                    macros.set.run(null, Wikifier.parse(inputs[i].name+' = "'+inputs[i].value.replace(/"/g,'\\"')+'"'));
+                }
+                else if (inputs[i].type=="checkbox" && inputs[i].checked) {
+                    macros.set.run(null, Wikifier.parse(
+                        inputs[i].name+' = [].concat('+inputs[i].name+' || []);'));
+                    macros.set.run(null, Wikifier.parse(
+                        inputs[i].name+'.push("'+inputs[i].value.replace(/"/g,'\\"')+'")'));
+                }
+            }
+        }
+    },
+    handler: function (A, C, D, parser) {
+        var link,
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+        
+        if (match) {
+            Wikifier.linkFormatter.makeLink(A, match, this.callback, 'button');
+        }
+        else {
+            Wikifier.linkFormatter.makeLink(A,'[['+D[0]+']]', this.callback, 'button');
         }
     }
 };
@@ -1528,25 +1566,29 @@ Wikifier.formatters = [
     name: "prettyLink",
     match: "\\[\\[",
     lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
-    makeInternalOrExternal: function(out,title,callback) {
+    makeInternalOrExternal: function(out,title,callback,type) {
         if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match) || ~title.search(/[\.\\\/#]/)))
-            return Wikifier.createExternalLink(out, title, callback); 
+            return Wikifier.createExternalLink(out, title, callback, type); 
         else
-            return Wikifier.createInternalLink(out, title, callback);
+            return Wikifier.createInternalLink(out, title, callback, type);
     },
-    makeLink: function(out, match, callback2) {
+    // This base callback executes the code in a setter 
+    makeCallback: function(out,code,callback) {
+        return function() {
+            macros.set.run(out, Wikifier.parse(code)); 
+            typeof callback == "function" && callback.call(this);
+        }
+    },
+    makeLink: function(out, match, callback2, type) {
         var link, title, callback;
         if (match[3]) { // Code
-            callback = function() {
-                macros.set.run(out, Wikifier.parse(match[3])); 
-                typeof callback2 == "function" && callback2();
-            };
+            callback = this.makeCallback(out,match[3],callback2);
         }
         else {
             typeof callback2 == "function" && (callback = callback2);
         }
         title = Wikifier.parsePassageTitle(match[2] || match[1]);
-        link = this.makeInternalOrExternal(out,title,callback);
+        link = this.makeInternalOrExternal(out,title,callback, type);
         setPageElement(link, null, match[2] ? match[1] : title);
         return link;
     },
@@ -1783,32 +1825,27 @@ Wikifier.parsePassageTitle = function(title) {
 };
 
 Wikifier.linkFunction = function(title, el, callback) {
-    var fn = function() {
+    return function() {
         if (state.rewindTo) {
-            var passage = findPassageParent(fn.el);
+            var passage = findPassageParent(el);
             if (passage && passage.parentNode.lastChild != passage) {
                 state.rewindTo(passage, true);
             }
         }
-        state.display(title, fn.el, null, callback);
+        state.display(title, el, null, callback);
     };
-    fn.el = el;
-    fn.reassign = function(el2) {
-        el2.onclick = fn;
-        el2.innerHTML = fn.el.innerHTML;
-        fn.el = el2;
-    };
-    return fn;
 };
 
-Wikifier.createInternalLink = function (place, title, callback) {
-    var el = insertElement(place, 'a', title);
+Wikifier.createInternalLink = function (place, title, callback, type) {
+    var tag = (type == "button" ? 'button' : 'a'),
+        suffix = (type == "button" ? "Button" : "Link"),
+        el = insertElement(place, tag, title);
 
     if (tale.has(title)) {
-        el.className = 'internalLink';
-        if (visited(title)) el.className += ' visitedLink';
+        el.className = 'internal'+suffix;
+        if (visited(title)) el.className += ' visited'+suffix;
     }
-    else el.className = 'brokenLink';
+    else el.className = 'broken'+suffix;
 
     el.onclick = Wikifier.linkFunction(title, el, callback);
 
@@ -1818,10 +1855,11 @@ Wikifier.createInternalLink = function (place, title, callback) {
 };
 
 Wikifier.createExternalLink = function (place, url) {
-    var el = insertElement(place, 'a');
+    var tag = (type == "button" ? 'button' : 'a'),
+        el = insertElement(place, tag);
     el.href = url;
-    el.className = 'externalLink';
-    el.target = '_blank';
+    el.className = "external"+(type == "button" ? "Button" : "Link");
+    el.target = "_blank";
 
     if (place) place.appendChild(el);
 
