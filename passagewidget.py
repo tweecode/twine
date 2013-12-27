@@ -361,22 +361,23 @@ class PassageWidget:
                 width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
                 self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
-        for i in self.passage.images:
-            if i not in dontDraw:
-                otherWidget = self.parent.findWidget(i)
-                if otherWidget and not otherWidget.dimmed:
-                    color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                    width = (2 if self.selected else 1)
-                    self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-        
-        if self.passage.isStylesheet():
-            for t in self.passage.tags: 
-                if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
-                    for otherWidget in self.parent.taggedWidgets(t):
-                        if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
-                            color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                            width = (2 if self.selected else 1)
-                            self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+        if self.app.config.ReadBool('imageArrows'):
+            for i in self.passage.images:
+                if i not in dontDraw:
+                    otherWidget = self.parent.findWidget(i)
+                    if otherWidget and not otherWidget.dimmed:
+                        color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                        width = (2 if self.selected else 1)
+                        self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+            
+            if self.passage.isStylesheet():
+                for t in self.passage.tags: 
+                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                        for otherWidget in self.parent.taggedWidgets(t):
+                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
+                                color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                                width = (2 if self.selected else 1)
+                                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
         return dontDraw
     
@@ -489,7 +490,7 @@ class PassageWidget:
         excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
-        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(hash("".join(self.passage.tags))%256/256.0, 0.28, 0.88)), self.dimmed)    
+        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08, 0.28, 0.88)), self.dimmed)    
          
         # inset for text (we need to know this for layout purposes)
         

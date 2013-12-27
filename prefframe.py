@@ -19,7 +19,7 @@ class PreferenceFrame (wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(7, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(8, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -62,6 +62,11 @@ class PreferenceFrame (wx.Frame):
         self.fastStoryPanel.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('fastStoryPanel', \
                                                                           self.fastStoryPanel.GetValue()))
         self.fastStoryPanel.SetValue(self.app.config.ReadBool('fastStoryPanel'))
+        
+        self.imageArrows = wx.CheckBox(panel, label = 'Connector arrows for images and stylesheets')
+        self.imageArrows.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('imageArrows', \
+                                                                          self.imageArrows.GetValue()))
+        self.imageArrows.SetValue(self.app.config.ReadBool('imageArrows'))
 
         panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
@@ -77,7 +82,9 @@ class PreferenceFrame (wx.Frame):
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.fastStoryPanel)
-
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.imageArrows)
+        
         panelSizer.Fit(self)
         borderSizer.Fit(self)
         self.SetIcon(self.app.icon)
