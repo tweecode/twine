@@ -1589,7 +1589,7 @@ Wikifier.formatters = [
         }
         title = Wikifier.parsePassageTitle(match[2] || match[1]);
         link = this.makeInternalOrExternal(out,title,callback, type);
-        setPageElement(link, null, match[2] ? match[1] : title);
+        insertText(link, match[2] ? match[1] : title);
         return link;
     },
     handler: function (w) {
@@ -1890,16 +1890,33 @@ function visited(e) {
         for (ret = state.history.length; i<arguments.length; i++) {
             ret = Math.min(ret, visited(arguments[i]));
         }
-    } else for(; i<state.history.length && state.history[i].passage; i++) {
+    }
+    else for(; i<state.history.length && state.history[i].passage; i++) {
         if(e == state.history[i].passage.title) {
             ret++;
         }
     }
     return ret;
 }
+
+function visitedTag() {
+    var i, j, k, ret = 0;
+    for(i = 0; i<state.history.length && state.history[i].passage; i++) {
+        for(j = 0; j<state.history.length && state.history[i].passage; i++) {
+            for (k = 0; k < arguments.length || void ret++; k++) {
+                if(state.history[i].passage.tags.indexOf(arguments[k])==-1) {
+                    break;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
 function passage() {
     return state.history[0].passage.title
 }
+
 function tags(e) {
     var ret = [], i = 0;
     e = e || state.history[0].passage.title;
@@ -1911,6 +1928,7 @@ function tags(e) {
     ret = ret.concat(tale.get(e).tags);
     return ret;
 }
+
 function previous() {
     if (state.history[1]) {
         for (var d = 1; d < state.history.length && state.history[d].passage; d++) {
@@ -1921,9 +1939,11 @@ function previous() {
     }
     return ""
 }
+
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
+
 function parameter(n) {
     n = n || 0;
     if (macros.display.parameters[n]) {
