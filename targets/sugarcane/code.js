@@ -89,14 +89,6 @@ History.prototype.watchHash = function () {
         this.hash = window.location.hash
     }
 };
-History.prototype.restart = function () {
-    if (!hasPushState) {
-        window.location.hash = "";
-    } else {
-        window.history.replaceState(this.history, document.title, window.location.href.replace(/#.*$/,''));
-        window.location.reload();
-    }
-};
 Passage.prototype.render = function () {
     var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
     b.style.visibility = 'hidden';
@@ -169,7 +161,7 @@ var Interface = {
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this story?")) {
-            window.state.restart()
+            state.restart()
         }
     },
     showSnapback: function (a) {
@@ -179,7 +171,6 @@ var Interface = {
     },
     buildSnapback: function () {
         var b, c = false,
-            state = window.state,
             menuelem = document.getElementById("snapbackMenu");
         while (menuelem.hasChildNodes()) {
             menuelem.removeChild(menuelem.firstChild)

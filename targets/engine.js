@@ -427,6 +427,15 @@ History.prototype.saveVariables = function(c, el, callback) {
     // Save to linkVars
     diff && this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
 };
+var restart = History.prototype.restart = function () {
+    if (typeof window.history.replaceState == "function") {
+        window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
+        window.location.reload()
+    }
+    else {
+        window.location.hash = "";
+    }
+};
 
 var version = {
     major: 4,
@@ -901,6 +910,11 @@ macros.checkbox = macros.radio = macros.textinput = {
         else if ((C == "radio" || C == "checkbox") && D[1]) {
             input.value = D[1];
             insertElement(A, 'label','', '', D[1]).setAttribute('for',id);
+            if (D[2]) {
+                insertElement(A,'br');
+                D.splice(1,1);
+                macros[C].handler(A,C,D)
+            }
         }
     }
 };

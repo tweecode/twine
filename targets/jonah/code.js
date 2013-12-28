@@ -68,8 +68,6 @@ History.prototype.display = function (name, source, type, callback) {
     return F
 };
 History.prototype.rewindTo = function (C, instant) {
-    var B = this;
-
     var p2, p = document.getElementById("passages").lastChild;
     while (p && p != C) {
         p2 = p.previousSibling;
@@ -87,7 +85,7 @@ History.prototype.rewindTo = function (C, instant) {
                 onComplete: function() { this.parentNode.removeChild(this); }
             });
         }
-        B.history.shift();
+        this.history.shift();
         p = p2;
     }
 };
@@ -254,13 +252,7 @@ function setupTagCSS() {
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
         if (confirm("Are you sure you want to restart this story?")) {
-            if (typeof window.history.replaceState == "function") {
-                window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
-            }
-            else {
-                window.location.hash = "";
-            }
-            window.location.reload()
+            state.restart();
         }
     };
     main();
