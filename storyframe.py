@@ -586,7 +586,7 @@ class StoryFrame (wx.Frame):
                 
                 # Remove widgets elected to be replaced
                 for t in removedWidgets:
-                    self.storyPanel.removeWidget(t)
+                    self.storyPanel.removeWidget(self.storyPanel.findWidget(t))
                 
                 # Insert widgets now
                 lastpos = [0, 0]

@@ -380,8 +380,8 @@ class Tiddler:
 		if tags and tags.group(1) != '':
 			if obfuscationkey:
 				self.tags = encode_obfuscate_swap(tags.group(1), obfuscationkey).split(' ');
-			else: self.tags = tags.group(1).split(' ')
-				
+			else: self.tags = tags.group(1).split(' ')	
+			
 		# creation date
 		
 		self.created = time.localtime()
@@ -397,7 +397,7 @@ class Tiddler:
 		modified = modified_re.search(source)
 		if (modified):
 			self.modified = decode_date(modified.group(1))
-		
+
 		# position
 		self.pos = [0,0]
 		pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
@@ -407,8 +407,7 @@ class Tiddler:
 		
 		# body text
 		
-		self.text = ''
-		text_re = re.compile(r'<div.*?>(.*)</div>')
+		text_re = re.compile(r'<div.*?>((?:[^<]|<(?!\/div>))*)<\/div>')
 		text = text_re.search(source)
 		if (text):
 			self.text = decode_text(text.group(1))
@@ -558,6 +557,7 @@ def encode_text (text, obfuscation, obfuscationkey):
 	output = text
 	if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
 	output = output.replace('\\', '\s')
+	output = output.replace('\t', '\\t')
 	output = re.sub(r'\r?\n', r'\\n', output)
 	output = output.replace('<', '&lt;')
 	output = output.replace('>', '&gt;')
@@ -585,11 +585,11 @@ def decode_text (text):
 	"""Decodes a string from HTML."""
 	output = text
 	output = output.replace('\\n', '\n')
+	output = output.replace('\\t', '\t')
 	output = output.replace('\s', '\\')
 	output = output.replace('&lt;', '<')
 	output = output.replace('&gt;', '>')
 	output = output.replace('&quot;', '"')
-	
 	return output
 	
 	

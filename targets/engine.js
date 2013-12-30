@@ -980,7 +980,7 @@ function Passage(c, b, a, ofunc, okey) {
 }
 Passage.unescapeLineBreaks = function (a) {
     if (a && typeof a == "string") {
-        return a.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
+        return a.replace(/\\n/mg, "\n").replace(/\\t/mg, "\t").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
     } else {
         return ""
     }
@@ -1452,7 +1452,7 @@ Wikifier.formatters = [
     name: "emdash",
     match: "--",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + String.fromCharCode(8212), String.fromCharCode(8212));
     }
 },
 {
@@ -1603,7 +1603,7 @@ Wikifier.formatters = [
         }
         title = Wikifier.parsePassageTitle(match[2] || match[1]);
         link = this.makeInternalOrExternal(out,title,callback, type);
-        insertText(link, match[2] ? match[1] : title);
+        setPageElement(link, null, match[2] ? match[1] : title);
         return link;
     },
     handler: function (w) {
@@ -1808,7 +1808,9 @@ Wikifier.formatters = [
             if (lookaheadMatch || isvoid) {
                 e = document.createElement(a.output.tagName);
                 e.innerHTML = a.matchText;
-                e = e.firstChild;
+                while(e.firstChild) {
+                    e = e.firstChild;
+                }
                 if (!isvoid) {
                     a.subWikify(e, lookahead);
                 }
@@ -1823,7 +1825,8 @@ Wikifier.formatters = [
     name: "char",
     match: ".",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" :
+            a.matchText == "\t" ? "tab" : a.matchText), a.matchText);
     }
 }
 ];
@@ -1966,7 +1969,7 @@ function parameter(n) {
     return 0
 }
 
-var softErrorMessage = " You may be able to continue reading, but parts of the story may not work properly.";
+var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
 function scriptEval(s) {
     try {
         eval(s.text);
@@ -2028,6 +2031,8 @@ function main() {
         scriptEval(scripts[i]);
         sanityCheck('script passage "'+scripts[i].title+'"');
     }
+    // Need to create state now, since it's used by remember.init()
+    state = window.state = new History();
     for (i in macros) {
         macro = macros[i];
         if (typeof macro.init == "function") {
@@ -2049,6 +2054,6 @@ function main() {
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
     
-    state = window.state = new History();
+
     state.init();
 }

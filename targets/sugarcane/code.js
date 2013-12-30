@@ -25,11 +25,17 @@ History.prototype.display = function (title, source, type, callback) {
     if (type != "back") {
         this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
-            if(this.history.length <= 2 && window.history.state == "") {
-                window.history.replaceState(this.history, document.title);
-            }
-            else {
-                window.history.pushState(this.history, document.title);
+            try {
+                if(this.history.length <= 2 && window.history.state == "") {
+                    window.history.replaceState(this.history, document.title);
+                }
+                else {
+                    window.history.pushState(this.history, document.title);
+                }
+            } catch(e) {
+                alert("Your browser couldn't save the state of the game.\n"+
+                    "You may continue playing, but it will no longer be possible to undo moves from here on in.");
+                tale.storysettings.undo="off";
             }
         }
     }
