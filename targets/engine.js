@@ -88,7 +88,7 @@ function alterCSS(text) {
                 break;
             }
         }
-        return "url(" + src + ");"
+        return "url(" + src + ")"
     });
 }
 
@@ -160,10 +160,6 @@ String.prototype.unDash = function () {
     s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
     return s.join("");
 }
-// New prettyprint
-Array.prototype.toString = function() {
-    return "[ "+this.join(", ")+" ]";
-};
 Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     d = (d == null) ? 0 : d;
     var a = this.length;
@@ -995,7 +991,7 @@ Passage.prototype.setTags = function(b) {
 Passage.prototype.processText = function() {
     var ret = this.text;
     if (~this.tags.indexOf("nobr")) {
-        ret = ret.replace(/\n/g,'\u200c');
+        ret = ret.replace(/\n/g,"\u200c");
     }
     if (~this.tags.indexOf("Twine.image")) {
         ret = "[img[" + ret + "]]"
@@ -1238,12 +1234,13 @@ Wikifier.prototype.fullMatch = function() {
 };
 
 Wikifier.prototype.fullArgs = function (includeName) {
-    var endPos = this.source.indexOf('>>', this.matchStart),
-        startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart);
+    var source = this.source.replace(/\u200c/g," "),
+        endPos = source.indexOf('>>', this.matchStart),
+        startPos = source.indexOf(includeName ? '<<' : ' ', this.matchStart);
     if (!~startPos || !~endPos || endPos <= startPos) {
         return "";
     }
-    return Wikifier.parse(this.source.slice(startPos + (includeName ? 2 : 1), endPos).trim());
+    return Wikifier.parse(source.slice(startPos + (includeName ? 2 : 1), endPos).trim());
 };
 
 Wikifier.parse = function (input) {
@@ -1654,7 +1651,7 @@ Wikifier.formatters = [
     handler: function (w) {
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
-        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        var lookaheadMatch = lookaheadRegExp.exec(w.source.replace(/\u200c/g,'\n'));
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {
             var params = lookaheadMatch[2].readMacroParams();
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
@@ -1898,7 +1895,7 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
 Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
     Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
-    
+
 /* Functions usable by custom scripts */
 function visited(e) {
     var ret = 0, i = 0;
