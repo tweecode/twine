@@ -275,9 +275,10 @@ function delta(old,neu) {
 function History() {
     this.history = [{
         passage: null,
-        variables: {},
-        hash: null
+        variables: {}
     }]
+    // Unique identifier for this game session
+    this.id = new Date().getTime()+'';
 }
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -393,9 +394,7 @@ History.prototype.restore = function () {
             if (vars) {
                 if (b == a.length - 1) {
                     vars.variables = clone(this.history[0].variables);
-                    for (c in this.history[0].linkVars) {
-                        vars.variables[c] = clone(this.history[0].linkVars[c]);
-                    }
+                    this.loadLinkVars();
                     this.history.unshift(vars);
                     this.display(vars.passage.title, null, "back");
                 }
@@ -409,8 +408,14 @@ History.prototype.restore = function () {
         return false
     }
 };
+
+History.prototype.loadLinkVars = function() {
+    for (var c in this.history[0].linkVars) {
+        this.history[0].variables[c] = clone(this.history[0].linkVars[c]);
+    }
+};
+
 History.prototype.saveVariables = function(c, el, callback) {
-    var i, diff = false;
     this.history.unshift({
         passage: c,
         variables: clone(this.history[0].variables)
@@ -418,14 +423,12 @@ History.prototype.saveVariables = function(c, el, callback) {
     // Setter links
     if (typeof callback == "function") {
         callback.call(el);
-        diff = true;
+        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
     }
-    // Save to linkVars
-    diff && this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
 };
 var restart = History.prototype.restart = function () {
     if (typeof window.history.replaceState == "function") {
-        window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
+        this.pushState(true, window.location.href.replace(/#.*$/,''));
         window.location.reload()
     }
     else {
@@ -437,7 +440,7 @@ var version = {
     major: 4,
     minor: 1,
     revision: 0,
-    date: new Date("December 25, 2013"),
+    date: new Date("January 1, 2013"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -1000,7 +1003,6 @@ Passage.prototype.processText = function() {
 };
 
 function Tale() {
-    this.passages = {};
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
             lookup: function(a) {
@@ -1024,6 +1026,7 @@ function Tale() {
         }
         return r
     }
+    this.passages = {};
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
     a = document.getElementById("storeArea").children;

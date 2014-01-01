@@ -20,18 +20,17 @@ History.prototype.init = function () {
         }, 250)
     }
 };
+hasPushState && (History.prototype.pushState = function(replace, uri) {
+    window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
+});
 History.prototype.display = function (title, source, type, callback) {
     var bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
     if (type != "back") {
         this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
             try {
-                if(this.history.length <= 2 && window.history.state == "") {
-                    window.history.replaceState(this.history, document.title);
-                }
-                else {
-                    window.history.pushState(this.history, document.title);
-                }
+                sessionStorage.setItem("history"+this.id, JSON.stringify(this.history));
+                this.pushState(this.history.length <= 2 && window.history.state == "");
             } catch(e) {
                 alert("Your browser couldn't save the state of the game.\n"+
                     "You may continue playing, but it will no longer be possible to undo moves from here on in.");
@@ -246,25 +245,33 @@ macros.back.onclick = function(back, steps) {
           window.history.go(-steps);
           return;
         }
-        while(steps >= 0 && state.history.length>1) {
+        while(steps-- >= 0 && state.history.length>1) {
             title = state.history[0].passage.title;
             state.history.shift();
-            steps--;
         }
-        state.display(title, null, "", (function(a) {
-            if (a) return function() {
-                for(var i in a) {
-                    state.history[0].variables[i] = a[i];
-                }
-            }
-        }(state.history[0].linkVars)));
+        state.loadLinkVars();
+        state.saveVariables(tale.get(title));
+        state.display(title, null, "back");
     }
-    else state.display(state.history[steps].passage.title);
-}
+    else {
+        state.display(state.history[steps].passage.title);
+    }
+};
 
 window.onpopstate = function(e) {
-    if (e.state && e.state.length > 0) {
-        state.history = e.state;
-        state.display(state.history[0].passage.title,null,"back");
+    var title, hist, steps, s = e && e.state;
+    if (s && s.id && s.length != null) {
+        hist = JSON.parse(sessionStorage.getItem("history"+s.id)),
+        steps = hist.length-s.length;
     }
-}
+    if (hist != null && steps != null) {
+        state.history = hist;
+        while(steps-- >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
+            state.history.shift();
+        }
+        state.loadLinkVars();
+        state.saveVariables(tale.get(title));
+        state.display(title, null, "back");
+    }
+};
