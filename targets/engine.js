@@ -394,7 +394,9 @@ History.prototype.restore = function () {
             if (vars) {
                 if (b == a.length - 1) {
                     vars.variables = clone(this.history[0].variables);
-                    this.loadLinkVars();
+                    for (c in this.history[0].linkVars) {
+                        vars.variables[c] = clone(this.history[0].linkVars[c]);
+                    }
                     this.history.unshift(vars);
                     this.display(vars.passage.title, null, "back");
                 }
@@ -406,12 +408,6 @@ History.prototype.restore = function () {
         return true
     } catch (d) {
         return false
-    }
-};
-
-History.prototype.loadLinkVars = function() {
-    for (var c in this.history[0].linkVars) {
-        this.history[0].variables[c] = clone(this.history[0].linkVars[c]);
     }
 };
 

@@ -94,6 +94,11 @@ History.prototype.watchHash = function () {
         this.hash = window.location.hash
     }
 };
+History.prototype.loadLinkVars = function() {
+    for (var c in this.history[0].linkVars) {
+        this.history[0].variables[c] = clone(this.history[0].linkVars[c]);
+    }
+};
 Passage.prototype.render = function () {
     var b = insertElement(null, 'div', 'passage' + this.title, 'passage');
     b.style.visibility = 'hidden';
