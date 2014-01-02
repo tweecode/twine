@@ -158,7 +158,10 @@ class TweeLexer:
         
         def applyMacroStyle(pos, m):
             length = m.end(0)
-            self.applyStyle(pos, length, self.MACRO)
+            if self.passageExists(m.group(1)):
+                self.applyStyle(pos, length, self.GOOD_LINK)
+            else:
+                self.applyStyle(pos, length, self.MACRO)
             # Apply different style to the macro contents
             group = 2 if m.group(1)[0] != '$' else 1
             contents = m.group(group)
@@ -231,13 +234,16 @@ class TweeLexer:
                  
             #macro               
             elif nextToken == self.MACRO:
-                name = m.group(1).lower()
+                name = m.group(1)
                 length = m.end(0)
+                # Finish the current style
                 self.applyStyle(styleStart, pos-styleStart, style)
+                styled = False
                 
                 for i in self.NESTED_MACROS:
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
+                        styled = True
                         self.applyStyle(pos, length, self.BAD_LINK)
                         macroNestStack.append((i,pos, m))
                         if i=="silently":
@@ -250,12 +256,14 @@ class TweeLexer:
                             macroStart,macroMatch = macroNestStack.pop()[1:];
                             applyMacroStyle(macroStart,macroMatch)
                         else:
+                            styled = True
                             self.applyStyle(pos, length, self.BAD_LINK)
                         if i=="silently":
                             inSilence = False;
                             style = styleStack.pop() if styleStack else self.DEFAULT  
                             
-                applyMacroStyle(pos,m)
+                if not styled:
+                    applyMacroStyle(pos,m)
                 pos += length-1
                 styleStart = pos+1
                         

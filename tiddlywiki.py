@@ -299,7 +299,8 @@ class Tiddler:
 		self.links = []
 		self.displays = []
 		self.images = []
-		
+		self.macros = []
+        
 		"""Pass source code, and optionally 'twee' or 'html'"""
 		if type == 'twee':
 			self.initTwee(source)
@@ -484,11 +485,20 @@ class Tiddler:
 			self.displays = []
 			self.links = []
 			self.images = []
+			self.macros = []
 			return
         
 		# <<display>>
 		self.displays = re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 		
+		self.macros = []
+		# other macros (including shorthand <<display>>)
+		iterator = re.finditer(TweeLexer.MACRO_REGEX, self.text)
+		for m in iterator:
+			# Exclude shorthand <<print>>
+			if m.group(1) and m.group(1)[0] != '$':
+				self.macros.append(m.group(1))
+        
 		links = []
 		actions = []
 		choices = []

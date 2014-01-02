@@ -155,13 +155,16 @@ class PassageWidget:
             
         return titleReps + textReps
       
+    def linksAndDisplays(self):
+        return self.passage.linksAndDisplays() + self.getShorthandDisplays()
+    
+    def getShorthandDisplays(self):
+        """Returns a list of macro tags which match passage names."""
+        return filter(lambda a: self.parent.findWidget(a), self.passage.macros)
+        
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""
-        brokens = []
-        for link in self.passage.links:
-            if not self.parent.findWidget(link):
-                brokens.append(link)
-        return brokens
+        return filter(lambda a: not self.parent.findWidget(a), self.passage.links)
                  
     def setSelected (self, value, exclusive = True):
         """
@@ -179,7 +182,7 @@ class PassageWidget:
             
             # Figure out the dirty rect
             dirtyRect = self.getPixelRect()
-            for link in self.passage.linksAndDisplays() + self.passage.images:
+            for link in self.linksAndDisplays() + self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
                     dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
@@ -350,7 +353,7 @@ class PassageWidget:
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
         
-        for link in self.passage.linksAndDisplays():
+        for link in self.linksAndDisplays():
             if link in dontDraw: continue
             
             otherWidget = self.parent.findWidget(link)
@@ -413,7 +416,7 @@ class PassageWidget:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
             return 'startTitleBar'
-        elif not self.passage.linksAndDisplays():
+        elif not self.linksAndDisplays():
             return 'endTitleBar'
         return 'titleBar'
     
