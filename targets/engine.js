@@ -709,7 +709,7 @@ macros.nobr = macros.silently = {
         for (i = 0; i < a.length; i++) {
             if (a.substr(i, macroName.length+7) == '<<end' + macroName + '>>') {
                 if (l == 0) {
-                    d = k + i + 15;
+                    d = k + i + macroName.length+7;
                     break;
                 } else {
                     l--;
@@ -1867,13 +1867,14 @@ Wikifier.createInternalLink = function (place, title, callback, type) {
     return el;
 };
 
-Wikifier.createExternalLink = function (place, url) {
+Wikifier.createExternalLink = function (place, url, callback, type) {
     var tag = (type == "button" ? 'button' : 'a'),
         el = insertElement(place, tag);
     el.href = url;
     el.className = "external"+(type == "button" ? "Button" : "Link");
     el.target = "_blank";
-
+	el.onclick = callback;
+	
     if (place) place.appendChild(el);
 
     return el;
@@ -1965,7 +1966,14 @@ function parameter(n) {
     return 0
 }
 
+/* Error reporting */
 var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+
+window.onerror = function (e) {
+	alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+	window.onerror = null;
+};
+
 function scriptEval(s) {
     try {
         eval(s.text);

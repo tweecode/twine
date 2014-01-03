@@ -407,7 +407,7 @@ class Tiddler:
 			self.pos = map(int, pos.group(1).split(','))
 		
 		# body text
-		
+		self.text = ''
 		text_re = re.compile(r'<div.*?>((?:[^<]|<(?!\/div>))*)<\/div>')
 		text = text_re.search(source)
 		if (text):
