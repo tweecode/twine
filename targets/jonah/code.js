@@ -41,6 +41,9 @@ History.prototype.display = function (name, source, type, callback) {
         el.id += "|" + (new Date).getTime();
     }
     D = tale.get(name);
+    if (D==null) {
+        return;
+    }
     if (type != "back") {
         this.saveVariables(D, source, callback);
     }

@@ -24,7 +24,10 @@ hasPushState && (History.prototype.pushState = function(replace, uri) {
     window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
 });
 History.prototype.display = function (title, source, type, callback) {
-    var bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+    var e, bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+    if (c==null) {
+        return;
+    }
     if (type != "back") {
         this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
@@ -39,7 +42,7 @@ History.prototype.display = function (title, source, type, callback) {
         }
     }
     bookmarkhref = this.save();
-    var e = c.render();
+    e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
             for(var i = 0; i < p.childNodes.length; i += 1) {

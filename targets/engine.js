@@ -1600,7 +1600,7 @@ Wikifier.formatters = [
     match: "\\[\\[",
     lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
     makeInternalOrExternal: function(out,title,callback,type) {
-        if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match) || ~title.search(/[\.\\\/#]/)))
+        if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match,"g") || ~title.search(/[\.\\\/#]/)))
             return Wikifier.createExternalLink(out, title, callback, type); 
         else
             return Wikifier.createInternalLink(out, title, callback, type);
@@ -1852,8 +1852,7 @@ Wikifier.formatters = [
 Wikifier.parsePassageTitle = function(title) {
     if (title && !tale.has(title)) {
         try {
-            title = eval(this.parse(title))
-            title && (title += "");
+            title = (eval(this.parse(title)) || title)+"";
         }
         catch(e) {}
     }
@@ -1896,7 +1895,7 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
     el.href = url;
     el.className = "external"+(type == "button" ? "Button" : "Link");
     el.target = "_blank";
-    el.onclick = callback;
+    if (typeof callback == "function") el.onclick = callback;
     
     if (place) place.appendChild(el);
 
