@@ -951,11 +951,12 @@ macros.button = {
 };
 
 function Passage(c, b, a, ofunc, okey) {
+    var t, k;
     this.title = c;
     if (b) {
         this.id = a;
         if (ofunc != null && typeof ofunc == 'function' && okey != null) {
-            var t = b.firstChild ? b.firstChild.nodeValue : "";
+            t = b.firstChild ? b.firstChild.nodeValue : "";
             this.initialText = this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
             this.tags = b.getAttribute("tags");
             if (typeof this.tags == "string") {
@@ -968,11 +969,33 @@ function Passage(c, b, a, ofunc, okey) {
             if (typeof this.tags == "string") this.tags = this.tags.readBracketedList();
             else this.tags = [];
         }
+        if (!~(this.tags.indexOf("Twine.image"))) {
+            this.preloadImages();
+        }
     } else {
         this.initialText = this.text = '@@This passage does not exist: ' + c + '@@';
         this.tags = [];
     }
 }
+
+Passage.prototype.preloadImages = function() {
+    var u = "\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\s*",
+        k = function(c, e) {
+            var i,d;
+            do {
+                d = c.exec(this.initialText);
+                if(d) {
+                    i = new Image();
+                    i.src = d[e];
+                }
+            } while (d);
+            return k;
+        };
+    k.call(this, new RegExp(Wikifier.imageFormatter.lookahead.replace("[^\\[\\]\\|]+",u), "mg"), 4)
+        .call(this, new RegExp("url\(" + u + "\)", "mig"), 1)
+        .call(this, new RegExp("src\s*=" + u, "mig"), 1);
+};
+
 Passage.unescapeLineBreaks = function (a) {
     if (a && typeof a == "string") {
         return a.replace(/\\n/mg, "\n").replace(/\\t/mg, "\t").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
@@ -1873,8 +1896,8 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
     el.href = url;
     el.className = "external"+(type == "button" ? "Button" : "Link");
     el.target = "_blank";
-	el.onclick = callback;
-	
+    el.onclick = callback;
+    
     if (place) place.appendChild(el);
 
     return el;
@@ -1970,8 +1993,8 @@ function parameter(n) {
 var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
 
 window.onerror = function (e) {
-	alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
-	window.onerror = null;
+    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+    window.onerror = null;
 };
 
 function scriptEval(s) {
