@@ -41,16 +41,14 @@ History.prototype.display = function (name, source, type, callback) {
         el.id += "|" + (new Date).getTime();
     }
     D = tale.get(name);
-    this.history.unshift({
-        passage: D,
-        variables: clone(this.history[0].variables)
-    });
-    if (typeof callback == "function") {
-        callback();
-        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+    if (D==null) {
+        return;
+    }
+    if (type != "back") {
+        this.saveVariables(D, source, callback);
     }
     F = D.render();
-    if (type != "offscreen" && type != "quietly") {
+    if (type != "quietly") {
         if (hasTransition) {
             F.classList.add("transition-in");
             setTimeout(function () {
@@ -73,8 +71,6 @@ History.prototype.display = function (name, source, type, callback) {
     return F
 };
 History.prototype.rewindTo = function (C, instant) {
-    var B = this;
-
     var p2, p = document.getElementById("passages").lastChild;
     while (p && p != C) {
         p2 = p.previousSibling;
@@ -92,7 +88,7 @@ History.prototype.rewindTo = function (C, instant) {
                 onComplete: function() { this.parentNode.removeChild(this); }
             });
         }
-        B.history.shift();
+        this.history.shift();
         p = p2;
     }
 };
@@ -101,6 +97,7 @@ Passage.prototype.render = function () {
     E.style.visibility = 'hidden';
     this.setTags(E);
     this.setCSS();
+    insertElement(E, 'div', '', 'header');
     F = insertElement(E, 'div', '', 'title', this.title);
     D = insertElement(F, 'span', '', 'toolbar');
     for (i = 0; i < Passage.toolbarItems.length && tale.canUndo(); i++) {
@@ -123,6 +120,7 @@ Passage.prototype.render = function () {
         (typeof prerender[i] == "function") && prerender[i].call(this,A);
     }
     new Wikifier(A, this.processText());
+    insertElement(E, 'div', '', 'footer');
     for (i in postrender) {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }
@@ -168,37 +166,36 @@ Passage.prototype.setCSS = function() {
     }
 };
 
-Wikifier.createInternalLink = function (place, title, callback) {
-    var el = insertElement(place, 'a', title);
-
-    if (tale.has(title)) el.className = 'internalLink';
-    else el.className = 'brokenLink';
-
-    el.onclick = function () {
-        var passage = el;
-        while(passage && !~passage.className.indexOf("passage")) {
-            passage = passage.parentNode;
-        }
-        if (passage && passage.parentNode.lastChild != passage) {
-            state.rewindTo(passage, true);
-        }
-        state.display(title, el, null, callback)
-    };
-
-    if (place) place.appendChild(el);
-
-    return el;
-};
-
-macros.back.onclick = function(back, steps) {
+macros.back.onclick = function(back, steps, el) {
+    var title, q, p = document.getElementById("passages");
     if (back) {
-        var p = document.getElementById("passages").lastChild;
-        while (steps > 0 && p) {
-            p = p.previousSibling;
+        q = p.querySelectorAll(".passage");
+        el = findPassageParent(el);
+        if (q[0] != el) {
+            p = el;
+            while (p && steps > 0) {
+                p = p.previousSibling;
+                steps--;
+            }
+            state.rewindTo(p);
+            return;
+        }
+        steps += q.length-1;
+        removeChildren(p);
+        while(steps >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
+            state.history.shift();
             steps--;
         }
-        state.rewindTo(p);
-    } else state.display(state.history[steps].passage.title);
+        state.display(title, null, "", (function(a) {
+            if (a) return function() {
+                for(var i in a) {
+                    state.history[0].variables[i] = a[i];
+                }
+            }
+        }(state.history[0].linkVars)));
+    }
+    else state.display(state.history[steps].passage.title, null);
 };
 
 function setupTagCSS() {
@@ -247,7 +244,7 @@ function setupTagCSS() {
             for (j = 0; j < passage.tags.length; j++) {
                 if (passage.tags[j] != "transition" && passage.tags[j] != "stylesheet") {
                     handler.tag = passage.tags[j];
-                    parseCssStylesheet(passage.text,handler);
+                    parseCssStylesheet(alterCSS(passage.text),handler);
                 }
             }
         }
@@ -258,13 +255,7 @@ function setupTagCSS() {
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
         if (confirm("Are you sure you want to restart this story?")) {
-            if (typeof window.history.replaceState == "function") {
-                window.history.replaceState({}, document.title, window.location.href.replace(/#.*$/,''));
-            }
-            else {
-                window.location.hash = "";
-            }
-            window.location.reload()
+            state.restart();
         }
     };
     main();

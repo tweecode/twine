@@ -1,5 +1,8 @@
 function clone(a) {
     var b = {};
+    if (!a || typeof a != "object") {
+        return a;
+    }
     for (var property in a) {
         if (typeof a[property] == "object") {
             try {
@@ -39,6 +42,13 @@ function removeChildren(a) {
     }
 }
 
+function findPassageParent(el) {
+    while(el && !~el.className.indexOf("passage")) {
+        el = el.parentNode;
+    }
+    return el;
+}
+
 function setPageElement(c, b, a) {
     var place;
     if (place = (typeof c == "string" ? document.getElementById(c) : c)) {
@@ -50,6 +60,7 @@ function setPageElement(c, b, a) {
         }
     }
 }
+
 // Kept for custom script use
 function addStyle(b) {
     if (document.createStyleSheet) {
@@ -65,6 +76,10 @@ function alterCSS(text) {
     var imgPassages = tale.lookup("tags", "Twine.image");
     // Remove comments
     text = text.replace(/\/\*(?:[^\*]|\*(?!\/))*\*\//g,'');
+    // Replace :link
+    text = text.replace(/:link/g,"[class*=Link]");
+    // Replace :visited
+    text = text.replace(/:visited/g,".visitedLink");
     // Add images
     return text.replace(new RegExp(Wikifier.imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
         for (var i = 0; i < imgPassages.length; i++) {
@@ -73,7 +88,7 @@ function alterCSS(text) {
                 break;
             }
         }
-        return "url(" + src + ");"
+        return "url(" + src + ")"
     });
 }
 
@@ -84,8 +99,10 @@ function setTransitionCSS(styleText) {
 }
 
 function throwError(a, b, tooltip) {
-    var elem = insertElement(a, "span", null, "marked", b);
-    tooltip && elem.setAttribute("title", tooltip);
+    if (a) {
+        var elem = insertElement(a, "span", null, "marked", b);
+        tooltip && elem.setAttribute("title", tooltip);
+    }
 }
 Math.easeInOut = function (a) {
     return (1 - ((Math.cos(a * Math.PI) + 1) / 2))
@@ -197,11 +214,11 @@ function fade(f, c) {
 
 var scrollWindowInterval;
 function scrollWindowTo(e) {
-    var d = window.scrollY ? window.scrollY : document.body.scrollTop;
-    var g = k(e);
-    var c = Math.abs(d - g);
-    var b = 0;
-    var j = (d > g) ? -1 : 1;
+    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        g = k(e),
+        c = Math.abs(d - g),
+        b = 0,
+        j = (d > g) ? -1 : 1;
     scrollWindowInterval = window.setInterval(h, 25);
 
     function h() {
@@ -215,8 +232,8 @@ function scrollWindowTo(e) {
     function k(o) {
         var p = a(o);
         var q = p + o.offsetHeight;
-        var l = window.scrollY ? window.scrollY : document.body.scrollTop;
-        var m = window.innerHeight ? window.innerHeight : document.body.clientHeight;
+        var l = window.scrollY ? window.scrollY : document.documentElement.scrollTop;
+        var m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
         var n = l + m;
         if (p < l) {
             return p
@@ -258,9 +275,10 @@ function delta(old,neu) {
 function History() {
     this.history = [{
         passage: null,
-        variables: {},
-        hash: null
+        variables: {}
     }]
+    // Unique identifier for this game session
+    this.id = new Date().getTime()+'';
 }
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -275,7 +293,7 @@ History.prototype.encodeHistory = function(b, noVars) {
         }
     }
     
-    if (!hist.passage || hist.passage.id == undefined) {
+    if (!hist.passage || hist.passage.id == null) {
         return ""
     }
     ret += hist.passage.id.toString(36)
@@ -295,11 +313,11 @@ History.prototype.encodeHistory = function(b, noVars) {
         }
     }
     return ret
-}
+};
 
 History.prototype.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
-        ret = { variables: prev.variables || {} },
+        ret = { variables: clone(prev.variables) || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
     
     function btov(str) {
@@ -339,7 +357,7 @@ History.prototype.decodeHistory = function(str, prev) {
         ret.passage = tale.get(name);
         return ret;
     }
-}
+};
 
 History.prototype.save = function (c) {
     var hist, b, a = "";
@@ -375,9 +393,9 @@ History.prototype.restore = function () {
             vars = this.decodeHistory(a[b], vars || {});
             if (vars) {
                 if (b == a.length - 1) {
-                    vars.variables = this.history[0].variables;
+                    vars.variables = clone(this.history[0].variables);
                     for (c in this.history[0].linkVars) {
-                        vars.variables[c] = this.history[0].linkVars[c];
+                        vars.variables[c] = clone(this.history[0].linkVars[c]);
                     }
                     this.history.unshift(vars);
                     this.display(vars.passage.title, null, "back");
@@ -392,11 +410,33 @@ History.prototype.restore = function () {
         return false
     }
 };
+
+History.prototype.saveVariables = function(c, el, callback) {
+    this.history.unshift({
+        passage: c,
+        variables: clone(this.history[0].variables)
+    });
+    // Setter links
+    if (typeof callback == "function") {
+        callback.call(el);
+        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
+    }
+};
+var restart = History.prototype.restart = function () {
+    if (typeof window.history.replaceState == "function") {
+        this.pushState(true, window.location.href.replace(/#.*$/,''));
+        window.location.reload()
+    }
+    else {
+        window.location.hash = "";
+    }
+};
+
 var version = {
     major: 4,
-    minor: 0,
+    minor: 1,
     revision: 0,
-    date: new Date("November 28, 2013"),
+    date: new Date("January 1, 2013"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -512,7 +552,7 @@ macros.set = {
     },
     run: function (a,expression, parser) {
         try {
-            return eval(Wikifier.parse(expression));
+            return eval(expression);
         } catch (e) {
             throwError(a, "bad expression: " + e.message, parser ? parser.fullMatch() : expression)
         }
@@ -615,7 +655,7 @@ macros.remember = {
     init: function () {
         var i, variable, value;
         if (tale.has("StoryTitle")) {
-            this.prefix = "Twine." + tale.get("StoryTitle").text + ".";
+            this.prefix = "Twine." + tale.title + ".";
         } else {
             this.prefix = "Twine.Untitled Story.";
         }
@@ -667,14 +707,14 @@ macros.nobr = macros.silently = {
             c = '',
             l = 0;
         for (i = 0; i < a.length; i++) {
-            if (a.substr(i, 15) == '<<end' + macroName + '>>') {
+            if (a.substr(i, macroName.length+7) == '<<end' + macroName + '>>') {
                 if (l == 0) {
-                    d = k + i + 15;
+                    d = k + i + macroName.length+7;
                     break;
                 } else {
                     l--;
                 }
-            } else if (a.substr(i, 12) == '<<' + macroName + '>>') {
+            } else if (a.substr(i, macroName.length+4) == '<<' + macroName + '>>') {
                 l++;
             }
             if (macroName == "nobr" && a.charAt(i) == '\n') {
@@ -702,39 +742,36 @@ version.extensions.choiceMacro = {
     revision: 0
 };
 macros.choice = {
-    handler: function (A, C, D, parser) {
-        var link, id, match, temp,
-            text = D[1] || D[0].split("|")[0],
-            clicked = state.history[0].variables["choice clicked"] || 
-                (state.history[0].variables["choice clicked"] = {}),
-            passage = A;
-        while(passage && !~passage.className.indexOf("passage")) {
-            passage = passage.parentNode;
-        }
-        // Get ID of the "choice clicked" entry
-        id = (passage && passage.id.replace(/\|[^\]]*$/,'') + "|" + text);
+    callback: function() {
+        var i, other, passage = findPassageParent(this);
         
-        if (id && clicked[id]) {
+        if (passage) {
+            other = passage.querySelectorAll(".choice");
+            for (i = 0; i < other.length; i++) {
+                other[i].outerHTML = "<span class=disabled>" + other[i].innerHTML + "</span>";
+            }
+        }
+        state.history[0].variables["choice clicked"][id] = true;
+    },
+    handler: function (A, C, D, parser) {
+        var link, id, match,
+            text = D[1] || D[0].split("|")[0],
+            passage = findPassageParent(A);
+        // Get ID of the "choice clicked" entry
+        id = (passage && passage.id.replace(/\|[^\]]*$/,''));
+        if (id && (state.history[0].variables["choice clicked"] || 
+                (state.history[0].variables["choice clicked"] = {}))[id]) {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
             match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
             
             if (match) {
-                temp = document.createElement("p");
-                new Wikifier(temp, parser.fullArgs());
-                link = temp.firstChild;
-                A.appendChild(link);
+                link = Wikifier.linkFormatter.makeLink(A,match,this.callback);
             }
             else {
-                link = Wikifier.createInternalLink(A, D[0]);
-                setPageElement(link, null, text);
+                link = Wikifier.linkFormatter.makeLink(A,"[["+text+"|"+D[0]+"]]",this.callback);
             }
-            link.onclick = (function(link, onclick) { return function() {
-                onclick && onclick();
-                clicked[id] = true;
-                link.outerHTML = "<span class=disabled>" + link.innerHTML + "</span>";
-            }}(link, link.onclick));
             link.className += " " + C;
         }
     }
@@ -818,7 +855,7 @@ macros.back = {
         el = document.createElement("a");
         el.className = b;
         el.onclick = (function(b) { return function () {
-            return macros.back.onclick(b == "back", steps)
+            return macros.back.onclick(b == "back", steps, el)
         }}(b));
         el.innerHTML = labeltouse;
         a.appendChild(el);
@@ -837,14 +874,90 @@ macros["return"] = {
   }
 };
 
+version.extensions.textInputMacro = {
+    major: 2,
+    minor: 0,
+    revision: 0
+};
+macros.checkbox = macros.radio = macros.textinput = {
+    handler: function (A, C, D, parser) {
+        var match,
+            class_ = C.replace('input','Input'),
+            q = A.querySelectorAll('input'),
+            id = class_ + "|" + ((q && q.length) || 0);
+            input = insertElement(null, 'input', id, class_);
+        
+        input.name=D[0];
+        input.type=C.replace('input','');
+        // IE 8 support - delay insertion until now
+        A.appendChild(input);
+        
+        if (C == "textinput" && D[1]) {
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            
+            if (match) {
+                Wikifier.linkFormatter.makeLink(A,match, macros.button.callback, 'button');
+            }
+            else {
+                Wikifier.linkFormatter.makeLink(A,'[['+(D[2] || D[1])+"|"+D[1]+"]]", macros.button.callback, 'button');
+            }
+        }
+        else if ((C == "radio" || C == "checkbox") && D[1]) {
+            input.value = D[1];
+            insertElement(A, 'label','', '', D[1]).setAttribute('for',id);
+            if (D[2]) {
+                insertElement(A,'br');
+                D.splice(1,1);
+                macros[C].handler(A,C,D)
+            }
+        }
+    }
+};
+
+version.extensions.buttonMacro = {
+    major: 1,
+    minor: 0,
+    revision: 0
+};
+macros.button = {
+    callback: function() {
+        var el = findPassageParent(this);
+        if (el) {
+            var inputs = el.querySelectorAll("input");
+            for (i = 0; i < inputs.length; i++) {
+                if (inputs[i].type!="checkbox" && (inputs[i].type!="radio" || inputs[i].checked)) {
+                    macros.set.run(null, Wikifier.parse(inputs[i].name+' = "'+inputs[i].value.replace(/"/g,'\\"')+'"'));
+                }
+                else if (inputs[i].type=="checkbox" && inputs[i].checked) {
+                    macros.set.run(null, Wikifier.parse(
+                        inputs[i].name+' = [].concat('+inputs[i].name+' || []);'));
+                    macros.set.run(null, Wikifier.parse(
+                        inputs[i].name+'.push("'+inputs[i].value.replace(/"/g,'\\"')+'")'));
+                }
+            }
+        }
+    },
+    handler: function (A, C, D, parser) {
+        var link,
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+        
+        if (match) {
+            Wikifier.linkFormatter.makeLink(A, match, this.callback, 'button');
+        }
+        else {
+            Wikifier.linkFormatter.makeLink(A,'[['+D[0]+']]', this.callback, 'button');
+        }
+    }
+};
+
 function Passage(c, b, a, ofunc, okey) {
+    var t, k;
     this.title = c;
     if (b) {
         this.id = a;
         if (ofunc != null && typeof ofunc == 'function' && okey != null) {
-            var t = b.firstChild ? b.firstChild.nodeValue : "";
-            t = ofunc(t, okey);
-            this.initialText = this.text = Passage.unescapeLineBreaks(t);
+            t = b.firstChild ? b.firstChild.nodeValue : "";
+            this.initialText = this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
             this.tags = b.getAttribute("tags");
             if (typeof this.tags == "string") {
                 this.tags = ofunc(this.tags, okey);
@@ -856,14 +969,36 @@ function Passage(c, b, a, ofunc, okey) {
             if (typeof this.tags == "string") this.tags = this.tags.readBracketedList();
             else this.tags = [];
         }
+        if (!~(this.tags.indexOf("Twine.image"))) {
+            this.preloadImages();
+        }
     } else {
         this.initialText = this.text = '@@This passage does not exist: ' + c + '@@';
         this.tags = [];
     }
 }
+
+Passage.prototype.preloadImages = function() {
+    var u = "\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\s*",
+        k = function(c, e) {
+            var i,d;
+            do {
+                d = c.exec(this.initialText);
+                if(d) {
+                    i = new Image();
+                    i.src = d[e];
+                }
+            } while (d);
+            return k;
+        };
+    k.call(this, new RegExp(Wikifier.imageFormatter.lookahead.replace("[^\\[\\]\\|]+",u), "mg"), 4)
+        .call(this, new RegExp("url\(" + u + "\)", "mig"), 1)
+        .call(this, new RegExp("src\s*=" + u, "mig"), 1);
+};
+
 Passage.unescapeLineBreaks = function (a) {
     if (a && typeof a == "string") {
-        return a.replace(/\\n/mg, "\n").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
+        return a.replace(/\\n/mg, "\n").replace(/\\t/mg, "\t").replace(/\\s/mg, "\\").replace(/\\/mg, "\\").replace(/\r/mg, "")
     } else {
         return ""
     }
@@ -878,7 +1013,7 @@ Passage.prototype.setTags = function(b) {
 Passage.prototype.processText = function() {
     var ret = this.text;
     if (~this.tags.indexOf("nobr")) {
-        ret = ret.replace(/\n/g,'\u200c');
+        ret = ret.replace(/\n/g,"\u200c");
     }
     if (~this.tags.indexOf("Twine.image")) {
         ret = "[img[" + ret + "]]"
@@ -887,11 +1022,10 @@ Passage.prototype.processText = function() {
 };
 
 function Tale() {
-    this.passages = {};
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
             lookup: function(a) {
-                return !~["0", "off", "false"].indexOf((this[a]+"").toLowerCase());
+                return !~["0", "off", "false"].indexOf((this[a]+""));
             }
         },
         tiddlerTitle = '';
@@ -911,6 +1045,7 @@ function Tale() {
         }
         return r
     }
+    this.passages = {};
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
     a = document.getElementById("storeArea").children;
@@ -920,7 +1055,7 @@ function Tale() {
             lines = new Passage('StorySettings', c, 0, null, null).text.split('\n');
             for (i in lines) {
                 if (typeof lines[i] == "string" && lines[i].indexOf(':') > -1) {
-                    kv = lines[i].split(':');
+                    kv = lines[i].toLowerCase().split(':');
                     kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
                     kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
                     settings[kv[0]] = kv[1];
@@ -956,7 +1091,6 @@ function Tale() {
             }
         }
     }
-    this.title = (this.passages.StoryTitle ? this.passages.StoryTitle.text : document.title);
 }
 Tale.prototype.has = function (a) {
     if (typeof a == "string") {
@@ -1090,8 +1224,12 @@ Wikifier.prototype.subWikify = function (output, terminator) {
 
             // Figure out which formatter matched
             var matchingFormatter = -1;
-            for (var t = 1; t < formatterMatch.length; t++)
-            if (formatterMatch[t]) matchingFormatter = t - 1;
+            for (var t = 1; t < formatterMatch.length; t++) {
+                if (formatterMatch[t]) {
+                    matchingFormatter = t - 1;
+                    break;
+                }
+            }
 
             // Call the formatter
             if (matchingFormatter != -1) { this.formatters[matchingFormatter].handler(this); }
@@ -1118,12 +1256,13 @@ Wikifier.prototype.fullMatch = function() {
 };
 
 Wikifier.prototype.fullArgs = function (includeName) {
-    var startPos = this.source.indexOf(includeName ? '<<' : ' ', this.matchStart) + (includeName ? 2 : 1),
-        endPos = this.source.indexOf('>>', this.matchStart);
-    if (startPos < this.matchStart || endPos < this.matchStart) {
+    var source = this.source.replace(/\u200c/g," "),
+        endPos = source.indexOf('>>', this.matchStart),
+        startPos = source.indexOf(includeName ? '<<' : ' ', this.matchStart);
+    if (!~startPos || !~endPos || endPos <= startPos) {
         return "";
     }
-    return Wikifier.parse(this.source.slice(startPos, endPos).trim());
+    return Wikifier.parse(source.slice(startPos + (includeName ? 2 : 1), endPos).trim());
 };
 
 Wikifier.parse = function (input) {
@@ -1332,7 +1471,7 @@ Wikifier.formatters = [
     name: "emdash",
     match: "--",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + String.fromCharCode(8212), String.fromCharCode(8212));
     }
 },
 {
@@ -1448,44 +1587,54 @@ Wikifier.formatters = [
         } while (matched);
     }
 },
-(Wikifier.linkFormatter = {
-    name: "prettyLink",
-    match: "\\[\\[",
-    lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
-    callback: function(out, text) { return function() { macros.set.run(out, text); } },
-    handler: function (w) {
-        var title, link, callback, lookaheadRegExp = new RegExp(this.lookahead, "mg");
-        lookaheadRegExp.lastIndex = w.matchStart;
-        var lookaheadMatch = lookaheadRegExp.exec(w.source)
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
-            if (lookaheadMatch[3]) { // Code
-                callback = this.callback(w.output, lookaheadMatch[3]);
-            }
-            if (!lookaheadMatch[2]) // Simple bracketed link
-            {
-                title = Wikifier.parsePassageTitle(lookaheadMatch[1]);
-                link = Wikifier.createInternalLink(w.output, title, callback);
-                setPageElement(link, null, title);
-            } else { // Pretty bracketed link
-                title = Wikifier.parsePassageTitle(lookaheadMatch[2]);
-                if (tale.has(title) || !title)
-                    link = Wikifier.createInternalLink(w.output, title, callback);
-                else
-                    link = Wikifier.createExternalLink(w.output, lookaheadMatch[2], callback);
-                setPageElement(link, null, w.source.substring(w.nextMatch, w.nextMatch + lookaheadMatch[1].length));
-            }
-            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
-        }
-    }
-}),
-{
+(Wikifier.urlFormatter = {
     name: "urlLink",
-    match: "(?:http|https|mailto|ftp):[^\\s'\"]+(?:/|\\b)",
+    match: "(?:http|https|mailto|javascript|ftp|data):[^\\s'\"]+(?:/|\\b)",
     handler: function (w) {
         var e = Wikifier.createExternalLink(w.output, w.matchText);
         w.outputText(e, w.matchStart, w.nextMatch);
     }
-},
+}),
+(Wikifier.linkFormatter = {
+    name: "prettyLink",
+    match: "\\[\\[",
+    lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
+    makeInternalOrExternal: function(out,title,callback,type) {
+        if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match,"g") || ~title.search(/[\.\\\/#]/)))
+            return Wikifier.createExternalLink(out, title, callback, type); 
+        else
+            return Wikifier.createInternalLink(out, title, callback, type);
+    },
+    // This base callback executes the code in a setter 
+    makeCallback: function(out,code,callback) {
+        return function() {
+            macros.set.run(out, Wikifier.parse(code)); 
+            typeof callback == "function" && callback.call(this);
+        }
+    },
+    makeLink: function(out, match, callback2, type) {
+        var link, title, callback;
+        if (match[3]) { // Code
+            callback = this.makeCallback(out,match[3],callback2);
+        }
+        else {
+            typeof callback2 == "function" && (callback = callback2);
+        }
+        title = Wikifier.parsePassageTitle(match[2] || match[1]);
+        link = this.makeInternalOrExternal(out,title,callback, type);
+        setPageElement(link, null, match[2] ? match[1] : title);
+        return link;
+    },
+    handler: function (w) {
+        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        lookaheadRegExp.lastIndex = w.matchStart;
+        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
+            this.makeLink(w.output, lookaheadMatch)
+            w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+        }
+    }
+}),
 (Wikifier.imageFormatter = {
     name: "image",
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
@@ -1498,8 +1647,7 @@ Wikifier.formatters = [
         {
             var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
             if (title) {
-                if (tale.has(title)) e = Wikifier.createInternalLink(w.output, title);
-                else e = Wikifier.createExternalLink(w.output, title);
+                e = Wikifier.linkFormatter.makeInternalOrExternal(w.output, title);
             }
             var img = insertElement(e, "img");
             if (lookaheadMatch[1]) img.align = "left";
@@ -1525,7 +1673,7 @@ Wikifier.formatters = [
     handler: function (w) {
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
-        var lookaheadMatch = lookaheadRegExp.exec(w.source)
+        var lookaheadMatch = lookaheadRegExp.exec(w.source.replace(/\u200c/g,'\n'));
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {
             var params = lookaheadMatch[2].readMacroParams();
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
@@ -1679,7 +1827,9 @@ Wikifier.formatters = [
             if (lookaheadMatch || isvoid) {
                 e = document.createElement(a.output.tagName);
                 e.innerHTML = a.matchText;
-                e = e.firstChild;
+                while(e.firstChild) {
+                    e = e.firstChild;
+                }
                 if (!isvoid) {
                     a.subWikify(e, lookahead);
                 }
@@ -1694,26 +1844,59 @@ Wikifier.formatters = [
     name: "char",
     match: ".",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" : a.matchText), a.matchText);
+        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" :
+            a.matchText == "\t" ? "tab" : a.matchText), a.matchText);
     }
 }
 ];
 Wikifier.parsePassageTitle = function(title) {
     if (title && !tale.has(title)) {
         try {
-            title = eval(this.parse(title))
-            title && (title += "");
+            title = (eval(this.parse(title)) || title)+"";
         }
         catch(e) {}
     }
     return title;
-}
-Wikifier.createExternalLink = function (place, url) {
-    var el = insertElement(place, 'a');
-    el.href = url;
-    el.className = 'externalLink';
-    el.target = '_blank';
+};
 
+Wikifier.linkFunction = function(title, el, callback) {
+    return function() {
+        if (state.rewindTo) {
+            var passage = findPassageParent(el);
+            if (passage && passage.parentNode.lastChild != passage) {
+                state.rewindTo(passage, true);
+            }
+        }
+        state.display(title, el, null, callback);
+    };
+};
+
+Wikifier.createInternalLink = function (place, title, callback, type) {
+    var tag = (type == "button" ? 'button' : 'a'),
+        suffix = (type == "button" ? "Button" : "Link"),
+        el = insertElement(place, tag, title);
+
+    if (tale.has(title)) {
+        el.className = 'internal'+suffix;
+        if (visited(title)) el.className += ' visited'+suffix;
+    }
+    else el.className = 'broken'+suffix;
+
+    el.onclick = Wikifier.linkFunction(title, el, callback);
+
+    if (place) place.appendChild(el);
+
+    return el;
+};
+
+Wikifier.createExternalLink = function (place, url, callback, type) {
+    var tag = (type == "button" ? 'button' : 'a'),
+        el = insertElement(place, tag);
+    el.href = url;
+    el.className = "external"+(type == "button" ? "Button" : "Link");
+    el.target = "_blank";
+    if (typeof callback == "function") el.onclick = callback;
+    
     if (place) place.appendChild(el);
 
     return el;
@@ -1733,8 +1916,8 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
 };
 Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+"|\\[[^\\]]+\\])+)";
-    
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
+
 /* Functions usable by custom scripts */
 function visited(e) {
     var ret = 0, i = 0;
@@ -1743,13 +1926,45 @@ function visited(e) {
         for (ret = state.history.length; i<arguments.length; i++) {
             ret = Math.min(ret, visited(arguments[i]));
         }
-    } else for(; i<state.history.length && state.history[i].passage; i++) {
-        if(~e.indexOf(state.history[i].passage.title)) {
+    }
+    else for(; i<state.history.length && state.history[i].passage; i++) {
+        if(e == state.history[i].passage.title) {
             ret++;
         }
     }
     return ret;
 }
+
+function visitedTag() {
+    var i, j, k, ret = 0;
+    for(i = 0; i<state.history.length && state.history[i].passage; i++) {
+        for(j = 0; j<state.history.length && state.history[i].passage; i++) {
+            for (k = 0; k < arguments.length || void ret++; k++) {
+                if(state.history[i].passage.tags.indexOf(arguments[k])==-1) {
+                    break;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+function passage() {
+    return state.history[0].passage.title
+}
+
+function tags(e) {
+    var ret = [], i = 0;
+    e = e || state.history[0].passage.title;
+    if (arguments.length > 1) {
+        for (i = arguments.length-1; i >= 1; i--) {
+            ret = ret.concat(tags(arguments[i]));
+        }
+    }
+    ret = ret.concat(tale.get(e).tags);
+    return ret;
+}
+
 function previous() {
     if (state.history[1]) {
         for (var d = 1; d < state.history.length && state.history[d].passage; d++) {
@@ -1760,22 +1975,32 @@ function previous() {
     }
     return ""
 }
+
 function either() {
     return arguments[~~(Math.random()*arguments.length)];
 }
+
 function parameter(n) {
     n = n || 0;
     if (macros.display.parameters[n]) {
         return macros.display.parameters[n];
     }
-    throw new RangeError("there isn't a parameter " + n);
+    return 0
 }
+
+/* Error reporting */
+var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+
+window.onerror = function (e) {
+    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+    window.onerror = null;
+};
 
 function scriptEval(s) {
     try {
         eval(s.text);
     } catch (e) {
-        alert("There is a technical problem with this story (" + s.title + ": " + e.message + "). You may be able to continue reading, but parts of the story may not work properly.");
+        alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
 /* Init function */
@@ -1786,28 +2011,38 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var imgs, scripts, macro, style, styleText = "", i, p = document.getElementById("passages");
+    var imgs, scripts, macro, style, styleText = "", i, storyTitle, defaultTitle = "Untitled Story", passages = document.getElementById("passages");
     
-    if (!window.JSON) {
-        return (p.innerHTML = "This story requires a newer web browser. Sorry.");
+    function sanityCheck(thing) {
+        // Warn if display() was replaced improperly
+        if (!sanityCheck.display) {
+            if (History.prototype.display.length < 4 && !~History.prototype.display.toString().indexOf("arguments")) {
+                alert("NOTE: The " + thing + " contains a function that patches History.prototype.display, but takes the wrong number of arguments."+softErrorMessage);
+            }
+            sanityCheck.display = true;
+        }
+    }
+    
+    if (!window.JSON || !document.querySelector) {
+        return (passages.innerHTML = "This story requires a newer web browser. Sorry.");
     } else {
-        p.innerHTML = "";
-    }   
+        passages.innerHTML = "";
+    }
     tale = window.tale = new Tale();
-    state = window.state = new History();
-    document.title = tale.title;
     
     if (~document.documentElement.className.indexOf("lt-ie9")) {
         imgs = tale.lookup("tags", "Twine.image");
         for (i = 0; i < imgs.length; i++) {
             if (imgs[i].text.length >= 32768) {
-                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display.");
+                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
                 break;
             }
         }
     }
+    setPageElement("storyTitle", "StoryTitle", defaultTitle);
+    storyTitle = document.getElementById("storyTitle");
+    document.title = tale.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || defaultTitle;
     
-    setPageElement("storyTitle", "StoryTitle", "Untitled Story");
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
         setPageElement("titleSeparator", null, "\n");
@@ -1820,13 +2055,18 @@ function main() {
     scripts = tale.lookup("tags", "script");
     for (i = 0; i < scripts.length; i++) {
         scriptEval(scripts[i]);
+        sanityCheck('script passage "'+scripts[i].title+'"');
     }
-    for (macro in macros) {
-        macro = macros[macro];
+    // Need to create state now, since it's used by remember.init()
+    state = window.state = new History();
+    for (i in macros) {
+        macro = macros[i];
         if (typeof macro.init == "function") {
             macro.init();
+            sanityCheck('init() of the custom macro "'+i+'"');
         }
     }
+    
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];
@@ -1839,5 +2079,7 @@ function main() {
         }
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
+    
+
     state.init();
 }

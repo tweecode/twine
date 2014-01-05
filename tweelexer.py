@@ -26,7 +26,7 @@ class TweeLexer:
         """
         bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
-        monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+        monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         
         self.ctrl.StyleClearAll()
@@ -133,7 +133,7 @@ class TweeLexer:
         if m: return (self.COMMENT, m)
         
         return (None, None)
-    
+        
     def lex (self, event):
         """
         Lexes, or applies syntax highlighting, to text based on a
@@ -158,22 +158,17 @@ class TweeLexer:
         
         def applyMacroStyle(pos, m):
             length = m.end(0)
-            self.applyStyle(pos, length, self.MACRO)
+            if self.passageExists(m.group(1)):
+                self.applyStyle(pos, length, self.GOOD_LINK)
+            else:
+                self.applyStyle(pos, length, self.MACRO)
             # Apply different style to the macro contents
-            contents = m.group(2)
+            group = 2 if m.group(1)[0] != '$' else 1
+            contents = m.group(group)
             if contents:
-                pos2 = pos + m.start(2)
-                self.applyStyle(pos2, len(m.group(2)), self.PARAM)
+                pos2 = pos + m.start(group)
+                self.applyStyle(pos2, len(m.group(group)), self.PARAM)
                 applyParamStyle(pos2, contents)
-        
-        def badLinkStyle(dest, external = False):
-            # Apply style for a link destination which does not seem to be an existent passage
-            if external:
-                for t in ['http://', 'https://', 'ftp://']:
-                  if t in dest.lower():
-                    return self.EXTERNAL
-            iscode = re.search(self.MACRO_PARAMS_VAR_REGEX+"|"+self.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
-            return self.PARAM if iscode else self.BAD_LINK
         
         pos = 0
         prev = 0
@@ -223,7 +218,7 @@ class TweeLexer:
                 s2 = self.GOOD_LINK
                 if not m.group(2):
                     if not self.passageExists(m.group(1)):
-                        s2 = badLinkStyle(m.group(1), True)
+                        s2 = badLinkStyle(m.group(1))
                 else:
                     if not self.passageExists(m.group(2)):
                         s2 = badLinkStyle(m.group(2))
@@ -239,13 +234,16 @@ class TweeLexer:
                  
             #macro               
             elif nextToken == self.MACRO:
-                name = m.group(1).lower()
+                name = m.group(1)
                 length = m.end(0)
+                # Finish the current style
                 self.applyStyle(styleStart, pos-styleStart, style)
+                styled = False
                 
                 for i in self.NESTED_MACROS:
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
+                        styled = True
                         self.applyStyle(pos, length, self.BAD_LINK)
                         macroNestStack.append((i,pos, m))
                         if i=="silently":
@@ -258,12 +256,14 @@ class TweeLexer:
                             macroStart,macroMatch = macroNestStack.pop()[1:];
                             applyMacroStyle(macroStart,macroMatch)
                         else:
+                            styled = True
                             self.applyStyle(pos, length, self.BAD_LINK)
                         if i=="silently":
                             inSilence = False;
                             style = styleStack.pop() if styleStack else self.DEFAULT  
                             
-                applyMacroStyle(pos,m)
+                if not styled:
+                    applyMacroStyle(pos,m)
                 pos += length-1
                 styleStart = pos+1
                         
@@ -390,3 +390,11 @@ class TweeLexer:
     PARAM_NUM_COLOR = '#A15000'
     
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
+ 
+def badLinkStyle(dest):
+    # Apply style for a link destination which does not seem to be an existent passage
+    for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', '.', '/', '\\', '#']:
+        if t in dest.lower():
+            return TweeLexer.EXTERNAL
+    iscode = re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+    return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK

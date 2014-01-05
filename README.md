@@ -17,8 +17,8 @@ Installation
 The easiest way to install Twine is to download the installable versions
 for Windows or Mac OS X:
 
- * [Twine 1.3.5 for Windows](http://twee.googlecode.com/files/twine-1.3.5-windows.exe)
- * [Twine 1.3.5 for Mac OS X](http://twee.googlecode.com/files/twine-1.3.5-osx.zip)
+ * [Twine 1.4 for Windows](http://twinery.org/downloads/twine_1.4_win.exe)
+ * [Twine 1.4 for Mac OS X](http://twinery.org/downloads/twine_1.4_osx.zip)
 
 Set up a development environment
 --------------------------------

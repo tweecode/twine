@@ -26,7 +26,8 @@ class StoryFrame (wx.Frame):
         self.dirty = False      # the user has not made unsaved changes
         self.storyFormats = {}  # list of available story formats
         self.lastTestBuild = None
-
+        self.title = ""
+        
         # inner state
         
         if (state):
@@ -169,7 +170,7 @@ class StoryFrame (wx.Frame):
         else:
             shortcut = 'Ctrl-H'
         
-        editMenu.Append(wx.ID_REPLACE, 'Replace Across Entire Story...\t' + shortcut)
+        editMenu.Append(wx.ID_REPLACE, 'Replace Across Story...\t' + shortcut)
         self.Bind(wx.EVT_MENU, self.showReplace, id = wx.ID_REPLACE)
 
         editMenu.AppendSeparator()
@@ -237,9 +238,6 @@ class StoryFrame (wx.Frame):
         self.storyMenu.Append(StoryFrame.STORY_EDIT_FULLSCREEN, 'Edit in &Fullscreen\tF12')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: w.openEditor(e, fullscreen = True)), \
                   id = StoryFrame.STORY_EDIT_FULLSCREEN)
-        
-        self.storyMenu.Append(wx.ID_DELETE, '&Delete Passage')
-        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.removeWidgets(e, saveUndo = True), id = wx.ID_DELETE)
  
         self.storyMenu.AppendSeparator()
         
@@ -296,22 +294,31 @@ class StoryFrame (wx.Frame):
         storyFormatMenu = wx.Menu()
         storyFormatCounter = StoryFrame.STORY_FORMAT_BASE
         storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
+        	
         for sfdir in os.listdir(storyFormatPath):
-            if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                if sfdir == 'jonah':
-                    sfdirlabel = 'Jonah'
-                elif sfdir == 'sugarcane': 
-                    sfdirlabel = 'Sugarcane'
-                elif sfdir == 'sugarcube': 
-                    sfdirlabel = 'SugarCube'
-                else: 
-                    sfdirlabel = sfdir.capitalize()
-                storyFormatMenu.Append(storyFormatCounter, sfdirlabel, kind = wx.ITEM_CHECK)
-                self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
-                self.storyFormats[storyFormatCounter] = sfdir
-                storyFormatCounter = storyFormatCounter + 1
+            try:
+                if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
+                    storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
+                    self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                    self.storyFormats[storyFormatCounter] = sfdir
+                    storyFormatCounter += 1
+            except:
+                pass
         
-        storyFormatMenu.AppendSeparator()
+        if sys.platform == "darwin":
+            try:
+                externalFormatPath = re.sub('[^/]+.app/.*', '', app.getPath()) + os.sep + 'targets' + os.sep        
+                for sfdir in os.listdir(externalFormatPath):
+                    if os.access(externalFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
+                        storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
+                        self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
+                        self.storyFormats[storyFormatCounter] = sfdir
+                        storyFormatCounter += 1
+            except:
+                pass
+                
+        if storyFormatCounter:
+            storyFormatMenu.AppendSeparator()
        
         storyFormatMenu.Append(StoryFrame.STORY_FORMAT_HELP, '&About Story Formats')        
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
@@ -376,11 +383,7 @@ class StoryFrame (wx.Frame):
                                     (wx.ACCEL_CTRL, wx.WXK_RETURN, StoryFrame.STORY_EDIT_FULLSCREEN) \
                                                       ]))
 
-        # add toolbar
-        if sys.platform == 'darwin':
-            iconPath = re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep
-        else:
-            iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
+        iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
         
         self.toolbar = self.CreateToolBar(style = wx.TB_FLAT | wx.TB_NODIVIDER)
         self.toolbar.SetToolBitmapSize((StoryFrame.TOOLBAR_ICON_SIZE, StoryFrame.TOOLBAR_ICON_SIZE))
@@ -557,6 +560,10 @@ class StoryFrame (wx.Frame):
             else:
                 tw.addTweeFromFilename(path)
             
+            allWidgetTitles = []
+            
+            self.storyPanel.eachWidget(lambda e: allWidgetTitles.append(e.passage.title))
+            
             # add passages for each of the tiddlers the TiddlyWiki saw
             if len(tw.tiddlers):
                 removedWidgets = []
@@ -564,14 +571,14 @@ class StoryFrame (wx.Frame):
                 
                 # Check for passage title conflicts
                 for t in tw.tiddlers:
-                    other = self.storyPanel.findWidget(t)
-                    if other:
+                    
+                    if t in allWidgetTitles:
                         dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
                                               + '" in this story. Replace it with the imported passage?', 'Passage Title Conflict', \
                                               wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
                         check = dialog.ShowModal();
                         if check == wx.ID_YES:
-                            removedWidgets.append(other)
+                            removedWidgets.append(t)
                         elif check == wx.ID_CANCEL:
                             return
                         elif check == wx.ID_NO:
@@ -579,7 +586,7 @@ class StoryFrame (wx.Frame):
                 
                 # Remove widgets elected to be replaced
                 for t in removedWidgets:
-                    self.storyPanel.removeWidget(t)
+                    self.storyPanel.removeWidget(self.storyPanel.findWidget(t))
                 
                 # Insert widgets now
                 lastpos = [0, 0]
@@ -588,11 +595,11 @@ class StoryFrame (wx.Frame):
                     t = tw.tiddlers[t]
                     if t.title in skippedTitles:
                         continue
-                    new = self.storyPanel.newWidget(title = t.title, text = t.text, quietly = True,
+                    new = self.storyPanel.newWidget(title = t.title, tags = t.tags, text = t.text, quietly = True,
                                                     pos = t.pos if t.pos else lastpos)
-                    new.passage.tags = t.tags
                     lastpos = new.pos
                     addedWidgets.append(new)
+                    
                 self.setDirty(True, 'Import')
                 for t in addedWidgets:
                     t.clearPaintCache()
@@ -865,12 +872,12 @@ Modernizr: off
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
                     dir = (path and os.path.dirname(path)) or None)
-                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt).encode('utf-8'))
+                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt, defaultName = self.title).encode('utf-8'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'w')
-                dest.write(tw.toHtml(self.app, self.target).encode('utf-8'))
+                dest.write(tw.toHtml(self.app, self.target, defaultName = self.title).encode('utf-8'))
                 dest.close()
                 if displayAfter: self.viewBuild()
         except:
@@ -1074,16 +1081,16 @@ Modernizr: off
         # window title
         
         if self.saveDestination == '':
-            title = StoryFrame.DEFAULT_TITLE
+            self.title = StoryFrame.DEFAULT_TITLE
         else:
             bits = os.path.splitext(self.saveDestination)
-            title = os.path.basename(bits[0])
+            self.title = os.path.basename(bits[0])
         
         percent = str(int(round(self.storyPanel.scale * 100)))
         dirty = ''
         if self.dirty: dirty = ' *'
 
-        self.SetTitle(title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
+        self.SetTitle(self.title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
         
         if not self.menus: return
             

@@ -13,6 +13,7 @@
 #
 
 import re, datetime, time, os, sys, tempfile, codecs
+import tweelexer
 from tweelexer import TweeLexer
 
 #
@@ -49,7 +50,23 @@ class TiddlyWiki:
 		
 		return output
 		
-	def toHtml (self, app, target = None, order = None, startAt = ''):
+	def read(self, filename):
+		try:
+			source = codecs.open(filename, 'r', 'utf8', 'strict')
+			w = source.read()
+		except UnicodeDecodeError:
+			try:
+				source = codecs.open(filename, 'r', 'utf16', 'strict')
+				w = source.read()
+			except:
+				source = open(filename, 'rb')
+				w = source.read()
+		source.close()
+		# Normalise line endings
+		w = w.replace('\r\n','\n')
+		return w
+	
+	def toHtml (self, app, target = None, order = None, startAt = '', defaultName = ''):
 		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
@@ -60,9 +77,17 @@ class TiddlyWiki:
 			return
 		
 		try:
-			header = open(app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'header.html')
-			output = header.read()
-			header.close()
+			headerPath = os.sep + 'targets' + os.sep + target + os.sep + 'header.html'
+			
+			if sys.platform == "darwin":
+				externalFormatDir = re.sub('[^/]+.app/.*', '', app.getPath())
+				if os.access(externalFormatDir + headerPath, os.R_OK):
+					headerPath = externalFormatDir + headerPath
+				else:
+					headerPath = app.getPath() + headerPath
+			else:
+				headerPath = app.getPath() + headerPath
+			output = self.read(headerPath)
 		except IOError:
 			app.displayError("building: the story format '" + target + "' isn't available.\n"
 				+ "Please select another format from the Story Format submenu.\n\n")
@@ -72,9 +97,7 @@ class TiddlyWiki:
 		def insertEngine(app, output, filename, label, extra = ''):
 			if output.count(label) > 0:
 				try:
-					engine = open(app.getPath() + os.sep + 'targets' + os.sep + filename)
-					enginecode = engine.read()
-					engine.close()
+					enginecode = self.read(app.getPath() + os.sep + 'targets' + os.sep + filename)
 					return output.replace(label,enginecode + extra)
 				except IOError:
 					app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
@@ -84,19 +107,28 @@ class TiddlyWiki:
 		
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
+		# Insert timestamp
+		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %Z"))
 		
-		# Set up the test play variable
+		# Insert the test play "start at passage" value
 		if (startAt):
-			startAt = 'testplay = "' + startAt.replace('\\', r'\\').replace('"', '\"') + '";'
+			output = output.replace('"START_AT"', '"' + startAt.replace('\\', r'\\').replace('"', '\"') + '"')
+		else:
+			output = output.replace('"START_AT"', '""')
+		
 		# Insert the main engine
-		output = insertEngine(app, output, 'engine.js', '"ENGINE"', startAt)
+		output = insertEngine(app, output, 'engine.js', '"ENGINE"')
 		if not output: return
 		
 		# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
-		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"', startAt)
+		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"')
 		if not output: return
-		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"', startAt)
+		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"')
 		if not output: return
+		
+		# Insert the Backup Story Title
+		if defaultName:
+			output = output.replace('"Untitled Story"', '"'+defaultName.replace('"',r'\"')+'"')
 		
 		falseOpts = ["false", "off", "0"]
 		
@@ -130,9 +162,7 @@ class TiddlyWiki:
 		storycode = u''
 		for i in order:
 			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
-				if (self.tiddlers[i].title == 'StorySettings'):
-					storycode += self.tiddlers[i].toHtml(self.author, insensitive = True)
-				elif (not obfuscate):
+				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
 					storycode += self.tiddlers[i].toHtml(self.author)
 				else:
 					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
@@ -144,9 +174,7 @@ class TiddlyWiki:
 			if (target):
 				footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
 				if os.path.exists(footername):
-					footer = open(footername,'r')
-					output += footer.read()
-					footer.close()
+					output += self.read(footername)
 				else:
 					output += '</div></body></html>'
 
@@ -210,14 +238,15 @@ class TiddlyWiki:
 		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
 						re.DOTALL)
 		if divs:
+			divs = divs.group(1);
 			# HTML may be obfuscated.
 			obfuscationkey = ''
 			storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
-			storysettings = re.search(r'<div'+storysettings_re, divs.group(1), re.DOTALL)
+			storysettings = re.search(r'<div'+storysettings_re, divs, re.DOTALL)
 			if storysettings:
-				storysettings = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
-				if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', storysettings.text, re.I):
-					match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', storysettings.text, re.I)
+				ssTiddler = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
+				if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', ssTiddler.text, re.I):
+					match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', ssTiddler.text, re.I)
 					if match:
 						obfuscationkey = match.group(1)
 						nss = u''
@@ -225,26 +254,17 @@ class TiddlyWiki:
 							if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
 								nss = nss + nsc
 						obfuscationkey = nss
+				divs = divs[:storysettings.start(0)] + divs[storysettings.end(0)+1:]
 			
-			for div in divs.group(1).split('<div'):
-				if div.strip() and not re.search(storysettings_re, div, re.DOTALL):
-					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
-				
+			for div in divs.split('<div'):
+				div.strip()
+				self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+			
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
 		
 	def addTweeFromFilename(self, filename, html = False):
-		try:
-			source = codecs.open(filename, 'r', 'utf-8-sig', 'strict')
-			w = source.read()
-		except UnicodeDecodeError:
-			try:
-				source = codecs.open(filename, 'r', 'utf16', 'strict')
-				w = source.read()
-			except:
-				source = open(filename, 'rb')
-				w = source.read()
-		source.close()
+		w = self.read(filename)
 		if html:
 			self.addHtml(w)
 		else:
@@ -259,6 +279,7 @@ class TiddlyWiki:
 				self.tiddlers[tiddler.title] = tiddler
 		else:
 			self.tiddlers[tiddler.title] = tiddler
+		
 		return tiddler
 	
 	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
@@ -278,7 +299,8 @@ class Tiddler:
 		self.links = []
 		self.displays = []
 		self.images = []
-		
+		self.macros = []
+        
 		"""Pass source code, and optionally 'twee' or 'html'"""
 		if type == 'twee':
 			self.initTwee(source)
@@ -350,7 +372,7 @@ class Tiddler:
 			self.title = title.group(1)
 			if obfuscationkey:
 				self.title = encode_obfuscate_swap(self.title, obfuscationkey);
-					
+				
 		# tags
 		
 		self.tags = []
@@ -359,8 +381,8 @@ class Tiddler:
 		if tags and tags.group(1) != '':
 			if obfuscationkey:
 				self.tags = encode_obfuscate_swap(tags.group(1), obfuscationkey).split(' ');
-			else: self.tags = tags.group(1).split(' ')
-					
+			else: self.tags = tags.group(1).split(' ')	
+			
 		# creation date
 		
 		self.created = time.localtime()
@@ -368,7 +390,7 @@ class Tiddler:
 		created = created_re.search(source)
 		if created:
 			self.created = decode_date(created.group(1))
-		
+			
 		# modification date
 		
 		self.modified = time.localtime()
@@ -376,7 +398,7 @@ class Tiddler:
 		modified = modified_re.search(source)
 		if (modified):
 			self.modified = decode_date(modified.group(1))
-		
+
 		# position
 		self.pos = [0,0]
 		pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
@@ -385,28 +407,26 @@ class Tiddler:
 			self.pos = map(int, pos.group(1).split(','))
 		
 		# body text
-		
 		self.text = ''
-		text_re = re.compile(r'<div.*?>(.*)</div>')
+		text_re = re.compile(r'<div.*?>((?:[^<]|<(?!\/div>))*)<\/div>')
 		text = text_re.search(source)
 		if (text):
 			self.text = decode_text(text.group(1))
 			if obfuscationkey:
 				self.text = encode_obfuscate_swap(self.text, obfuscationkey);
 		
-		
-	def toHtml (self, author = 'twee', insensitive = False, obfuscation = False, obfuscationkey = ''):
+	def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
 		"""Returns an HTML representation of this tiddler."""
 			
 		now = time.localtime()
 		output = ''
 		if not obfuscation:
-			output = '<div tiddler="' + self.title + '" tags="'
+			output = u'<div tiddler="' + self.title + '" tags="'
 			for tag in self.tags:
 				output += tag + ' '
 			output = output.strip()
 		else:
-			output = '<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			output = u'<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
 			for tag in self.tags:
 				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
 			output = output.strip()
@@ -416,7 +436,7 @@ class Tiddler:
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author + '">'
-		output += encode_text(self.text.lower() if insensitive else self.text, obfuscation, obfuscationkey) + '</div>'
+		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		 
 		return output
 		
@@ -455,7 +475,7 @@ class Tiddler:
 	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
-	
+    
 	def update(self, includeInternal = True, includeMacros = True):
 		"""
 		Update the lists of all passages linked/displayed by this one. By default,
@@ -465,11 +485,20 @@ class Tiddler:
 			self.displays = []
 			self.links = []
 			self.images = []
+			self.macros = []
 			return
-		
+        
 		# <<display>>
 		self.displays = re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
 		
+		self.macros = []
+		# other macros (including shorthand <<display>>)
+		iterator = re.finditer(TweeLexer.MACRO_REGEX, self.text)
+		for m in iterator:
+			# Exclude shorthand <<print>>
+			if m.group(1) and m.group(1)[0] != '$':
+				self.macros.append(m.group(1))
+        
 		links = []
 		actions = []
 		choices = []
@@ -488,17 +517,10 @@ class Tiddler:
 					links.append(m.group(5))
 			
 			# Remove externals
-			def filterExternals (text):
-				for t in ['http://', 'https://', 'ftp://']:
-					if text.lower().startswith(t): return False
-				return True
-				
-			links = filter(filterExternals, links)
+			def filterExternals(text):
+			    return tweelexer.badLinkStyle(text) == TweeLexer.BAD_LINK
 			
-			# Remove code parameters
-			links = filter(lambda text:
-				not re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, text, re.U),
-				links)
+			links = filter(filterExternals, links)
 
 		if includeMacros:
 			
@@ -545,6 +567,7 @@ def encode_text (text, obfuscation, obfuscationkey):
 	output = text
 	if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
 	output = output.replace('\\', '\s')
+	output = output.replace('\t', '\\t')
 	output = re.sub(r'\r?\n', r'\\n', output)
 	output = output.replace('<', '&lt;')
 	output = output.replace('>', '&gt;')
@@ -572,11 +595,11 @@ def decode_text (text):
 	"""Decodes a string from HTML."""
 	output = text
 	output = output.replace('\\n', '\n')
+	output = output.replace('\\t', '\t')
 	output = output.replace('\s', '\\')
 	output = output.replace('&lt;', '<')
 	output = output.replace('&gt;', '>')
 	output = output.replace('&quot;', '"')
-	
 	return output
 	
 	

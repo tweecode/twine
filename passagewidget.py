@@ -14,7 +14,7 @@
 # logical coordinates. Use StoryPanel.toPixels() to convert.
 #
 
-import sys, os, copy, math, re, wx, storypanel, tiddlywiki
+import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame
 
@@ -26,10 +26,7 @@ class PassageWidget:
         self.parent = parent
         self.app = app
         self.dimmed = False
-        if sys.platform == 'darwin':
-            self.brokenEmblem = wx.Bitmap(re.sub('lib/.*', '', os.path.realpath(sys.path[0])) + "icons" + os.sep + 'brokenemblem.png')
-        else:
-            self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
+        self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
         self.paintBuffer = wx.MemoryDC()
         self.paintBufferBounds = None
         pos = list(pos)
@@ -158,13 +155,16 @@ class PassageWidget:
             
         return titleReps + textReps
       
+    def linksAndDisplays(self):
+        return self.passage.linksAndDisplays() + self.getShorthandDisplays()
+    
+    def getShorthandDisplays(self):
+        """Returns a list of macro tags which match passage names."""
+        return filter(lambda a: self.parent.findWidget(a), self.passage.macros)
+        
     def getBrokenLinks (self):
         """Returns a list of broken links in this widget."""
-        brokens = []
-        for link in self.passage.links:
-            if not self.parent.findWidget(link):
-                brokens.append(link)
-        return brokens
+        return filter(lambda a: not self.parent.findWidget(a), self.passage.links)
                  
     def setSelected (self, value, exclusive = True):
         """
@@ -182,7 +182,7 @@ class PassageWidget:
             
             # Figure out the dirty rect
             dirtyRect = self.getPixelRect()
-            for link in self.passage.linksAndDisplays() + self.passage.images:
+            for link in self.linksAndDisplays() + self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
                     dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
@@ -353,7 +353,7 @@ class PassageWidget:
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
         
-        for link in self.passage.linksAndDisplays():
+        for link in self.linksAndDisplays():
             if link in dontDraw: continue
             
             otherWidget = self.parent.findWidget(link)
@@ -364,22 +364,23 @@ class PassageWidget:
                 width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
                 self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
-        for i in self.passage.images:
-            if i not in dontDraw:
-                otherWidget = self.parent.findWidget(i)
-                if otherWidget and not otherWidget.dimmed:
-                    color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                    width = (2 if self.selected else 1)
-                    self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-        
-        if self.passage.isStylesheet():
-            for t in self.passage.tags: 
-                if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
-                    for otherWidget in self.parent.taggedWidgets(t):
-                        if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
-                            color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                            width = (2 if self.selected else 1)
-                            self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+        if self.app.config.ReadBool('imageArrows'):
+            for i in self.passage.images:
+                if i not in dontDraw:
+                    otherWidget = self.parent.findWidget(i)
+                    if otherWidget and not otherWidget.dimmed:
+                        color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                        width = (2 if self.selected else 1)
+                        self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
+            
+            if self.passage.isStylesheet():
+                for t in self.passage.tags: 
+                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                        for otherWidget in self.parent.taggedWidgets(t):
+                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
+                                color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                                width = (2 if self.selected else 1)
+                                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
         return dontDraw
     
@@ -415,7 +416,7 @@ class PassageWidget:
             return 'storyInfoTitleBar'
         elif self.passage.title == "Start":
             return 'startTitleBar'
-        elif not self.passage.linksAndDisplays():
+        elif not self.linksAndDisplays():
             return 'endTitleBar'
         return 'titleBar'
     
@@ -492,18 +493,20 @@ class PassageWidget:
         excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
-                
+        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08, 0.28, 0.88)), self.dimmed)    
+         
         # inset for text (we need to know this for layout purposes)
         
         inset = titleFontHeight / 3
         
         # frame
         
-        frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
         if self.passage.isAnnotation():
-            c = wx.Colour(*PassageWidget.COLORS['annotation'], alpha = 1)
+            frameColor = PassageWidget.COLORS['frame']
+            c = wx.Colour(*PassageWidget.COLORS['annotation'])
             frameInterior = (c,c)
         else:
+            frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
             frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
                          dim(PassageWidget.COLORS['bodyEnd'], self.dimmed))
         
@@ -523,7 +526,10 @@ class PassageWidget:
             # title bar
             
             titleBarHeight = titleFontHeight + (2 * inset)
-            titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
+            if self.passage.isAnnotation():
+                titleBarColor = frameInterior[0]
+            else:
+                titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
             gc.SetPen(wx.Pen(titleBarColor, 1))
             gc.SetBrush(wx.Brush(titleBarColor))
             gc.DrawRectangle(1, 1, size.width - 3, titleBarHeight)            
@@ -559,10 +565,10 @@ class PassageWidget:
         
                 if isinstance(gc, wx.GraphicsContext):
                     gc.ResetClip()
-                    gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2))
+                    gc.Clip(inset, inset, size.width - (inset * 2), size.height - (inset * 2)-1)
                 else:
                     gc.DestroyClippingRegion()
-                    gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)))
+                    gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)-1))
                 
                 if self.passage.isAnnotation():
                     excerptTextColor = wx.Colour(*PassageWidget.COLORS['annotationText'])
@@ -587,7 +593,6 @@ class PassageWidget:
                     (self.passage.isStylesheet() and len(self.passage.tags) > 1):
                 
                 tagBarHeight = excerptFontHeight + (2 * inset)
-                tagBarColor = dim((226, 201, 162), self.dimmed)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
                 gc.DrawRectangle(0, size.height-tagBarHeight-1, size.width, tagBarHeight+1)            
@@ -654,7 +659,6 @@ class PassageWidget:
                     (self.passage.isStylesheet() and len(self.passage.tags) > 1) :
                 
                 tagBarHeight = PassageWidget.GREEK_HEIGHT*3
-                tagBarColor = dim((226, 201, 162), self.dimmed)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
                 height = size.height-tagBarHeight-2
@@ -786,6 +790,11 @@ class PassageWidgetContext (wx.Menu):
         self.parent = parent
         title = '"' + parent.passage.title + '"'
         
+        if parent.passage.isStoryPassage():
+            test = wx.MenuItem(self, wx.NewId(), 'Test Play From Here')
+            self.AppendItem(test)
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.parent.testBuild(startAt = parent.passage.title), id = test.GetId())
+        
         edit = wx.MenuItem(self, wx.NewId(), 'Edit ' + title)
         self.AppendItem(edit)
         self.Bind(wx.EVT_MENU, self.parent.openEditor, id = edit.GetId())
@@ -793,9 +802,5 @@ class PassageWidgetContext (wx.Menu):
         delete = wx.MenuItem(self, wx.NewId(), 'Delete ' + title)
         self.AppendItem(delete)
         self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent), id = delete.GetId())
-        
-        if parent.passage.isStoryPassage():
-            test = wx.MenuItem(self, wx.NewId(), 'Test Play From Here')
-            self.AppendItem(test)
-            self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.parent.testBuild(startAt = parent.passage.title), id = test.GetId())
+
     

@@ -20,28 +20,29 @@ History.prototype.init = function () {
         }, 250)
     }
 };
-History.prototype.display = function (title, b, type, callback) {
-    var bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+hasPushState && (History.prototype.pushState = function(replace, uri) {
+    window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
+});
+History.prototype.display = function (title, source, type, callback) {
+    var e, bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+    if (c==null) {
+        return;
+    }
     if (type != "back") {
-        this.history.unshift({
-            passage: c,
-            variables: clone(this.history[0].variables)
-        });
-        if (typeof callback == "function") {
-            callback();
-            this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
-        }
+        this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
-            if(this.history.length <= 2 && window.history.state == "") {
-                window.history.replaceState(this.history, document.title);
-            }
-            else {
-                window.history.pushState(this.history, document.title);
+            try {
+                sessionStorage.setItem("history"+this.id, JSON.stringify(this.history));
+                this.pushState(this.history.length <= 2 && window.history.state == "");
+            } catch(e) {
+                alert("Your browser couldn't save the state of the game.\n"+
+                    "You may continue playing, but it will no longer be possible to undo moves from here on in.");
+                tale.storysettings.undo="off";
             }
         }
     }
     bookmarkhref = this.save();
-    var e = c.render();
+    e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
             for(var i = 0; i < p.childNodes.length; i += 1) {
@@ -96,12 +97,9 @@ History.prototype.watchHash = function () {
         this.hash = window.location.hash
     }
 };
-History.prototype.restart = function () {
-    if (!hasPushState) {
-        window.location.hash = "";
-    } else {
-        window.history.replaceState(this.history, document.title, window.location.href.replace(/#.*$/,''));
-        window.location.reload();
+History.prototype.loadLinkVars = function() {
+    for (var c in this.history[0].linkVars) {
+        this.history[0].variables[c] = clone(this.history[0].linkVars[c]);
     }
 };
 Passage.prototype.render = function () {
@@ -158,21 +156,6 @@ Passage.prototype.setCSS = function() {
     }
 };
 
-Wikifier.createInternalLink = function (place, title, callback) {
-    var el = insertElement(place, 'a', title);
-
-    if (tale.has(title)) el.className = 'internalLink';
-    else el.className = 'brokenLink';
-
-    el.onclick = function () {
-        state.display(title, el, null, callback)
-    };
-
-    if (place) place.appendChild(el);
-
-    return el;
-};
-
 var Interface = {
     init: function () {
         var snapback = document.getElementById("snapback"),
@@ -191,7 +174,7 @@ var Interface = {
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this story?")) {
-            window.state.restart()
+            state.restart()
         }
     },
     showSnapback: function (a) {
@@ -201,7 +184,6 @@ var Interface = {
     },
     buildSnapback: function () {
         var b, c = false,
-            state = window.state,
             menuelem = document.getElementById("snapbackMenu");
         while (menuelem.hasChildNodes()) {
             menuelem.removeChild(menuelem.firstChild)
@@ -265,25 +247,39 @@ var Interface = {
 window.onload = Interface.init;
 
 macros.back.onclick = function(back, steps) {
+    var title;
     if (back) {
         if (tale.canUndo()) {
           window.history.go(-steps);
           return;
         }
-        else while(steps >= 0) {
-          if (state.history.length>1) {
+        while(steps-- >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
             state.history.shift();
-          }
-          steps--;
         }
-        state.display(state.history[0].passage.title);
+        state.loadLinkVars();
+        state.saveVariables(tale.get(title));
+        state.display(title, null, "back");
     }
-    else state.display(state.history[steps].passage.title);
-}
+    else {
+        state.display(state.history[steps].passage.title);
+    }
+};
 
 window.onpopstate = function(e) {
-    if (e.state && e.state.length > 0) {
-        state.history = e.state;
-        state.display(state.history[0].passage.title,null,"back");
+    var title, hist, steps, s = e && e.state;
+    if (s && s.id && s.length != null) {
+        hist = JSON.parse(sessionStorage.getItem("history"+s.id)),
+        steps = hist.length-s.length;
     }
-}
+    if (hist != null && steps != null) {
+        state.history = hist;
+        while(steps-- >= 0 && state.history.length>1) {
+            title = state.history[0].passage.title;
+            state.history.shift();
+        }
+        state.loadLinkVars();
+        state.saveVariables(tale.get(title));
+        state.display(title, null, "back");
+    }
+};
