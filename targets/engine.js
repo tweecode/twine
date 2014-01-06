@@ -470,8 +470,10 @@ macros.display = {
                 output = eval(name);
             }
             catch(e) {
+            }
+            if (output == null) {
                 // Last-ditch attempt
-                if (tale.get(name).id) {
+                if (tale.get(name).id != null) {
                     output = name;
                 }
                 else {
