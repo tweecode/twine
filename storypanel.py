@@ -207,7 +207,7 @@ class StoryPanel (wx.ScrolledWindow):
             
         for widget in self.widgets: 
             if not widget.selected:
-                for link in widget.passage.linksAndDisplays():
+                for link in widget.linksAndDisplays():
                     if len(link) > 0:
                         for widget2 in selected:
                             if widget2.passage.title == link:
@@ -551,7 +551,7 @@ class StoryPanel (wx.ScrolledWindow):
             
             for widget in self.draggingWidgets:
                 dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
-                for link in widget.passage.linksAndDisplays():
+                for link in widget.linksAndDisplays():
                     widget2 = self.findWidget(link)
                     if widget2:
                         dirtyRect = dirtyRect.Union(widget2.getDirtyPixelRect())

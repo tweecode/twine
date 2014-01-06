@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <!--
 "VERSION"
+"TIME"
 
 Jonah is based on:
 
@@ -45,6 +46,8 @@ DAMAGE.
 "ENGINE"
 
 "JONAH"
+
+testplay = "START_AT";
 
 // CssLexer/CssParser
 // Copyright (C) 2010 Google Inc.
@@ -231,6 +234,15 @@ a.brokenLink {
 .passage hr {
 	height: 1px;
 }
+input, button {
+	font-size: 1.2em;
+}
+button {
+	padding: 0.2em 0.8em;
+}
+input[type=text] {
+	width: 20%;
+}
 #saveTest,.footer {
 	display: none;
 }
@@ -247,6 +259,9 @@ a.brokenLink {
 	font-size: 120%;
 	font-weight: bold;
 }
+img {
+	vertical-align:bottom;
+}
 </style>
 <style id="transitionCSS">
 .transition-in {
@@ -257,7 +272,7 @@ a.brokenLink {
 	transition: 1s;
 	-webkit-transition: 1s;
 }
-#passages .transition-out {
+.transition-out {
 	opacity:0 !important;
 }
 </style>

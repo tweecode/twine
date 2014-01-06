@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <!--
 "VERSION"
+"TIME"
 
 Sugarcane is based on:
 
@@ -47,6 +48,8 @@ DAMAGE.
 
 "SUGARCANE"
 
+testplay = "START_AT";
+
 }());
 </script>
 <script title="modules">
@@ -64,6 +67,7 @@ body {
 #sidebar {
 	position: absolute;
 	width: 12em;
+	left: 7.5em;
 	list-style: none;
 	margin: 0;
 	padding: 0 1em 0 0;
@@ -100,8 +104,7 @@ body {
 #sidebar #title a:hover {
 	color: #fff;
 }
-#sidebar 
-#storySubtitle {
+#sidebar #storySubtitle {
 	font-size: 75%;
 	display: block;
 }
@@ -216,6 +219,26 @@ a.brokenLink {
 .passage hr {
 	height: 1px;
 }
+input, button {
+	background-color: #000;
+	color:#fff;
+	font-size: 1.2em;
+}
+button {
+	border: 2px outset #333;
+	border-radius:0.5em;
+	padding: 0.2em 0.8em;
+}
+button:active {
+	border-style:solid;
+}
+input[type=text] {
+	border: 2px solid #333;
+	width: 20%;
+}
+input[type=text]:hover {
+	border-color: #fff;
+}
 #storeArea {
 	display: none;
 }
@@ -223,6 +246,9 @@ a.brokenLink {
 	margin-left: 18.2em;
 	font-size: 1.2em;
 	font-weight: bold;
+}
+img {
+	vertical-align:bottom;
 }
 </style>
 <style id="transitionCSS">
@@ -234,7 +260,7 @@ a.brokenLink {
 	transition: 1s;
 	-webkit-transition: 1s;
 }
-#passages .transition-out {
+.transition-out {
 	opacity:0 !important;
 	position:absolute;
 }

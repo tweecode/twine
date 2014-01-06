@@ -472,7 +472,7 @@ class PassageFrame (wx.Frame):
     
     def setCodeLexer(self, css = False):
         """Basic CSS highlighting"""
-        monoFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+        monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         body = self.bodyInput
         body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
@@ -556,12 +556,12 @@ class PassageFrame (wx.Frame):
         if selection != '':
             if not re.match(r'^\[\[.*\]\]$', selection):
                 if len(selection) < 25:
-                    editSelected.SetText('Create &Link Named "' + selection + '"\tCtrl-L')
+                    editSelected.SetText('Create &Link "' + selection + '"\tCtrl-L')
                 else:
                     editSelected.SetText('Create &Link From Selected Text\tCtrl-L')
             else:
                 if len(selection) < 25:
-                    editSelected.SetText('&Edit Passage Named "' + self.stripCrud(selection) + '"\tCtrl-L')
+                    editSelected.SetText('&Edit Passage "' + self.stripCrud(selection) + '"\tCtrl-L')
                 else:
                     editSelected.SetText('&Edit Passage From Selected Text\tCtrl-L')
             editSelected.Enable(True)

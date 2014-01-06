@@ -9,7 +9,7 @@ class App (wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.4 (running on %s %s)' % (platform.system(), platform.release()) #Named attributes not available in Python 2.6
+    VERSION = '1.4.1 (running on %s %s)' % (platform.system(), platform.release()) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
@@ -20,22 +20,19 @@ class App (wx.App):
         self.loadPrefs()
         
         # Determine the path to the executing script or application.
-        self.scriptPath = os.path.realpath(sys.path[0])
-        # OS X py2app'd apps will direct us right into the app bundle
-        self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+        self.scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
         # Windows py2exe'd apps add an extraneous library.zip at the end
         self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
 
-        # try to load our app icon under win32
+        # try to load our app icon
         # if it doesn't work, we continue anyway
 
         self.icon = wx.EmptyIcon()
         
-        if sys.platform == 'win32':
-            try:
-                self.icon = wx.Icon('icons' + os.sep + 'app.ico', wx.BITMAP_TYPE_ICO)
-            except:
-                pass
+        try:
+            self.icon = wx.Icon('icons' + os.sep + 'app.ico', wx.BITMAP_TYPE_ICO)
+        except:
+            pass
         
         
         # restore save location
@@ -216,7 +213,7 @@ class App (wx.App):
     
     def storyFormatHelp (self, event = None):
         """Opens the online manual to the section on story formats."""
-        wx.LaunchDefaultBrowser('http://twinery.org/wiki/about_story_formats')
+        wx.LaunchDefaultBrowser('http://twinery.org/wiki/story_format')
     
     def openDocs (self, event = None):
         """Opens the online manual."""
@@ -258,6 +255,8 @@ class App (wx.App):
             self.config.WriteBool('storyPanelSnap', False)
         if not self.config.HasEntry('fastStoryPanel'):
             self.config.WriteBool('fastStoryPanel', False)
+        if not self.config.HasEntry('imageArrows'):
+            self.config.WriteBool('imageArrows', True)
             
     def applyPrefs (self):
         """Asks all of our stories to update themselves based on a preference change."""
