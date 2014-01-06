@@ -473,7 +473,7 @@ macros.display = {
             }
             if (output == null) {
                 // Last-ditch attempt
-                if (tale.get(name).id != null) {
+                if (tale.has(name)) {
                     output = name;
                 }
                 else {
@@ -483,19 +483,19 @@ macros.display = {
                 }
             }
         }
-        t = tale.get(output+"");
         if (!output) {
             throwError(place, '"' +name + "\" did not evaluate to a passage name", parser.fullMatch());
-        } else if (t.id === undefined) {
+        } else if (!tale.has(output+"")) {
             throwError(place, "The \"" + output + "\" passage does not exist", parser.fullMatch());
         } else {
             oldDisplayParams = this.parameters;
             this.parameters = params;
+            t = tale.get(output+"");
             if (t.tags.indexOf("script") > -1) {
                 scriptEval(t);
             }
             else {
-                new Wikifier(place, tale.get(output+"").processText());
+                new Wikifier(place, t.processText());
             }
             this.parameters = oldDisplayParams; 
         }
@@ -752,8 +752,8 @@ macros.choice = {
             for (i = 0; i < other.length; i++) {
                 other[i].outerHTML = "<span class=disabled>" + other[i].innerHTML + "</span>";
             }
+            state.history[0].variables["choice clicked"][passage.id.replace(/\|[^\]]*$/,'')] = true;
         }
-        state.history[0].variables["choice clicked"][id] = true;
     },
     handler: function (A, C, D, parser) {
         var link, id, match,
@@ -772,7 +772,7 @@ macros.choice = {
                 link = Wikifier.linkFormatter.makeLink(A,match,this.callback);
             }
             else {
-                link = Wikifier.linkFormatter.makeLink(A,"[["+text+"|"+D[0]+"]]",this.callback);
+                link = Wikifier.linkFormatter.makeLink(A,[0,text,D[0]],this.callback);
             }
             link.className += " " + C;
         }
@@ -842,7 +842,7 @@ macros.back = {
                 else {
                     e = e[0];
                 }
-                if(tale.get(e).id == undefined) {
+                if(!tale.has(e)) {
                     throwError(a, "The \"" + e + "\" passage does not exist");
                     return;
                 }
@@ -901,7 +901,7 @@ macros.checkbox = macros.radio = macros.textinput = {
                 Wikifier.linkFormatter.makeLink(A,match, macros.button.callback, 'button');
             }
             else {
-                Wikifier.linkFormatter.makeLink(A,'[['+(D[2] || D[1])+"|"+D[1]+"]]", macros.button.callback, 'button');
+                Wikifier.linkFormatter.makeLink(A,[0,(D[2] || D[1]),D[1]], macros.button.callback, 'button');
             }
         }
         else if ((C == "radio" || C == "checkbox") && D[1]) {
@@ -947,7 +947,7 @@ macros.button = {
             Wikifier.linkFormatter.makeLink(A, match, this.callback, 'button');
         }
         else {
-            Wikifier.linkFormatter.makeLink(A,'[['+D[0]+']]', this.callback, 'button');
+            Wikifier.linkFormatter.makeLink(A,[0,D[1] || D[0], D[0]], this.callback, 'button');
         }
     }
 };
