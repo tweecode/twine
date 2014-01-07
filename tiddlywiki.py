@@ -77,17 +77,10 @@ class TiddlyWiki:
 			return
 		
 		try:
-			headerPath = os.sep + 'targets' + os.sep + target + os.sep + 'header.html'
-			
-			if sys.platform == "darwin":
-				externalFormatDir = re.sub('[^/]+.app/.*', '', app.getPath())
-				if os.access(externalFormatDir + headerPath, os.R_OK):
-					headerPath = externalFormatDir + headerPath
-				else:
-					headerPath = app.getPath() + headerPath
-			else:
-				headerPath = app.getPath() + headerPath
+			headerPath = app.targetsPath + target + os.sep + 'header.html'
+
 			output = self.read(headerPath)
+
 		except IOError:
 			app.displayError("building: the story format '" + target + "' isn't available.\n"
 				+ "Please select another format from the Story Format submenu.\n\n")
@@ -97,8 +90,9 @@ class TiddlyWiki:
 		def insertEngine(app, output, filename, label, extra = ''):
 			if output.count(label) > 0:
 				try:
-					enginecode = self.read(app.getPath() + os.sep + 'targets' + os.sep + filename)
+					enginecode = self.read(app.targetsPath + filename)
 					return output.replace(label,enginecode + extra)
+    
 				except IOError:
 					app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
 					return None
@@ -190,7 +184,7 @@ class TiddlyWiki:
 		else:
 			output += storycode
 			if (target):
-				footername = app.getPath() + os.sep + 'targets' + os.sep + target + os.sep + 'footer.html'
+				footername = app.targetsPath + target + os.sep + 'footer.html'
 				if os.path.exists(footername):
 					output += self.read(footername)
 				else:
