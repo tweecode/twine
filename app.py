@@ -215,6 +215,10 @@ class App (wx.App):
         """Opens the online manual to the section on story formats."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/story_format')
     
+    def openForum (self, event = None):
+        """Opens the forum."""
+        wx.LaunchDefaultBrowser('http://twinery.org/forum/')
+        
     def openDocs (self, event = None):
         """Opens the online manual."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/')

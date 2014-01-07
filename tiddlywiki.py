@@ -420,22 +420,22 @@ class Tiddler:
 			
 		now = time.localtime()
 		output = ''
+		title = self.title.replace('"','&quot;')
 		if not obfuscation:
-			output = u'<div tiddler="' + self.title + '" tags="'
+			output = u'<div tiddler="' + title + '" tags="'
 			for tag in self.tags:
 				output += tag + ' '
-			output = output.strip()
 		else:
-			output = u'<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			output = u'<div tiddler="' + encode_obfuscate_swap(title, obfuscationkey) + '" tags="'
 			for tag in self.tags:
 				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
-			output = output.strip()
+		output = output.strip()
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
-		output += ' modifier="' + author + '">'
+		output += ' modifier="' + author.replace('"','&quot;') + '">'
 		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		 
 		return output
