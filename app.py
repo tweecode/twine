@@ -19,11 +19,7 @@ class App (wx.App):
         locale.setlocale(locale.LC_ALL, '')
         self.stories = []
         self.loadPrefs()
-        
-        # Determine the path to the executing script or application.
-        self.scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
-        # Windows py2exe'd apps add an extraneous library.zip at the end
-        self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
+        self.determinePaths()
 
         # try to load our app icon
         # if it doesn't work, we continue anyway
@@ -31,7 +27,7 @@ class App (wx.App):
         self.icon = wx.EmptyIcon()
         
         try:
-            self.icon = wx.Icon('icons' + os.sep + 'app.ico', wx.BITMAP_TYPE_ICO)
+            self.icon = wx.Icon(self.iconsPath + 'app.ico', wx.BITMAP_TYPE_ICO)
         except:
             pass
         
@@ -285,6 +281,21 @@ class App (wx.App):
     def MacReopenApp(self):
         """OS X support"""
         self.GetTopWindow().Raise()
+
+    def determinePaths(self):
+        """Determine the paths to relevant files used by application"""
+        # Determine the path to the executing script or application.
+        self.scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
+
+        # Windows py2exe'd apps add an extraneous library.zip at the end
+        if sys.platform == 'win32':
+            self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
+            
+        if sys.platform == "darwin":
+            self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+
+        self.iconsPath = self.scriptPath + os.sep + 'icons' + os.sep
+        self.targetsPath = self.scriptPath + os.sep + 'targets' + os.sep
 
 # start things up if we were called directly
 if __name__ == "__main__":

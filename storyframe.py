@@ -293,7 +293,7 @@ class StoryFrame (wx.Frame):
         
         storyFormatMenu = wx.Menu()
         storyFormatCounter = StoryFrame.STORY_FORMAT_BASE
-        storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
+        storyFormatPath = app.targetsPath 
         	
         for sfdir in os.listdir(storyFormatPath):
             try:
@@ -302,18 +302,6 @@ class StoryFrame (wx.Frame):
                     self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
                     self.storyFormats[storyFormatCounter] = sfdir
                     storyFormatCounter += 1
-            except:
-                pass
-        
-        if sys.platform == "darwin":
-            try:
-                externalFormatPath = re.sub('[^/]+.app/.*', '', app.getPath()) + os.sep + 'targets' + os.sep        
-                for sfdir in os.listdir(externalFormatPath):
-                    if os.access(externalFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                        storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
-                        self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
-                        self.storyFormats[storyFormatCounter] = sfdir
-                        storyFormatCounter += 1
             except:
                 pass
                 
@@ -386,7 +374,7 @@ class StoryFrame (wx.Frame):
                                     (wx.ACCEL_CTRL, wx.WXK_RETURN, StoryFrame.STORY_EDIT_FULLSCREEN) \
                                                       ]))
 
-        iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
+        iconPath = self.app.iconsPath
         
         self.toolbar = self.CreateToolBar(style = wx.TB_FLAT | wx.TB_NODIVIDER)
         self.toolbar.SetToolBitmapSize((StoryFrame.TOOLBAR_ICON_SIZE, StoryFrame.TOOLBAR_ICON_SIZE))
