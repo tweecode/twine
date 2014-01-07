@@ -767,7 +767,14 @@ Undo: on
 --Let the player use bookmarks? (on / off)
 --This enables the Bookmark links in Jonah and Sugarcane
 --(If the player can't undo, bookmarks are always disabled.)
+
 Bookmark: on
+
+--Enable Javascript error alerts? (on / off)
+--This interrupts the game once a Javascript error is
+--raised, indicating a bug in either Twine or a script.
+
+Errors: on
 
 --Obfuscate the story's HTML source to prevent possible
 --spoilers? (swap / off)

@@ -54,7 +54,7 @@ function setPageElement(c, b, a) {
     if (place = (typeof c == "string" ? document.getElementById(c) : c)) {
         removeChildren(place);
         if (tale.has(b)) {
-            new Wikifier(place, tale.get(b).text)
+            new Wikifier(place, tale.get(b).processText())
         } else {
             new Wikifier(place, a)
         }
@@ -1023,6 +1023,9 @@ Passage.prototype.processText = function() {
     return ret;
 };
 
+/* Error reporting */
+var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
@@ -1060,7 +1063,9 @@ function Tale() {
                     kv = lines[i].toLowerCase().split(':');
                     kv[0] = kv[0].replace(/^\s+|\s+$/g, '');
                     kv[1] = kv[1].replace(/^\s+|\s+$/g, '');
-                    settings[kv[0]] = kv[1];
+                    if (kv[0] != "lookup") {
+                        settings[kv[0]] = kv[1];
+                    }
                 }
             }
         }
@@ -1092,6 +1097,13 @@ function Tale() {
                 this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, null, null)
             }
         }
+    }
+    //Error reporting
+    if (settings.lookup("errors")) {
+        window.onerror = function (e) {
+            alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+            window.onerror = null;
+        };
     }
 }
 Tale.prototype.has = function (a) {
@@ -1158,6 +1170,23 @@ Tale.prototype.forEachStylesheet = function(tags, callback) {
                 }
             }
         }
+    }
+};
+Tale.prototype.setPageElements = function() {
+    var storyTitle, defaultTitle = "Untitled Story";
+    
+    setPageElement("storyTitle", "StoryTitle", defaultTitle);
+    storyTitle = document.getElementById("storyTitle");
+    document.title = this.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || defaultTitle;
+    
+    setPageElement("storySubtitle", "StorySubtitle", "");
+    if (tale.has("StoryAuthor")) {
+        setPageElement("titleSeparator", null, "\n");
+        setPageElement("storyAuthor", "StoryAuthor", "");
+    }
+    if (tale.has("StoryMenu")) {
+        document.getElementById("storyMenu").style.display = "block";
+        setPageElement("storyMenu", "StoryMenu", "");
     }
 };
 
@@ -1923,6 +1952,9 @@ Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.r
 /* Functions usable by custom scripts */
 function visited(e) {
     var ret = 0, i = 0;
+    if (!state) {
+        return 0;
+    }
     e = e || state.history[0].passage.title;
     if (arguments.length > 1) {
         for (ret = state.history.length; i<arguments.length; i++) {
@@ -1939,6 +1971,9 @@ function visited(e) {
 
 function visitedTag() {
     var i, j, k, ret = 0;
+    if (!state) {
+        return 0;
+    }
     for(i = 0; i<state.history.length && state.history[i].passage; i++) {
         for(j = 0; j<state.history.length && state.history[i].passage; i++) {
             for (k = 0; k < arguments.length || void ret++; k++) {
@@ -1957,6 +1992,9 @@ function passage() {
 
 function tags(e) {
     var ret = [], i = 0;
+    if (!state) {
+        return 0;
+    }
     e = e || state.history[0].passage.title;
     if (arguments.length > 1) {
         for (i = arguments.length-1; i >= 1; i--) {
@@ -1968,7 +2006,7 @@ function tags(e) {
 }
 
 function previous() {
-    if (state.history[1]) {
+    if (state && state.history[1]) {
         for (var d = 1; d < state.history.length && state.history[d].passage; d++) {
             if (state.history[d].passage.title != state.history[0].passage.title) {
                 return state.history[d].passage.title
@@ -1990,14 +2028,6 @@ function parameter(n) {
     return 0
 }
 
-/* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
-
-window.onerror = function (e) {
-    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
-    window.onerror = null;
-};
-
 function scriptEval(s) {
     try {
         eval(s.text);
@@ -2013,7 +2043,7 @@ function main() {
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var imgs, scripts, macro, style, styleText = "", i, storyTitle, defaultTitle = "Untitled Story", passages = document.getElementById("passages");
+    var imgs, scripts, macro, style, styleText = "", i, passages = document.getElementById("passages");
     
     function sanityCheck(thing) {
         // Warn if display() was replaced improperly
@@ -2040,19 +2070,6 @@ function main() {
                 break;
             }
         }
-    }
-    setPageElement("storyTitle", "StoryTitle", defaultTitle);
-    storyTitle = document.getElementById("storyTitle");
-    document.title = tale.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || defaultTitle;
-    
-    setPageElement("storySubtitle", "StorySubtitle", "");
-    if (tale.has("StoryAuthor")) {
-        setPageElement("titleSeparator", null, "\n");
-        setPageElement("storyAuthor", "StoryAuthor", "");
-    }
-    if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "inline";
-        setPageElement("storyMenu", "StoryMenu", "");
     }
     scripts = tale.lookup("tags", "script");
     for (i = 0; i < scripts.length; i++) {
@@ -2082,6 +2099,5 @@ function main() {
     }
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
     
-
     state.init();
 }

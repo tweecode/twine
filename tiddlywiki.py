@@ -108,7 +108,7 @@ class TiddlyWiki:
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
 		# Insert timestamp
-		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %Z"))
+		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %z"))
 		
 		# Insert the test play "start at passage" value
 		if (startAt):
@@ -258,7 +258,8 @@ class TiddlyWiki:
 			
 			for div in divs.split('<div'):
 				div.strip()
-				self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+				if div:
+					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
 			
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
