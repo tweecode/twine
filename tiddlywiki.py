@@ -66,23 +66,23 @@ class TiddlyWiki:
 		w = w.replace('\r\n','\n')
 		return w
 	
-	def toHtml (self, app, target = None, order = None, startAt = '', defaultName = ''):
-		"""Returns HTML code for this TiddlyWiki. If target is passed, adds a header."""
+	def toHtml (self, app, header = None, order = None, startAt = '', defaultName = ''):
+		"""Returns HTML code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
 		
-		if not target:
+		if not header:
 			app.displayError("building: no story format was specified.\n"
 							+ "Please select another format from the Story Format submenu.\n\n")
 			return
 		
 		try:
-			headerPath = app.targetsPath + target + os.sep + 'header.html'
-
+			headerPath = header.path + 'header.html'
+			# TODO: Move file reading to Header class.
 			output = self.read(headerPath)
 
 		except IOError:
-			app.displayError("building: the story format '" + target + "' isn't available.\n"
+			app.displayError("building: the story format '" + header.label + "' isn't available.\n"
 				+ "Please select another format from the Story Format submenu.\n\n")
 			return
 		
@@ -110,15 +110,11 @@ class TiddlyWiki:
 		else:
 			output = output.replace('"START_AT"', '""')
 		
-		# Insert the main engine
-		output = insertEngine(app, output, 'engine.js', '"ENGINE"')
-		if not output: return
-		
-		# Insert Sugarcane/Jonah code if the storyformat is a Sugarcane/Jonah offshoot
-		output = insertEngine(app, output, 'sugarcane/code.js', '"SUGARCANE"')
-		if not output: return
-		output = insertEngine(app, output, 'jonah/code.js', '"JONAH"')
-		if not output: return
+		# Embed any engine related files required by the header.
+		embedded = header.files_to_embed()
+		for key in embedded.keys():
+			output = insertEngine(app, output, embedded[key], key)
+			if not output: return
 		
 		# Insert the Backup Story Title
 		if defaultName:
@@ -165,8 +161,8 @@ class TiddlyWiki:
 			output = output.replace('"STORY"', storycode)
 		else:
 			output += storycode
-			if (target):
-				footername = app.targetsPath + target + os.sep + 'footer.html'
+			if (header):
+				footername = header.path + 'footer.html'
 				if os.path.exists(footername):
 					output += self.read(footername)
 				else:
