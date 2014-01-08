@@ -3,3 +3,5 @@
 /*.pyc
 /build
 /dist
+/build/vcredist_x86.exe
+/targets/**/*.pyc
