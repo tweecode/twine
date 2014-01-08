@@ -52,7 +52,7 @@ class TiddlyWiki:
 		
 	def read(self, filename):
 		try:
-			source = codecs.open(filename, 'r', 'utf8', 'strict')
+			source = codecs.open(filename, 'r', 'utf_8_sig', 'strict')
 			w = source.read()
 		except UnicodeDecodeError:
 			try:
