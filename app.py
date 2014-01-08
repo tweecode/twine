@@ -2,6 +2,7 @@
 
 import sys, os, locale, re, pickle, wx, platform
 import metrics
+from header import Header
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
 from version import versionString
@@ -20,6 +21,7 @@ class App (wx.App):
         self.stories = []
         self.loadPrefs()
         self.determinePaths()
+        self.loadTargetHeaders()
 
         # try to load our app icon
         # if it doesn't work, we continue anyway
@@ -296,6 +298,19 @@ class App (wx.App):
 
         self.iconsPath = self.scriptPath + os.sep + 'icons' + os.sep
         self.targetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+
+    def loadTargetHeaders(self):
+        """Load the Target Headers: NOTE: finish this description"""
+        self.headers = {}
+        for sfdir in os.listdir(self.targetsPath):
+            try:
+                target_path = self.targetsPath + sfdir + os.sep
+                if os.access(target_path + 'header.html', os.R_OK):
+                    header = Header.factory(sfdir, target_path)
+                    self.headers[header.id] = header 
+            except:
+                pass
+
 
 # start things up if we were called directly
 if __name__ == "__main__":
