@@ -4,6 +4,7 @@ import sys, os.path, getopt, glob
 scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.append(os.path.join(scriptPath, 'lib'))
 from tiddlywiki import TiddlyWiki
+from version import versionString
 
 
 def usage():
@@ -13,7 +14,7 @@ def usage():
 class TweeApp(object):
 
 	NAME = 'Twee'
-	VERSION = '1.4.1'
+	VERSION = versionString
 
 	def displayError(self, activity):
 		activity = activity.strip()

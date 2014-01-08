@@ -3,13 +3,14 @@
 # Call this with this command line: buildapp.py py2app
 
 from distutils.core import setup
+from version import versionString
 import py2app
 
 setup(app = ['app.py'], options = dict(py2app = dict( argv_emulation = True,
                                        iconfile = 'appicons/app.icns', \
                                        resources = ['icons', 'targets', 'appicons/doc.icns'], \
                                        plist = dict( \
-                                       CFBundleShortVersionString = '1.4.1', \
+                                       CFBundleShortVersionString = versionString, \
                                        CFBundleName = 'Twine', \
                                        CFBundleSignature = 'twee', \
                                        CFBundleIconFile = 'app.icns',\

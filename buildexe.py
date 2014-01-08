@@ -5,6 +5,7 @@
 
 import sys, os, py2exe
 from distutils.core import setup
+from version import versionString
 
 manifest = '''
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -47,7 +48,7 @@ for root, dirs, files in os.walk('dist' + os.sep + 'win32', topdown=False):
 setup(
     name = 'Twine',
     description = 'Twine',
-    version = '1.4.1',
+    version = versionString,
 
     windows = [{
         'script': 'app.py',
