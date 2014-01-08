@@ -52,7 +52,7 @@ class TiddlyWiki:
 		
 	def read(self, filename):
 		try:
-			source = codecs.open(filename, 'r', 'utf8', 'strict')
+			source = codecs.open(filename, 'r', 'utf_8_sig', 'strict')
 			w = source.read()
 		except UnicodeDecodeError:
 			try:
@@ -108,7 +108,7 @@ class TiddlyWiki:
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
 		# Insert timestamp
-		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %Z"))
+		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %z"))
 		
 		# Insert the test play "start at passage" value
 		if (startAt):
@@ -258,7 +258,8 @@ class TiddlyWiki:
 			
 			for div in divs.split('<div'):
 				div.strip()
-				self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+				if div:
+					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
 			
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
@@ -420,22 +421,22 @@ class Tiddler:
 			
 		now = time.localtime()
 		output = ''
+		title = self.title.replace('"','&quot;')
 		if not obfuscation:
-			output = u'<div tiddler="' + self.title + '" tags="'
+			output = u'<div tiddler="' + title + '" tags="'
 			for tag in self.tags:
 				output += tag + ' '
-			output = output.strip()
 		else:
-			output = u'<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			output = u'<div tiddler="' + encode_obfuscate_swap(title, obfuscationkey) + '" tags="'
 			for tag in self.tags:
 				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
-			output = output.strip()
+		output = output.strip()
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
-		output += ' modifier="' + author + '">'
+		output += ' modifier="' + author.replace('"','&quot;') + '">'
 		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		 
 		return output

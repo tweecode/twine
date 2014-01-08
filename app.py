@@ -4,12 +4,13 @@ import sys, os, locale, re, pickle, wx, platform
 import metrics
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
+from version import versionString
 
 class App (wx.App):    
     """This bootstraps our application and keeps track of preferences, etc."""
     
     NAME = 'Twine'
-    VERSION = '1.4.1 (running on %s %s)' % (platform.system(), platform.release()) #Named attributes not available in Python 2.6
+    VERSION = '%s (running on %s %s)' % (versionString, platform.system(), platform.release()) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
     def __init__ (self, redirect = False):
@@ -215,6 +216,10 @@ class App (wx.App):
         """Opens the online manual to the section on story formats."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/story_format')
     
+    def openForum (self, event = None):
+        """Opens the forum."""
+        wx.LaunchDefaultBrowser('http://twinery.org/forum/')
+        
     def openDocs (self, event = None):
         """Opens the online manual."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/')
