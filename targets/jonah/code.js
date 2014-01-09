@@ -172,6 +172,9 @@ macros.back.onclick = function(back, steps, el) {
     if (back) {
         q = p.querySelectorAll(".passage");
         el = findPassageParent(el);
+        if (!el) {
+            el = q[q.length-1];
+        }
         if (q[0] != el) {
             p = el;
             while (p && steps > 0) {

@@ -43,10 +43,10 @@ function removeChildren(a) {
 }
 
 function findPassageParent(el) {
-    while(el && !~el.className.indexOf("passage")) {
+    while(el && el != document.body && !~el.className.indexOf("passage")) {
         el = el.parentNode;
     }
-    return el;
+    return el == document.body ? null : el;
 }
 
 function setPageElement(c, b, a) {
@@ -638,7 +638,7 @@ macros.remember = {
         macros.set.run(place, parser.fullArgs());
         if (!window.localStorage) {
             throwError(place, "<<remember>> can't be used "
-                + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.");
+                + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.",parser.fullMatch());
             return;
         }
         re = new RegExp(Wikifier.textPrimitives.variable, "g");
@@ -760,6 +760,10 @@ macros.choice = {
             text = D[1] || D[0].split("|")[0],
             passage = findPassageParent(A);
         // Get ID of the "choice clicked" entry
+        if (!passage) {
+            throwError(A, "<<"+C+">> can't be used here.",parser.fullMatch());
+            return;
+        }
         id = (passage && passage.id.replace(/\|[^\]]*$/,''));
         if (id && (state.history[0].variables["choice clicked"] || 
                 (state.history[0].variables["choice clicked"] = {}))[id]) {
@@ -786,7 +790,7 @@ version.extensions.backMacro = {
 };
 macros.back = {
     labeltext: '&#171; back',
-    handler: function (a, b, e) {
+    handler: function (a, b, e, parser) {
         var labelParam, c, el,
             labeltouse = this.labeltext,
             steps = 1,
@@ -800,7 +804,7 @@ macros.back = {
                     stepsParam2 = eval(Wikifier.parse(stepsParam2));
                 }
                 catch(r) {
-                    throwError(a, b + "Macro bad expression: " + r.message)
+                    throwError(a, "<<"+b + ">> bad expression: " + r.message, parser.fullMatch())
                     return;
                 }
             }
@@ -820,7 +824,7 @@ macros.back = {
         }
         if(labelParam > -1) {
             if(!e[labelParam + 1]) {
-                throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
+                throwError(a, e[labelParam] + 'keyword needs an additional label parameter', parser.fullMatch());
                 return;
             }
             labeltouse = e[labelParam + 1];
@@ -835,7 +839,7 @@ macros.back = {
                         e = eval(Wikifier.parse(e[0]));
                     }
                     catch(r) {
-                        throwError(a, "<<" + b + ">> bad expression: " + r.message)
+                        throwError(a, "<<" + b + ">> bad expression: " + r.message, parser.fullMatch())
                         return;
                     }
                 }
@@ -843,7 +847,7 @@ macros.back = {
                     e = e[0];
                 }
                 if(!tale.has(e)) {
-                    throwError(a, "The \"" + e + "\" passage does not exist");
+                    throwError(a, "The \"" + e + "\" passage does not exist",parser.fullMatch());
                     return;
                 }
                 for(c = 0; c < state.history.length; c++) {

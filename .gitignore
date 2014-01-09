@@ -2,3 +2,4 @@
 /.project
 /*.pyc
 /build
+/dist

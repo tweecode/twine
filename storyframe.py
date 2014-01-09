@@ -843,8 +843,10 @@ Modernizr: off
             hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
-                if widget.passage.title != 'StoryIncludes' and \
-                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                if widget.passage.title == 'StoryIncludes':
+                    # Might as well suppress the warning for a StoryIncludes file
+                    hasstartpassage = True
+                elif not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
