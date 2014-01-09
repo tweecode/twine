@@ -3,6 +3,7 @@
 import sys, os.path, getopt, glob
 scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
 sys.path.append(os.path.join(scriptPath, 'lib'))
+from header import Header
 from tiddlywiki import TiddlyWiki
 
 
@@ -15,6 +16,11 @@ class TweeApp(object):
 	NAME = 'Twee'
 	VERSION = '1.4.1'
 
+	def __init__ (self, path):
+		"""Initializes the application."""
+		self.scriptPath = path + os.sep 
+		self.targetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+
 	def displayError(self, activity):
 		activity = activity.strip()
 		print >> sys.stderr, 'Error while ' + activity
@@ -24,7 +30,7 @@ class TweeApp(object):
 		print >> sys.stderr, ''
 
 	def getPath(self):
-		return scriptPath
+		return self.scriptPath
 
 
 def main(argv):
@@ -64,6 +70,10 @@ def main(argv):
 		print >> sys.stderr, 'twee: no source files specified\n'
 		sys.exit(2)
 
+	app = TweeApp(scriptPath)
+
+	header = Header.factory(target, app.targetsPath + target + os.sep)
+
 	# populate a TiddlyWiki
 
 	tw = TiddlyWiki(author)
@@ -74,7 +84,7 @@ def main(argv):
 
 	# generate output
 
-	print tw.toHtml(TweeApp(), target = target, startAt = start)
+	print tw.toHtml(app, header, startAt = start)
 
 
 if __name__ == '__main__':
