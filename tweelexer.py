@@ -178,6 +178,7 @@ class TweeLexer:
         styleStart = pos
         inSilence = False
         macroNestStack = []; # macro nesting
+        header = self.getHeader()
         
         self.applyStyle(0, len(text), self.DEFAULT);
         
@@ -240,7 +241,7 @@ class TweeLexer:
                 self.applyStyle(styleStart, pos-styleStart, style)
                 styled = False
                 
-                for i in self.NESTED_MACROS:
+                for i in header.nested_macros():
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
                         styled = True
@@ -250,7 +251,7 @@ class TweeLexer:
                             inSilence = True;
                             styleStack.append(style)
                             style = self.SILENT
-                    elif name == ('end' + i):
+                    elif header.is_endtag(name, i):
                         if macroNestStack and macroNestStack[-1][0] == i:
                             # Re-style open macro
                             macroStart,macroMatch = macroNestStack.pop()[1:];
@@ -327,6 +328,10 @@ class TweeLexer:
         """
         self.ctrl.StartStyling(start, self.TEXT_STYLES)
         self.ctrl.SetStyling(end, style)
+
+    def getHeader(self):
+        """Returns the current selected target header for this Twee Lexer."""
+        return self.frame.getHeader()
 
     # style constants
     # ordering of BOLD through to THREE_STYLES is important

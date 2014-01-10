@@ -1209,6 +1209,10 @@ Modernizr: off
     def __repr__ (self):
         return "<StoryFrame '" + self.saveDestination + "'>"
     
+    def getHeader(self):
+        """Returns the current selected target header for this Story Frame."""
+        return self.header
+    
     # menu constants
     # (that aren't already defined by wx)
     
