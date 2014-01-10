@@ -786,10 +786,14 @@ Obfuscate: off
 ObfuscateKey: """ + ''.join(obfuscateKey) + """
 
 --Include the jQuery script library? (on / off)
+--Individual scripts may force this on by
+--containing the text 'requires jQuery'.
 
 jQuery: off
 
 --Include the Modernizr script library? (on / off)
+--Individual scripts/stylesheets may force this on by
+--containing the text 'requires Modernizr'.
 
 Modernizr: off
 """
