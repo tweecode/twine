@@ -20,7 +20,12 @@ class Header (object):
         """
         return OrderedDict([('"ENGINE"', 'engine.js')])
 
+    def is_endtag(self, name, tag):
+        """Return true if the name is equal to an endtag."""
+        return (name == ('end' + tag))
+
     def nested_macros(self):
+        """Returns a list of macro names that support nesting."""
         return ['if', 'silently']
     
     @staticmethod

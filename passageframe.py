@@ -642,6 +642,10 @@ class PassageFrame (wx.Frame):
     
     def __repr__ (self):
         return "<PassageFrame '" + self.widget.passage.title + "'>"
+
+    def getHeader(self):
+        """Returns the current selected target header for this Passage Frame."""
+        return self.widget.getHeader()
     
     # timing constants
     
