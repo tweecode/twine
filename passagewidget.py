@@ -751,6 +751,10 @@ class PassageWidget:
     def __repr__ (self):
         return "<PassageWidget '" + self.passage.title + "'>"
     
+    def getHeader(self):
+        """Returns the current selected target header for this Passage Widget."""
+        return self.parent.getHeader()
+    
     MIN_PIXEL_SIZE = 10
     MIN_GREEKING_SIZE = 50
     GREEK_HEIGHT = 2

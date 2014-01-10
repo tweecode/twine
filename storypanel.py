@@ -930,6 +930,11 @@ class StoryPanel (wx.ScrolledWindow):
                     pass
             self.tooltipobj = None
 
+    def getHeader(self):
+        """Returns the current selected target header for this Story Panel."""
+        return self.parent.getHeader()
+
+
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
     FIRST_TITLE = 'Start'
