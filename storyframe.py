@@ -770,12 +770,6 @@ Undo: on
 
 Bookmark: on
 
---Enable Javascript error alerts? (on / off)
---This interrupts the game once a Javascript error is
---raised, indicating a bug in either Twine or a script.
-
-Errors: on
-
 --Obfuscate the story's HTML source to prevent possible
 --spoilers? (swap / off)
 

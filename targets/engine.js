@@ -819,12 +819,9 @@ macros.back = {
         }
         // Label parameter
         labelParam = e.indexOf("label");
-        if(labelParam == -1) {
-            labelParam = e.indexOf("labeldefault");
-        }
         if(labelParam > -1) {
             if(!e[labelParam + 1]) {
-                throwError(a, e[labelParam] + 'keyword needs an additional label parameter', parser.fullMatch());
+                throwError(a, e[labelParam] + ' keyword needs an additional label parameter', parser.fullMatch());
                 return;
             }
             labeltouse = e[labelParam + 1];
@@ -1026,10 +1023,7 @@ Passage.prototype.processText = function() {
     }
     return ret;
 };
-
-/* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
-
+	
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
@@ -1101,13 +1095,6 @@ function Tale() {
                 this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, null, null)
             }
         }
-    }
-    //Error reporting
-    if (settings.lookup("errors")) {
-        window.onerror = function (e) {
-            alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
-            window.onerror = null;
-        };
     }
 }
 Tale.prototype.has = function (a) {
@@ -1953,7 +1940,8 @@ Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.r
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
     Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
 
-/* Functions usable by custom scripts */
+// Functions usable by custom scripts
+// This includes restart(), above.
 function visited(e) {
     var ret = 0, i = 0;
     if (!state) {
@@ -1988,6 +1976,10 @@ function visitedTag() {
         }
     }
     return ret;
+}
+
+function turns() {
+    return state.history.length-1;
 }
 
 function passage() {
@@ -2039,6 +2031,14 @@ function scriptEval(s) {
         alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
+
+/* Error reporting */
+var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+window.onerror = function (e) {
+	alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+	window.onerror = null;
+};
+
 /* Init function */
 var $;
 function main() {

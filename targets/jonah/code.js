@@ -16,6 +16,7 @@ History.prototype.init = function () {
         } else {
             this.display("Start", null, "quietly")
         }
+        tale.setPageElements();
     }
 };
 History.prototype.closeLinks = function() {
