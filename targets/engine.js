@@ -1023,7 +1023,7 @@ Passage.prototype.processText = function() {
     }
     return ret;
 };
-	
+    
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
@@ -1836,6 +1836,22 @@ Wikifier.formatters = [
     match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
     tagname: "<(\\w+)",
     voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
+    tableElems: ["table","thead","tbody","tfoot","th","tr","td","colgroup","col","caption","figcaption"],
+    cleanupTables: function (e) {
+        var i, name, elems = [].slice.call(e.children);
+        // Remove non-table child elements that aren't children of <td>s
+        for (i = 0; i < elems.length; i++) {
+            if (elems[i].tagName) {
+                name = elems[i].tagName.toLowerCase();
+                if (this.tableElems.indexOf(name)==-1) {
+                    elems[i].outerHTML = '';
+                }
+                else if (['col','caption','figcaption','td','th'].indexOf(name)==-1) {
+                    this.cleanupTables.call(this,elems[i]);
+                }
+            }
+        }
+    },
     handler: function (a) {
         var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
@@ -1854,6 +1870,9 @@ Wikifier.formatters = [
                 }
                 if (!isvoid) {
                     a.subWikify(e, lookahead);
+                }
+                if (e.tagName.toLowerCase() == 'table') {
+                    this.cleanupTables.call(this,e);
                 }
                 a.output.appendChild(e);
             } else {
@@ -2035,8 +2054,8 @@ function scriptEval(s) {
 /* Error reporting */
 var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
 window.onerror = function (e) {
-	alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
-	window.onerror = null;
+    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+    window.onerror = null;
 };
 
 /* Init function */
