@@ -11,6 +11,7 @@ import sys, cStringIO, wx, re
 def AddURIPrefix(text, mimeType):
     """ Adds the Data URI MIME prefix to the base64 data"""
     # SVG MIME-type is the same for both images and fonts
+    mimeType = mimeType.lower()
     if mimeType in 'gif|jpg|jpeg|png|webp|svg':
         mimeGroup = "image/"
     elif mimeType in 'ttf|woff|otf':
@@ -57,7 +58,11 @@ def BitmapToBase64PNG(bmp):
 def GetImageType(text):
     """Returns the part of the Data URI's MIME type that refers to the type of the image."""
     # By using (\w+), "svg+xml" becomes "svg"
-    search = re.search(r"data:image/(\w+)", text);
+    search = re.search(r"data:image/(\w+)", text)
     if (search):
         return "." + search.group(1)
-    return None
+    #Fallback
+    search = re.search(r"application:x-(\w+)", text)
+    if (search):
+        return "." + search.group(1)
+    return ""

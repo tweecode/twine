@@ -531,12 +531,6 @@ class Tiddler:
 			for m in iterator:
 				if m.group(5):
 					links.append(m.group(5))
-			
-			# Remove externals
-			def filterExternals(text):
-			    return tweelexer.badLinkStyle(text) == TweeLexer.BAD_LINK
-			
-			links = filter(filterExternals, links)
 
 		if includeMacros:
 			
