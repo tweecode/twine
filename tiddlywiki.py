@@ -108,7 +108,7 @@ class TiddlyWiki:
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
 		# Insert timestamp
-		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %z"))
+		output = output.replace('"TIME"', "Built on "+time.strftime("%Y-%m-%d at %H:%M:%S, %z"))
 		
 		# Insert the test play "start at passage" value
 		if (startAt):
