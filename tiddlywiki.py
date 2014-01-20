@@ -12,7 +12,7 @@
 # that translate between Twee and TiddlyWiki output seamlessly.
 #
 
-import re, datetime, time, os, sys, tempfile, codecs
+import re, datetime, time, locale, os, sys, tempfile, codecs
 import tweelexer
 from tweelexer import TweeLexer
 
@@ -107,8 +107,14 @@ class TiddlyWiki:
 		
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
+		
 		# Insert timestamp
-		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %z"))
+		# Due to Windows limitations, the timezone offset must be computed manually.
+		tz_offset = (lambda t: '%s%02d%02d' % (('+' if t <= 0 else '-',) + divmod(abs(t) / 60, 60)))(time.timezone)
+		# Obtain the encoding expected to be used by strftime in this locale
+		strftime_encoding = locale.getlocale(locale.LC_TIME)[1] or locale.getpreferredencoding()
+		# Write the timestamp
+		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, "+tz_offset).decode(strftime_encoding))
 		
 		# Insert the test play "start at passage" value
 		if (startAt):
