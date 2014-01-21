@@ -52,7 +52,7 @@ class TiddlyWiki:
 		
 	def read(self, filename):
 		try:
-			source = codecs.open(filename, 'r', 'utf8', 'strict')
+			source = codecs.open(filename, 'r', 'utf_8_sig', 'strict')
 			w = source.read()
 		except UnicodeDecodeError:
 			try:
@@ -108,7 +108,7 @@ class TiddlyWiki:
 		# Insert version number
 		output = output.replace('"VERSION"', "Made in " + app.NAME + " " + app.VERSION)
 		# Insert timestamp
-		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %Z"))
+		output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, %z"))
 		
 		# Insert the test play "start at passage" value
 		if (startAt):
@@ -132,15 +132,27 @@ class TiddlyWiki:
 		
 		falseOpts = ["false", "off", "0"]
 		
+		# Check if the scripts are personally requesting jQuery or Modernizr
+		jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts
+		modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts
+		
+		for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
+			if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
+				jquery = True
+			if not modernizr and re.search(r'requires? modernizr', i.text, re.I):
+				modernizr = True
+			if jquery and modernizr:
+				break
+		
 		# Insert jQuery
-		if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
+		if jquery:
 			output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
 			if not output: return
 		else:
 			output = output.replace('"JQUERY"','')
 		
 		# Insert Modernizr
-		if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
+		if modernizr:
 			output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
 			if not output: return
 		else:
@@ -258,7 +270,8 @@ class TiddlyWiki:
 			
 			for div in divs.split('<div'):
 				div.strip()
-				self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+				if div:
+					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
 			
 	def addHtmlFromFilename(self, filename):
 		self.addTweeFromFilename(filename, True)
@@ -420,22 +433,22 @@ class Tiddler:
 			
 		now = time.localtime()
 		output = ''
+		title = self.title.replace('"','&quot;')
 		if not obfuscation:
-			output = u'<div tiddler="' + self.title + '" tags="'
+			output = u'<div tiddler="' + title + '" tags="'
 			for tag in self.tags:
 				output += tag + ' '
-			output = output.strip()
 		else:
-			output = u'<div tiddler="' + encode_obfuscate_swap(self.title, obfuscationkey) + '" tags="'
+			output = u'<div tiddler="' + encode_obfuscate_swap(title, obfuscationkey) + '" tags="'
 			for tag in self.tags:
 				output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
-			output = output.strip()
+		output = output.strip()
 
 		output += '" modified="' + encode_date(self.modified) + '"'
 		output += ' created="' + encode_date(self.created) + '"' 
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
-		output += ' modifier="' + author + '">'
+		output += ' modifier="' + author.replace('"','&quot;') + '">'
 		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
 		 
 		return output
@@ -463,6 +476,9 @@ class Tiddler:
 	
 	def isStylesheet(self):
 		return 'stylesheet' in self.tags
+	
+	def isScript(self):
+		return 'script' in self.tags
 	
 	def isStoryText(self):
 		return not (('script' in self.tags) or self.isStylesheet()

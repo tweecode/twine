@@ -16,6 +16,7 @@ History.prototype.init = function () {
         } else {
             this.display("Start", null, "quietly")
         }
+        tale.setPageElements();
     }
 };
 History.prototype.closeLinks = function() {
@@ -63,6 +64,7 @@ History.prototype.display = function (name, source, type, callback) {
                 fade: "in"
             });
         }
+        tale.setPageElements();
     }
     else {
         p.appendChild(F);
@@ -171,6 +173,9 @@ macros.back.onclick = function(back, steps, el) {
     if (back) {
         q = p.querySelectorAll(".passage");
         el = findPassageParent(el);
+        if (!el) {
+            el = q[q.length-1];
+        }
         if (q[0] != el) {
             p = el;
             while (p && steps > 0) {

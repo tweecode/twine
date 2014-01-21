@@ -357,6 +357,9 @@ class StoryFrame (wx.Frame):
         helpMenu.Append(StoryFrame.HELP_MANUAL, 'Twine &Wiki')
         self.Bind(wx.EVT_MENU, self.app.openDocs, id = StoryFrame.HELP_MANUAL)
         
+        helpMenu.Append(StoryFrame.HELP_FORUM, 'Twine &Forum')
+        self.Bind(wx.EVT_MENU, self.app.openForum, id = StoryFrame.HELP_FORUM)
+        
         helpMenu.Append(StoryFrame.HELP_GITHUB, 'Twine\'s Source Code on &GitHub')
         self.Bind(wx.EVT_MENU, self.app.openGitHub, id = StoryFrame.HELP_GITHUB)
         
@@ -764,6 +767,7 @@ Undo: on
 --Let the player use bookmarks? (on / off)
 --This enables the Bookmark links in Jonah and Sugarcane
 --(If the player can't undo, bookmarks are always disabled.)
+
 Bookmark: on
 
 --Obfuscate the story's HTML source to prevent possible
@@ -776,10 +780,14 @@ Obfuscate: off
 ObfuscateKey: """ + ''.join(obfuscateKey) + """
 
 --Include the jQuery script library? (on / off)
+--Individual scripts may force this on by
+--containing the text 'requires jQuery'.
 
 jQuery: off
 
 --Include the Modernizr script library? (on / off)
+--Individual scripts/stylesheets may force this on by
+--containing the text 'requires Modernizr'.
 
 Modernizr: off
 """
@@ -833,8 +841,10 @@ Modernizr: off
             hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
-                if widget.passage.title != 'StoryIncludes' and \
-                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                if widget.passage.title == 'StoryIncludes':
+                    # Might as well suppress the warning for a StoryIncludes file
+                    hasstartpassage = True
+                elif not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
@@ -1237,7 +1247,7 @@ Modernizr: off
     
     [BUILD_TEST, BUILD_TEST_HERE, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 607)
     
-    [HELP_MANUAL, HELP_GROUP, HELP_GITHUB] = range(701,704)
+    [HELP_MANUAL, HELP_GROUP, HELP_GITHUB, HELP_FORUM] = range(701,705)
 
     # tooltip labels
     

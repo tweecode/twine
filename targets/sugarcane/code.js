@@ -63,6 +63,7 @@ History.prototype.display = function (title, source, type, callback) {
                 fade: "in"
             })
         }
+        tale.setPageElements();
     }
     else {
         p.appendChild(e);

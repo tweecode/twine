@@ -217,7 +217,7 @@ class PassageFrame (wx.Frame):
     def syncPassage (self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
         title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
-        
+        title = title.replace('\n','')
 
         if title:
         # Check for title conflict

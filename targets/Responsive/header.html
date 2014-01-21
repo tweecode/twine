@@ -167,7 +167,7 @@ body{ font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; font-size: 12
     MOBILE: Menu
    ============== */
 
-nav a{
+nav li{
 	display:block;
 	margin-bottom:10px;
 	padding:15px 0;
@@ -176,15 +176,17 @@ nav a{
 	color:#fff;
 
 	text-align:center;
-	text-decoration:none;
 	font-weight:bold;
 }
 
-nav a:hover, nav a:visited{
+nav li a, nav li a:visited {
+	text-decoration:none;
 	color:#fff;
 }
 
-nav a:hover{
+nav li:hover, nav li a:hover {
+	color:#fff;
+	cursor:pointer;
 	text-decoration:underline;
 }
 
@@ -225,18 +227,19 @@ nav a:hover{
 #credits { color:#999; font-size: 0.8em; line-height: 1.0em; }
 #credits a { color:#999; text-decoration:none; }
 #credits a:hover { text-decoration:underline; }
+#storyMenu { display:none; }
 
 .menu { position:absolute;display:none;background-color:#666;color:#fff;text-align:left;line-height:2em;}
 .menu div{padding:0 .4em;}
 .menu div:hover{cursor:pointer;background-color:#fff;color:#666;}
-nav li:hover{cursor:pointer;}
 
 #main-container { padding-top: 1em; }
 #passages { font-size: 12px; line-height: 16px; position:relative; }
 .passage ul{padding-top:1.3em;}
 .passage li{margin-right:6em;}
-.passage a{text-decoration:none;cursor: pointer;}
+.passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
+a.internalLink,a.externalLink,a.back,a.return {cursor: pointer;}
 a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
 .marked[title]{cursor:help;}
@@ -262,7 +265,7 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 	clear:both;
 	box-sizing:border-box;
 	z-index:10;
-} 
+}
 
 /* =============================================================================
    Media Queries
@@ -274,7 +277,7 @@ body > #non-footer-container { height: auto; min-height: 100%; }
     INTERMEDIATE: Menu
    ==================== */
 
-	nav a{
+	nav li{
 		float:left;
 		width:25%;
 		margin:0 0 0 1.7%;
@@ -283,7 +286,7 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 		margin-top:1.7%;
 	}
 	
-	nav li:last-child a, #storyMenu li:last-child a{ margin-right:0; }
+	nav li:last-child a{ margin-right:0; }
 	#title { margin-top: 0.5em; margin-bottom: 0.5em; }
 	#passages { font-size: 12px; line-height: 18px; }
 	
@@ -291,11 +294,8 @@ body > #non-footer-container { height: auto; min-height: 100%; }
     INTERMEDIATE: IE Fixes
    ======================== */
 
-	nav ul li{
+	nav li{
 		display:inline;
-	}	
-	.oldie nav a{
-		margin:0 0.7%;		
 	}
 }
 
@@ -392,17 +392,17 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 		<div id="header-container">
 			<header class="wrapper clearfix">
 				<div id="title">
-					<div id="storyTitle"></div>
-					<div id="storySubtitle"></div>
+					<div id="storyTitle" class="storyElement"></div>
+					<div id="storySubtitle" class="storyElement"></div>
 					<div id="titleSeparator"></div>
 					<div class="clearfix"></div>
-					<div id="storyAuthor"></div>
+					<div id="storyAuthor" class="storyElement"></div>
 				</div>
+				<nav id="storyMenu" class="storyElement"></nav>
 				<nav id="sidebar">
 					<ul>
-						<li id="storyMenu"></li>
-						<li><a id="snapback" href="javascript:;">Rewind</a></li>
-						<li><a id="restart" href="javascript:;">Restart</a></li>
+						<li id="snapback">Rewind</a></li>
+						<li id="restart">Restart</a></li>
 						<li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
 					</ul>
 				</nav>

@@ -89,7 +89,7 @@ body {
 	color: #333;
 	text-decoration: none;
 }
-#sidebar li a:hover {
+#sidebar li a:hover, #sidebar #title a:hover {
 	color: #fff;
 	text-decoration: none;
 }
@@ -100,9 +100,6 @@ body {
 }
 #sidebar #title a {
 	color: #999;
-}
-#sidebar #title a:hover {
-	color: #fff;
 }
 #sidebar #storySubtitle {
 	font-size: 75%;
@@ -115,6 +112,9 @@ body {
 	display: none;
 	line-height: 2.5em;
 	margin-bottom: .5em;
+	color: #999;
+	cursor: auto;
+	text-align:right !important;
 }
 #sidebar #title:hover {
 	color: #999;
@@ -176,6 +176,8 @@ body {
 	color: #4d6ad8;
 	font-weight: bold;
 	text-decoration: none;
+}
+a.internalLink, a.externalLink, a.back, a.return {
 	cursor: pointer;
 }
 .passage a:hover {
@@ -270,8 +272,8 @@ img {
 </head>
 <body>
 <ul id="sidebar">
-<li id="title"><span id="storyTitle"></span><span id="storySubtitle"></span><span id="titleSeparator"></span><span id="storyAuthor"></span></li>
-<li id="storyMenu"></li>
+<li id="title" class="storyElement"><span id="storyTitle" class="storyElement"></span><span id="storySubtitle" class="storyElement"></span><span id="titleSeparator"></span><span id="storyAuthor" class="storyElement"></span></li>
+<li id="storyMenu" class="storyElement"></li>
 <li id="snapback">Rewind</li>
 <li id="restart">Restart</li>
 <li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
