@@ -645,6 +645,8 @@ class StoryPanel (wx.ScrolledWindow):
         """Returns a string for an untitled PassageWidget."""
         number = 1
         
+        if not self.findWidget("Start"):
+            return "Start"
         if not "Untitled " in base:
             if not self.findWidget(base):
                 return base

@@ -132,15 +132,27 @@ class TiddlyWiki:
 		
 		falseOpts = ["false", "off", "0"]
 		
+		# Check if the scripts are personally requesting jQuery or Modernizr
+		jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts
+		modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts
+		
+		for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
+			if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
+				jquery = True
+			if not modernizr and re.search(r'requires? modernizr', i.text, re.I):
+				modernizr = True
+			if jquery and modernizr:
+				break
+		
 		# Insert jQuery
-		if 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts:
+		if jquery:
 			output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
 			if not output: return
 		else:
 			output = output.replace('"JQUERY"','')
 		
 		# Insert Modernizr
-		if 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts:
+		if modernizr:
 			output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
 			if not output: return
 		else:
@@ -464,6 +476,9 @@ class Tiddler:
 	
 	def isStylesheet(self):
 		return 'stylesheet' in self.tags
+	
+	def isScript(self):
+		return 'script' in self.tags
 	
 	def isStoryText(self):
 		return not (('script' in self.tags) or self.isStylesheet()

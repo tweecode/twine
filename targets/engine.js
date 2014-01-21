@@ -43,10 +43,10 @@ function removeChildren(a) {
 }
 
 function findPassageParent(el) {
-    while(el && !~el.className.indexOf("passage")) {
+    while(el && el != document.body && !~el.className.indexOf("passage")) {
         el = el.parentNode;
     }
-    return el;
+    return el == document.body ? null : el;
 }
 
 function setPageElement(c, b, a) {
@@ -638,7 +638,7 @@ macros.remember = {
         macros.set.run(place, parser.fullArgs());
         if (!window.localStorage) {
             throwError(place, "<<remember>> can't be used "
-                + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.");
+                + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.",parser.fullMatch());
             return;
         }
         re = new RegExp(Wikifier.textPrimitives.variable, "g");
@@ -760,6 +760,10 @@ macros.choice = {
             text = D[1] || D[0].split("|")[0],
             passage = findPassageParent(A);
         // Get ID of the "choice clicked" entry
+        if (!passage) {
+            throwError(A, "<<"+C+">> can't be used here.",parser.fullMatch());
+            return;
+        }
         id = (passage && passage.id.replace(/\|[^\]]*$/,''));
         if (id && (state.history[0].variables["choice clicked"] || 
                 (state.history[0].variables["choice clicked"] = {}))[id]) {
@@ -786,7 +790,7 @@ version.extensions.backMacro = {
 };
 macros.back = {
     labeltext: '&#171; back',
-    handler: function (a, b, e) {
+    handler: function (a, b, e, parser) {
         var labelParam, c, el,
             labeltouse = this.labeltext,
             steps = 1,
@@ -800,7 +804,7 @@ macros.back = {
                     stepsParam2 = eval(Wikifier.parse(stepsParam2));
                 }
                 catch(r) {
-                    throwError(a, b + "Macro bad expression: " + r.message)
+                    throwError(a, "<<"+b + ">> bad expression: " + r.message, parser.fullMatch())
                     return;
                 }
             }
@@ -815,12 +819,9 @@ macros.back = {
         }
         // Label parameter
         labelParam = e.indexOf("label");
-        if(labelParam == -1) {
-            labelParam = e.indexOf("labeldefault");
-        }
         if(labelParam > -1) {
             if(!e[labelParam + 1]) {
-                throwError(a, e[labelParam] + 'keyword needs an additional label parameter');
+                throwError(a, e[labelParam] + ' keyword needs an additional label parameter', parser.fullMatch());
                 return;
             }
             labeltouse = e[labelParam + 1];
@@ -835,7 +836,7 @@ macros.back = {
                         e = eval(Wikifier.parse(e[0]));
                     }
                     catch(r) {
-                        throwError(a, "<<" + b + ">> bad expression: " + r.message)
+                        throwError(a, "<<" + b + ">> bad expression: " + r.message, parser.fullMatch())
                         return;
                     }
                 }
@@ -843,7 +844,7 @@ macros.back = {
                     e = e[0];
                 }
                 if(!tale.has(e)) {
-                    throwError(a, "The \"" + e + "\" passage does not exist");
+                    throwError(a, "The \"" + e + "\" passage does not exist",parser.fullMatch());
                     return;
                 }
                 for(c = 0; c < state.history.length; c++) {
@@ -1022,10 +1023,7 @@ Passage.prototype.processText = function() {
     }
     return ret;
 };
-
-/* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
-
+    
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,nope,
         settings = this.storysettings = {
@@ -1097,13 +1095,6 @@ function Tale() {
                 this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b, null, null)
             }
         }
-    }
-    //Error reporting
-    if (settings.lookup("errors")) {
-        window.onerror = function (e) {
-            alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
-            window.onerror = null;
-        };
     }
 }
 Tale.prototype.has = function (a) {
@@ -1845,6 +1836,22 @@ Wikifier.formatters = [
     match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
     tagname: "<(\\w+)",
     voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
+    tableElems: ["table","thead","tbody","tfoot","th","tr","td","colgroup","col","caption","figcaption"],
+    cleanupTables: function (e) {
+        var i, name, elems = [].slice.call(e.children);
+        // Remove non-table child elements that aren't children of <td>s
+        for (i = 0; i < elems.length; i++) {
+            if (elems[i].tagName) {
+                name = elems[i].tagName.toLowerCase();
+                if (this.tableElems.indexOf(name)==-1) {
+                    elems[i].outerHTML = '';
+                }
+                else if (['col','caption','figcaption','td','th'].indexOf(name)==-1) {
+                    this.cleanupTables.call(this,elems[i]);
+                }
+            }
+        }
+    },
     handler: function (a) {
         var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
@@ -1863,6 +1870,9 @@ Wikifier.formatters = [
                 }
                 if (!isvoid) {
                     a.subWikify(e, lookahead);
+                }
+                if (e.tagName.toLowerCase() == 'table') {
+                    this.cleanupTables.call(this,e);
                 }
                 a.output.appendChild(e);
             } else {
@@ -1949,7 +1959,8 @@ Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.r
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
     Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
 
-/* Functions usable by custom scripts */
+// Functions usable by custom scripts
+// This includes restart(), above.
 function visited(e) {
     var ret = 0, i = 0;
     if (!state) {
@@ -1984,6 +1995,10 @@ function visitedTag() {
         }
     }
     return ret;
+}
+
+function turns() {
+    return state.history.length-1;
 }
 
 function passage() {
@@ -2035,6 +2050,14 @@ function scriptEval(s) {
         alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
+
+/* Error reporting */
+var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+window.onerror = function (e) {
+    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+    window.onerror = null;
+};
+
 /* Init function */
 var $;
 function main() {

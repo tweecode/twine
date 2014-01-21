@@ -313,7 +313,7 @@ class TweeLexer:
                 styleStart = pos+1
         
         # Finish up unclosed styles
-        self.applyStyle(pos+1, len(text), style) 
+        self.applyStyle(styleStart, len(text), style) 
 
     def passageExists (self, title):
         """

@@ -770,12 +770,6 @@ Undo: on
 
 Bookmark: on
 
---Enable Javascript error alerts? (on / off)
---This interrupts the game once a Javascript error is
---raised, indicating a bug in either Twine or a script.
-
-Errors: on
-
 --Obfuscate the story's HTML source to prevent possible
 --spoilers? (swap / off)
 
@@ -786,10 +780,14 @@ Obfuscate: off
 ObfuscateKey: """ + ''.join(obfuscateKey) + """
 
 --Include the jQuery script library? (on / off)
+--Individual scripts may force this on by
+--containing the text 'requires jQuery'.
 
 jQuery: off
 
 --Include the Modernizr script library? (on / off)
+--Individual scripts/stylesheets may force this on by
+--containing the text 'requires Modernizr'.
 
 Modernizr: off
 """
@@ -843,8 +841,10 @@ Modernizr: off
             hasstartpassage = False
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
-                if widget.passage.title != 'StoryIncludes' and \
-                not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                if widget.passage.title == 'StoryIncludes':
+                    # Might as well suppress the warning for a StoryIncludes file
+                    hasstartpassage = True
+                elif not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
