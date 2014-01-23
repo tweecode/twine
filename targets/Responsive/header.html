@@ -237,8 +237,9 @@ nav li:hover, nav li a:hover {
 #passages { font-size: 12px; line-height: 16px; position:relative; }
 .passage ul{padding-top:1.3em;}
 .passage li{margin-right:6em;}
-.passage a{text-decoration:none;cursor: pointer;}
+.passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
+a.internalLink,a.externalLink,a.back,a.return {cursor: pointer;}
 a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
 .marked[title]{cursor:help;}
@@ -391,13 +392,13 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 		<div id="header-container">
 			<header class="wrapper clearfix">
 				<div id="title">
-					<div id="storyTitle"></div>
-					<div id="storySubtitle"></div>
+					<div id="storyTitle" class="storyElement"></div>
+					<div id="storySubtitle" class="storyElement"></div>
 					<div id="titleSeparator"></div>
 					<div class="clearfix"></div>
-					<div id="storyAuthor"></div>
+					<div id="storyAuthor" class="storyElement"></div>
 				</div>
-				<nav id="storyMenu"></nav>
+				<nav id="storyMenu" class="storyElement"></nav>
 				<nav id="sidebar">
 					<ul>
 						<li id="snapback">Rewind</a></li>

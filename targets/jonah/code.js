@@ -16,6 +16,7 @@ History.prototype.init = function () {
         } else {
             this.display("Start", null, "quietly")
         }
+        tale.setPageElements();
     }
 };
 History.prototype.closeLinks = function() {
@@ -172,6 +173,9 @@ macros.back.onclick = function(back, steps, el) {
     if (back) {
         q = p.querySelectorAll(".passage");
         el = findPassageParent(el);
+        if (!el) {
+            el = q[q.length-1];
+        }
         if (q[0] != el) {
             p = el;
             while (p && steps > 0) {

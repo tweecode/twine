@@ -361,6 +361,9 @@ class PassageWidget:
         
             if otherWidget and not otherWidget.dimmed:
                 color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in self.passage.links else PassageWidget.CONNECTOR_COLOR
+                # Special colour for annotations
+                if self.passage.isAnnotation():
+                    color = '#000000'
                 width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
                 self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
         
