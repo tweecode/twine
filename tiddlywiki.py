@@ -427,7 +427,7 @@ class Tiddler:
 		
 		# body text
 		self.text = ''
-		text_re = re.compile(r'<div.*?>((?:[^<]|<(?!\/div>))*)<\/div>')
+		text_re = re.compile(r'<div(?:[^"]|(?:".*?"))*?>((?:[^<]|<(?!\/div>))*)<\/div>')
 		text = text_re.search(source)
 		if (text):
 			self.text = decode_text(text.group(1))
