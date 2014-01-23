@@ -63,12 +63,12 @@ History.prototype.display = function (title, source, type, callback) {
                 fade: "in"
             })
         }
-        tale.setPageElements();
     }
     else {
         p.appendChild(e);
         e.style.visibility = "visible"
     }
+    tale.setPageElements();
     if (tale.canUndo()) {
         if (!hasPushState && type != "back") {
             this.hash = bookmarkhref;
