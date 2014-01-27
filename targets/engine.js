@@ -73,13 +73,19 @@ function addStyle(b) {
 }
 
 function alterCSS(text) {
-    var imgPassages = tale.lookup("tags", "Twine.image");
+    var temp = '', imgPassages = tale.lookup("tags", "Twine.image");
     // Remove comments
     text = text.replace(/\/\*(?:[^\*]|\*(?!\/))*\*\//g,'');
     // Replace :link
     text = text.replace(/:link/g,"[class*=Link]");
     // Replace :visited
     text = text.replace(/:visited/g,".visitedLink");
+    // Hoist @import
+    text = text.replace(/@import\s+(?:url\s*\(\s*['"]?|['"])[^"'\s]+(?:['"]?\s*\)|['"])\s*([\w\s\(\)\d\:,\-]*);/g, function(e) {
+        temp += e;
+    });
+    text = temp + text;
+    
     // Add images
     return text.replace(new RegExp(Wikifier.imageFormatter.lookahead, "gim"), function(m,p1,p2,p3,src) {
         for (var i = 0; i < imgPassages.length; i++) {
@@ -955,6 +961,9 @@ macros.button = {
 
 function Passage(c, b, a, ofunc, okey) {
     var t, k;
+    if (!this || this.constructor != Passage) {
+        throw new ReferenceError("passage() incorrectly capitalised");
+    }
     this.title = c;
     if (b) {
         this.id = a;
@@ -982,7 +991,7 @@ function Passage(c, b, a, ofunc, okey) {
 }
 
 Passage.prototype.preloadImages = function() {
-    var u = "\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\s*",
+    var u = "\\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
@@ -995,8 +1004,8 @@ Passage.prototype.preloadImages = function() {
             return k;
         };
     k.call(this, new RegExp(Wikifier.imageFormatter.lookahead.replace("[^\\[\\]\\|]+",u), "mg"), 4)
-        .call(this, new RegExp("url\(" + u + "\)", "mig"), 1)
-        .call(this, new RegExp("src\s*=" + u, "mig"), 1);
+        .call(this, new RegExp("url\\s*\\(" + u + "\\)", "mig"), 1)
+        .call(this, new RegExp("src\\s*=" + u, "mig"), 1);
 };
 
 Passage.unescapeLineBreaks = function (a) {
@@ -2053,8 +2062,9 @@ function scriptEval(s) {
 
 /* Error reporting */
 var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
-window.onerror = function (e) {
-    alert("Sorry to interrupt, but this story's code has got itself in a mess (" + e + ")." + softErrorMessage);
+window.onerror = function (msg, a, b, c, error) {
+    var s = (error && (".\n\n" + error.stack + "\n\n")) || (" (" + msg + ").\n");
+    alert("Sorry to interrupt, but this story's code has got itself in a mess" + s + softErrorMessage.slice(1));
     window.onerror = null;
 };
 
@@ -2113,13 +2123,14 @@ function main() {
     for (i in tale.passages) {
         i = tale.passages[i];
         if (i.tags + "" == "stylesheet") {
-            styleText += alterCSS(i.text);
+            styleText += i.text;
         }
         else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1 &&
                 i.tags.indexOf("stylesheet") >-1) {
             setTransitionCSS(i.text);
         }
     }
+    styleText = alterCSS(styleText);
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
     
     state.init();
