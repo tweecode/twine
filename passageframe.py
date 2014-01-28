@@ -18,7 +18,7 @@
 
 import sys, os, re, threading, wx, wx.animate, base64, time
 import metrics, images
-from tweelexer import TweeLexer
+from tweelexer import TweeLexer, badLinkStyle
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
@@ -581,7 +581,10 @@ class PassageFrame (wx.Frame):
         incoming = []
         broken = []
         
-        for link in self.widget.passage.links:
+        # Remove externals
+        
+        links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
+        for link in links:
             if len(link) > 0:
                 found = False
                 
@@ -845,7 +848,7 @@ class ImageFrame (PassageFrame):
         t = self.widget.passage.text;
         # Get the extension
         extension = images.GetImageType(t)
-        
+        print extension
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
         
