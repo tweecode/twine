@@ -253,7 +253,7 @@ class TiddlyWiki:
 	def addHtml (self, source):
 		
 		"""Adds HTML source code to this TiddlyWiki."""	
-		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
+		divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
 						re.DOTALL)
 		if divs:
 			divs = divs.group(1);
