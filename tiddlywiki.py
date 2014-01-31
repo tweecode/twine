@@ -253,7 +253,7 @@ class TiddlyWiki:
 	def addHtml (self, source):
 		
 		"""Adds HTML source code to this TiddlyWiki."""	
-		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
+		divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
 						re.DOTALL)
 		if divs:
 			divs = divs.group(1);
@@ -498,10 +498,10 @@ class Tiddler:
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
     
-	def update(self, includeInternal = True, includeMacros = True):
+	def update(self):
 		"""
-		Update the lists of all passages linked/displayed by this one. By default,
-		returns internal links and <<choice>>/<<actions>> macros.
+		Update the lists of all passages linked/displayed by this one.
+		Returns internal links and <<choice>>/<<actions>> macros.
 		"""
 		if not self.isStoryText() and not self.isAnnotation() and not self.isStylesheet():
 			self.displays = []
@@ -515,8 +515,7 @@ class Tiddler:
 		
 		self.macros = []
 		# other macros (including shorthand <<display>>)
-		iterator = re.finditer(TweeLexer.MACRO_REGEX, self.text)
-		for m in iterator:
+		for m in re.finditer(TweeLexer.MACRO_REGEX, self.text):
 			# Exclude shorthand <<print>>
 			if m.group(1) and m.group(1)[0] != '$':
 				self.macros.append(m.group(1))
@@ -526,41 +525,27 @@ class Tiddler:
 		choices = []
 		images = []
 		
-		# regular hyperlinks
-		if includeInternal:
-			iterator = re.finditer(TweeLexer.LINK_REGEX, self.text)
-			for m in iterator:
-				links.append(m.group(2) or m.group(1))
-			
-			# Include images
-			iterator = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
-			for m in iterator:
-				if m.group(5):
-					links.append(m.group(5))
+		# Regular hyperlinks (also matches wiki-style links inside macros)
+		for m in re.finditer(TweeLexer.LINK_REGEX, self.text):
+			links.append(m.group(2) or m.group(1))
 
-		if includeMacros:
-			
-			# <<choice>>
-			choices = []
-			choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
-			for block in choiceBlocks:
-				# New style <<choice>>
-				item = re.match(TweeLexer.LINK_REGEX, block)
-				if item:
-					choices.append(m.group(2) or m.group(1))
-				else:
-					# Old style
-					item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\s]\S*)', block)
-					if item:
-						choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
-			
-			# <<actions '' ''>>
-			
-			actions = []
-			actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text)
-			for block in actionBlocks:
-				actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
-		
+		# Include images
+		for m in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
+			if m.group(5):
+				links.append(m.group(5))
+
+		# <<choice passage_name [link_text]>>
+		choices = []
+		for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
+			item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)
+			if item:
+				choices.append(''.join(item.groups('')))
+
+		# <<actions '' ''>>
+		actions = []
+		for block in re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text):
+			actions.extend(re.findall(r'[\'"](.*?)[\'"]', block))
+
 		# remove duplicates by converting to a set
 		
 		self.links = list(set(links + choices + actions))
