@@ -280,16 +280,12 @@ class TiddlyWiki:
 				div.strip()
 				if div:
 					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
-			
+
 	def addHtmlFromFilename(self, filename):
-		self.addTweeFromFilename(filename, True)
-		
-	def addTweeFromFilename(self, filename, html = False):
-		w = self.read(filename)
-		if html:
-			self.addHtml(w)
-		else:
-			self.addTwee(w)
+		self.addHtml(self.read(filename))
+
+	def addTweeFromFilename(self, filename):
+		self.addTwee(self.read(filename))
 
 	def addTiddler (self, tiddler):
 		"""Adds a Tiddler object to this TiddlyWiki."""
