@@ -546,11 +546,11 @@ class Tiddler:
 
 		# Images
 
-		images = []
+		images = set()
 		for block in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
-			images.append(block.group(4))
+			images.add(block.group(4))
 
-		self.images = images
+		self.images = list(images)
 
 #
 # Helper functions
