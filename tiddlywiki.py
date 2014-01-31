@@ -519,39 +519,34 @@ class Tiddler:
 			# Exclude shorthand <<print>>
 			if m.group(1) and m.group(1)[0] != '$':
 				self.macros.append(m.group(1))
-        
-		links = []
-		actions = []
-		choices = []
-		images = []
+
+		# avoid duplicates by collecting links in a set
+		links = set()
 
 		# Regular hyperlinks (also matches wiki-style links inside macros)
 		for m in re.finditer(TweeLexer.LINK_REGEX, self.text):
-			links.append(m.group(2) or m.group(1))
+			links.add(m.group(2) or m.group(1))
 
 		# Include images
 		for m in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
 			if m.group(5):
-				links.append(m.group(5))
+				links.add(m.group(5))
 
 		# <<choice passage_name [link_text]>>
-		choices = []
 		for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
 			item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)
 			if item:
-				choices.append(''.join(item.groups('')))
+				links.add(''.join(item.groups('')))
 
 		# <<actions '' ''>>
-		actions = []
 		for block in re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text):
-			actions.extend(re.findall(r'[\'"](.*?)[\'"]', block))
+			links.update(re.findall(r'[\'"](.*?)[\'"]', block))
 
-		# remove duplicates by converting to a set
-		
-		self.links = list(set(links + choices + actions))
+		self.links = list(links)
 
 		# Images
 
+		images = []
 		for block in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
 			images.append(block.group(4))
 
