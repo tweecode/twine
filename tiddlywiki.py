@@ -515,8 +515,7 @@ class Tiddler:
 		
 		self.macros = []
 		# other macros (including shorthand <<display>>)
-		iterator = re.finditer(TweeLexer.MACRO_REGEX, self.text)
-		for m in iterator:
+		for m in re.finditer(TweeLexer.MACRO_REGEX, self.text):
 			# Exclude shorthand <<print>>
 			if m.group(1) and m.group(1)[0] != '$':
 				self.macros.append(m.group(1))
@@ -527,30 +526,26 @@ class Tiddler:
 		images = []
 		
 		# Regular hyperlinks (also matches wiki-style links inside macros)
-		iterator = re.finditer(TweeLexer.LINK_REGEX, self.text)
-		for m in iterator:
+		for m in re.finditer(TweeLexer.LINK_REGEX, self.text):
 			links.append(m.group(2) or m.group(1))
 
 		# Include images
-		iterator = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
-		for m in iterator:
+		for m in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
 			if m.group(5):
 				links.append(m.group(5))
 
 		# <<choice passage_name [link_text]>>
 		choices = []
-		choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
-		for block in choiceBlocks:
+		for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
 			item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)
 			if item:
 				choices.append(''.join(item.groups('')))
 
 		# <<actions '' ''>>
 		actions = []
-		actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text)
-		for block in actionBlocks:
-			actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
-		
+		for block in re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text):
+			actions.extend(re.findall(r'[\'"](.*?)[\'"]', block))
+
 		# remove duplicates by converting to a set
 		
 		self.links = list(set(links + choices + actions))
