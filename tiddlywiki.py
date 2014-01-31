@@ -177,13 +177,15 @@ class TiddlyWiki:
 					nss = nss + nsc
 			self.storysettings['obfuscatekey'] = nss
 		
-		storycode = u''
+		storyfragments = []
 		for i in order:
-			if self.NOINCLUDE_TAGS.isdisjoint(self.tiddlers[i].tags):
-				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
-					storycode += self.tiddlers[i].toHtml(self.author)
+			tiddler = self.tiddlers[i]
+			if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
+				if not obfuscate or tiddler.title == 'StorySettings':
+					storyfragments.append(tiddler.toHtml(self.author))
 				else:
-					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
+					storyfragments.append(tiddler.toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey']))
+		storycode = u''.join(storyfragments)
 		
 		if output.count('"STORY"') > 0:
 			output = output.replace('"STORY"', storycode)
