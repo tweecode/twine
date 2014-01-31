@@ -179,7 +179,7 @@ class TiddlyWiki:
 		
 		storycode = u''
 		for i in order:
-			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
+			if self.NOINCLUDE_TAGS.isdisjoint(self.tiddlers[i].tags):
 				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
 					storycode += self.tiddlers[i].toHtml(self.author)
 				else:
@@ -301,11 +301,12 @@ class TiddlyWiki:
 		
 		return tiddler
 	
-	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
-	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
-	SPECIAL_TAGS = ['Twine.image']
-	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
-	INFO_TAGS = ['script', 'stylesheet', 'annotation'] + SPECIAL_TAGS + NOINCLUDE_TAGS
+	FORMATTED_INFO_PASSAGES = frozenset(['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle'])
+	UNFORMATTED_INFO_PASSAGES = frozenset(['StoryIncludes', 'StorySettings', 'StartPassages'])
+	INFO_PASSAGES = FORMATTED_INFO_PASSAGES | UNFORMATTED_INFO_PASSAGES
+	SPECIAL_TAGS = frozenset(['Twine.image'])
+	NOINCLUDE_TAGS = frozenset(['Twine.private', 'Twine.system'])
+	INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -487,13 +488,13 @@ class Tiddler:
 		return 'script' in self.tags
 	
 	def isStoryText(self):
-		return not (('script' in self.tags) or self.isStylesheet()
-			or self.isAnnotation() or any('Twine.' in i for i in self.tags)
-			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
+		return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def isStoryPassage(self):
 		""" A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
-		return self.isStoryText() and self.title not in TiddlyWiki.INFO_PASSAGES
+		return self.title not in TiddlyWiki.INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
