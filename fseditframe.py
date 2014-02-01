@@ -54,6 +54,7 @@ class FullscreenEditFrame (wx.Frame):
         self.editCtrl.SetUseHorizontalScrollBar(False)
         self.editCtrl.SetUseVerticalScrollBar(False)
         self.editCtrl.SetCaretPeriod(750)
+        self.editCtrl.SetBufferedDraw(False)
         
         self.directions = wx.StaticText(self.panel, label = FullscreenEditFrame.DIRECTIONS, style = wx.ALIGN_CENTRE)
         labelFont = wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
