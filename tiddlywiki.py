@@ -31,15 +31,7 @@ class TiddlyWiki:
 
 	def hasTiddler(self, name):
 		return name in self.tiddlers
-	
-	def tryGetting (self, names, default = ''):
-		"""Tries retrieving the text of several tiddlers by name; returns default if none exist."""
-		for name in names:
-			if name in self.tiddlers:
-				return self.tiddlers[name].text
-				
-		return default
-		
+
 	def toTwee (self, order = None):
 		"""Returns Twee source code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()		
