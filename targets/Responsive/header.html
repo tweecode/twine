@@ -237,8 +237,6 @@ nav li:hover, nav li a:hover {
 #passages { font-size: 12px; line-height: 16px; position:relative; }
 .storyElement { white-space: pre-line; }
 .passage { white-space: pre-wrap; }
-.passage ul{padding-top:1.3em;}
-.passage li{margin-right:6em;}
 .passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
 a.internalLink,a.externalLink,a.back,a.return {cursor: pointer;}
@@ -246,6 +244,10 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
 .marked[title]{cursor:help;}
 .passage ul{margin-left:.5em;padding-left:1.5em;}
+.content > ul{padding-top:1.3em;}
+.passage li{margin-right:6em;}
+.passage li[data-bullet] { list-style-type: none; }
+.passage li[data-bullet]:before { content: attr(data-bullet); position: relative; left: -1em; }
 .passage ol{margin-left:.5em;padding-left:1.5em;}
 .passage table{border-collapse:collapse;font-size:100%;margin:.8em 1.0em;}
 .passage th,.passage td,.passage tr,.passage caption{padding:3px;}

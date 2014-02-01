@@ -131,9 +131,6 @@ h3 {
 	max-width:50%;
 	margin:auto;
 }
-ul li {
-	list-style-type: square;
-}
 .toolbar a {
 	color: #999;
 	text-decoration: none;
@@ -230,6 +227,17 @@ a.brokenLink {
 .passage ul {
 	margin-left: .5em;
 	padding-left: 1.5em;
+}
+li {
+	list-style-type: square;
+}
+.passage li[data-bullet] {
+	list-style-type: none;
+}
+.passage li[data-bullet]:before {
+	content: attr(data-bullet);
+	position: relative;
+	left: -1em;
 }
 .passage ol {
 	margin-left: .5em;

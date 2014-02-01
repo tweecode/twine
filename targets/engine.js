@@ -545,7 +545,7 @@ macros.print = {
             var args = parser.fullArgs(macroName != "print"),
                 output = eval(args);
             if (output != null && (typeof output != "number" || !isNaN(output))) {
-                new Wikifier(place, output.toString());
+                new Wikifier(place, ''+output);
             }
         } catch (e) {
             throwError(place, "<<print>> bad expression: " + e.message, parser.fullMatch());
@@ -1553,76 +1553,61 @@ Wikifier.formatters = [
     }
 },
 {
-    name: "quoteByLine",
-    match: "^>+",
-    terminator: "\\n",
-    element: "blockquote",
-    handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.match, "mg");
-        var placeStack = [w.output];
-        var currLevel = 0;
-        var newLevel = w.matchLength;
-        var t;
-        do {
-            if (newLevel > currLevel) {
-                for (t = currLevel; t < newLevel; t++)
-                placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
-            } else if (newLevel < currLevel) {
-                for (t = currLevel; t > newLevel; t--)
-                placeStack.pop();
-            }
-            currLevel = newLevel;
-            w.subWikify(placeStack[placeStack.length - 1], this.terminator);
-            lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
-            if (matched) {
-                newLevel = lookaheadMatch[0].length;
-                w.nextMatch += lookaheadMatch[0].length;
-                insertElement(placeStack[placeStack.length - 1], "br");
-            }
-        } while (matched);
-    }
-},
-{
     name: "list",
-    match: "^(?:(?:\\*+)|(?:#+))",
-    lookahead: "^(?:(\\*+)|(#+))",
+    match: "^(?:(?:[>\\*\\-=]+)|(?:#+))",
+    lookahead: "^(?:([>\\*\\-=]+)|(#+))",
     terminator: "\\n",
     outerElement: "ul",
     itemElement: "li",
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var newType, newLevel, t, len, bulletType, lookaheadMatch, matched,
+            lookaheadRegExp = new RegExp(this.lookahead, "mg"),
+            placeStack = [w.output],
+            currType = null,
+            currLevel = 0;
+            
         w.nextMatch = w.matchStart;
-        var placeStack = [w.output];
-        var currType = null,
-            newType;
-        var currLevel = 0,
-            newLevel;
-        var t;
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            lookaheadMatch = lookaheadRegExp.exec(w.source);
+            matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
-                if (lookaheadMatch[1]) newType = "ul";
-                if (lookaheadMatch[2]) newType = "ol";
                 newLevel = lookaheadMatch[0].length;
-                w.nextMatch += lookaheadMatch[0].length;
+                // Non-conventional bullet points
+                if (lookaheadMatch[1]) {
+                    if (lookaheadMatch[1].slice(-2) == "->") {
+                        bulletType = '\u2192';
+                        newLevel--;
+                    }
+                    else if (lookaheadMatch[1].slice(-2) == "=>") {
+                        bulletType = '\u21d2';
+                        newLevel--;
+                    }
+                    else bulletType = lookaheadMatch[1].slice(-1);
+                    newType = "ul";
+                }
+                else if (lookaheadMatch[2]) {
+                    newType = "ol";
+                }
+                w.nextMatch += newLevel;
                 if (newLevel > currLevel) {
-                    for (t = currLevel; t < newLevel; t++)
-                    placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                    for (t = currLevel; t < newLevel; t++) {
+                        placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                    }
                 } else if (newLevel < currLevel) {
                     for (t = currLevel; t > newLevel; t--)
-                    placeStack.pop();
+                        placeStack.pop();
                 } else if (newLevel == currLevel && newType != currType) {
                     placeStack.pop();
                     placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
                 }
                 currLevel = newLevel;
                 currType = newType;
-                var e = insertElement(placeStack[placeStack.length - 1], "li");
-                w.subWikify(e, this.terminator);
+                t = insertElement(placeStack[placeStack.length - 1], "li");
+                if (bulletType != "*" && bulletType != "#") {
+                    t.setAttribute("data-bullet", bulletType);
+                }
+                w.subWikify(t, this.terminator);
             }
         } while (matched);
     }
@@ -1966,9 +1951,9 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
         anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
     }
 };
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
-    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
+    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
 
 // Functions usable by custom scripts
 // This includes restart(), above.

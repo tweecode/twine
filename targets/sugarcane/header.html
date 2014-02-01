@@ -163,12 +163,6 @@ body {
 	margin-bottom: 2em;
 	text-align: left;
 }
-.passage ul {
-	padding-top: 1.3em;
-}
-.passage li {
-	margin-right: 6em;
-}
 .passage center {
 	max-width:50%;
 	margin:auto;
@@ -203,9 +197,23 @@ a.brokenLink {
 .marked[title] {
 	cursor: help;
 }
+.content > ul {
+	padding-top: 1.3em;
+}
 .passage ul {
 	margin-left: .5em;
 	padding-left: 1.5em;
+}
+.passage li {
+	margin-right: 6em;
+}
+.passage li[data-bullet] {
+	list-style-type: none;
+}
+.passage li[data-bullet]:before {
+	content: attr(data-bullet);
+	position: relative;
+	left: -1em;
 }
 .passage ol {
 	margin-left: .5em;
