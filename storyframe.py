@@ -844,7 +844,7 @@ Modernizr: off
                 if widget.passage.title == 'StoryIncludes':
                     # Might as well suppress the warning for a StoryIncludes file
                     hasstartpassage = True
-                elif not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                elif TiddlyWiki.NOINCLUDE_TAGS.isdisjoint(widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
                     if widget.passage.title == "Start":
@@ -898,6 +898,7 @@ Modernizr: off
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
         excludepassages = TiddlyWiki.INFO_PASSAGES
+        excludetags = TiddlyWiki.NOINCLUDE_TAGS
         for line in lines:
             try:
                 if line.strip():
@@ -912,8 +913,8 @@ Modernizr: off
                         openedFile.close()
                         
                         for widget in s.storyPanel.widgets:
-                            if not any(widget.passage.title in t for t in excludepassages) and \
-                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in widget.passage.tags):
+                            if widget.passage.title not in excludepassages \
+                            and excludetags.isdisjoint(widget.passage.tags):
                             
                                 # Check for uniqueness
                                 if self.storyPanel.findWidget(widget.passage.title):
@@ -946,8 +947,8 @@ Modernizr: off
                         tiddlerkeys = tw1.tiddlers.keys()
                         for tiddlerkey in tiddlerkeys:
                             passage = tw1.tiddlers[tiddlerkey]
-                            if not any(passage.title == t for t in excludepassages) and \
-                            not any(t in TiddlyWiki.NOINCLUDE_TAGS for t in passage.tags):
+                            if passage.title not in excludepassages \
+                            and excludetags.isdisjoint(passage.tags):
                                 tw.addTiddler(passage)
                     else:
                         raise Exception('File format not recognized')

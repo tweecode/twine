@@ -31,15 +31,7 @@ class TiddlyWiki:
 
 	def hasTiddler(self, name):
 		return name in self.tiddlers
-	
-	def tryGetting (self, names, default = ''):
-		"""Tries retrieving the text of several tiddlers by name; returns default if none exist."""
-		for name in names:
-			if name in self.tiddlers:
-				return self.tiddlers[name].text
-				
-		return default
-		
+
 	def toTwee (self, order = None):
 		"""Returns Twee source code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()		
@@ -177,13 +169,15 @@ class TiddlyWiki:
 					nss = nss + nsc
 			self.storysettings['obfuscatekey'] = nss
 		
-		storycode = u''
+		storyfragments = []
 		for i in order:
-			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
-				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
-					storycode += self.tiddlers[i].toHtml(self.author)
+			tiddler = self.tiddlers[i]
+			if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
+				if not obfuscate or tiddler.title == 'StorySettings':
+					storyfragments.append(tiddler.toHtml(self.author))
 				else:
-					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
+					storyfragments.append(tiddler.toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey']))
+		storycode = u''.join(storyfragments)
 		
 		if output.count('"STORY"') > 0:
 			output = output.replace('"STORY"', storycode)
@@ -245,7 +239,8 @@ class TiddlyWiki:
 	def addTwee (self, source):
 		"""Adds Twee source code to this TiddlyWiki."""
 		source = source.replace("\r\n", "\n")
-		tiddlers = source.split('\n::')
+		source = '\n' + source
+		tiddlers = source.split('\n::')[1:]
 		
 		for i in tiddlers:
 			self.addTiddler(Tiddler('::' + i))
@@ -278,16 +273,12 @@ class TiddlyWiki:
 				div.strip()
 				if div:
 					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
-			
+
 	def addHtmlFromFilename(self, filename):
-		self.addTweeFromFilename(filename, True)
-		
-	def addTweeFromFilename(self, filename, html = False):
-		w = self.read(filename)
-		if html:
-			self.addHtml(w)
-		else:
-			self.addTwee(w)
+		self.addHtml(self.read(filename))
+
+	def addTweeFromFilename(self, filename):
+		self.addTwee(self.read(filename))
 
 	def addTiddler (self, tiddler):
 		"""Adds a Tiddler object to this TiddlyWiki."""
@@ -301,11 +292,12 @@ class TiddlyWiki:
 		
 		return tiddler
 	
-	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
-	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
-	SPECIAL_TAGS = ['Twine.image']
-	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
-	INFO_TAGS = ['script', 'stylesheet', 'annotation'] + SPECIAL_TAGS + NOINCLUDE_TAGS
+	FORMATTED_INFO_PASSAGES = frozenset(['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle'])
+	UNFORMATTED_INFO_PASSAGES = frozenset(['StoryIncludes', 'StorySettings', 'StartPassages'])
+	INFO_PASSAGES = FORMATTED_INFO_PASSAGES | UNFORMATTED_INFO_PASSAGES
+	SPECIAL_TAGS = frozenset(['Twine.image'])
+	NOINCLUDE_TAGS = frozenset(['Twine.private', 'Twine.system'])
+	INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -487,13 +479,13 @@ class Tiddler:
 		return 'script' in self.tags
 	
 	def isStoryText(self):
-		return not (('script' in self.tags) or self.isStylesheet()
-			or self.isAnnotation() or any('Twine.' in i for i in self.tags)
-			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
+		return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def isStoryPassage(self):
 		""" A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
-		return self.isStoryText() and self.title not in TiddlyWiki.INFO_PASSAGES
+		return self.title not in TiddlyWiki.INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
