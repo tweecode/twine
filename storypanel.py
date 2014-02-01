@@ -95,7 +95,7 @@ class StoryPanel (wx.ScrolledWindow):
                 type = "Untitled Passage"
             title = self.untitledName(type)
         if not pos: pos = StoryPanel.INSET
-        if not logicals: qspos = self.toLogical(pos)
+        if not logicals: pos = self.toLogical(pos)
 		
         new = PassageWidget(self, self.app, title = title, text = text, tags = tags, pos = pos)
         self.widgets.append(new)
