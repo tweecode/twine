@@ -58,7 +58,8 @@ History.prototype.display = function (name, source, type, callback) {
             F.style.visibility = "visible"
         }
         p.appendChild(F);
-        scrollWindowTo(F);
+        scrollWindowTo(F, (window.getComputedStyle ?
+			parseInt(window.getComputedStyle(p).paddingBottom) : 150));
         if (!hasTransition) {
             fade(F, {
                 fade: "in"
@@ -127,9 +128,6 @@ Passage.prototype.render = function () {
         (typeof postrender[i] == "function") && postrender[i].call(this,A);
     }
     return E
-};
-Passage.prototype.reset = function () {
-    this.text = this.initialText
 };
 Passage.toolbarItems = [{
     label: "bookmark",
@@ -259,7 +257,7 @@ function setupTagCSS() {
 
 window.onload = function() {
     document.getElementById("restart").onclick=function() {
-        if (confirm("Are you sure you want to restart this story?")) {
+        if (confirm("Are you sure you want to restart this " + tale.identity() + "?")) {
             state.restart();
         }
     };

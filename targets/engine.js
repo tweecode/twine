@@ -219,13 +219,17 @@ function fade(f, c) {
 }
 
 var scrollWindowInterval;
-function scrollWindowTo(e) {
+function scrollWindowTo(e, margin) {
     var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
         g = k(e),
-        c = Math.abs(d - g),
+        j = (d > g) ? -1 : 1,
         b = 0,
-        j = (d > g) ? -1 : 1;
-    scrollWindowInterval = window.setInterval(h, 25);
+        c = Math.abs(d - g);
+    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
+    if (c) {
+        scrollWindowInterval = window.setInterval(h, 25);
+    }
 
     function h() {
         b += 0.1;
@@ -236,17 +240,16 @@ function scrollWindowTo(e) {
     }
 
     function k(o) {
-        var p = a(o);
-        var q = p + o.offsetHeight;
-        var l = window.scrollY ? window.scrollY : document.documentElement.scrollTop;
-        var m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
-        var n = l + m;
-        if (p < l) {
+        var p = a(o),
+            h = o.offsetHeight,
+            n = d + m;
+        p = Math.min(Math.max(p + margin * ( p < d ? -1 : 1), 0), n);
+        if (p < d) {
             return p
         } else {
-            if (q > n) {
-                if (o.offsetHeight < m) {
-                    return (p - (m - o.offsetHeight) + 20)
+            if (p+h > n) {
+                if (h < m) {
+                    return (p - (m - h) + 20)
                 } else {
                     return p
                 }
@@ -960,42 +963,47 @@ macros.button = {
 };
 
 function Passage(c, b, a, ofunc, okey) {
-    var t, k;
+    var t;
     if (!this || this.constructor != Passage) {
-        throw new ReferenceError("passage() incorrectly capitalised");
+        throw new ReferenceError("passage() must be in lowercase");
     }
     this.title = c;
+    ofunc = typeof ofunc == 'function' && okey != null && ofunc;
     if (b) {
         this.id = a;
-        if (ofunc != null && typeof ofunc == 'function' && okey != null) {
-            t = b.firstChild ? b.firstChild.nodeValue : "";
-            this.initialText = this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
-            this.tags = b.getAttribute("tags");
-            if (typeof this.tags == "string") {
+        // Load tags
+        this.tags = b.getAttribute("tags");
+        if (typeof this.tags == "string") {
+            if (ofunc) {
                 this.tags = ofunc(this.tags, okey);
-                this.tags = this.tags.readBracketedList();
-            } else this.tags = [];
+            }
+            this.tags = this.tags.readBracketedList();
+        } else this.tags = [];
+        // Load text
+        t = b.firstChild ? b.firstChild.nodeValue : "";
+        if (ofunc && !this.isImage()) {
+            this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
         } else {
-            this.initialText = this.text = Passage.unescapeLineBreaks(b.firstChild ? b.firstChild.nodeValue : "");
-            this.tags = b.getAttribute("tags");
-            if (typeof this.tags == "string") this.tags = this.tags.readBracketedList();
-            else this.tags = [];
+            this.text = Passage.unescapeLineBreaks(t);
         }
-        if (!~(this.tags.indexOf("Twine.image"))) {
+        // Preload linked images
+        if (!this.isImage()) {
             this.preloadImages();
         }
     } else {
-        this.initialText = this.text = '@@This passage does not exist: ' + c + '@@';
+        this.text = '@@This passage does not exist: ' + c + '@@';
         this.tags = [];
     }
 }
-
+Passage.prototype.isImage = function() {
+    return !!~(this.tags.indexOf("Twine.image"));
+}
 Passage.prototype.preloadImages = function() {
     var u = "\\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
-                d = c.exec(this.initialText);
+                d = c.exec(this.text);
                 if(d) {
                     i = new Image();
                     i.src = d[e];
@@ -1027,20 +1035,21 @@ Passage.prototype.processText = function() {
     if (~this.tags.indexOf("nobr")) {
         ret = ret.replace(/\n/g,"\u200c");
     }
-    if (~this.tags.indexOf("Twine.image")) {
+    if (this.isImage()) {
         ret = "[img[" + ret + "]]"
     }
     return ret;
 };
     
 function Tale() {
-    var a,b,c,lines,i,kv,ns,nsc,nope,
+    var a,b,c,lines,i,kv,ns,nsc,isImage,
         settings = this.storysettings = {
             lookup: function(a) {
                 return !~["0", "off", "false"].indexOf((this[a]+""));
             }
         },
         tiddlerTitle = '';
+    window.tale = this;
     function deswap(t, k) {
         var i,c,p,p1,up,r = '';
         for (i = 0; i < t.length; i++) {
@@ -1080,21 +1089,18 @@ function Tale() {
     //Load in the passages
     if (settings.obfuscate == 'swap' && settings.obfuscatekey) {
         ns = '';
-        nope = ":\\\"n0";
-        if (settings.obfuscatekey == 'rot13') {
-            settings.obfuscatekey = "anbocpdqerfsgthuivjwkxlymz";
-        }
         for (i = 0; i < settings.obfuscatekey.length; i++) {
             nsc = settings.obfuscatekey[i];
-            if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
+            if (ns.indexOf(nsc) == -1 && ":\\\"n0".indexOf(nsc) == -1) ns = ns + nsc;
         }
         settings.obfuscatekey = ns;
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
-                if (tiddlerTitle != 'StorySettings') 
+                isImage = (c.getAttribute("tags")+"").indexOf("Twine.image")>-1;
+                if (tiddlerTitle != 'StorySettings' && !isImage) 
                     tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, deswap, settings.obfuscatekey);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && deswap, settings.obfuscatekey);
             }
         }
     } else {
@@ -1153,6 +1159,9 @@ Tale.prototype.lookup = function (h, g, a) {
 };
 Tale.prototype.canUndo = function() {
     return this.storysettings.lookup('undo');
+};
+Tale.prototype.identity = function() {
+    return this.storysettings.identity || "game";
 };
 Tale.prototype.forEachStylesheet = function(tags, callback) {
     var passage, i
@@ -1827,13 +1836,6 @@ Wikifier.formatters = [
     }
 },
 {
-    name: "lineBreak",
-    match: "\\n",
-    handler: function (w) {
-        insertElement(w.output, "br");
-    }
-},
-{
     name: "continuedLine",
     match: "\\\\\\s*?\\n",
     handler: function(a) {
@@ -1924,7 +1926,7 @@ Wikifier.linkFunction = function(title, el, callback) {
 Wikifier.createInternalLink = function (place, title, callback, type) {
     var tag = (type == "button" ? 'button' : 'a'),
         suffix = (type == "button" ? "Button" : "Link"),
-        el = insertElement(place, tag, title);
+        el = insertElement(place, tag);
 
     if (tale.has(title)) {
         el.className = 'internal'+suffix;
@@ -2056,15 +2058,15 @@ function scriptEval(s) {
     try {
         eval(s.text);
     } catch (e) {
-        alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
+        alert("There is a technical problem with this " + tale.identity() + " (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
 
 /* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+var softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
 window.onerror = function (msg, a, b, c, error) {
-    var s = (error && (".\n\n" + error.stack + "\n\n")) || (" (" + msg + ").\n");
-    alert("Sorry to interrupt, but this story's code has got itself in a mess" + s + softErrorMessage.slice(1));
+    var s = (error && (".\n\n" + error.stack.replace(/\([^\)]+\)/g,'') + "\n\n")) || (" (" + msg + ").\n");
+    alert("Sorry to interrupt, but this " + ((tale && tale.identity && tale.identity()) || "page") + "'s code has got itself in a mess" + s + softErrorMessage.slice(1));
     window.onerror = null;
 };
 
@@ -2089,7 +2091,7 @@ function main() {
     }
     
     if (!window.JSON || !document.querySelector) {
-        return (passages.innerHTML = "This story requires a newer web browser. Sorry.");
+        return (passages.innerHTML = "This " + tale.identity() + " requires a newer web browser. Sorry.");
     } else {
         passages.innerHTML = "";
     }
@@ -2099,7 +2101,7 @@ function main() {
         imgs = tale.lookup("tags", "Twine.image");
         for (i = 0; i < imgs.length; i++) {
             if (imgs[i].text.length >= 32768) {
-                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
+                alert("NOTE: This " + tale.identity() + "'s HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
                 break;
             }
         }

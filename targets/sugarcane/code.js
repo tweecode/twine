@@ -35,7 +35,7 @@ History.prototype.display = function (title, source, type, callback) {
                 sessionStorage.setItem("history"+this.id, JSON.stringify(this.history));
                 this.pushState(this.history.length <= 2 && window.history.state == "");
             } catch(e) {
-                alert("Your browser couldn't save the state of the game.\n"+
+                alert("Your browser couldn't save the state of the " + tale.identity() +".\n"+
                     "You may continue playing, but it will no longer be possible to undo moves from here on in.");
                 tale.storysettings.undo="off";
             }
@@ -174,7 +174,7 @@ var Interface = {
         restart && (restart.onclick = Interface.restart);
     },
     restart: function () {
-        if (confirm("Are you sure you want to restart this story?")) {
+        if (confirm("Are you sure you want to restart this " + tale.identity() + "?")) {
             state.restart()
         }
     },

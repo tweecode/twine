@@ -13,7 +13,6 @@
 #
 
 import re, datetime, time, locale, os, sys, tempfile, codecs
-import tweelexer
 from tweelexer import TweeLexer
 
 #
@@ -173,7 +172,7 @@ class TiddlyWiki:
 		for i in order:
 			tiddler = self.tiddlers[i]
 			if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
-				if not obfuscate or tiddler.title == 'StorySettings':
+				if not obfuscate or tiddler.title == 'StorySettings' or tiddler.isImage() :
 					storyfragments.append(tiddler.toHtml(self.author))
 				else:
 					storyfragments.append(tiddler.toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey']))
@@ -447,9 +446,9 @@ class Tiddler:
 		if hasattr(self, 'pos'):
 			output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
 		output += ' modifier="' + author.replace('"','&quot;') + '">'
-		output += encode_text(self.text, obfuscation, obfuscationkey) + '</div>'
+		output += encode_text(self.text, obfuscation, obfuscationkey) 
 		 
-		return output
+		return output + '</div>'
 		
 		
 	def toTwee (self):
@@ -549,16 +548,17 @@ class Tiddler:
 #
 
 
-def encode_text (text, obfuscation, obfuscationkey):
+def encode_text (text, obfuscation = None, obfuscationkey = ''):
 	"""Encodes a string for use in HTML output."""
 	output = text
 	if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
-	output = output.replace('\\', '\s')
-	output = output.replace('\t', '\\t')
+	output = output.replace('\\', '\s') \
+		.replace('\t', '\\t') \
+		.replace('<', '&lt;') \
+		.replace('>', '&gt;') \
+		.replace('"', '&quot;') \
+		.replace('\0', '&#0;')
 	output = re.sub(r'\r?\n', r'\\n', output)
-	output = output.replace('<', '&lt;')
-	output = output.replace('>', '&gt;')
-	output = output.replace('"', '&quot;')
 	return output
 
 def encode_obfuscate_swap(text, obfuscationkey):

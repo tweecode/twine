@@ -770,7 +770,7 @@ Undo: on
 
 Bookmark: on
 
---Obfuscate the story's HTML source to prevent possible
+--Obfuscate the HTML source to prevent possible
 --spoilers? (swap / off)
 
 Obfuscate: off
@@ -778,6 +778,12 @@ Obfuscate: off
 --String of letter pairs to use for swap-style obfuscation
 
 ObfuscateKey: """ + ''.join(obfuscateKey) + """
+
+--What this work identifies as. Is it a game, a story,
+--a poem, or something else? (This is used for dialogs and
+--error messages only.)
+
+Identity: game
 
 --Include the jQuery script library? (on / off)
 --Individual scripts may force this on by
