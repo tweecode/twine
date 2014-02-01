@@ -239,7 +239,8 @@ class TiddlyWiki:
 	def addTwee (self, source):
 		"""Adds Twee source code to this TiddlyWiki."""
 		source = source.replace("\r\n", "\n")
-		tiddlers = source.split('\n::')
+		source = '\n' + source
+		tiddlers = source.split('\n::')[1:]
 		
 		for i in tiddlers:
 			self.addTiddler(Tiddler('::' + i))
