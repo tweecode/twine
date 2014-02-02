@@ -1,0 +1,38 @@
+#!/usr/bin/env python2
+
+from tiddlywiki import TiddlyWiki
+
+from glob import glob
+import sys
+
+
+def main(args):
+
+    # read command line arguments
+
+    sources = [
+        filename
+        for arg in args
+        for filename in glob(arg)
+        ]
+    if len(sources) != 1:
+        print >> sys.stderr, 'untwee: %s HTML files specified' % ('multiple' if sources else 'no')
+        sys.exit(2)
+    source, = sources
+
+    # populate a TiddlyWiki
+
+    wiki = TiddlyWiki()
+    wiki.addHtmlFromFilename(source)
+
+    # generate output
+
+    output = wiki.toTwee()
+    if sys.stdout.isatty():
+        print output
+    else:
+        print output.encode('utf_8_sig')
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
