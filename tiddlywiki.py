@@ -26,14 +26,15 @@ class TiddlyWiki:
         return name in self.tiddlers
 
     def toTwee(self, order = None):
-        """Returns Twee source code for this TiddlyWiki."""
-        if not order: order = self.tiddlers.keys()
-        output = u''
-
-        for i in order:
-            output += self.tiddlers[i].toTwee()
-
-        return output
+        """Returns Twee source code for this TiddlyWiki.
+        The 'order' argument is a sequence of passage titles specifying the order
+        in which passages should appear in the output string; by default passages
+        are returned in arbitrary order.
+        """
+        tiddlers = self.tiddlers
+        if order is None:
+            order = tiddlers.keys()
+        return u''.join(tiddlers[i].toTwee() for i in order)
 
     def read(self, filename):
         try:
