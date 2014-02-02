@@ -31,15 +31,7 @@ class TiddlyWiki:
 
 	def hasTiddler(self, name):
 		return name in self.tiddlers
-	
-	def tryGetting (self, names, default = ''):
-		"""Tries retrieving the text of several tiddlers by name; returns default if none exist."""
-		for name in names:
-			if name in self.tiddlers:
-				return self.tiddlers[name].text
-				
-		return default
-		
+
 	def toTwee (self, order = None):
 		"""Returns Twee source code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()		
@@ -177,13 +169,15 @@ class TiddlyWiki:
 					nss = nss + nsc
 			self.storysettings['obfuscatekey'] = nss
 		
-		storycode = u''
+		storyfragments = []
 		for i in order:
-			if not any(t in self.NOINCLUDE_TAGS for t in self.tiddlers[i].tags):
-				if (self.tiddlers[i].title == 'StorySettings' or not obfuscate):
-					storycode += self.tiddlers[i].toHtml(self.author)
+			tiddler = self.tiddlers[i]
+			if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
+				if not obfuscate or tiddler.title == 'StorySettings':
+					storyfragments.append(tiddler.toHtml(self.author))
 				else:
-					storycode += self.tiddlers[i].toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey'])
+					storyfragments.append(tiddler.toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey']))
+		storycode = u''.join(storyfragments)
 		
 		if output.count('"STORY"') > 0:
 			output = output.replace('"STORY"', storycode)
@@ -245,7 +239,8 @@ class TiddlyWiki:
 	def addTwee (self, source):
 		"""Adds Twee source code to this TiddlyWiki."""
 		source = source.replace("\r\n", "\n")
-		tiddlers = source.split('\n::')
+		source = '\n' + source
+		tiddlers = source.split('\n::')[1:]
 		
 		for i in tiddlers:
 			self.addTiddler(Tiddler('::' + i))
@@ -253,7 +248,7 @@ class TiddlyWiki:
 	def addHtml (self, source):
 		
 		"""Adds HTML source code to this TiddlyWiki."""	
-		divs = re.search(r'<div\sid=["\']?storeArea["\']?>(.*)</div>', source,
+		divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
 						re.DOTALL)
 		if divs:
 			divs = divs.group(1);
@@ -278,16 +273,12 @@ class TiddlyWiki:
 				div.strip()
 				if div:
 					self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
-			
+
 	def addHtmlFromFilename(self, filename):
-		self.addTweeFromFilename(filename, True)
-		
-	def addTweeFromFilename(self, filename, html = False):
-		w = self.read(filename)
-		if html:
-			self.addHtml(w)
-		else:
-			self.addTwee(w)
+		self.addHtml(self.read(filename))
+
+	def addTweeFromFilename(self, filename):
+		self.addTwee(self.read(filename))
 
 	def addTiddler (self, tiddler):
 		"""Adds a Tiddler object to this TiddlyWiki."""
@@ -301,11 +292,12 @@ class TiddlyWiki:
 		
 		return tiddler
 	
-	INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryIncludes', 'StorySettings', 'StartPassages']
-	FORMATTED_INFO_PASSAGES = ['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle']
-	SPECIAL_TAGS = ['Twine.image']
-	NOINCLUDE_TAGS = ['Twine.private', 'Twine.system']
-	INFO_TAGS = ['script', 'stylesheet', 'annotation'] + SPECIAL_TAGS + NOINCLUDE_TAGS
+	FORMATTED_INFO_PASSAGES = frozenset(['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle'])
+	UNFORMATTED_INFO_PASSAGES = frozenset(['StoryIncludes', 'StorySettings', 'StartPassages'])
+	INFO_PASSAGES = FORMATTED_INFO_PASSAGES | UNFORMATTED_INFO_PASSAGES
+	SPECIAL_TAGS = frozenset(['Twine.image'])
+	NOINCLUDE_TAGS = frozenset(['Twine.private', 'Twine.system'])
+	INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
 #
 # Tiddler class
 #
@@ -487,21 +479,21 @@ class Tiddler:
 		return 'script' in self.tags
 	
 	def isStoryText(self):
-		return not (('script' in self.tags) or self.isStylesheet()
-			or self.isAnnotation() or any('Twine.' in i for i in self.tags)
-			or (self.title in TiddlyWiki.INFO_PASSAGES and self.title not in TiddlyWiki.FORMATTED_INFO_PASSAGES))
+		return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def isStoryPassage(self):
 		""" A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
-		return self.isStoryText() and self.title not in TiddlyWiki.INFO_PASSAGES
+		return self.title not in TiddlyWiki.INFO_PASSAGES \
+			and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 	
 	def linksAndDisplays(self):
 		return list(set(self.links+self.displays))
     
-	def update(self, includeInternal = True, includeMacros = True):
+	def update(self):
 		"""
-		Update the lists of all passages linked/displayed by this one. By default,
-		returns internal links and <<choice>>/<<actions>> macros.
+		Update the lists of all passages linked/displayed by this one.
+		Returns internal links and <<choice>>/<<actions>> macros.
 		"""
 		if not self.isStoryText() and not self.isAnnotation() and not self.isStylesheet():
 			self.displays = []
@@ -515,63 +507,42 @@ class Tiddler:
 		
 		self.macros = []
 		# other macros (including shorthand <<display>>)
-		iterator = re.finditer(TweeLexer.MACRO_REGEX, self.text)
-		for m in iterator:
+		for m in re.finditer(TweeLexer.MACRO_REGEX, self.text):
 			# Exclude shorthand <<print>>
 			if m.group(1) and m.group(1)[0] != '$':
 				self.macros.append(m.group(1))
-        
-		links = []
-		actions = []
-		choices = []
-		images = []
-		
-		# regular hyperlinks
-		if includeInternal:
-			iterator = re.finditer(TweeLexer.LINK_REGEX, self.text)
-			for m in iterator:
-				links.append(m.group(2) or m.group(1))
-			
-			# Include images
-			iterator = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
-			for m in iterator:
-				if m.group(5):
-					links.append(m.group(5))
 
-		if includeMacros:
-			
-			# <<choice>>
-			choices = []
-			choiceBlocks = re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text)
-			for block in choiceBlocks:
-				# New style <<choice>>
-				item = re.match(TweeLexer.LINK_REGEX, block)
-				if item:
-					choices.append(m.group(2) or m.group(1))
-				else:
-					# Old style
-					item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\s]\S*)', block)
-					if item:
-						choices.append(re.sub(r'^[^\|]*\|', '', ''.join(item.groups(''))))
-			
-			# <<actions '' ''>>
-			
-			actions = []
-			actionBlocks = re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text)
-			for block in actionBlocks:
-				actions = actions + re.findall(r'[\'"](.*?)[\'"]', block)
-		
-		# remove duplicates by converting to a set
-		
-		self.links = list(set(links + choices + actions))
-		
+		# avoid duplicates by collecting links in a set
+		links = set()
+
+		# Regular hyperlinks (also matches wiki-style links inside macros)
+		for m in re.finditer(TweeLexer.LINK_REGEX, self.text):
+			links.add(m.group(2) or m.group(1))
+
+		# Include images
+		for m in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
+			if m.group(5):
+				links.add(m.group(5))
+
+		# <<choice passage_name [link_text]>>
+		for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
+			item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)
+			if item:
+				links.add(''.join(item.groups('')))
+
+		# <<actions '' ''>>
+		for block in re.findall(r'\<\<actions\s+(.*?)\s?\>\>', self.text):
+			links.update(re.findall(r'[\'"](.*?)[\'"]', block))
+
+		self.links = list(links)
+
 		# Images
-		
-		imageBlocks = re.finditer(TweeLexer.IMAGE_REGEX, self.text)
-		for block in imageBlocks:
-			images.append(block.group(4))
-		
-		self.images = images
+
+		images = set()
+		for block in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
+			images.add(block.group(4))
+
+		self.images = list(images)
 
 #
 # Helper functions
