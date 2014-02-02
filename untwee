@@ -6,6 +6,19 @@ from glob import glob
 import sys
 
 
+def makeOrder(wiki):
+    '''Computes a linear passage order for the given story.
+    '''
+    tiddlers = wiki.tiddlers
+    storyPassages = set(
+        name
+        for name, tiddler in tiddlers.iteritems()
+        if tiddler.isStoryPassage()
+        )
+    infoPassages = set(tiddlers) - storyPassages
+    return sorted(infoPassages) + sorted(storyPassages)
+
+
 def main(args):
 
     # read command line arguments
@@ -27,7 +40,7 @@ def main(args):
 
     # generate output
 
-    output = wiki.toTwee()
+    output = wiki.toTwee(makeOrder(wiki))
     if sys.stdout.isatty():
         print output
     else:
