@@ -59,7 +59,7 @@ History.prototype.display = function (name, source, type, callback) {
         }
         p.appendChild(F);
         scrollWindowTo(F, (window.getComputedStyle ?
-			parseInt(window.getComputedStyle(p).paddingBottom) : 150));
+            parseInt(window.getComputedStyle(p).paddingBottom) : 150));
         if (!hasTransition) {
             fade(F, {
                 fade: "in"

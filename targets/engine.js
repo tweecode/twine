@@ -82,7 +82,7 @@ function alterCSS(text) {
     text = text.replace(/:visited/g,".visitedLink");
     // Hoist @import
     text = text.replace(/@import\s+(?:url\s*\(\s*['"]?|['"])[^"'\s]+(?:['"]?\s*\)|['"])\s*([\w\s\(\)\d\:,\-]*);/g, function(e) {
-        temp += e;
+        temp += e; return '';
     });
     text = temp + text;
     
@@ -230,7 +230,7 @@ function scrollWindowTo(e, margin) {
     if (c) {
         scrollWindowInterval = window.setInterval(h, 25);
     }
-
+	
     function h() {
         b += 0.1;
         window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
@@ -243,7 +243,7 @@ function scrollWindowTo(e, margin) {
         var p = a(o),
             h = o.offsetHeight,
             n = d + m;
-        p = Math.min(Math.max(p + margin * ( p < d ? -1 : 1), 0), n);
+        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
         if (p < d) {
             return p
         } else {
@@ -1194,7 +1194,7 @@ Tale.prototype.setPageElements = function() {
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "block";
+        document.getElementById("storyMenu").setAttribute("style","");
         setPageElement("storyMenu", "StoryMenu", "");
     }
 };

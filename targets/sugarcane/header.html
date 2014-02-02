@@ -3,6 +3,7 @@
 <!--[if gt IE 8]><!--> <html> <!--<![endif]-->
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--
 "VERSION"
 "TIME"
@@ -65,7 +66,7 @@ body {
 	margin: 4em 15% 5% 5em;
 }
 #sidebar {
-	position: absolute;
+	position: fixed;
 	width: 12em;
 	left: 7.5em;
 	list-style: none;
@@ -73,12 +74,15 @@ body {
 	padding: 0 1em 0 0;
 	font: bold 1.1em Verdana,sans-serif;
 }
+#sidebar ul {
+	padding: 0;
+}
 #sidebar li {
 	color: #333;
 	text-align: right;
 	background-repeat: no-repeat;
 	margin-bottom: 1em;
-	line-height: 1.4em !important;
+	line-height: 1.4em;
 	list-style: none;
 }
 #sidebar li a {
@@ -106,12 +110,11 @@ body {
 	font-size: 50%;
 }
 #sidebar #storyMenu {
-	display: none;
+	display: block;
 	line-height: 2.5em;
 	margin-bottom: .5em;
 	color: #999;
 	cursor: auto;
-	text-align:right !important;
 }
 #sidebar #title:hover {
 	color: #999;
@@ -134,6 +137,7 @@ body {
 	background-color: #343434;
 	color: #fff;
 	opacity: .9;
+	z-index: 5;
 	border: 1px solid #fff;
 	text-align: left;
 	font: 1.1em Verdana;
@@ -261,6 +265,26 @@ input[type=text]:hover {
 img {
 	vertical-align:bottom;
 }
+@media screen and (max-width: 640px) {
+	body {
+		margin: 5%;
+	}
+	#sidebar {
+		position: static;
+		width: 100%;
+		padding: 0;
+		border-bottom: 1px solid #333;
+	}
+	#sidebar li  {
+		text-align: center;
+	}
+	#passages {
+		padding-top: 2em;
+		margin-left: 0em;
+		border-left: 0;
+		min-height: 100vh;
+	}
+}
 </style>
 <style id="transitionCSS">
 .transition-in {
@@ -282,7 +306,7 @@ img {
 <body>
 <ul id="sidebar">
 <li id="title" class="storyElement"><span id="storyTitle" class="storyElement"></span><span id="storySubtitle" class="storyElement"></span><span id="titleSeparator"></span><span id="storyAuthor" class="storyElement"></span></li>
-<li id="storyMenu" class="storyElement"></li>
+<li id="storyMenu" class="storyElement" style="display:none"></li>
 <li id="snapback">Rewind</li>
 <li id="restart">Restart</li>
 <li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
