@@ -686,14 +686,23 @@ class PassageWidget:
                     gc.DestroyClippingRegion()
                     gc.SetClippingRect(wx.Rect(1, titleBarHeight + 1, size.width - 3, size.height - 3))
                 
-                scale = size.width/float(self.bitmap.GetWidth());
+                width = size.width
+                height = size.height - titleBarHeight
+
+                # choose smaller of vertical and horizontal scale factor, to preserve aspect ratio
+                scale = min(width/float(self.bitmap.GetWidth()), height/float(self.bitmap.GetHeight()));
+
                 img = self.bitmap.ConvertToImage();
                 if scale != 1:
                     img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
+
+                # offset image horizontally or vertically, to centre after scaling
+                offsetWidth = (width - img.GetWidth())/2
+                offsetHeight = (height - img.GetHeight())/2
                 if isinstance(gc, wx.GraphicsContext):
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1, img.GetWidth(), img.GetHeight())
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight, img.GetWidth(), img.GetHeight())
                 else:
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1, titleBarHeight + 1)
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight)
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
