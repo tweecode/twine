@@ -16,7 +16,29 @@ def makeOrder(wiki):
         if tiddler.isStoryPassage()
         )
     infoPassages = set(tiddlers) - storyPassages
-    return sorted(infoPassages) + sorted(storyPassages)
+    ordered = []
+
+    # Begin with the special passages, in a fixed order.
+    for name in ('StoryBanner', 'StoryTitle', 'StorySubtitle', 'StoryAuthor', 'StoryCaption',
+            'StoryMenu', 'MenuStory', 'MenuOptions', 'MenuShare',
+            'StorySettings', 'StoryIncludes', 'StoryInit', 'PassageReady', 'PassageDone'):
+        if name in infoPassages:
+            ordered.append(name)
+            infoPassages.remove(name)
+
+    # Add passages with special tags, in a fixed tag order.
+    for tag in ('script', 'widget', 'stylesheet', 'Twine.image', 'annotation'):
+        tagged = set(passage for passage in infoPassages if tag in tiddlers[passage].tags)
+        ordered.extend(sorted(tagged))
+        infoPassages -= tagged
+
+    # Append any remaining info passages.
+    ordered.extend(sorted(infoPassages))
+
+    # Append all story passages.
+    ordered.extend(sorted(storyPassages))
+
+    return ordered
 
 
 def main(args):
