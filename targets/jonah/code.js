@@ -8,14 +8,7 @@ Tale.prototype.canBookmark = function() {
 };
 History.prototype.init = function () {
     if (!this.restore()) {
-        if (tale.has("StartPassages")) {
-            var B = tale.get("StartPassages").text.readBracketedList();
-            for (var A = 0; A < B.length; A++) {
-                this.display(B[A], null, "quietly")
-            }
-        } else {
-            this.display("Start", null, "quietly")
-        }
+        this.display("Start", null, "quietly");
         tale.setPageElements();
     }
 };
