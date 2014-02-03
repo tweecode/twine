@@ -404,7 +404,9 @@ class PassageWidget:
         dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
     
     def getTitleColorIndex(self):
-        # Find the StartPassages passage
+        """
+        Returns the title bar style that matches this widget's passage.
+        """
         if self.passage.isAnnotation():
             return 'annotation'
         elif self.passage.isImage():
