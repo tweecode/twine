@@ -230,7 +230,7 @@ function scrollWindowTo(e, margin) {
     if (c) {
         scrollWindowInterval = window.setInterval(h, 25);
     }
-	
+    
     function h() {
         b += 0.1;
         window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
@@ -443,9 +443,9 @@ var restart = History.prototype.restart = function () {
 
 var version = {
     major: 4,
-    minor: 1,
+    minor: 2,
     revision: 0,
-    date: new Date("January 1, 2013"),
+    date: new Date("2014"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -1510,8 +1510,9 @@ Wikifier.formatters = [
 {
     name: "emdash",
     match: "--",
+    becomes: String.fromCharCode(8212),
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + String.fromCharCode(8212), String.fromCharCode(8212));
+        insertElement(a.output, "span", null, "char " + this.becomes, this.becomes);
     }
 },
 {
@@ -1530,20 +1531,6 @@ Wikifier.formatters = [
     handler: Wikifier.formatHelpers.monospacedByLineHelper
 },
 {
-    name: "monospacedByLineForPlugin",
-    match: "^//\\{\\{\\{\\n",
-    lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
-    handler: Wikifier.formatHelpers.monospacedByLineHelper
-},
-{
-    name: "wikifyCommentForPlugin",
-    match: "^/\\*\\*\\*\\n",
-    terminator: "^\\*\\*\\*/\\n",
-    handler: function (w) {
-        w.subWikify(w.output, this.terminator);
-    }
-},
-{
     name: "quoteByBlock",
     match: "^<<<\\n",
     terminator: "^<<<\\n",
@@ -1554,11 +1541,9 @@ Wikifier.formatters = [
 },
 {
     name: "list",
-    match: "^(?:(?:[>\\*\\-=]+)|(?:#+))",
-    lookahead: "^(?:([>\\*\\-=]+)|(#+))",
+    match: "^(?:(?:[>\\*=]+)|(?:#+))",
+    lookahead: "^(?:([>\\*=]+)|(#+))",
     terminator: "\\n",
-    outerElement: "ul",
-    itemElement: "li",
     handler: function (w) {
         var newType, newLevel, t, len, bulletType, lookaheadMatch, matched,
             lookaheadRegExp = new RegExp(this.lookahead, "mg"),

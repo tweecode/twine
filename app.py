@@ -203,7 +203,7 @@ class App (wx.App):
         info.SetIcon(self.icon)
         info.SetWebSite('http://twinery.org/')
         info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas')
-        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','and others.'])
+        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','Maarten ter Huurne','and others.'])
                           
         info.SetLicense('The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
                           + ' it under the terms of the GNU General Public License as published by the Free Software'
