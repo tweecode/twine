@@ -26,7 +26,7 @@ class PassageWidget:
         self.parent = parent
         self.app = app
         self.dimmed = False
-        self.brokenEmblem = wx.Bitmap(self.app.getPath() + os.sep + 'icons' + os.sep + 'brokenemblem.png')
+        self.brokenEmblem = wx.Bitmap(self.app.iconsPath + 'brokenemblem.png')
         self.paintBuffer = wx.MemoryDC()
         self.paintBufferBounds = None
         pos = list(pos)
@@ -764,6 +764,10 @@ class PassageWidget:
     
     def __repr__ (self):
         return "<PassageWidget '" + self.passage.title + "'>"
+    
+    def getHeader(self):
+        """Returns the current selected target header for this Passage Widget."""
+        return self.parent.getHeader()
     
     MIN_PIXEL_SIZE = 10
     MIN_GREEKING_SIZE = 50

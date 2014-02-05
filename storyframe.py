@@ -33,13 +33,13 @@ class StoryFrame (wx.Frame):
         if (state):
             self.buildDestination = state['buildDestination']
             self.saveDestination = state['saveDestination']
-            self.target = state['target']
+            self.setTarget(state['target'].lower())
             self.storyPanel = StoryPanel(self, app, state = state['storyPanel'])
             self.pristine = False
         else:
             self.buildDestination = ''
             self.saveDestination = ''
-            self.target = 'sugarcane'
+            self.setTarget('sugarcane')
             self.storyPanel = StoryPanel(self, app)
         
         # window events
@@ -296,30 +296,14 @@ class StoryFrame (wx.Frame):
         
         storyFormatMenu = wx.Menu()
         storyFormatCounter = StoryFrame.STORY_FORMAT_BASE
-        storyFormatPath = app.getPath() + os.sep + 'targets' + os.sep 
-        	
-        for sfdir in os.listdir(storyFormatPath):
-            try:
-                if os.access(storyFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                    storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
-                    self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
-                    self.storyFormats[storyFormatCounter] = sfdir
-                    storyFormatCounter += 1
-            except:
-                pass
-        
-        if sys.platform == "darwin":
-            try:
-                externalFormatPath = re.sub('[^/]+.app/.*', '', app.getPath()) + os.sep + 'targets' + os.sep        
-                for sfdir in os.listdir(externalFormatPath):
-                    if os.access(externalFormatPath + sfdir + os.sep + 'header.html', os.R_OK):
-                        storyFormatMenu.Append(storyFormatCounter, sfdir.capitalize(), kind = wx.ITEM_CHECK)
-                        self.Bind(wx.EVT_MENU, lambda e,target=sfdir: self.setTarget(target), id = storyFormatCounter)
-                        self.storyFormats[storyFormatCounter] = sfdir
-                        storyFormatCounter += 1
-            except:
-                pass
-                
+
+        for key in sorted(app.headers.keys()):
+            header = app.headers[key]
+            storyFormatMenu.Append(storyFormatCounter, header.label, kind = wx.ITEM_CHECK)
+            self.Bind(wx.EVT_MENU, lambda e,target=key: self.setTarget(target), id = storyFormatCounter)
+            self.storyFormats[storyFormatCounter] = header
+            storyFormatCounter += 1
+
         if storyFormatCounter:
             storyFormatMenu.AppendSeparator()
        
@@ -389,7 +373,7 @@ class StoryFrame (wx.Frame):
                                     (wx.ACCEL_CTRL, wx.WXK_RETURN, StoryFrame.STORY_EDIT_FULLSCREEN) \
                                                       ]))
 
-        iconPath = self.app.getPath() + os.sep + 'icons' + os.sep
+        iconPath = self.app.iconsPath
         
         self.toolbar = self.CreateToolBar(style = wx.TB_FLAT | wx.TB_NODIVIDER)
         self.toolbar.SetToolBitmapSize((StoryFrame.TOOLBAR_ICON_SIZE, StoryFrame.TOOLBAR_ICON_SIZE))
@@ -1084,6 +1068,7 @@ Modernizr: off
     
     def setTarget (self, target):
         self.target = target
+        self.header = self.app.headers[target]
         
     def updateUI (self, event = None):
         """Adjusts menu items to reflect the current state."""
@@ -1182,9 +1167,8 @@ Modernizr: off
         autoBuildItem.Enable(self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") != None)
         
         # Story format submenu
-
         for key in self.storyFormats:
-            self.menus.FindItemById(key).Check(self.target == self.storyFormats[key])
+            self.menus.FindItemById(key).Check(self.target == self.storyFormats[key].id)
         
     def toggleToolbar (self, event = None):
         """Toggles the toolbar onscreen."""
@@ -1232,6 +1216,10 @@ Modernizr: off
 
     def __repr__ (self):
         return "<StoryFrame '" + self.saveDestination + "'>"
+    
+    def getHeader(self):
+        """Returns the current selected target header for this Story Frame."""
+        return self.header
     
     # menu constants
     # (that aren't already defined by wx)
