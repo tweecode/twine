@@ -62,6 +62,8 @@ class TiddlyWiki:
 		if not order: order = self.tiddlers.keys()
 		output = u''
 		
+		header = header in app.headers and app.headers[header]
+        
 		if not header:
 			app.displayError("building: no story format was specified.\n"
 							+ "Please select another format from the Story Format submenu.\n\n")
@@ -81,11 +83,11 @@ class TiddlyWiki:
 		def insertEngine(app, output, filename, label, extra = ''):
 			if output.count(label) > 0:
 				try:
-					enginecode = self.read(app.targetsPath + filename)
+					enginecode = self.read(filename)
 					return output.replace(label,enginecode + extra)
     
 				except IOError:
-					app.displayError("building: the file '" + filename + "' used by the story format '" + target + "' wasn't found.\n\n")
+					app.displayError("building: the file '" + filename + "' used by the story format '" + header.label + "' wasn't found.\n\n")
 					return None
 			else:
 				return output
@@ -110,7 +112,17 @@ class TiddlyWiki:
 		# Embed any engine related files required by the header.
 		embedded = header.files_to_embed()
 		for key in embedded.keys():
-			output = insertEngine(app, output, embedded[key], key)
+			output = insertEngine(app, output, header.path + embedded[key], key)
+			if not output: return
+        
+		# "ENGINE", "SUGARCANE" and "JONAH" are always available even without a header,
+		# for pre-1.4.2 compatibility (and to support "Sugarcane clones" like Responsive)
+		# and because it's impossible for a file stored in the OS X "external headers" folder
+		# to refer to files in the "internal headers" folder.
+		for label, filename in { '"ENGINE"' : 'engine.js',
+                    '"SUGARCANE"' : 'sugarcane' + os.sep + 'code.js',
+                    '"JONAH"' : 'jonah' + os.sep + 'code.js' }.iteritems():
+			output = insertEngine(app, output, label = label, filename = app.builtinTargetsPath + os.sep + filename)
 			if not output: return
 		
 		# Insert the Backup Story Title
@@ -133,14 +145,14 @@ class TiddlyWiki:
 		
 		# Insert jQuery
 		if jquery:
-			output = insertEngine(app, output, 'jquery.js', '"JQUERY"')
+			output = insertEngine(app, output, app.builtinTargetsPath + 'jquery.js', '"JQUERY"')
 			if not output: return
 		else:
 			output = output.replace('"JQUERY"','')
 		
 		# Insert Modernizr
 		if modernizr:
-			output = insertEngine(app, output, 'modernizr.js', '"MODERNIZR"')
+			output = insertEngine(app, output, app.builtinTargetsPath + 'modernizr.js', '"MODERNIZR"')
 			if not output: return
 		else:
 			output = output.replace('"MODERNIZR"','')

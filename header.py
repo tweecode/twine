@@ -16,9 +16,9 @@ class Header (object):
         The item key is the label to look for within the output. 
         The item value is the name of the file who's contents will be embedded into the output.
         
-        NOTE: Currently tiddlywiki assumes the location of the file is based on the 'targets' directory.
+        NOTE: Currently assumes the files are within self.path
         """
-        return OrderedDict([('"ENGINE"', 'engine.js')])
+        return OrderedDict()
 
     def is_endtag(self, name, tag):
         """Return true if the name is equal to an endtag."""
@@ -26,7 +26,7 @@ class Header (object):
 
     def nested_macros(self):
         """Returns a list of macro names that support nesting."""
-        return ['if', 'silently']
+        return ['if', 'silently', 'nobr']
     
     @staticmethod
     def factory(type, path):

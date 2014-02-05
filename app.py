@@ -297,16 +297,25 @@ class App (wx.App):
             self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
 
         self.iconsPath = self.scriptPath + os.sep + 'icons' + os.sep
-        self.targetsPath = self.scriptPath + os.sep + 'targets' + os.sep
-
+        self.builtinTargetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+        if sys.platform == "darwin":
+            self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + os.sep + 'targets' + os.sep
+        else:
+            self.externalTargetsPath = ''
+        
     def loadTargetHeaders(self):
-        """Load the Target Headers: NOTE: finish this description"""
+        """Load the target headers and populate the self.headers dictionary"""
         self.headers = {}
-        for sfdir in os.listdir(self.targetsPath):
+        # Get paths to built-in targets
+        paths = [(t, self.builtinTargetsPath + t + os.sep) for t in os.listdir(self.builtinTargetsPath)]
+        if self.externalTargetsPath:
+            # Get paths to external targets
+            paths += [(t, self.externalTargetsPath + t + os.sep) for t in os.listdir(self.externalTargetsPath)]
+        # Look in subdirectories only for the header file
+        for path in paths:
             try:
-                target_path = self.targetsPath + sfdir + os.sep
-                if os.access(target_path + 'header.html', os.R_OK):
-                    header = Header.factory(sfdir, target_path)
+                if not os.path.isfile(path[1]) and os.access(path[1] + 'header.html', os.R_OK):
+                    header = Header.factory(*path)
                     self.headers[header.id] = header 
             except:
                 pass

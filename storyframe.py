@@ -273,6 +273,9 @@ class StoryFrame (wx.Frame):
         self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_MENU, 'StoryMenu')
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_MENU)
         
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INIT, 'StoryInit')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INIT)
+        
         # Separator for 'visible' passages (title, subtitle) and those that solely affect compilation
         self.storySettingsMenu.AppendSeparator()
         
@@ -281,9 +284,6 @@ class StoryFrame (wx.Frame):
         
         self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INCLUDES, 'StoryIncludes')
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INCLUDES)
-        
-        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INIT, 'StoryInit')
-        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INIT)
 
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
 
@@ -786,8 +786,9 @@ Modernizr: off
 """
 
         elif id == self.STORYSETTINGS_INIT:
-            defaultText = "This passage's contents will be evaluated on story (re)start, before the first passage is shown. " \
-                          "It is a good place to initialize variables."
+            defaultText = "Place your story's setup code in this passage."\
+                          "Any macros in this passage will be run before the Start passage" \
+                          "(or any passage you wish to Test Play) is run."
 
         for widget in self.storyPanel.widgets:
             if widget.passage.title == title:

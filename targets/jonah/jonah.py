@@ -8,5 +8,5 @@ class Header (header.Header):
     def files_to_embed(self):
         """Returns an Ordered Dictionary of file names to embed into the output."""
         list = super(Header, self).files_to_embed()
-        list['"JONAH"'] = 'jonah/code.js'
+        list['"JONAH"'] = 'code.js'
         return list
