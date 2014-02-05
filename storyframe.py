@@ -282,6 +282,9 @@ class StoryFrame (wx.Frame):
         self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INCLUDES, 'StoryIncludes')
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INCLUDES)
         
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INIT, 'StoryInit')
+        self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INIT)
+
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
 
         self.storyMenu.AppendSeparator()
@@ -791,7 +794,11 @@ jQuery: off
 
 Modernizr: off
 """
-        
+
+        elif id == self.STORYSETTINGS_INIT:
+            defaultText = "This passage's contents will be evaluated on story (re)start, before the first passage is shown. " \
+                          "It is a good place to initialize variables."
+
         for widget in self.storyPanel.widgets:
             if widget.passage.title == title:
                 found = True
@@ -1242,7 +1249,7 @@ Modernizr: off
     
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
      STORY_IMPORT_IMAGE, STORY_IMPORT_IMAGE_URL, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES] = range(401,418)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT] = range(401,419)
     
     STORY_FORMAT_BASE = 501
     

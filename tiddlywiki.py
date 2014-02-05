@@ -292,7 +292,8 @@ class TiddlyWiki:
 		
 		return tiddler
 	
-	FORMATTED_INFO_PASSAGES = frozenset(['StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle'])
+	FORMATTED_INFO_PASSAGES = frozenset([
+			'StoryMenu', 'StoryTitle', 'StoryAuthor', 'StorySubtitle', 'StoryInit'])
 	UNFORMATTED_INFO_PASSAGES = frozenset(['StoryIncludes', 'StorySettings'])
 	INFO_PASSAGES = FORMATTED_INFO_PASSAGES | UNFORMATTED_INFO_PASSAGES
 	SPECIAL_TAGS = frozenset(['Twine.image'])
