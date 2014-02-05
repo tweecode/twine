@@ -14,11 +14,12 @@ def AddURIPrefix(text, mimeType):
     mimeType = mimeType.lower()
     if mimeType in 'gif|jpg|jpeg|png|webp|svg':
         mimeGroup = "image/"
-    elif mimeType in 'ttf|woff|otf':
+    elif mimeType == 'woff':
         mimeGroup = "application/font-"
+    elif mimeType in 'ttf|otf':
+        mimeGroup = "application/x-font-"
     else:
-        # Desperate (probably incorrect) guess
-        mimeGroup = "application/x-"
+        mimeGroup = "application/octet-stream"
     
     # Correct certain MIME types
     if mimeType == "jpg":
