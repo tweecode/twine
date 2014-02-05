@@ -151,6 +151,7 @@ class PassageFrame (wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        self.bodyInput.SetBufferedDraw(False)
 
         # The default keyboard shortcuts for StyledTextCtrl are
         # nonstandard on Mac OS X
