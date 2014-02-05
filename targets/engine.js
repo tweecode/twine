@@ -102,6 +102,8 @@ function throwError(a, b, tooltip) {
     if (a) {
         var elem = insertElement(a, "span", null, "marked", b);
         tooltip && elem.setAttribute("title", tooltip);
+    } else {
+        alert("There is a technical problem with this story: " + b + "."+softErrorMessage);
     }
 }
 Math.easeInOut = function (a) {
@@ -2108,7 +2110,11 @@ function main() {
             sanityCheck('init() of the custom macro "'+i+'"');
         }
     }
-    
+
+    if (tale.has("StoryInit")) {
+        new Wikifier(null, tale.get("StoryInit").text);
+    }
+
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];
