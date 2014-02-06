@@ -93,8 +93,8 @@ class App (wx.App):
             self.addRecentFile(filename)
     
     def MacOpenFile(self, path):
-    	"""OS X support"""
-    	self.open(path)
+        """OS X support"""
+        self.open(path)
     
     def open (self, path):
         """Opens a specific story file."""

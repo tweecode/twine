@@ -2093,10 +2093,6 @@ function main() {
         }
     }
 
-    if (tale.has("StoryInit")) {
-        new Wikifier(null, tale.get("StoryInit").text);
-    }
-
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];

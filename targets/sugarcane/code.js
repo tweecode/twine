@@ -20,6 +20,9 @@ Tale.prototype.canBookmark = function() {
 History.prototype.init = function () {
     var a = this;
     if (!this.restore()) {
+        if (tale.has("StoryInit")) {
+            new Wikifier(null, tale.get("StoryInit").text);
+        }
         this.display("Start", null)
     }
     if (!hasPushState) {

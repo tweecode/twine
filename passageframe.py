@@ -276,7 +276,7 @@ class PassageFrame (wx.Frame):
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
         self.syncTimer.start()
         
-		# update links/displays lists
+        # update links/displays lists
         self.widget.passage.update()
         
         # change our lexer as necessary

@@ -96,7 +96,7 @@ class StoryPanel (wx.ScrolledWindow):
             title = self.untitledName(type)
         if not pos: pos = StoryPanel.INSET
         if not logicals: pos = self.toLogical(pos)
-		
+        
         new = PassageWidget(self, self.app, title = title, text = text, tags = tags, pos = pos)
         self.widgets.append(new)
         self.snapWidget(new, quietly)
@@ -582,7 +582,7 @@ class StoryPanel (wx.ScrolledWindow):
                         widget.setDimmed(False)
                 
                 self.Refresh()
-				
+                
             else:
                 # change the selection
                 self.clickedWidget.setSelected(True, not event.ShiftDown())
