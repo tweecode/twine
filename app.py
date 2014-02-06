@@ -294,7 +294,7 @@ class App (wx.App):
         self.iconsPath = scriptPath + os.sep + 'icons' + os.sep
         self.builtinTargetsPath = scriptPath + os.sep + 'targets' + os.sep
         if sys.platform == "darwin":
-            self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + os.sep + 'targets' + os.sep
+            self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + 'targets' + os.sep
         else:
             self.externalTargetsPath = ''
         
