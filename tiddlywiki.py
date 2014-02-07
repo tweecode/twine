@@ -220,17 +220,25 @@ class TiddlyWiki:
         return output
 
     def addTwee(self, source):
-        """Adds Twee source code to this TiddlyWiki."""
+        """Adds Twee source code to this TiddlyWiki.
+        Returns the tiddler titles in the order they occurred in the Twee source.
+        """
         source = source.replace("\r\n", "\n")
         source = '\n' + source
         tiddlers = source.split('\n::')[1:]
 
+        order = []
         for i in tiddlers:
-            self.addTiddler(Tiddler('::' + i))
+            tiddler = Tiddler('::' + i)
+            self.addTiddler(tiddler)
+            order.append(tiddler.title)
+        return order
 
     def addHtml(self, source):
-
-        """Adds HTML source code to this TiddlyWiki."""
+        """Adds HTML source code to this TiddlyWiki.
+        Returns the tiddler titles in the order they occurred in the HTML.
+        """
+        order = []
         divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
                         re.DOTALL)
         if divs:
@@ -255,13 +263,16 @@ class TiddlyWiki:
             for div in divs.split('<div'):
                 div.strip()
                 if div:
-                    self.addTiddler(Tiddler('<div' + div, 'html', obfuscationkey))
+                    tiddler = Tiddler('<div' + div, 'html', obfuscationkey)
+                    self.addTiddler(tiddler)
+                    order.append(tiddler.title)
+        return order
 
     def addHtmlFromFilename(self, filename):
-        self.addHtml(self.read(filename))
+        return self.addHtml(self.read(filename))
 
     def addTweeFromFilename(self, filename):
-        self.addTwee(self.read(filename))
+        return self.addTwee(self.read(filename))
 
     def addTiddler(self, tiddler):
         """Adds a Tiddler object to this TiddlyWiki."""
