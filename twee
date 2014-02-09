@@ -19,8 +19,7 @@ class TweeApp(object):
 
 	def __init__ (self, path):
 		"""Initializes the application."""
-		self.scriptPath = path + os.sep 
-		self.builtinTargetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+		self.builtinTargetsPath = path + os.sep + 'targets' + os.sep
 
 	def displayError(self, activity):
 		activity = activity.strip()
@@ -29,9 +28,6 @@ class TweeApp(object):
 		if exceptionValue is not None:
 			print >> sys.stderr, exceptionValue
 		print >> sys.stderr, ''
-
-	def getPath(self):
-		return self.scriptPath
 
 
 def main(argv):
