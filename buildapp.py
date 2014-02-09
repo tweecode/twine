@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 #
 # This builds an .app out of Twine for use with OS X.
 # Call this with this command line: buildapp.py py2app
