@@ -3,14 +3,14 @@
 #
 # StoryFindFrame
 # This allows the user to search a StoryPanel for a string of text.
-# This is just a front-end to method calls on StoryPanel. 
+# This is just a front-end to method calls on StoryPanel.
 #
 
 import re, wx
 from searchpanels import FindPanel
 
 class StoryFindFrame (wx.Frame):
-    
+
     def __init__ (self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
         self.app = app
@@ -24,24 +24,24 @@ class StoryFindFrame (wx.Frame):
         sizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
-        
-    def onFind (self, regexp, flags):            
+
+    def onFind (self, regexp, flags):
         self.storyPanel.findWidgetRegexp(regexp, flags)
-        
+
     def onClose (self):
         self.Close()
 
 #
 # StoryReplaceFrame
 # This allows the user to replace text across an entire StoryPanel.
-# This is just a front-end to method calls on StoryPanel. 
+# This is just a front-end to method calls on StoryPanel.
 #
 
 import re, wx
 from searchpanels import ReplacePanel
 
 class StoryReplaceFrame (wx.Frame):
-    
+
     def __init__ (self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
         self.app = app
@@ -54,18 +54,18 @@ class StoryReplaceFrame (wx.Frame):
                                     onReplaceAll = self.onReplaceAll, onClose = self.onClose)
         sizer.Add(replacePanel)
         replacePanel.focus()
-        
+
         sizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
 
-    def onFind (self, regexp, flags):            
+    def onFind (self, regexp, flags):
         self.storyPanel.findWidgetRegexp(regexp, flags)
 
     def onReplace(self, findRegexp, flags, replaceRegexp):
         self.storyPanel.replaceRegexpInSelectedWidget(findRegexp, replaceRegexp, flags)
-        
-    def onReplaceAll (self, findRegexp, flags, replaceRegexp):        
+
+    def onReplaceAll (self, findRegexp, flags, replaceRegexp):
         self.storyPanel.replaceRegexpInWidgets(findRegexp, replaceRegexp, flags)
 
     def onClose (self):
