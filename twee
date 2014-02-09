@@ -69,7 +69,7 @@ def main(argv):
 
 	app = TweeApp(scriptPath)
 
-	header = Header.factory(target, app.builtinTargetsPath + target + os.sep)
+	header = Header.factory(target, app.builtinTargetsPath + target + os.sep, app.builtinTargetsPath)
 
 	# populate a TiddlyWiki
 
