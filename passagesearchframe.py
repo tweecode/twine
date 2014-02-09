@@ -1,14 +1,12 @@
-#
-# PassageSearchFrame
-# This allows a user to do search and replaces on a PassageFrame.
-# By default, this shows the Find tab initially, but this can be
-# set via the constructor.
-#
-
 import re, wx
 from searchpanels import FindPanel, ReplacePanel
 
 class PassageSearchFrame (wx.Frame):
+    """
+    This allows a user to do search and replaces on a PassageFrame.
+    By default, this shows the Find tab initially, but this can be
+    set via the constructor.
+    """
 
     def __init__ (self, parent, passageFrame, app, initialState = 0):
         self.passageFrame = passageFrame

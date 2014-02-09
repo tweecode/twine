@@ -1,20 +1,18 @@
 import re, wx
 import metrics
 
-#
-# FindPanel
-# This allows the user to enter a search term and select various
-# criteria (i.e. "match case", etc.) There are two callbacks:
-#
-# onFind (regexp, flags)
-# Regexp corresponds to the user's search, and flags should be used
-# when performing that search.
-#
-# onClose()
-# When the user clicks the Close button.
-#
-
 class FindPanel (wx.Panel):
+    """
+    This allows the user to enter a search term and select various
+    criteria (i.e. "match case", etc.) There are two callbacks:
+
+    onFind (regexp, flags)
+    Regexp corresponds to the user's search, and flags should be used
+    when performing that search.
+
+    onClose()
+    When the user clicks the Close button.
+    """
 
     def __init__ (self, parent, onFind = None, onClose = None):
         self.findCallback = onFind
@@ -102,29 +100,28 @@ class FindPanel (wx.Panel):
         """
         if self.closeCallback: self.closeCallback()
 
-#
-# ReplacePanel
-# This allows the user to enter a search and replace term and select
-# various criteria (i.e. "match case", etc.) There are two callbacks:
-#
-# onFind (regexp, flags)
-# Regexp corresponds to the user's search, and flags should be used
-# when performing that search.
-#
-# onReplace (regexp, flags, replaceTerm)
-# Like find, only with a replaceTerm.
-#
-# onReplaceAll (regexp, flags, replaceTerm)
-# Like replace, only the user is signalling that they want to replace
-# all instances at once.
-#
-# onClose()
-# When the user clicks the Close button.
-#
-# You may also pass in a parameter to set whether users can perform
-# incremental searches, or if they may only replace all.
-
 class ReplacePanel (wx.Panel):
+    """
+    This allows the user to enter a search and replace term and select
+    various criteria (i.e. "match case", etc.) There are two callbacks:
+
+    onFind (regexp, flags)
+    Regexp corresponds to the user's search, and flags should be used
+    when performing that search.
+
+    onReplace (regexp, flags, replaceTerm)
+    Like find, only with a replaceTerm.
+
+    onReplaceAll (regexp, flags, replaceTerm)
+    Like replace, only the user is signalling that they want to replace
+    all instances at once.
+
+    onClose()
+    When the user clicks the Close button.
+
+    You may also pass in a parameter to set whether users can perform
+    incremental searches, or if they may only replace all.
+    """
 
     def __init__ (self, parent, allowIncremental = True, \
                   onFind = None, onReplace = None, onReplaceAll = None, onClose = None):

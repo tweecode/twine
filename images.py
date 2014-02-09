@@ -1,8 +1,6 @@
-#
-# Images
-#
-# A module for handling base64 encoded images and other assets.
-#
+"""
+A module for handling base64 encoded images and other assets.
+"""
 
 import sys, cStringIO, wx, re
 

@@ -1,22 +1,20 @@
-#
-# PassageWidget
-# A PassageWidget is a box standing in for a proxy for a single
-# passage in a story. Users can drag them around, double-click
-# to open a PassageFrame, and so on.
-#
-# This must have a StoryPanel as its parent.
-#
-# See the comments on StoryPanel for more information on the
-# coordinate systems are used here. In general, you should
-# always pass methods logical coordinates, and expect back
-# logical coordinates. Use StoryPanel.toPixels() to convert.
-#
-
 import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
 class PassageWidget:
+    """
+    A PassageWidget is a box standing in for a proxy for a single
+    passage in a story. Users can drag them around, double-click
+    to open a PassageFrame, and so on.
+
+    This must have a StoryPanel as its parent.
+
+    See the comments on StoryPanel for more information on the
+    coordinate systems are used here. In general, you should
+    always pass methods logical coordinates, and expect back
+    logical coordinates. Use StoryPanel.toPixels() to convert.
+    """
 
     def __init__ (self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', tags = [], state = None):
         # inner state

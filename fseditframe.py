@@ -1,15 +1,13 @@
-#
-# FullscreenEditFrame
-# This opens a modal fullscreen editor with some text. When the user's done,
-# this calls the callback function passed to the constructor with the new text.
-#
-# A lot of the stuff dealing with wx.stc.StyledTextCtrl comes from:
-# http://www.psychicorigami.com/2009/01/05/a-5k-python-fullscreen-text-editor/
-#
-
 import sys, wx, wx.stc
 
 class FullscreenEditFrame (wx.Frame):
+    """
+    This opens a modal fullscreen editor with some text. When the user's done,
+    this calls the callback function passed to the constructor with the new text.
+
+    A lot of the stuff dealing with wx.stc.StyledTextCtrl comes from:
+    http://www.psychicorigami.com/2009/01/05/a-5k-python-fullscreen-text-editor/
+    """
 
     def __init__ (self, parent, app, frame = None, title = '', initialText = '', callback = lambda i: i):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = title, size = (400, 400))

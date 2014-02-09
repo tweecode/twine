@@ -1,8 +1,7 @@
-#
-# Metrics
-# This module offers advice on how to size the UI appropriately
-# for the OS we're running on.
-#
+"""
+This module offers advice on how to size the UI appropriately
+for the OS we're running on.
+"""
 
 import sys
 

@@ -1,17 +1,15 @@
-#
-# StatisticsDialog
-# A StatisticsDialog displays the number of characters, words,
-# passages, links, and broken links in a StoryPanel.
-#
-# This is not a live count.
-#
-
 import wx, re, locale
 from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
 import metrics
 
 class StatisticsDialog (wx.Dialog):
+    """
+    A StatisticsDialog displays the number of characters, words,
+    passages, links, and broken links in a StoryPanel.
+
+    This is not a live count.
+    """
 
     def __init__ (self, parent, storyPanel, app, id = wx.ID_ANY):
         wx.Dialog.__init__(self, parent, id, title = 'Story Statistics')

@@ -1,13 +1,11 @@
-#
-# TweeLexer
-# This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.
-# This needs to be passed the control it will be lexing, so it can
-# look up the body text as needed.
-#
-
 import re, wx, wx.stc
 
 class TweeLexer:
+    """
+    This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.
+    This needs to be passed the control it will be lexing, so it can
+    look up the body text as needed.
+    """
 
     def __init__ (self, control, frame):
         self.ctrl = control

@@ -1,9 +1,3 @@
-#
-# StoryFrame
-# A StoryFrame displays an entire story. Its main feature is an
-# instance of a StoryPanel, but it also has a menu bar and toolbar.
-#
-
 import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
@@ -13,6 +7,10 @@ from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 
 class StoryFrame (wx.Frame):
+    """
+    A StoryFrame displays an entire story. Its main feature is an
+    instance of a StoryPanel, but it also has a menu bar and toolbar.
+    """
 
     def __init__(self, parent, app, state = None):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = StoryFrame.DEFAULT_TITLE, \

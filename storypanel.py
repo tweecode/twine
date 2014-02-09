@@ -1,25 +1,23 @@
-#
-# StoryPanel
-# A StoryPanel is a container for PassageWidgets. It translates
-# between logical coordinates and pixel coordinates as the user
-# zooms in and out, and communicates those changes to its widgets.
-#
-# A discussion on coordinate systems: logical coordinates are notional,
-# and do not change as the user zooms in and out. Pixel coordinates
-# are extremely literal: (0, 0) is the top-left corner visible to the
-# user, no matter where the scrollbar position is.
-#
-# This class (and PassageWidget) deal strictly in logical coordinates, but
-# incoming events are in pixel coordinates. We convert these to logical
-# coordinates as soon as possible.
-#
-
 import sys, math, wx, re, os, pickle
 import geometry, time
 from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 
 class StoryPanel (wx.ScrolledWindow):
+    """
+    A StoryPanel is a container for PassageWidgets. It translates
+    between logical coordinates and pixel coordinates as the user
+    zooms in and out, and communicates those changes to its widgets.
+
+    A discussion on coordinate systems: logical coordinates are notional,
+    and do not change as the user zooms in and out. Pixel coordinates
+    are extremely literal: (0, 0) is the top-left corner visible to the
+    user, no matter where the scrollbar position is.
+
+    This class (and PassageWidget) deal strictly in logical coordinates, but
+    incoming events are in pixel coordinates. We convert these to logical
+    coordinates as soon as possible.
+    """
 
     def __init__ (self, parent, app, id = wx.ID_ANY, state = None):
         wx.ScrolledWindow.__init__(self, parent, id)

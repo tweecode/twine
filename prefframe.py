@@ -1,13 +1,11 @@
-#
-# PreferenceFrame
-# This allows the user to set their preferences. Changes automatically update as
-# the user makes them; when they're done, they close the window.
-#
-
 import wx
 import metrics
 
 class PreferenceFrame (wx.Frame):
+    """
+    This allows the user to set their preferences. Changes automatically
+    update as the user makes them; when they're done, they close the window.
+    """
 
     def __init__ (self, app, parent = None):
         self.app = app

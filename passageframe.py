@@ -1,19 +1,3 @@
-#
-# PassageFrame
-# A PassageFrame is a window that allows the user to change the contents
-# of a passage. This must be paired with a PassageWidget; it gets to the
-# underlying passage via it, and also notifies it of changes made here.
-#
-# This doesn't require the user to save their changes -- as they make changes,
-# they are automatically updated everywhere.
-#
-# nb: This does not make use of wx.stc's built-in find/replace functions.
-# This is partially for user interface reasons, as find/replace at the
-# StoryPanel level uses Python regexps, not Scintilla ones. It's also
-# because SearchPanel and ReplacePanel hand back regexps, so we wouldn't
-# know what flags to pass to wx.stc.
-#
-
 import sys, os, re, threading, wx, wx.animate, base64, time
 import metrics, images
 from tweelexer import TweeLexer, badLinkStyle
@@ -23,6 +7,20 @@ from fseditframe import FullscreenEditFrame
 import cStringIO
 
 class PassageFrame (wx.Frame):
+    """
+    A PassageFrame is a window that allows the user to change the contents
+    of a passage. This must be paired with a PassageWidget; it gets to the
+    underlying passage via it, and also notifies it of changes made here.
+
+    This doesn't require the user to save their changes -- as they make
+    changes, they are automatically updated everywhere.
+
+    nb: This does not make use of wx.stc's built-in find/replace functions.
+    This is partially for user interface reasons, as find/replace at the
+    StoryPanel level uses Python regexps, not Scintilla ones. It's also
+    because SearchPanel and ReplacePanel hand back regexps, so we wouldn't
+    know what flags to pass to wx.stc.
+    """
 
     def __init__ (self, parent, widget, app):
         self.widget = widget
@@ -684,11 +682,10 @@ class PassageFrame (wx.Frame):
 
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 
-#
-# StorySettingsFrame
-# Special type of PassageFrame which presents the current header's StorySettings
-#
+
 class StorySettingsFrame (PassageFrame):
+    """Special type of PassageFrame which presents the current header's StorySettings."""
+
     def __init__ (self, parent, widget, app):
         self.widget = widget
         self.app = app
@@ -770,12 +767,12 @@ class StorySettingsFrame (PassageFrame):
         self.widget.clearPaintCache()
         self.widget.passage.update()
 
-#
-# ImageFrame
-# Special type of PassageFrame which only displays passages whose text consists of base64
-# encoded images - the image is converted to a bitmap and displayed, if possible.
-#
+
 class ImageFrame (PassageFrame):
+    """
+    Special type of PassageFrame which only displays passages whose text consists of base64
+    encoded images - the image is converted to a bitmap and displayed, if possible.
+    """
 
     def __init__ (self, parent, widget, app):
         self.widget = widget

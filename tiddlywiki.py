@@ -1,23 +1,17 @@
-#
-# TiddlyWiki.py
-#
-# A Python implementation of the Twee compiler.
-#
-# This code was written by Chris Klimas <klimas@gmail.com>
-# It is licensed under the GNU General Public License v2
-# http://creativecommons.org/licenses/GPL/2.0/
-#
-# This file defines two classes: Tiddler and TiddlyWiki. These match what
-# you'd normally see in a TiddlyWiki; the goal here is to provide classes
-# that translate between Twee and TiddlyWiki output seamlessly.
-#
+"""
+A Python implementation of the Twee compiler.
+
+This code was written by Chris Klimas <klimas@gmail.com>
+It is licensed under the GNU General Public License v2
+http://creativecommons.org/licenses/GPL/2.0/
+
+This file defines two classes: Tiddler and TiddlyWiki. These match what
+you'd normally see in a TiddlyWiki; the goal here is to provide classes
+that translate between Twee and TiddlyWiki output seamlessly.
+"""
 
 import re, datetime, time, locale, os, sys, tempfile, codecs
 from tweelexer import TweeLexer
-
-#
-# TiddlyWiki class
-#
 
 class TiddlyWiki:
     """An entire TiddlyWiki."""
@@ -288,9 +282,7 @@ class TiddlyWiki:
     SPECIAL_TAGS = frozenset(['Twine.image'])
     NOINCLUDE_TAGS = frozenset(['Twine.private', 'Twine.system'])
     INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
-#
-# Tiddler class
-#
+
 
 class Tiddler:
     """A single tiddler in a TiddlyWiki."""

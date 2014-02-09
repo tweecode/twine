@@ -1,13 +1,11 @@
-#
-# StoryFindFrame
-# This allows the user to search a StoryPanel for a string of text.
-# This is just a front-end to method calls on StoryPanel.
-#
-
 import re, wx
 from searchpanels import FindPanel
 
 class StoryFindFrame (wx.Frame):
+    """
+    This allows the user to search a StoryPanel for a string of text.
+    This is just a front-end to method calls on StoryPanel.
+    """
 
     def __init__ (self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
@@ -29,16 +27,11 @@ class StoryFindFrame (wx.Frame):
     def onClose (self):
         self.Close()
 
-#
-# StoryReplaceFrame
-# This allows the user to replace text across an entire StoryPanel.
-# This is just a front-end to method calls on StoryPanel.
-#
-
-import re, wx
-from searchpanels import ReplacePanel
-
 class StoryReplaceFrame (wx.Frame):
+    """
+    This allows the user to replace text across an entire StoryPanel.
+    This is just a front-end to method calls on StoryPanel.
+    """
 
     def __init__ (self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
