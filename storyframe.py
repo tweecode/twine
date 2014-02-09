@@ -872,6 +872,7 @@ Modernizr: off
                     break
             
             # Write the output file
+            header = self.app.headers.get(self.target)
             if temp:
                 # This implicitly closes the previous test build
                 if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
@@ -880,12 +881,12 @@ Modernizr: off
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
                     dir = (path and os.path.dirname(path)) or None)
-                self.lastTestBuild.write(tw.toHtml(self.app, self.target, startAt = startAt, defaultName = self.title).encode('utf-8-sig'))
+                self.lastTestBuild.write(tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title).encode('utf-8-sig'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'w')
-                dest.write(tw.toHtml(self.app, self.target, defaultName = self.title).encode('utf-8-sig'))
+                dest.write(tw.toHtml(self.app, header, defaultName = self.title).encode('utf-8-sig'))
                 dest.close()
                 if displayAfter: self.viewBuild()
         except:

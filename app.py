@@ -275,29 +275,24 @@ class App (wx.App):
         text += str(exception[1]) + ').'
         error = wx.MessageDialog(None, text, 'Error', wx.OK | wx.ICON_ERROR)
         error.ShowModal()
-	
-    def getPath (self):
-        """Returns the path to the executing script or application."""
-        return self.scriptPath
-    
+
     def MacReopenApp(self):
         """OS X support"""
         self.GetTopWindow().Raise()
 
     def determinePaths(self):
         """Determine the paths to relevant files used by application"""
+
         # Determine the path to the executing script or application.
-        self.scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
-
-        # Windows py2exe'd apps add an extraneous library.zip at the end
+        scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
         if sys.platform == 'win32':
-            self.scriptPath = re.sub('\\\\\w*.zip', '', self.scriptPath)
-            
-        if sys.platform == "darwin":
-            self.scriptPath = re.sub('[^/]+.app/.*', '', self.scriptPath)
+            # Windows py2exe'd apps add an extraneous library.zip at the end
+            scriptPath = re.sub('\\\\\w*.zip', '', scriptPath)
+        elif sys.platform == "darwin":
+            scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
 
-        self.iconsPath = self.scriptPath + os.sep + 'icons' + os.sep
-        self.builtinTargetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+        self.iconsPath = scriptPath + os.sep + 'icons' + os.sep
+        self.builtinTargetsPath = scriptPath + os.sep + 'targets' + os.sep
         if sys.platform == "darwin":
             self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + os.sep + 'targets' + os.sep
         else:
