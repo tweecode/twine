@@ -108,21 +108,11 @@ class TiddlyWiki:
             output = output.replace('"START_AT"', '""')
         
         # Embed any engine related files required by the header.
-        embedded = header.files_to_embed()
+        embedded = header.filesToEmbed()
         for key in embedded.keys():
-            output = insertEngine(app, output, header.path + embedded[key], key)
+            output = insertEngine(app, output, embedded[key], key)
             if not output: return
-        
-        # "ENGINE", "SUGARCANE" and "JONAH" are always available even without a header,
-        # for pre-1.4.2 compatibility (and to support "Sugarcane clones" like Responsive)
-        # and because it's impossible for a file stored in the OS X "external headers" folder
-        # to refer to files in the "internal headers" folder.
-        for label, filename in { '"ENGINE"' : 'engine.js',
-                    '"SUGARCANE"' : 'sugarcane' + os.sep + 'code.js',
-                    '"JONAH"' : 'jonah' + os.sep + 'code.js' }.iteritems():
-            output = insertEngine(app, output, label = label, filename = app.builtinTargetsPath + os.sep + filename)
-            if not output: return
-        
+       
         # Insert the Backup Story Title
         if defaultName:
             output = output.replace('"Untitled Story"', '"'+defaultName.replace('"',r'\"')+'"')

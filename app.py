@@ -282,17 +282,17 @@ class App (wx.App):
 
     def determinePaths(self):
         """Determine the paths to relevant files used by application"""
-
-        # Determine the path to the executing script or application.
         scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
         if sys.platform == 'win32':
             # Windows py2exe'd apps add an extraneous library.zip at the end
             scriptPath = re.sub('\\\\\w*.zip', '', scriptPath)
         elif sys.platform == "darwin":
             scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
-
-        self.iconsPath = scriptPath + os.sep + 'icons' + os.sep
-        self.builtinTargetsPath = scriptPath + os.sep + 'targets' + os.sep
+        
+        scriptPath += os.sep
+        self.iconsPath = scriptPath + 'icons' + os.sep
+        self.builtinTargetsPath = scriptPath + 'targets' + os.sep
+        
         if sys.platform == "darwin":
             self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + 'targets' + os.sep
         else:
@@ -310,7 +310,7 @@ class App (wx.App):
         for path in paths:
             try:
                 if not os.path.isfile(path[1]) and os.access(path[1] + 'header.html', os.R_OK):
-                    header = Header.factory(*path)
+                    header = Header.factory(*path, builtinPath = self.builtinTargetsPath)
                     self.headers[header.id] = header 
             except:
                 pass

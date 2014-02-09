@@ -13,7 +13,6 @@ from storypanel import StoryPanel
 from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
-from random import shuffle
 
 class StoryFrame (wx.Frame):
     
@@ -739,56 +738,11 @@ class StoryFrame (wx.Frame):
             defaultText = """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
  
 You can also include URLs of .tws and .twee files, too."""
-        
-        elif id == self.STORYSETTINGS_SETTINGS:         
-            # Generate a random obfuscateKey
-            obfuscateKey = list('anbocpdqerfsgthuivjwkxlymz')
-            shuffle(obfuscateKey)
-            defaultText = """--Let the player undo moves? (on / off)
---In Sugarcane, this enables the browser's back button.
---In Jonah, this lets the player click links in previous
---passages.
-
-Undo: on
-
---Let the player use bookmarks? (on / off)
---This enables the Bookmark links in Jonah and Sugarcane
---(If the player can't undo, bookmarks are always disabled.)
-
-Bookmark: on
-
---Obfuscate the HTML source to prevent possible
---spoilers? (swap / off)
-
-Obfuscate: off
-
---String of letter pairs to use for swap-style obfuscation
-
-ObfuscateKey: """ + ''.join(obfuscateKey) + """
-
---What this work identifies as. Is it a game, a story,
---a poem, or something else? (This is used for dialogs and
---error messages only.)
-
-Identity: game
-
---Include the jQuery script library? (on / off)
---Individual scripts may force this on by
---containing the text 'requires jQuery'.
-
-jQuery: off
-
---Include the Modernizr script library? (on / off)
---Individual scripts/stylesheets may force this on by
---containing the text 'requires Modernizr'.
-
-Modernizr: off
-"""
 
         elif id == self.STORYSETTINGS_INIT:
-            defaultText = "Place your story's setup code in this passage."\
+            defaultText = "/% Place your story's setup code in this passage."\
                           "Any macros in this passage will be run before the Start passage" \
-                          "(or any passage you wish to Test Play) is run."
+                          "(or any passage you wish to Test Play) is run. %/"
 
         for widget in self.storyPanel.widgets:
             if widget.passage.title == title:

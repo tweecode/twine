@@ -113,11 +113,28 @@ class PassageFrame (wx.Frame):
         editMenu.Append(wx.ID_REPLACE, '&Replace...\t' + shortcut)
         self.Bind(wx.EVT_MENU, lambda e: self.showSearchFrame(PassageSearchFrame.REPLACE_TAB), id = wx.ID_REPLACE)
 
+        # help menu
+        
+        helpMenu = wx.Menu()
+        
+        helpMenu.Append(PassageFrame.HELP1, 'About Passages')
+        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/passage'), id = PassageFrame.HELP1)
+        
+        helpMenu.Append(PassageFrame.HELP2, 'About Text Syntax')
+        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/syntax'), id = PassageFrame.HELP2)
+        
+        helpMenu.Append(PassageFrame.HELP3, 'About Links')
+        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/link'), id = PassageFrame.HELP3)
+        
+        helpMenu.Append(PassageFrame.HELP4, 'About Tags')
+        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/tag'), id = PassageFrame.HELP4)
+        
         # menus
         
         self.menus = wx.MenuBar()
         self.menus.Append(passageMenu, '&Passage')
         self.menus.Append(editMenu, '&Edit')
+        self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
 
         # controls
@@ -218,26 +235,30 @@ class PassageFrame (wx.Frame):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
         title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
         title = title.replace('\n','')
-
+        
+        def error():
+           self.titleInput.SetBackgroundColour((240,130,130))
+           self.titleInput.Refresh()
+           self.titleInvalid = True 
+        
         if title:
         # Check for title conflict
             otherTitled = self.widget.parent.findWidget(title)
             if otherTitled and otherTitled != self.widget:
-                self.titleLabel.SetLabel("Title is already in use!");
-                self.titleInput.SetBackgroundColour((240,130,130))
-                self.titleInput.Refresh()
-                self.titleInvalid = True
+                self.titleLabel.SetLabel("Title is already in use!")
+                error()
             elif "|" in title or "]" in title:
-                self.titleLabel.SetLabel("No | or ] symbols allowed!");
-                self.titleInput.SetBackgroundColour((240,130,130))
-                self.titleInput.Refresh()
-                self.titleInvalid = True
+                self.titleLabel.SetLabel("No | or ] symbols allowed!")
+                error()
+            elif title == "StorySettings":
+                self.titleLabel.SetLabel("That title is reserved.")
+                error()
             else:
                 if self.titleInvalid:
                     self.titleLabel.SetLabel(self.TITLE_LABEL)
                     self.titleInput.SetBackgroundColour((255,255,255))
                     self.titleInput.Refresh()
-                    self.titleInvalid = False
+                    self.titleInvalid = True 
                 self.widget.passage.title = title
         
         # Set body text
@@ -660,13 +681,97 @@ class PassageFrame (wx.Frame):
     # menu constants (not defined by wx)
  
     EDIT_FIND_NEXT = 2001
-    
-    PASSAGE_FULLSCREEN = 1001
-    PASSAGE_EDIT_SELECTION = 1002
-    PASSAGE_REBUILD_STORY = 1003
+    [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY] = range(1001,1004)
+    [HELP1, HELP2, HELP3, HELP4] = range(3001,3005)
     
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
     
+#
+# StorySettingsFrame
+# Special type of PassageFrame which presents the current header's StorySettings 
+#
+class StorySettingsFrame (PassageFrame):
+    def __init__ (self, parent, widget, app):
+        self.widget = widget
+        self.app = app
+        
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.widget.passage.title + ' - ' + self.app.NAME, \
+                          size = (450, 500), style=wx.DEFAULT_FRAME_STYLE)
+        # menus
+        
+        self.menus = wx.MenuBar()
+        self.SetMenuBar(self.menus)
+        
+        # controls
+        
+        self.panel = wx.Panel(self)
+        allSizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(allSizer)
+           
+        # Read the storysettings definitions for this header
+        checkboxData = self.widget.parent.parent.header.storySettings()
+        
+        for data in checkboxData:
+            if data["type"] == "checkbox":
+                checkbox = wx.CheckBox(self.panel, label = data["label"])
+                name = data["name"]
+                # Read checkbox's current value, and default it if it's not present
+                currentValue = self.getSetting(name).lower()
+                if not currentValue:
+                    currentValue = data.get('default', 'off')
+                    self.saveSetting(name, currentValue)
+                checkbox.SetValue(currentValue not in ["off", "false", '0'])
+                
+                values = data.get("values", ("on","off"))
+                checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name:
+                              self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
+                allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
+                
+            elif data["type"] == "text":
+                textlabel = wx.StaticText(self.panel, label = data["label"])
+                textctrl = wx.TextCtrl(self.panel)
+                name = data["name"]
+                # Read current value
+                currentValue = self.getSetting(name).lower()
+                if not currentValue:
+                    currentValue = data.get('default', '')
+                    self.saveSetting(name, currentValue)
+                textctrl.SetValue(currentValue or data.get("default",''))
+                
+                textctrl.Bind(wx.EVT_TEXT, lambda e, name=name, textctrl=textctrl:
+                              self.saveSetting(name,textctrl.GetValue()))
+                # Setup sizer for label/textctrl pair
+                hSizer = wx.BoxSizer(wx.HORIZONTAL)
+                hSizer.Add(textlabel,1,wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+                hSizer.Add(textctrl,1,wx.EXPAND)
+                allSizer.Add(hSizer,flag=wx.ALL|wx.EXPAND, border=metrics.size('windowBorder'))
+                
+            if "desc" in data:
+                desc = wx.StaticText(self.panel, label = data["desc"])
+                allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
+        
+        self.SetIcon(self.app.icon)
+        self.Layout() 
+        self.Show(True)
+        
+    def getSetting(self, valueName):
+        search = re.search("^"+valueName +r"\s*:\s*(.+?)\s*$", self.widget.passage.text, flags=re.I|re.M)
+        if search:
+            return search.group(1)
+        return ''
+    
+    def saveSetting(self, valueName, value):
+        newEntry = valueName+":"+str(value)+'\n'
+        sub = re.subn("^"+valueName+r"\s*:\s*[^\n]+\n", newEntry, self.widget.passage.text, flags=re.I|re.M)
+        if sub[1]:
+            self.widget.passage.text = sub[0]
+        else:
+            self.widget.passage.text += newEntry
+        self.widget.passage.modified = time.localtime()
+        self.widget.parent.parent.setDirty(True)
+        self.widget.clearPaintCache()
+        self.widget.passage.update()
+
 #
 # ImageFrame
 # Special type of PassageFrame which only displays passages whose text consists of base64
@@ -683,10 +788,6 @@ class ImageFrame (PassageFrame):
         
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
                           size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
-        # menus
-        
-        self.menus = wx.MenuBar()
-        self.SetMenuBar(self.menus)
         
         # controls
         

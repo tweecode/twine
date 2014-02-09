@@ -16,7 +16,7 @@
 
 import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki
 import geometry, metrics, images
-from passageframe import PassageFrame, ImageFrame
+from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
 class PassageWidget:
     
@@ -218,6 +218,8 @@ class PassageWidget:
         if (not hasattr(self, 'passageFrame')):
             if image:
                 self.passageFrame = ImageFrame(None, self, self.app)
+            elif self.passage.title == "StorySettings":
+                self.passageFrame = StorySettingsFrame(None, self, self.app)
             else:
                 self.passageFrame = PassageFrame(None, self, self.app)
                 if fullscreen: self.passageFrame.openFullscreen()
