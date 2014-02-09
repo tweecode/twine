@@ -7,14 +7,14 @@ class TweeLexer:
     look up the body text as needed.
     """
 
-    def __init__ (self, control, frame):
+    def __init__(self, control, frame):
         self.ctrl = control
         self.frame = frame
         self.app = frame.app
         self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, self.lex)
         self.initStyles()
 
-    def initStyles (self):
+    def initStyles(self):
         """
         Initialize style definitions. This is automatically invoked when
         the constructor is called, but should be called any time font
@@ -130,7 +130,7 @@ class TweeLexer:
 
         return (None, None)
 
-    def lex (self, event):
+    def lex(self, event):
         """
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
@@ -312,13 +312,13 @@ class TweeLexer:
         # Finish up unclosed styles
         self.applyStyle(styleStart, len(text), style)
 
-    def passageExists (self, title):
+    def passageExists(self, title):
         """
         Returns whether a given passage exists in the story.
         """
         return (self.frame.widget.parent.findWidget(title) != None)
 
-    def applyStyle (self, start, end, style):
+    def applyStyle(self, start, end, style):
         """
         Applies a style to a certain range.
         """

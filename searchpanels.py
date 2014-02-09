@@ -1,7 +1,7 @@
 import re, wx
 import metrics
 
-class FindPanel (wx.Panel):
+class FindPanel(wx.Panel):
     """
     This allows the user to enter a search term and select various
     criteria (i.e. "match case", etc.) There are two callbacks:
@@ -14,7 +14,7 @@ class FindPanel (wx.Panel):
     When the user clicks the Close button.
     """
 
-    def __init__ (self, parent, onFind = None, onClose = None):
+    def __init__(self, parent, onFind = None, onClose = None):
         self.findCallback = onFind
         self.closeCallback = onClose
 
@@ -65,17 +65,17 @@ class FindPanel (wx.Panel):
                   border = metrics.size('windowBorder'))
         sizer.Fit(self)
 
-    def focus (self):
+    def focus(self):
         """
         Focuses the proper text input and sets our default button.
         """
         self.findField.SetFocus()
         self.findButton.SetDefault()
 
-    def updateUI (self, event):
+    def updateUI(self, event):
         pass
 
-    def onFind (self, event):
+    def onFind(self, event):
         """
         Assembles a regexp based on field values and passes it on to our callback.
         """
@@ -94,13 +94,13 @@ class FindPanel (wx.Panel):
 
             self.findCallback(regexp, flags)
 
-    def onClose (self, event):
+    def onClose(self, event):
         """
         Passes on a close message to our callback.
         """
         if self.closeCallback: self.closeCallback()
 
-class ReplacePanel (wx.Panel):
+class ReplacePanel(wx.Panel):
     """
     This allows the user to enter a search and replace term and select
     various criteria (i.e. "match case", etc.) There are two callbacks:
@@ -123,7 +123,7 @@ class ReplacePanel (wx.Panel):
     incremental searches, or if they may only replace all.
     """
 
-    def __init__ (self, parent, allowIncremental = True, \
+    def __init__(self, parent, allowIncremental = True, \
                   onFind = None, onReplace = None, onReplaceAll = None, onClose = None):
         self.allowIncremental = allowIncremental
         self.findCallback = onFind
@@ -201,7 +201,7 @@ class ReplacePanel (wx.Panel):
                   border = metrics.size('windowBorder'))
         sizer.Fit(self)
 
-    def focus (self):
+    def focus(self):
         """
         Focuses the proper text input and sets our default button.
         """
@@ -211,7 +211,7 @@ class ReplacePanel (wx.Panel):
         else:
             self.replaceAllButton.SetDefault()
 
-    def onFind (self, event):
+    def onFind(self, event):
         """
         Passes a find message to our callback.
         """
@@ -219,7 +219,7 @@ class ReplacePanel (wx.Panel):
             regexps = self.assembleRegexps()
             self.findCallback(regexps['find'], regexps['flags'])
 
-    def onReplace (self, event):
+    def onReplace(self, event):
         """
         Passes a replace message to our callback.
         """
@@ -227,7 +227,7 @@ class ReplacePanel (wx.Panel):
             regexps = self.assembleRegexps()
             self.replaceCallback(regexps['find'], regexps['flags'], regexps['replace'])
 
-    def onReplaceAll (self, event):
+    def onReplaceAll(self, event):
         """
         Passes a replace all message to our callback.
         """
@@ -235,13 +235,13 @@ class ReplacePanel (wx.Panel):
             regexps = self.assembleRegexps()
             self.replaceAllCallback(regexps['find'], regexps['flags'], regexps['replace'])
 
-    def onClose (self, event):
+    def onClose(self, event):
         """
         Passes on a close message to our callback.
         """
         if self.closeCallback: self.closeCallback()
 
-    def assembleRegexps (self):
+    def assembleRegexps(self):
         """
         Builds up the regexp the user is searching for. Returns a dictionary with
         keys 'find', 'replace', and 'flags'.

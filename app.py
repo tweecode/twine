@@ -7,14 +7,14 @@ from storyframe import StoryFrame
 from prefframe import PreferenceFrame
 from version import versionString
 
-class App (wx.App):
+class App(wx.App):
     """This bootstraps our application and keeps track of preferences, etc."""
 
     NAME = 'Twine'
     VERSION = '%s (running on %s %s)' % (versionString, platform.system(), platform.release()) #Named attributes not available in Python 2.6
     RECENT_FILES = 10
 
-    def __init__ (self, redirect = False):
+    def __init__(self, redirect = False):
         """Initializes the application."""
         wx.App.__init__(self, redirect = redirect)
         locale.setlocale(locale.LC_ALL, '')
@@ -48,13 +48,13 @@ class App (wx.App):
             else:
                 self.newStory()
 
-    def newStory (self, event = None):
+    def newStory(self, event = None):
         """Opens a new, blank story."""
         s = StoryFrame(parent = None, app = self)
         self.stories.append(s)
         s.Show(True)
 
-    def removeStory (self, story, byMenu = False):
+    def removeStory(self, story, byMenu = False):
         """Removes a story from our collection. Should be called when it closes."""
         try:
             self.stories.remove(story)
@@ -69,7 +69,7 @@ class App (wx.App):
         except ValueError:
             None
 
-    def openDialog (self, event = None):
+    def openDialog(self, event = None):
         """Opens a story file of the user's choice."""
         opened = False
         dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
@@ -83,7 +83,7 @@ class App (wx.App):
 
         dialog.Destroy()
 
-    def openRecent (self, story, index):
+    def openRecent(self, story, index):
         """Opens a recently-opened file."""
         filename = story.recentFiles.GetHistoryFile(index)
         if not os.path.exists(filename):
@@ -96,7 +96,7 @@ class App (wx.App):
         """OS X support"""
         self.open(path)
 
-    def open (self, path):
+    def open(self, path):
         """Opens a specific story file."""
         try:
             openedFile = open(path, 'r')
@@ -119,7 +119,7 @@ class App (wx.App):
         except:
             self.displayError('opening your story')
 
-    def openOnStartup (self):
+    def openOnStartup(self):
         """
         Opens any files that were passed via argv[1:]. Returns
         whether anything was opened.
@@ -132,7 +132,7 @@ class App (wx.App):
 
         return True
 
-    def exit (self, event = None):
+    def exit(self, event = None):
         """Closes all open stories, implicitly quitting."""
         # need to make a copy of our stories list since
         # stories removing themselves will alter the list midstream
@@ -140,7 +140,7 @@ class App (wx.App):
             if isinstance(s, StoryFrame):
                 s.Close()
 
-    def showPrefs (self, event = None):
+    def showPrefs(self, event = None):
         """Shows the preferences dialog."""
         if (not hasattr(self, 'prefFrame')):
             self.prefFrame = PreferenceFrame(self)
@@ -152,7 +152,7 @@ class App (wx.App):
                 delattr(self, 'prefFrame')
                 self.showPrefs(event)
 
-    def addRecentFile (self, path):
+    def addRecentFile(self, path):
         """Adds a path to the recent files history and updates the menus."""
         for s in self.stories:
             if isinstance(s, StoryFrame):
@@ -193,7 +193,7 @@ class App (wx.App):
             else:
                 done = True
 
-    def about (self, event = None):
+    def about(self, event = None):
         """Shows the about dialog."""
         info = wx.AboutDialogInfo()
         info.SetName(self.NAME)
@@ -210,23 +210,23 @@ class App (wx.App):
                           + ' and is used under the terms of the MIT license.')
         wx.AboutBox(info)
 
-    def storyFormatHelp (self, event = None):
+    def storyFormatHelp(self, event = None):
         """Opens the online manual to the section on story formats."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/story_format')
 
-    def openForum (self, event = None):
+    def openForum(self, event = None):
         """Opens the forum."""
         wx.LaunchDefaultBrowser('http://twinery.org/forum/')
 
-    def openDocs (self, event = None):
+    def openDocs(self, event = None):
         """Opens the online manual."""
         wx.LaunchDefaultBrowser('http://twinery.org/wiki/')
 
-    def openGitHub (self, event = None):
+    def openGitHub(self, event = None):
         """Opens the GitHub page."""
         wx.LaunchDefaultBrowser('https://github.com/tweecode/twine')
 
-    def loadPrefs (self):
+    def loadPrefs(self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
         self.config = wx.Config('Twine')
 
@@ -261,11 +261,11 @@ class App (wx.App):
         if not self.config.HasEntry('imageArrows'):
             self.config.WriteBool('imageArrows', True)
 
-    def applyPrefs (self):
+    def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""
         map(lambda s: s.applyPrefs(), self.stories)
 
-    def displayError (self, activity):
+    def displayError(self, activity):
         """
         Displays an error dialog with diagnostic info. Call with what you were doing
         when the error occurred (e.g. 'saving your story', 'building your story'.)

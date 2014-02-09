@@ -2,7 +2,7 @@ import os, imp
 from collections import OrderedDict
 from random import shuffle
 
-class Header (object):
+class Header(object):
 
     def __init__(self, id, path, builtinPath):
         self.id = id.lower()

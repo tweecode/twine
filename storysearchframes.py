@@ -1,13 +1,13 @@
 import re, wx
 from searchpanels import FindPanel
 
-class StoryFindFrame (wx.Frame):
+class StoryFindFrame(wx.Frame):
     """
     This allows the user to search a StoryPanel for a string of text.
     This is just a front-end to method calls on StoryPanel.
     """
 
-    def __init__ (self, storyPanel, app, parent = None):
+    def __init__(self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
         self.app = app
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Find in Story', \
@@ -21,19 +21,19 @@ class StoryFindFrame (wx.Frame):
         self.SetIcon(self.app.icon)
         self.Show()
 
-    def onFind (self, regexp, flags):
+    def onFind(self, regexp, flags):
         self.storyPanel.findWidgetRegexp(regexp, flags)
 
-    def onClose (self):
+    def onClose(self):
         self.Close()
 
-class StoryReplaceFrame (wx.Frame):
+class StoryReplaceFrame(wx.Frame):
     """
     This allows the user to replace text across an entire StoryPanel.
     This is just a front-end to method calls on StoryPanel.
     """
 
-    def __init__ (self, storyPanel, app, parent = None):
+    def __init__(self, storyPanel, app, parent = None):
         self.storyPanel = storyPanel
         self.app = app
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Replace Across Entire Story', \
@@ -50,14 +50,14 @@ class StoryReplaceFrame (wx.Frame):
         self.SetIcon(self.app.icon)
         self.Show()
 
-    def onFind (self, regexp, flags):
+    def onFind(self, regexp, flags):
         self.storyPanel.findWidgetRegexp(regexp, flags)
 
     def onReplace(self, findRegexp, flags, replaceRegexp):
         self.storyPanel.replaceRegexpInSelectedWidget(findRegexp, replaceRegexp, flags)
 
-    def onReplaceAll (self, findRegexp, flags, replaceRegexp):
+    def onReplaceAll(self, findRegexp, flags, replaceRegexp):
         self.storyPanel.replaceRegexpInWidgets(findRegexp, replaceRegexp, flags)
 
-    def onClose (self):
+    def onClose(self):
         self.Close()

@@ -1,6 +1,6 @@
 import sys, wx, wx.stc
 
-class FullscreenEditFrame (wx.Frame):
+class FullscreenEditFrame(wx.Frame):
     """
     This opens a modal fullscreen editor with some text. When the user's done,
     this calls the callback function passed to the constructor with the new text.
@@ -9,7 +9,7 @@ class FullscreenEditFrame (wx.Frame):
     http://www.psychicorigami.com/2009/01/05/a-5k-python-fullscreen-text-editor/
     """
 
-    def __init__ (self, parent, app, frame = None, title = '', initialText = '', callback = lambda i: i):
+    def __init__(self, parent, app, frame = None, title = '', initialText = '', callback = lambda i: i):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = title, size = (400, 400))
         self.app = app
         self.callback = callback
@@ -74,12 +74,12 @@ class FullscreenEditFrame (wx.Frame):
         self.Show(True)
         self.ShowFullScreen(True)
 
-    def close (self):
+    def close(self):
         self.callback(self.editCtrl.GetText())
         if sys.platform == 'darwin': self.ShowFullScreen(False)
         self.Close()
 
-    def applyPrefs (self):
+    def applyPrefs(self):
         """
         Applies user preferences to this frame.
         """
@@ -112,7 +112,7 @@ class FullscreenEditFrame (wx.Frame):
 
         self.directions.SetForegroundColour(textColor)
 
-    def keyListener (self, event):
+    def keyListener(self, event):
         """
         Listens for a key that indicates this frame should close; otherwise lets the event propagate.
         This also hides the mouse cursor; the showCursor method, bound to the mouse motion event,
@@ -130,13 +130,13 @@ class FullscreenEditFrame (wx.Frame):
         self.hideCursor()
         event.Skip()
 
-    def hideCursor (self, event = None):
+    def hideCursor(self, event = None):
         if self.cursorVisible:
             self.SetCursor(wx.StockCursor(wx.CURSOR_BLANK))
             self.editCtrl.SetCursor(wx.StockCursor(wx.CURSOR_BLANK))
             self.cursorVisible = False
 
-    def showCursor (self, event = None):
+    def showCursor(self, event = None):
         if not self.cursorVisible:
             self.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
             self.editCtrl.SetCursor(wx.StockCursor(wx.CURSOR_IBEAM))

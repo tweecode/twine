@@ -3,7 +3,7 @@ from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
 import metrics
 
-class StatisticsDialog (wx.Dialog):
+class StatisticsDialog(wx.Dialog):
     """
     A StatisticsDialog displays the number of characters, words,
     passages, links, and broken links in a StoryPanel.
@@ -11,7 +11,7 @@ class StatisticsDialog (wx.Dialog):
     This is not a live count.
     """
 
-    def __init__ (self, parent, storyPanel, app, id = wx.ID_ANY):
+    def __init__(self, parent, storyPanel, app, id = wx.ID_ANY):
         wx.Dialog.__init__(self, parent, id, title = 'Story Statistics')
         self.storyPanel = storyPanel
 
@@ -70,7 +70,7 @@ class StatisticsDialog (wx.Dialog):
         self.SetIcon(app.icon)
         self.Show()
 
-    def count (self, panel):
+    def count(self, panel):
         """
         Sets values for the various counts.
         """
@@ -82,7 +82,7 @@ class StatisticsDialog (wx.Dialog):
         variables = set()
         tags = set()
 
-        def count (widget, counts):
+        def count(widget, counts):
             if widget.passage.isStoryText():
                 counts['chars'] += len(widget.passage.text)
                 counts['words'] += len(widget.passage.text.split(None))

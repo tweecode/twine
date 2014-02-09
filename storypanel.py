@@ -3,7 +3,7 @@ import geometry, time
 from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 
-class StoryPanel (wx.ScrolledWindow):
+class StoryPanel(wx.ScrolledWindow):
     """
     A StoryPanel is a container for PassageWidgets. It translates
     between logical coordinates and pixel coordinates as the user
@@ -19,7 +19,7 @@ class StoryPanel (wx.ScrolledWindow):
     coordinates as soon as possible.
     """
 
-    def __init__ (self, parent, app, id = wx.ID_ANY, state = None):
+    def __init__(self, parent, app, id = wx.ID_ANY, state = None):
         wx.ScrolledWindow.__init__(self, parent, id)
         self.app = app
         self.parent = parent
@@ -79,7 +79,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
 
-    def newWidget (self, title = None, text = '', tags = [], pos = None, quietly = False, logicals = False):
+    def newWidget(self, title = None, text = '', tags = [], pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
 
         # defaults
@@ -101,7 +101,7 @@ class StoryPanel (wx.ScrolledWindow):
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
 
-    def snapWidget (self, widget, quickly = False):
+    def snapWidget(self, widget, quickly = False):
         """
         Snaps a widget to our grid if self.snapping is set.
         Then, call findSpace()
@@ -124,7 +124,7 @@ class StoryPanel (wx.ScrolledWindow):
         else:
             widget.findSpace()
 
-    def cleanup (self):
+    def cleanup(self):
         """Snaps all widgets to the grid."""
         oldSnapping = self.snapping
         self.snapping = True
@@ -133,12 +133,12 @@ class StoryPanel (wx.ScrolledWindow):
         self.parent.setDirty(True, action = 'Clean Up')
         self.Refresh()
 
-    def toggleSnapping (self):
+    def toggleSnapping(self):
         """Toggles whether snapping is on."""
         self.snapping = self.snapping is not True
         self.app.config.WriteBool('storyPanelSnap', self.snapping)
 
-    def copyWidgets (self):
+    def copyWidgets(self):
         """Copies selected widgets into the clipboard."""
         data = []
         for widget in self.widgets:
@@ -151,13 +151,13 @@ class StoryPanel (wx.ScrolledWindow):
             wx.TheClipboard.SetData(clipData)
             wx.TheClipboard.Close()
 
-    def cutWidgets (self):
+    def cutWidgets(self):
         """Cuts selected widgets into the clipboard."""
         self.copyWidgets()
         self.removeWidgets()
         self.Refresh()
 
-    def pasteWidgets (self):
+    def pasteWidgets(self):
         """Pastes widgets into the clipboard."""
         format = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
 
@@ -178,7 +178,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.parent.setDirty(True, action = 'Paste')
             self.Refresh()
 
-    def removeWidget (self, widget, saveUndo = False):
+    def removeWidget(self, widget, saveUndo = False):
         """
         Deletes a passed widget. You can ask this to save an undo state manually,
         but by default, it doesn't.
@@ -189,7 +189,7 @@ class StoryPanel (wx.ScrolledWindow):
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
         self.Refresh()
 
-    def removeWidgets (self, event = None, saveUndo = False):
+    def removeWidgets(self, event = None, saveUndo = False):
         """
         Deletes all selected widgets. You can ask this to save an undo state manually,
         but by default, it doesn't.
@@ -232,7 +232,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.Refresh()
             if saveUndo: self.parent.setDirty(True, action = 'Delete')
 
-    def findWidgetRegexp (self, regexp = None, flags = None):
+    def findWidgetRegexp(self, regexp = None, flags = None):
         """
         Finds the next PassageWidget that matches the regexp passed.
         You may leave off the regexp, in which case it uses the last
@@ -275,7 +275,7 @@ class StoryPanel (wx.ScrolledWindow):
                                   'Not Found', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 
-    def replaceRegexpInSelectedWidget (self, findRegexp, replacementRegexp, flags):
+    def replaceRegexpInSelectedWidget(self, findRegexp, replacementRegexp, flags):
         for widget in self.widgets:
             if widget.selected:
                 widget.replaceRegexp(findRegexp, replacementRegexp, flags)
@@ -283,7 +283,7 @@ class StoryPanel (wx.ScrolledWindow):
                 self.Refresh()
                 self.parent.setDirty(True, action = 'Replace in Currently Selected Widget')
 
-    def replaceRegexpInWidgets (self, findRegexp, replacementRegexp, flags):
+    def replaceRegexpInWidgets(self, findRegexp, replacementRegexp, flags):
         """
         Performs a string replace on all widgets in this StoryPanel.
         It shows an alert once done to tell the user how many replacements were
@@ -308,7 +308,7 @@ class StoryPanel (wx.ScrolledWindow):
         dialog = wx.MessageDialog(self, message, 'Replace Complete', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 
-    def scrollToWidget (self, widget):
+    def scrollToWidget(self, widget):
         """
         Scrolls so that the widget passed is visible.
         """
@@ -318,7 +318,7 @@ class StoryPanel (wx.ScrolledWindow):
         sy = (widgetRect.y-20) / float(yUnit)
         self.Scroll(max(sx, 0), max(sy - 20, 0))
 
-    def pushUndo (self, action):
+    def pushUndo(self, action):
         """
         Pushes the current state onto the undo stack. The name parameter describes
         the action that triggered this call, and is displayed in the Undo menu.
@@ -335,7 +335,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.undoStack.append(state)
         self.undoPointer += 1
 
-    def undo (self):
+    def undo(self):
         """
         Restores the undo state at self.undoPointer to the current view, then
         decreases self.undoPointer by 1.
@@ -347,30 +347,30 @@ class StoryPanel (wx.ScrolledWindow):
         self.undoPointer -= 1
         self.Refresh()
 
-    def redo (self):
+    def redo(self):
         """
         Moves the undo pointer up 2, then calls undo() to restore state.
         """
         self.undoPointer += 2
         self.undo()
 
-    def canUndo (self):
+    def canUndo(self):
         """Returns whether an undo is available to the user."""
         return self.undoPointer > -1
 
-    def undoAction (self):
+    def undoAction(self):
         """Returns the name of the action that the user will be undoing."""
         return self.undoStack[self.undoPointer + 1]['action']
 
-    def canRedo (self):
+    def canRedo(self):
         """Returns whether a redo is available to the user."""
         return self.undoPointer < len(self.undoStack) - 2
 
-    def redoAction (self):
+    def redoAction(self):
         """Returns the name of the action that the user will be redoing."""
         return self.undoStack[self.undoPointer + 2]['action']
 
-    def handleClick (self, event):
+    def handleClick(self, event):
         """
         Passes off execution to either startMarquee or startDrag,
         depending on whether the user clicked a widget.
@@ -385,12 +385,12 @@ class StoryPanel (wx.ScrolledWindow):
                 return
         self.startMarquee(event)
 
-    def handleDoubleClick (self, event):
+    def handleDoubleClick(self, event):
         """Dispatches an openEditor() call to a widget the user clicked."""
         for widget in self.widgets:
             if widget.getPixelRect().Contains(event.GetPosition()): widget.openEditor()
 
-    def handleRightClick (self, event):
+    def handleRightClick(self, event):
         """Either opens our own contextual menu, or passes it off to a widget."""
         for widget in self.widgets:
             if widget.getPixelRect().Contains(event.GetPosition()):
@@ -398,7 +398,7 @@ class StoryPanel (wx.ScrolledWindow):
                 return
         self.PopupMenu(StoryPanelContext(self, event.GetPosition()), event.GetPosition())
 
-    def handleMiddleClick (self, event):
+    def handleMiddleClick(self, event):
         """Creates a new widget centered at the mouse position."""
         pos = event.GetPosition()
         offset = self.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
@@ -406,7 +406,7 @@ class StoryPanel (wx.ScrolledWindow):
         pos.y = pos.y - offset[0]
         self.newWidget(pos = pos)
 
-    def startMarquee (self, event):
+    def startMarquee(self, event):
         """Starts a marquee selection."""
         if not self.draggingMarquee:
             self.draggingMarquee = True
@@ -424,7 +424,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.CaptureMouse()
             self.Refresh()
 
-    def followMarquee (self, event):
+    def followMarquee(self, event):
         """
         Follows the mouse during a marquee selection.
         """
@@ -466,7 +466,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.ReleaseMouse()
             self.Refresh()
 
-    def startDrag (self, event, clickedWidget):
+    def startDrag(self, event, clickedWidget):
         """
         Starts a widget drag. The initial event is caught by PassageWidget, but
         it passes control to us so that we can move all selected widgets at once.
@@ -495,7 +495,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.Bind(wx.EVT_MOUSE_EVENTS, self.followDrag)
             self.CaptureMouse()
 
-    def followDrag (self, event):
+    def followDrag(self, event):
         """Follows mouse motions during a widget drag."""
         if event.LeftIsDown():
             self.actuallyDragged = True
@@ -590,7 +590,7 @@ class StoryPanel (wx.ScrolledWindow):
             self.ReleaseMouse()
             self.SetCursor(self.defaultCursor)
 
-    def scrollWithMouse (self, event):
+    def scrollWithMouse(self, event):
         """
         If the user has moved their mouse outside the window
         bounds, this tries to scroll to keep up. This returns a tuple
@@ -637,7 +637,7 @@ class StoryPanel (wx.ScrolledWindow):
 
         return pixScroll
 
-    def untitledName (self, base = "Untitled Passage"):
+    def untitledName(self, base = "Untitled Passage"):
         """Returns a string for an untitled PassageWidget."""
         number = 1
 
@@ -651,16 +651,16 @@ class StoryPanel (wx.ScrolledWindow):
 
         return base + ' ' + str(number)
 
-    def eachWidget (self, function):
+    def eachWidget(self, function):
         """Runs a function on every passage in the panel."""
         for widget in self.widgets:
             function(widget)
 
-    def sortedWidgets (self):
+    def sortedWidgets(self):
         """Returns a sorted list of widgets, left to right, top to bottom."""
         return sorted(self.widgets, PassageWidget.sort)
 
-    def taggedWidgets (self, tag):
+    def taggedWidgets(self, tag):
         """Returns widgets that have the given tag"""
         return (a for a in self.widgets if tag in a.passage.tags)
 
@@ -670,18 +670,18 @@ class StoryPanel (wx.ScrolledWindow):
             if widget.selected: return widget
         return None
 
-    def eachSelectedWidget (self, function):
+    def eachSelectedWidget(self, function):
         """Runs a function on every selected passage in the panel."""
         for widget in self.widgets:
             if widget.selected: function(widget)
 
-    def hasSelection (self):
+    def hasSelection(self):
         """Returns whether any passages are selected."""
         for widget in self.widgets:
             if widget.selected: return True
         return False
 
-    def hasMultipleSelection (self):
+    def hasMultipleSelection(self):
         """Returns whether multiple passages are selected."""
         selected = 0
         for widget in self.widgets:
@@ -690,13 +690,13 @@ class StoryPanel (wx.ScrolledWindow):
                 if selected > 1: return True
         return False
 
-    def findWidget (self, title):
+    def findWidget(self, title):
         """Returns a PassageWidget with the title passed. If none exists, it returns None."""
         for widget in self.widgets:
             if widget.passage.title == title: return widget
         return None
 
-    def toPixels (self, logicals, scaleOnly = False):
+    def toPixels(self, logicals, scaleOnly = False):
         """
         Converts a tuple of logical coordinates to pixel coordinates. If you need to do just
         a straight conversion from logicals to pixels without worrying about where the scrollbar
@@ -706,7 +706,7 @@ class StoryPanel (wx.ScrolledWindow):
         if not scaleOnly: converted = self.CalcScrolledPosition(converted)
         return converted
 
-    def toLogical (self, pixels, scaleOnly = False):
+    def toLogical(self, pixels, scaleOnly = False):
         """
         Converts a tuple of pixel coordinates to logical coordinates. If you need to do just
         a straight conversion without worrying about where the scrollbar is, then call with
@@ -722,7 +722,7 @@ class StoryPanel (wx.ScrolledWindow):
         converted = (converted[0] / self.scale, converted[1] / self.scale)
         return converted
 
-    def getSize (self):
+    def getSize(self):
         """
         Returns a tuple (width, height) of the smallest rect needed to
         contain all children widgets.
@@ -736,7 +736,7 @@ class StoryPanel (wx.ScrolledWindow):
             height = max(height, bottomSide)
         return (width, height)
 
-    def zoom (self, scale):
+    def zoom(self, scale):
         """
         Sets zoom to a certain level. Pass a number to set the zoom
         exactly, pass 'in' or 'out' to zoom relatively, and 'fit'
@@ -775,7 +775,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.Scroll(origin[0], origin[1])
         self.parent.updateUI()
 
-    def paint (self, event):
+    def paint(self, event):
         """Paints marquee selection, widget connectors, and widgets onscreen."""
         # do NOT call self.DoPrepareDC() no matter what the docs may say
         # we already take into account our scroll origin in our
@@ -831,7 +831,7 @@ class StoryPanel (wx.ScrolledWindow):
 
             gc.DrawRectangle(self.dragRect.x, self.dragRect.y, self.dragRect.width, self.dragRect.height)
 
-    def resize (self, event = None):
+    def resize(self, event = None):
         """
         Sets scrollbar settings based on panel size and widgets inside.
         This is designed to always give the user more room than they actually need
@@ -847,7 +847,7 @@ class StoryPanel (wx.ScrolledWindow):
         self.SetVirtualSize((maxWidth, maxHeight))
         self.SetScrollRate(StoryPanel.SCROLL_SPEED, StoryPanel.SCROLL_SPEED)
 
-    def serialize (self):
+    def serialize(self):
         """Returns a dictionary of state suitable for pickling."""
         state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
 
@@ -856,7 +856,7 @@ class StoryPanel (wx.ScrolledWindow):
 
         return state
 
-    def serialize_noprivate (self):
+    def serialize_noprivate(self):
         """Returns a dictionary of state suitable for pickling without passage marked with a Twine.private tag."""
         state = { 'scale': self.scale, 'widgets': [], 'snapping': self.snapping }
 
@@ -969,8 +969,8 @@ body {
 
 # context menu
 
-class StoryPanelContext (wx.Menu):
-    def __init__ (self, parent, pos):
+class StoryPanelContext(wx.Menu):
+    def __init__(self, parent, pos):
         wx.Menu.__init__(self)
         self.parent = parent
         self.pos = pos
@@ -993,7 +993,7 @@ class StoryPanelContext (wx.Menu):
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['annotation']), id = newPassage.GetId())
 
-    def newWidget (self, event, text = '', tags = []):
+    def newWidget(self, event, text = '', tags = []):
         pos = self.pos
         offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
         pos.x = pos.x - offset[0]
@@ -1002,8 +1002,8 @@ class StoryPanelContext (wx.Menu):
 
 # drag and drop listener
 
-class StoryPanelDropTarget (wx.PyDropTarget):
-    def __init__ (self, panel):
+class StoryPanelDropTarget(wx.PyDropTarget):
+    def __init__(self, panel):
         wx.PyDropTarget.__init__(self)
         self.panel = panel
         self.data = wx.DataObjectComposite()
@@ -1013,7 +1013,7 @@ class StoryPanelDropTarget (wx.PyDropTarget):
         self.data.Add(self.textdrop,False)
         self.SetDataObject(self.data)
 
-    def OnData (self, x, y, d):
+    def OnData(self, x, y, d):
         if self.GetData():
             type = self.data.GetReceivedFormat().GetType()
             if type in [wx.DF_UNICODETEXT, wx.DF_TEXT]:

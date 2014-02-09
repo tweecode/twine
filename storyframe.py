@@ -6,7 +6,7 @@ from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 
-class StoryFrame (wx.Frame):
+class StoryFrame(wx.Frame):
     """
     A StoryFrame displays an entire story. Its main feature is an
     instance of a StoryPanel, but it also has a menu bar and toolbar.
@@ -414,7 +414,7 @@ class StoryFrame (wx.Frame):
         if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
             os.remove(self.lastTestBuild.name)
 
-    def revert (self, event = None):
+    def revert(self, event = None):
         """Reverts to the last saved version of the story file."""
         bits = os.path.splitext(self.saveDestination)
         title = '"' + os.path.basename(bits[0]) + '"'
@@ -429,13 +429,13 @@ class StoryFrame (wx.Frame):
             self.dirty = False;
             self.checkClose(None)
 
-    def checkClose (self, event):
+    def checkClose(self, event):
         self.checkCloseDo(event,byMenu=False)
 
-    def checkCloseMenu (self, event):
+    def checkCloseMenu(self, event):
         self.checkCloseDo(event,byMenu=True)
 
-    def checkCloseDo (self, event, byMenu):
+    def checkCloseDo(self, event, byMenu):
         """
         If this instance's dirty flag is set, asks the user if they want to save the changes.
         """
@@ -471,7 +471,7 @@ class StoryFrame (wx.Frame):
             event.Skip()
         self.Destroy()
 
-    def saveAs (self, event = None):
+    def saveAs(self, event = None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
                          "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
@@ -495,7 +495,7 @@ class StoryFrame (wx.Frame):
 
         dialog.Destroy()
 
-    def exportSource (self, event = None):
+    def exportSource(self, event = None):
         """Asks the user to choose a file to export source to, then exports the wiki."""
         dialog = wx.FileDialog(self, 'Export Source Code', os.getcwd(), "", \
                                'Twee File (*.twee;* .tw; *.txt)|*.twee;*.tw;*.txt|All Files (*.*)|*.*', wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
@@ -522,7 +522,7 @@ class StoryFrame (wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.importHtml(dialog.GetPath())
 
-    def importHtml (self, path):
+    def importHtml(self, path):
         """Imports the tiddler objects in a HTML file into the story."""
         self.importSource(path, True)
 
@@ -534,7 +534,7 @@ class StoryFrame (wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.importSource(dialog.GetPath())
 
-    def importSource (self, path, html = False):
+    def importSource(self, path, html = False):
         """Imports the tiddler objects in a Twee file into the story."""
 
         try:
@@ -751,7 +751,7 @@ You can also include URLs of .tws and .twee files, too."""
 
         editingWidget.openEditor()
 
-    def save (self, event = None):
+    def save(self, event = None):
         if (self.saveDestination == ''):
             self.saveAs()
             return
@@ -765,7 +765,7 @@ You can also include URLs of .tws and .twee files, too."""
         except:
             self.app.displayError('saving your story')
 
-    def build (self, event = None):
+    def build(self, event = None):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
         dialog = wx.FileDialog(self, 'Build Story', self.buildDestination or os.getcwd(), "", \
                          "Web Page (*.html)|*.html", \
@@ -780,7 +780,7 @@ You can also include URLs of .tws and .twee files, too."""
     def testBuild(self, event = None, startAt = ''):
         self.rebuild(temp = True, startAt = startAt, displayAfter = True)
 
-    def rebuild (self, event = None, temp = False, displayAfter = False, startAt = ''):
+    def rebuild(self, event = None, temp = False, displayAfter = False, startAt = ''):
         """
         Builds an HTML version of the story. Pass whether to use a temp file, and/or open the file afterwards.
         """
@@ -906,7 +906,7 @@ You can also include URLs of .tws and .twee files, too."""
                 return None
         return tw
 
-    def viewBuild (self, event = None, name = ''):
+    def viewBuild(self, event = None, name = ''):
         """
         Opens the last built file in a Web browser.
         """
@@ -914,7 +914,7 @@ You can also include URLs of .tws and .twee files, too."""
         path = path.replace('file://///', 'file:///')
         wx.LaunchDefaultBrowser(path)
 
-    def autoBuild (self, event = None):
+    def autoBuild(self, event = None):
         """
         Toggles the autobuild feature
         """
@@ -924,7 +924,7 @@ You can also include URLs of .tws and .twee files, too."""
         else:
             self.autobuildtimer.Stop()
 
-    def autoBuildTick (self, event = None):
+    def autoBuildTick(self, event = None):
         """
         Called whenever the autobuild timer checks up on things
         """
@@ -936,7 +936,7 @@ You can also include URLs of .tws and .twee files, too."""
                 self.rebuild()
                 break
 
-    def autoBuildStart (self):
+    def autoBuildStart(self):
         self.autobuildfiles = { }
         if self.saveDestination == '':
             twinedocdir = os.getcwd()
@@ -952,7 +952,7 @@ You can also include URLs of .tws and .twee files, too."""
                         mtime = os.stat(pathname).st_mtime
                         self.autobuildfiles[pathname] = mtime
 
-    def stats (self, event = None):
+    def stats(self, event = None):
         """
         Displays a StatisticsDialog for this frame.
         """
@@ -960,7 +960,7 @@ You can also include URLs of .tws and .twee files, too."""
         statFrame = StatisticsDialog(parent = self, storyPanel = self.storyPanel, app = self.app)
         statFrame.ShowModal()
 
-    def showFind (self, event = None):
+    def showFind(self, event = None):
         """
         Shows a StoryFindFrame for this frame.
         """
@@ -975,7 +975,7 @@ You can also include URLs of .tws and .twee files, too."""
                 delattr(self, 'findFrame')
                 self.showFind(event)
 
-    def showReplace (self, event = None):
+    def showReplace(self, event = None):
         """
         Shows a StoryReplaceFrame for this frame.
         """
@@ -989,7 +989,7 @@ You can also include URLs of .tws and .twee files, too."""
                 delattr(self, 'replaceFrame')
                 self.showReplace(event)
 
-    def proof (self, event = None):
+    def proof(self, event = None):
         """
         Builds an RTF version of the story. Pass whether to open the destination file afterwards.
         """
@@ -1024,11 +1024,11 @@ You can also include URLs of .tws and .twee files, too."""
         except:
             self.app.displayError('building a proofing copy of your story')
 
-    def setTarget (self, target):
+    def setTarget(self, target):
         self.target = target
         self.header = self.app.headers[target]
 
-    def updateUI (self, event = None):
+    def updateUI(self, event = None):
         """Adjusts menu items to reflect the current state."""
 
         hasSelection = self.storyPanel.hasSelection()
@@ -1128,7 +1128,7 @@ You can also include URLs of .tws and .twee files, too."""
         for key in self.storyFormats:
             self.menus.FindItemById(key).Check(self.target == self.storyFormats[key].id)
 
-    def toggleToolbar (self, event = None):
+    def toggleToolbar(self, event = None):
         """Toggles the toolbar onscreen."""
         if (self.showToolbar):
             self.showToolbar = False
@@ -1140,7 +1140,7 @@ You can also include URLs of .tws and .twee files, too."""
             self.app.config.WriteBool('storyFrameToolbar', True)
         self.SendSizeEvent()
 
-    def setDirty (self, value, action = None):
+    def setDirty(self, value, action = None):
         """
         Sets the dirty flag to the value passed. Make sure to use this instead of
         setting the dirty property directly, as this method automatically updates
@@ -1155,24 +1155,24 @@ You can also include URLs of .tws and .twee files, too."""
         if value is True and action:
             self.storyPanel.pushUndo(action)
 
-    def applyPrefs (self):
+    def applyPrefs(self):
         """Passes on the apply message to child widgets."""
         self.storyPanel.eachWidget(lambda w: w.applyPrefs())
         self.storyPanel.Refresh()
 
-    def serialize (self):
+    def serialize(self):
         """Returns a dictionary of state suitable for pickling."""
         return { 'target': self.target, 'buildDestination': self.buildDestination, \
                  'saveDestination': self.saveDestination, \
                  'storyPanel': self.storyPanel.serialize() }
 
-    def serialize_noprivate (self, dest):
+    def serialize_noprivate(self, dest):
         """Returns a dictionary of state suitable for pickling."""
         return { 'target': self.target, 'buildDestination': '', \
                  'saveDestination': dest, \
                  'storyPanel': self.storyPanel.serialize_noprivate() }
 
-    def __repr__ (self):
+    def __repr__(self):
         return "<StoryFrame '" + self.saveDestination + "'>"
 
     def getHeader(self):

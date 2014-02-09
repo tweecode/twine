@@ -5,7 +5,7 @@ and Lines (which are tuples of wx.Points).
 
 import math, wx
 
-def clipLineByRects (line, *rects):
+def clipLineByRects(line, *rects):
     """
     Clips a line (e.g. an array of wx.Points) so it does
     not overlap any of the rects passed. The line must be
@@ -42,7 +42,7 @@ def endPointProjectedFrom(line, angle, distance):
 
     return wx.Point(x, y)
 
-def pointsToRect (p1, p2):
+def pointsToRect(p1, p2):
     """
     Returns the smallest wx.Rect that encloses two points.
     """
@@ -57,7 +57,7 @@ def pointsToRect (p1, p2):
 
     return rect
 
-def rectToLines (rect):
+def rectToLines(rect):
     """
     Converts a wx.Rect into an array of lines
     (e.g. tuples of wx.Points)
@@ -69,13 +69,13 @@ def rectToLines (rect):
     return (topLeft, topRight), (topLeft, bottomLeft), (topRight, bottomRight), \
            (bottomLeft, bottomRight)
 
-def lineLength (line):
+def lineLength(line):
     """
     Returns the length of a line.
     """
     return math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
 
-def lineRectIntersection (line, rect, excludeTrivial = False):
+def lineRectIntersection(line, rect, excludeTrivial = False):
     """
     Returns a wx.Point corresponding to where a line and a
     wx.Rect intersect. If they do not intersect, then None
@@ -101,7 +101,7 @@ def lineRectIntersection (line, rect, excludeTrivial = False):
         if intersection: return intersection
     return None
 
-def lineIntersection (line1, line2):
+def lineIntersection(line1, line2):
     """
     Returns a wx.Point corresponding to where two line
     segments intersect. If they do not intersect, then None

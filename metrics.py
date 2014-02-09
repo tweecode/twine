@@ -5,7 +5,7 @@ for the OS we're running on.
 
 import sys
 
-def size (type):
+def size(type):
     """
     Returns the number of pixels to use for a certain context.
     Recognized keywords:
@@ -66,7 +66,7 @@ def size (type):
         if sys.platform == 'darwin': return 20
         return 11
 
-def face (type):
+def face(type):
     """
     Returns a font face name.
     Recognized keywords:

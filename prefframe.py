@@ -1,13 +1,13 @@
 import wx
 import metrics
 
-class PreferenceFrame (wx.Frame):
+class PreferenceFrame(wx.Frame):
     """
     This allows the user to set their preferences. Changes automatically
     update as the user makes them; when they're done, they close the window.
     """
 
-    def __init__ (self, app, parent = None):
+    def __init__(self, app, parent = None):
         self.app = app
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.app.NAME + ' Preferences', \
                           style = wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CAPTION | wx.SYSTEM_MENU)
@@ -88,14 +88,14 @@ class PreferenceFrame (wx.Frame):
         self.panelSizer = panelSizer
         self.borderSizer = borderSizer
 
-    def getPrefFont (self, key):
+    def getPrefFont(self, key):
         """
         Returns a font saved in preferences as a wx.Font instance.
         """
         return wx.Font(self.app.config.ReadInt(key + 'FontSize'), wx.FONTFAMILY_MODERN, \
                        wx.FONTSTYLE_NORMAL, wx.NORMAL, False, self.app.config.Read(key + 'FontFace'))
 
-    def savePref (self, key, value):
+    def savePref(self, key, value):
         """
         Saves changes to a preference and sends an update message to the application.
         """
@@ -110,7 +110,7 @@ class PreferenceFrame (wx.Frame):
 
         self.app.applyPrefs()
 
-    def saveFontPref (self, key, font):
+    def saveFontPref(self, key, font):
         """
         Saves a user-chosen font to preference keys, then sends an update message to the application.
         """

@@ -16,7 +16,7 @@ class PassageWidget:
     logical coordinates. Use StoryPanel.toPixels() to convert.
     """
 
-    def __init__ (self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', tags = [], state = None):
+    def __init__(self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', tags = [], state = None):
         # inner state
 
         self.parent = parent
@@ -44,31 +44,31 @@ class PassageWidget:
         self.updateBitmap()
         self.passage.update()
 
-    def getSize (self):
+    def getSize(self):
         """Returns this instance's logical size."""
         if "annotation" in self.passage.tags:
             return (PassageWidget.SIZE+self.parent.GRID_SPACING, PassageWidget.SIZE+self.parent.GRID_SPACING)
         return (PassageWidget.SIZE, PassageWidget.SIZE)
 
-    def getCenter (self):
+    def getCenter(self):
         """Returns this instance's center in logical coordinates."""
         pos = list(self.pos)
         pos[0] += self.getSize()[0] / 2
         pos[1] += self.getSize()[1] / 2
         return pos
 
-    def getLogicalRect (self):
+    def getLogicalRect(self):
         """Returns this instance's rectangle in logical coordinates."""
         size = self.getSize()
         return wx.Rect(self.pos[0], self.pos[1], size[0], size[1])
 
-    def getPixelRect (self):
+    def getPixelRect(self):
         """Returns this instance's rectangle onscreen."""
         origin = self.parent.toPixels(self.pos)
         size = self.parent.toPixels(self.getSize(), scaleOnly = True)
         return wx.Rect(origin[0], origin[1], size[0], size[1])
 
-    def getDirtyPixelRect (self):
+    def getDirtyPixelRect(self):
         """
         Returns a pixel rectangle of everything that needs to be redrawn for the widget
         in its current position. This includes the widget itself as well as any
@@ -87,7 +87,7 @@ class PassageWidget:
 
         bridge = [ dirtyRect ]
 
-        def addLinkingToRect (widget):
+        def addLinkingToRect(widget):
             if self.passage.title in widget.passage.links:
                 dirtyRect = bridge[0].Union(widget.getPixelRect())
 
@@ -95,13 +95,13 @@ class PassageWidget:
 
         return dirtyRect
 
-    def offset (self, x = 0, y = 0):
+    def offset(self, x = 0, y = 0):
         """Offsets this widget's position by logical coordinates."""
         self.pos = list(self.pos)
         self.pos[0] += x
         self.pos[1] += y
 
-    def findSpace (self):
+    def findSpace(self):
         """Moves this widget so it doesn't overlap any others."""
         turns = 0.0
         movecount = 1
@@ -131,14 +131,14 @@ class PassageWidget:
                 self.pos[1] += self.parent.GRID_SPACING
 
 
-    def containsRegexp (self, regexp, flags):
+    def containsRegexp(self, regexp, flags):
         """
         Returns whether this widget's passage contains a regexp.
         """
         return (re.search(regexp, self.passage.title, flags) != None \
                 or re.search(regexp, self.passage.text, flags) != None)
 
-    def replaceRegexp (self, findRegexp, replaceRegexp, flags):
+    def replaceRegexp(self, findRegexp, replaceRegexp, flags):
         """
         Performs a regexp replace in this widget's passage title and
         body text. Returns the number of replacements actually made.
@@ -158,11 +158,11 @@ class PassageWidget:
         """Returns a list of macro tags which match passage names."""
         return filter(lambda a: self.parent.findWidget(a), self.passage.macros)
 
-    def getBrokenLinks (self):
+    def getBrokenLinks(self):
         """Returns a list of broken links in this widget."""
         return filter(lambda a: not self.parent.findWidget(a), self.passage.links)
 
-    def setSelected (self, value, exclusive = True):
+    def setSelected(self, value, exclusive = True):
         """
         Sets whether this widget should be selected. Pass a false value for
         exclusive to prevent other widgets from being deselected.
@@ -190,24 +190,24 @@ class PassageWidget:
                                 dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
             self.parent.Refresh(True, dirtyRect)
 
-    def setDimmed (self, value):
+    def setDimmed(self, value):
         """Sets whether this widget should be dimmed."""
         old = self.dimmed
         self.dimmed = value
         if self.dimmed != old:
             self.clearPaintCache()
 
-    def clearPaintCache (self):
+    def clearPaintCache(self):
         """
         Forces the widget to be repainted from scratch.
         """
         self.paintBufferBounds = None
 
-    def openContextMenu (self, event):
+    def openContextMenu(self, event):
         """Opens a contextual menu at the event position given."""
         self.parent.PopupMenu(PassageWidgetContext(self), event.GetPosition())
 
-    def openEditor (self, event = None, fullscreen = False):
+    def openEditor(self, event = None, fullscreen = False):
         """Opens a PassageFrame to edit this passage."""
         image = self.passage.isImage()
 
@@ -229,14 +229,14 @@ class PassageWidget:
                 delattr(self, 'passageFrame')
                 self.openEditor(event, fullscreen)
 
-    def closeEditor (self, event = None):
+    def closeEditor(self, event = None):
         """Closes the PassageFrame associated with this, if it exists."""
         try: self.passageFrame.closeFullscreen()
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
 
-    def intersectsAny (self, dragging = False):
+    def intersectsAny(self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""
 
         #Enforce positive coordinates
@@ -252,7 +252,7 @@ class PassageWidget:
 
         return False
 
-    def intersects (self, other):
+    def intersects(self, other):
         """
         Returns whether this widget intersects another widget or wx.Rect.
         This uses logical coordinates, so you can do this without actually moving the widget onscreen.
@@ -263,7 +263,7 @@ class PassageWidget:
             other = other.getLogicalRect()
         return selfRect.Intersects(other)
 
-    def applyPrefs (self):
+    def applyPrefs(self):
         """Passes on the message to any editor windows."""
         try: self.passageFrame.applyPrefs()
         except: pass
@@ -275,7 +275,7 @@ class PassageWidget:
         if self.passage.isImage():
             self.bitmap = images.Base64ToBitmap(self.passage.text)
 
-    def paintConnectorTo (self, otherWidget, arrowheads, color, width, gc, updateRect = None):
+    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
         """
         Paints a connecting line between this widget and another,
         with optional arrowheads. You may pass either a wx.GraphicsContext
@@ -338,7 +338,7 @@ class PassageWidget:
         else:
             gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
 
-    def paintConnectors (self, gc, arrowheads = True, dontDraw = [], updateRect = None):
+    def paintConnectors(self, gc, arrowheads = True, dontDraw = [], updateRect = None):
         """
         Paints all connectors originating from this widget. This accepts
         a list of widget titles that will not be drawn to. It returns this
@@ -385,7 +385,7 @@ class PassageWidget:
 
         return dontDraw
 
-    def paint (self, dc):
+    def paint(self, dc):
         """
         Handles paint events, either blitting our paint buffer or
         manually redrawing.
@@ -423,12 +423,12 @@ class PassageWidget:
             return 'endTitleBar'
         return 'titleBar'
 
-    def cachePaint (self, size):
+    def cachePaint(self, size):
         """
         Caches the widget so self.paintBuffer is up-to-date.
         """
 
-        def wordWrap (text, lineWidth, gc, lineBreaks = False):
+        def wordWrap(text, lineWidth, gc, lineBreaks = False):
             """
             Returns a list of lines from a string
             This is somewhat based on the wordwrap function built into wx.lib.
@@ -456,7 +456,7 @@ class PassageWidget:
             lines += currentLine
             return lines.split('\n')
 
-        def dim (c, dim):
+        def dim(c, dim):
             """Lowers a color's alpha if dim is true."""
             if isinstance(c, wx.Colour): c = list(c.Get(includeAlpha = True))
             if len(c) < 4:
@@ -739,11 +739,11 @@ class PassageWidget:
 
         self.paintBufferBounds = size
 
-    def serialize (self):
+    def serialize(self):
         """Returns a dictionary with state information suitable for pickling."""
         return { 'selected': self.selected, 'pos': self.pos, 'passage': copy.copy(self.passage) }
 
-    def sort (first, second):
+    def sort(first, second):
         """
         Sorts PassageWidgets so that the results appear left to right,
         top to bottom. A certain amount of slack is assumed here in
@@ -760,7 +760,7 @@ class PassageWidget:
             else:
                 return 1 # punt on ties
 
-    def __repr__ (self):
+    def __repr__(self):
         return "<PassageWidget '" + self.passage.title + "'>"
 
     def getHeader(self):
@@ -800,8 +800,8 @@ class PassageWidget:
 
 # contextual menu
 
-class PassageWidgetContext (wx.Menu):
-    def __init__ (self, parent):
+class PassageWidgetContext(wx.Menu):
+    def __init__(self, parent):
         wx.Menu.__init__(self)
         self.parent = parent
         title = '"' + parent.passage.title + '"'

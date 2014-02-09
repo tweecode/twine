@@ -6,7 +6,7 @@ from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
 import cStringIO
 
-class PassageFrame (wx.Frame):
+class PassageFrame(wx.Frame):
     """
     A PassageFrame is a window that allows the user to change the contents
     of a passage. This must be paired with a PassageWidget; it gets to the
@@ -22,7 +22,7 @@ class PassageFrame (wx.Frame):
     know what flags to pass to wx.stc.
     """
 
-    def __init__ (self, parent, widget, app):
+    def __init__(self, parent, widget, app):
         self.widget = widget
         self.app = app
         self.syncTimer = None
@@ -214,7 +214,7 @@ class PassageFrame (wx.Frame):
         self.SetIcon(self.app.icon)
         self.Show(True)
 
-    def syncInputs (self):
+    def syncInputs(self):
         """Updates the inputs based on the passage's state."""
         self.titleInput.SetValue(self.widget.passage.title)
         self.bodyInput.SetText(self.widget.passage.text)
@@ -227,7 +227,7 @@ class PassageFrame (wx.Frame):
         self.tagsInput.SetValue(tags)
         self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
 
-    def syncPassage (self, event = None):
+    def syncPassage(self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
         title = self.titleInput.GetValue() if len(self.titleInput.GetValue()) > 0 else ""
         title = title.replace('\n','')
@@ -281,7 +281,7 @@ class PassageFrame (wx.Frame):
 
         # reset redraw timer
 
-        def reallySync (self):
+        def reallySync(self):
             try:
                 self.widget.parent.Refresh()
             except:
@@ -300,7 +300,7 @@ class PassageFrame (wx.Frame):
 
         self.setLexer()
 
-    def openFullscreen (self, event = None):
+    def openFullscreen(self, event = None):
         """Opens a FullscreenEditFrame for this passage's body text."""
         self.Hide()
         self.fullscreen = FullscreenEditFrame(None, self.app, \
@@ -308,13 +308,13 @@ class PassageFrame (wx.Frame):
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
 
-    def closeFullscreen (self, event = None):
+    def closeFullscreen(self, event = None):
         """Closes this editor's fullscreen counterpart, if any."""
         try: self.fullscreen.Destroy()
         except: pass
         event.Skip()
 
-    def openOtherEditor (self, event = None, title = None):
+    def openOtherEditor(self, event = None, title = None):
         """
         Opens another passage for editing. If it does not exist, then
         it creates it next to this one and then opens it. You may pass
@@ -343,7 +343,7 @@ class PassageFrame (wx.Frame):
 
         editingWidget.openEditor()
 
-    def showSearchFrame (self, type):
+    def showSearchFrame(self, type):
         """
         Shows a PassageSearchFrame for this frame, creating it if need be.
         The type parameter should be one of the constants defined in
@@ -359,12 +359,12 @@ class PassageFrame (wx.Frame):
                 delattr(self, 'searchFrame')
                 self.showSearchFrame(type)
 
-    def setBodyText (self, text):
+    def setBodyText(self, text):
         """Changes the body text field directly."""
         self.bodyInput.SetText(text)
         self.Show(True)
 
-    def prepDrag (self, event):
+    def prepDrag(self, event):
         """
         Tells our StoryPanel about us so that it can tell us what to do in response to
         dropping some text into it.
@@ -372,25 +372,25 @@ class PassageFrame (wx.Frame):
         event.SetDragAllowMove(True)
         self.widget.parent.textDragSource = self
 
-    def getSelection (self):
+    def getSelection(self):
         """
         Returns the beginning and end of the selection as a tuple.
         """
         return self.bodyInput.GetSelection()
 
-    def getSelectedText (self):
+    def getSelectedText(self):
         """
         Returns the text currently selected.
         """
         return self.bodyInput.GetSelectedText()
 
-    def setSelection (self, range):
+    def setSelection(self, range):
         """
         Changes the current selection to the range passed.
         """
         self.bodyInput.SetSelection(range[0], range[1])
 
-    def editSelection (self, event = None):
+    def editSelection(self, event = None):
         """
         If the selection isn't already double-bracketed, then brackets are added.
         If a passage with the selection title doesn't exist, it is created.
@@ -402,14 +402,14 @@ class PassageFrame (wx.Frame):
         self.openOtherEditor(title = title)
         self.updateSubmenus()
 
-    def linkSelection (self):
+    def linkSelection(self):
         """Transforms the selection into a link by surrounding it with double brackets."""
         selStart = self.bodyInput.GetSelectionStart()
         selEnd = self.bodyInput.GetSelectionEnd()
         self.bodyInput.SetSelection(selStart, selEnd)
         self.bodyInput.ReplaceSelection("[["+self.bodyInput.GetSelectedText()+"]]")
 
-    def findRegexp (self, regexp, flags):
+    def findRegexp(self, regexp, flags):
         """
         Selects a regexp in the body text.
         """
@@ -437,13 +437,13 @@ class PassageFrame (wx.Frame):
                                           'Not Found', wx.ICON_INFORMATION | wx.OK)
                 dialog.ShowModal()
 
-    def findNextRegexp (self, event = None):
+    def findNextRegexp(self, event = None):
         """
         Performs a search for the last regexp that was searched for.
         """
         self.findRegexp(self.lastFindRegexp, self.lastFindFlags)
 
-    def replaceOneRegexp (self, findRegexp, flags, replaceRegexp):
+    def replaceOneRegexp(self, findRegexp, flags, replaceRegexp):
         """
         If the current selection matches the search regexp, a replacement
         is made. Otherwise, it calls findRegexp().
@@ -461,7 +461,7 @@ class PassageFrame (wx.Frame):
             # look for the next instance
             self.findRegexp(findRegexp, flags)
 
-    def replaceAllRegexps (self, findRegexp, flags, replaceRegexp):
+    def replaceAllRegexps(self, findRegexp, flags, replaceRegexp):
         """
         Replaces all instances of text in the body text and
         shows the user an alert about how many replacements
@@ -483,7 +483,7 @@ class PassageFrame (wx.Frame):
         dialog = wx.MessageDialog(self, message, 'Replace Complete', wx.ICON_INFORMATION | wx.OK)
         dialog.ShowModal()
 
-    def stripCrud (self, text):
+    def stripCrud(self, text):
         """Strips extraneous crud from around text, likely a partial selection of a link."""
         return text.strip(""" "'<>[]""")
 
@@ -513,7 +513,7 @@ class PassageFrame (wx.Frame):
                       wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, wx.stc.STC_CSS_DIRECTIVE]:
                 body.StyleSetBold(i, True)
 
-    def setLexer (self):
+    def setLexer(self):
         """
         Sets our custom lexer for the body input so long as the passage
         is part of the story.
@@ -539,7 +539,7 @@ class PassageFrame (wx.Frame):
                 self.lexer.initStyles()
             self.bodyInput.Colourise(0, len(self.bodyInput.GetText()))
 
-    def updateUI (self, event):
+    def updateUI(self, event):
         """Updates menus."""
 
         # basic edit menus
@@ -586,7 +586,7 @@ class PassageFrame (wx.Frame):
             editSelected.SetText('Create &Link From Selected Text\tCtrl-L')
             editSelected.Enable(False)
 
-    def updateSubmenus (self, event = None):
+    def updateSubmenus(self, event = None):
         """
         Updates our passage menus. This should be called sparingly, i.e. not during
         a UI update event, as it is doing a bunch of removing and adding of items.
@@ -622,7 +622,7 @@ class PassageFrame (wx.Frame):
 
         # repopulate the menus
 
-        def populate (menu, links):
+        def populate(menu, links):
             for item in menu.GetMenuItems():
                 menu.DeleteItem(item)
 
@@ -649,7 +649,7 @@ class PassageFrame (wx.Frame):
         self.brokenLinksMenuTitle.SetText(brokenTitle)
         populate(self.brokenLinksMenu, broken)
 
-    def applyPrefs (self):
+    def applyPrefs(self):
         """Applies user prefs to this frame."""
         bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL,
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
@@ -657,7 +657,7 @@ class PassageFrame (wx.Frame):
         self.bodyInput.StyleSetFont(defaultStyle, bodyFont)
         if hasattr(self, 'lexer'): self.lexer.initStyles()
 
-    def __repr__ (self):
+    def __repr__(self):
         return "<PassageFrame '" + self.widget.passage.title + "'>"
 
     def getHeader(self):
@@ -683,10 +683,10 @@ class PassageFrame (wx.Frame):
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 
 
-class StorySettingsFrame (PassageFrame):
+class StorySettingsFrame(PassageFrame):
     """Special type of PassageFrame which presents the current header's StorySettings."""
 
-    def __init__ (self, parent, widget, app):
+    def __init__(self, parent, widget, app):
         self.widget = widget
         self.app = app
 
@@ -768,13 +768,13 @@ class StorySettingsFrame (PassageFrame):
         self.widget.passage.update()
 
 
-class ImageFrame (PassageFrame):
+class ImageFrame(PassageFrame):
     """
     Special type of PassageFrame which only displays passages whose text consists of base64
     encoded images - the image is converted to a bitmap and displayed, if possible.
     """
 
-    def __init__ (self, parent, widget, app):
+    def __init__(self, parent, widget, app):
         self.widget = widget
         self.app = app
         self.syncTimer = None
@@ -863,7 +863,7 @@ class ImageFrame (PassageFrame):
         self.updateImage()
         self.Show(True)
 
-    def syncPassage (self, event = None):
+    def syncPassage(self, event = None):
         """Updates the image based on the title input; asks our matching widget to repaint."""
         if len(self.titleInput.GetValue()) > 0:
             self.widget.passage.title = self.titleInput.GetValue()
@@ -879,7 +879,7 @@ class ImageFrame (PassageFrame):
 
         # reset redraw timer
 
-        def reallySync (self):
+        def reallySync(self):
             self.widget.parent.Refresh()
 
         if (self.syncTimer):

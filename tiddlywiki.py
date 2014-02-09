@@ -16,7 +16,7 @@ from tweelexer import TweeLexer
 class TiddlyWiki:
     """An entire TiddlyWiki."""
 
-    def __init__ (self, author = 'twee'):
+    def __init__(self, author = 'twee'):
         """Optionally pass an author name."""
         self.author = author
         self.tiddlers = {}
@@ -25,7 +25,7 @@ class TiddlyWiki:
     def hasTiddler(self, name):
         return name in self.tiddlers
 
-    def toTwee (self, order = None):
+    def toTwee(self, order = None):
         """Returns Twee source code for this TiddlyWiki."""
         if not order: order = self.tiddlers.keys()
         output = u''
@@ -51,7 +51,7 @@ class TiddlyWiki:
         w = w.replace('\r\n','\n')
         return w
 
-    def toHtml (self, app, header = None, order = None, startAt = '', defaultName = ''):
+    def toHtml(self, app, header = None, order = None, startAt = '', defaultName = ''):
         """Returns HTML code for this TiddlyWiki."""
         if not order: order = self.tiddlers.keys()
         output = u''
@@ -175,7 +175,7 @@ class TiddlyWiki:
 
         return output
 
-    def toRtf (self, order = None):
+    def toRtf(self, order = None):
         """Returns RTF source code for this TiddlyWiki."""
         if not order: order = self.tiddlers.keys()
 
@@ -219,7 +219,7 @@ class TiddlyWiki:
 
         return output
 
-    def addTwee (self, source):
+    def addTwee(self, source):
         """Adds Twee source code to this TiddlyWiki."""
         source = source.replace("\r\n", "\n")
         source = '\n' + source
@@ -228,7 +228,7 @@ class TiddlyWiki:
         for i in tiddlers:
             self.addTiddler(Tiddler('::' + i))
 
-    def addHtml (self, source):
+    def addHtml(self, source):
 
         """Adds HTML source code to this TiddlyWiki."""
         divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
@@ -263,7 +263,7 @@ class TiddlyWiki:
     def addTweeFromFilename(self, filename):
         self.addTwee(self.read(filename))
 
-    def addTiddler (self, tiddler):
+    def addTiddler(self, tiddler):
         """Adds a Tiddler object to this TiddlyWiki."""
 
         if tiddler.title in self.tiddlers:
@@ -287,7 +287,7 @@ class TiddlyWiki:
 class Tiddler:
     """A single tiddler in a TiddlyWiki."""
 
-    def __init__ (self, source, type = 'twee', obfuscationkey = ""):
+    def __init__(self, source, type = 'twee', obfuscationkey = ""):
         # cache of passage names linked from this one
         self.links = []
         self.displays = []
@@ -300,7 +300,7 @@ class Tiddler:
         else:
             self.initHtml(source, obfuscationkey)
 
-    def __getstate__ (self):
+    def __getstate__(self):
         """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
         return {
             'created': self.created,
@@ -310,14 +310,14 @@ class Tiddler:
             'text': self.text,
         }
 
-    def __repr__ (self):
+    def __repr__(self):
         return "<Tiddler '" + self.title + "'>"
 
-    def __cmp__ (self, other):
+    def __cmp__(self, other):
         """Compares a Tiddler to another."""
         return hasattr(other, 'text') and self.text == other.text
 
-    def initTwee (self, source):
+    def initTwee(self, source):
         """Initializes a Tiddler from Twee source code."""
 
         # we were just born
@@ -353,7 +353,7 @@ class Tiddler:
         self.text = self.text.strip()
 
 
-    def initHtml (self, source, obfuscationkey = ""):
+    def initHtml(self, source, obfuscationkey = ""):
         """Initializes a Tiddler from HTML source code."""
 
         # title
@@ -408,7 +408,7 @@ class Tiddler:
             if obfuscationkey:
                 self.text = encode_obfuscate_swap(self.text, obfuscationkey);
 
-    def toHtml (self, author = 'twee', obfuscation = False, obfuscationkey = ''):
+    def toHtml(self, author = 'twee', obfuscation = False, obfuscationkey = ''):
         """Returns an HTML representation of this tiddler."""
 
         now = time.localtime()
@@ -434,7 +434,7 @@ class Tiddler:
         return output + '</div>'
 
 
-    def toTwee (self):
+    def toTwee(self):
         """Returns a Twee representation of this tiddler."""
         output = u':: ' + self.title
 
@@ -531,7 +531,7 @@ class Tiddler:
 #
 
 
-def encode_text (text, obfuscation = None, obfuscationkey = ''):
+def encode_text(text, obfuscation = None, obfuscationkey = ''):
     """Encodes a string for use in HTML output."""
     output = text
     if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
@@ -561,7 +561,7 @@ def encode_obfuscate_swap(text, obfuscationkey):
         r = r + c
     return r
 
-def decode_text (text):
+def decode_text(text):
     """Decodes a string from HTML."""
     output = text
     output = output.replace('\\n', '\n')
@@ -573,11 +573,11 @@ def decode_text (text):
     return output
 
 
-def encode_date (date):
+def encode_date(date):
     """Encodes a datetime in TiddlyWiki format."""
     return time.strftime('%Y%m%d%H%M', date)
 
 
-def decode_date (date):
+def decode_date(date):
     """Decodes a datetime from TiddlyWiki format."""
     return time.strptime(date, '%Y%m%d%H%M')

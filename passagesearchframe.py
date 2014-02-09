@@ -1,14 +1,14 @@
 import re, wx
 from searchpanels import FindPanel, ReplacePanel
 
-class PassageSearchFrame (wx.Frame):
+class PassageSearchFrame(wx.Frame):
     """
     This allows a user to do search and replaces on a PassageFrame.
     By default, this shows the Find tab initially, but this can be
     set via the constructor.
     """
 
-    def __init__ (self, parent, passageFrame, app, initialState = 0):
+    def __init__(self, parent, passageFrame, app, initialState = 0):
         self.passageFrame = passageFrame
         self.app = app
         wx.Frame.__init__(self, parent, title = 'Find/Replace In Passage')
@@ -38,7 +38,7 @@ class PassageSearchFrame (wx.Frame):
         self.SetIcon(self.app.icon)
         self.Show()
 
-    def onChangeTab (self, event):
+    def onChangeTab(self, event):
         if event.GetSelection() == PassageSearchFrame.FIND_TAB:
             self.findPanel.focus()
         else:
