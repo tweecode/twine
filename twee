@@ -20,7 +20,7 @@ class TweeApp(object):
 	def __init__ (self, path):
 		"""Initializes the application."""
 		self.scriptPath = path + os.sep 
-		self.targetsPath = self.scriptPath + os.sep + 'targets' + os.sep
+		self.builtinTargetsPath = self.scriptPath + os.sep + 'targets' + os.sep
 
 	def displayError(self, activity):
 		activity = activity.strip()
@@ -73,7 +73,7 @@ def main(argv):
 
 	app = TweeApp(scriptPath)
 
-	header = Header.factory(target, app.targetsPath + target + os.sep)
+	header = Header.factory(target, app.builtinTargetsPath + target + os.sep)
 
 	# populate a TiddlyWiki
 
