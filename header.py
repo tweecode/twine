@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os, imp
 from collections import OrderedDict
 from random import shuffle

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # This module has basic utilities for working with wx.Rects
 # and Lines (which are tuples of wx.Points).

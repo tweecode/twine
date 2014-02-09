@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #
 # StoryFindFrame
 # This allows the user to search a StoryPanel for a string of text.

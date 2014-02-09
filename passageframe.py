@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # PassageFrame
 # A PassageFrame is a window that allows the user to change the contents

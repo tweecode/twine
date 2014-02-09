@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # PassageSearchFrame
 # This allows a user to do search and replaces on a PassageFrame.

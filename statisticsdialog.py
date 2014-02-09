@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # StatisticsDialog
 # A StatisticsDialog displays the number of characters, words,

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # FullscreenEditFrame
 # This opens a modal fullscreen editor with some text. When the user's done,

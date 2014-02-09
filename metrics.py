@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # Metrics
 # This module offers advice on how to size the UI appropriately

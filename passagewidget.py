@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # PassageWidget
 # A PassageWidget is a box standing in for a proxy for a single

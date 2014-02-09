@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #
 # PreferenceFrame
 # This allows the user to set their preferences. Changes automatically update as

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # StoryPanel
 # A StoryPanel is a container for PassageWidgets. It translates

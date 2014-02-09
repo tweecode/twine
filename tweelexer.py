@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # TweeLexer
 # This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.

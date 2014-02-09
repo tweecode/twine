@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # StoryFrame
 # A StoryFrame displays an entire story. Its main feature is an
