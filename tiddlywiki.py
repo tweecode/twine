@@ -61,8 +61,6 @@ class TiddlyWiki:
 		"""Returns HTML code for this TiddlyWiki."""
 		if not order: order = self.tiddlers.keys()
 		output = u''
-		
-		header = header in app.headers and app.headers[header]
         
 		if not header:
 			app.displayError("building: no story format was specified.\n"
