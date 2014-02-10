@@ -32,6 +32,10 @@ class TweeApp(object):
 
 def main(argv):
 
+    if not argv:
+        usage()
+        sys.exit(2)
+
     # defaults
 
     author = 'twee'
@@ -64,7 +68,7 @@ def main(argv):
         ]
 
     if len(sources) == 0:
-        print >> sys.stderr, 'twee: no source files specified\n'
+        print >> sys.stderr, 'twee: no source files specified'
         sys.exit(2)
 
     app = TweeApp(scriptPath)
