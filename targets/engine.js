@@ -1514,7 +1514,7 @@ Wikifier.formatters = [
     match: "--",
     becomes: String.fromCharCode(8212),
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + this.becomes, this.becomes);
+        insertElement(a.output, "span", null, "char", this.becomes).setAttribute("data-char","emdash");
     }
 },
 {
@@ -1866,10 +1866,11 @@ Wikifier.formatters = [
 },
 {
     name: "char",
-    match: ".",
+    match: "[^\n]",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" :
-            a.matchText == "\t" ? "tab" : a.matchText), a.matchText);
+        // Line breaks do NOT get their own charspans
+        insertElement(a.output, "span", null, "char", a.matchText).setAttribute("data-char", a.matchText == " " ? "space" :
+            a.matchText == "\t" ? "tab" : a.matchText);
     }
 }
 ];
