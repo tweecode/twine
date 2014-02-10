@@ -9,81 +9,80 @@ from version import versionString
 
 
 def usage():
-	print >> sys.stderr, 'usage: twee [-a author] [-t target] [-m mergefile] [-s startpassage] source1 [source2..]'
+    print >> sys.stderr, 'usage: twee [-a author] [-t target] [-m mergefile] [-s startpassage] source1 [source2..]'
 
 
 class TweeApp(object):
 
-	NAME = 'Twee'
-	VERSION = versionString
+    NAME = 'Twee'
+    VERSION = versionString
 
-	def __init__ (self, path):
-		"""Initializes the application."""
-		self.builtinTargetsPath = path + os.sep + 'targets' + os.sep
+    def __init__ (self, path):
+        """Initializes the application."""
+        self.builtinTargetsPath = path + os.sep + 'targets' + os.sep
 
-	def displayError(self, activity):
-		activity = activity.strip()
-		print >> sys.stderr, 'Error while ' + activity
-		exceptionValue = sys.exc_info()[1]
-		if exceptionValue is not None:
-			print >> sys.stderr, exceptionValue
-		print >> sys.stderr, ''
+    def displayError(self, activity):
+        activity = activity.strip()
+        print >> sys.stderr, 'Error while ' + activity
+        exceptionValue = sys.exc_info()[1]
+        if exceptionValue is not None:
+            print >> sys.stderr, exceptionValue
+        print >> sys.stderr, ''
 
 
 def main(argv):
 
-	# defaults
+    # defaults
 
-	author = 'twee'
-	target = 'sugarcane'
-	merge = []
-	start = ''
+    author = 'twee'
+    target = 'sugarcane'
+    merge = []
+    start = ''
 
-	# read command line switches
+    # read command line switches
 
-	try:
-		opts, args = getopt.getopt(argv, 'a:m:s:t:', ['author=', 'merge=', 'start=', 'target='])
-	except getopt.GetoptError:
-		usage()
-		sys.exit(2)
+    try:
+        opts, args = getopt.getopt(argv, 'a:m:s:t:', ['author=', 'merge=', 'start=', 'target='])
+    except getopt.GetoptError:
+        usage()
+        sys.exit(2)
 
-	for opt, arg in opts:
-		if (opt in ('-a', '--author')):
-			author = arg
-		elif (opt in ('-m', '--merge')):
-			merge.append(arg)
-		elif (opt in ('-s', '--start')):
-			start = arg
-		elif (opt in ('-t', '--target')):
-			target = arg
+    for opt, arg in opts:
+        if (opt in ('-a', '--author')):
+            author = arg
+        elif (opt in ('-m', '--merge')):
+            merge.append(arg)
+        elif (opt in ('-s', '--start')):
+            start = arg
+        elif (opt in ('-t', '--target')):
+            target = arg
 
-	sources = [
-		filename
-		for arg in args
-		for filename in glob.glob(arg)
-		]
+    sources = [
+        filename
+        for arg in args
+        for filename in glob.glob(arg)
+        ]
 
-	if len(sources) == 0:
-		print >> sys.stderr, 'twee: no source files specified\n'
-		sys.exit(2)
+    if len(sources) == 0:
+        print >> sys.stderr, 'twee: no source files specified\n'
+        sys.exit(2)
 
-	app = TweeApp(scriptPath)
+    app = TweeApp(scriptPath)
 
-	header = Header.factory(target, app.builtinTargetsPath + target + os.sep, app.builtinTargetsPath)
+    header = Header.factory(target, app.builtinTargetsPath + target + os.sep, app.builtinTargetsPath)
 
-	# populate a TiddlyWiki
+    # populate a TiddlyWiki
 
-	tw = TiddlyWiki(author)
-	order = []
-	for filename in merge:
-		order += tw.addHtmlFromFilename(filename)
-	for filename in sources:
-		order += tw.addTweeFromFilename(filename)
+    tw = TiddlyWiki(author)
+    for filename in merge:
+        tw.addHtmlFromFilename(filename)
+    for filename in sources:
+        tw.addTweeFromFilename(filename)
 
-	# generate output
+    # generate output
 
-	print tw.toHtml(app, header, order, startAt = start)
+    print tw.toHtml(app, header, startAt = start)
 
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
+    main(sys.argv[1:])
