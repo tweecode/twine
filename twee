@@ -69,19 +69,20 @@ def main(argv):
 
 	app = TweeApp(scriptPath)
 
-	header = Header.factory(target, app.builtinTargetsPath + target + os.sep)
+	header = Header.factory(target, app.builtinTargetsPath + target + os.sep, app.builtinTargetsPath)
 
 	# populate a TiddlyWiki
 
 	tw = TiddlyWiki(author)
+	order = []
 	for filename in merge:
-		tw.addHtmlFromFilename(filename)
+		order += tw.addHtmlFromFilename(filename)
 	for filename in sources:
-		tw.addTweeFromFilename(filename)
+		order += tw.addTweeFromFilename(filename)
 
 	# generate output
 
-	print tw.toHtml(app, header, startAt = start)
+	print tw.toHtml(app, header, order, startAt = start)
 
 
 if __name__ == '__main__':

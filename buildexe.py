@@ -1,6 +1,6 @@
 
 # This builds an .exe out of Tweebox for use with Windows.
-# Call this with this command line: buildexe.py 
+# Call this with this command line: buildexe.py
 # py2exe is inserted as a command line parameter automatically.
 
 import sys, os, py2exe
@@ -75,7 +75,7 @@ setup(
             'icons' + os.sep + 'zoomfit.png',
             'icons' + os.sep + 'zoom1.png',
             'icons' + os.sep + 'zoomfit.png',
-            
+
             # other icons
             'icons' + os.sep + 'brokenemblem.png',
             'appicons' + os.sep + 'app.ico',

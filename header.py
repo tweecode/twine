@@ -1,10 +1,8 @@
-#!/usr/bin/python
-
 import os, imp
 from collections import OrderedDict
 from random import shuffle
 
-class Header (object):
+class Header(object):
 
     def __init__(self, id, path, builtinPath):
         self.id = id.lower()
@@ -14,29 +12,29 @@ class Header (object):
 
     def filesToEmbed(self):
         """Returns an Ordered Dictionary of file names to embed into the output.
-        
-        The item key is the label to look for within the output. 
+
+        The item key is the label to look for within the output.
         The item value is the name of the file who's contents will be embedded into the output.
-        
+
         Internal headers referring to files outside their folders should use
         the following form for paths: self.builtinPath + ...
-        
+
         External headers must use the following form for paths: self.path + "filename.js"
         """
         return OrderedDict([
             ('"JONAH"', self.builtinPath + os.sep + 'jonah' + os.sep + 'code.js'),
-            ('"SUGARCANE"', self.builtinPath + os.sep + 'sugarcane' + os.sep + 'code.js'),        
+            ('"SUGARCANE"', self.builtinPath + os.sep + 'sugarcane' + os.sep + 'code.js'),
             ('"ENGINE"', self.builtinPath + os.sep + 'engine.js')
         ])
-    
+
     def storySettings(self):
         """Returns a list of StorySettings dictionaries."""
-        
+
         # Randomise the obfuscate key
         obfuscatekey = list('anbocpdqerfsgthuivjwkxlymz')
         shuffle(obfuscatekey)
         obfuscatekey = ''.join(obfuscatekey)
-        
+
         return [{
                 "type": "checkbox",
                 "name": "undo",
@@ -76,7 +74,7 @@ class Header (object):
                 "label": "Include the Modernizr script library?",
                 "desc": "Individual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
             }]
-    
+
     def is_endtag(self, name, tag):
         """Return true if the name is equal to an endtag."""
         return (name == ('end' + tag))
@@ -84,7 +82,7 @@ class Header (object):
     def nested_macros(self):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
-    
+
     @staticmethod
     def factory(type, path, builtinPath):
         header_def = path + type + '.py'
