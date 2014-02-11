@@ -969,9 +969,6 @@ function Passage(c, b, a, ofunc, okey) {
     if (!this || this.constructor != Passage) {
         throw new ReferenceError("passage() must be in lowercase");
     }
-    if (!this || this.constructor != Passage) {
-        throw new ReferenceError("passage() incorrectly capitalised");
-    }
     this.title = c;
     ofunc = typeof ofunc == 'function' && okey != null && ofunc;
     if (b) {
