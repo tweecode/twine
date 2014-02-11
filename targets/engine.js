@@ -781,7 +781,7 @@ macros.choice = {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
             
             if (match) {
                 link = Wikifier.linkFormatter.makeLink(A,match,this.callback);
@@ -907,7 +907,7 @@ macros.checkbox = macros.radio = macros.textinput = {
         A.appendChild(input);
         
         if (C == "textinput" && D[1]) {
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
             
             if (match) {
                 Wikifier.linkFormatter.makeLink(A,match, macros.button.callback, 'button');
@@ -953,7 +953,7 @@ macros.button = {
     },
     handler: function (A, C, D, parser) {
         var link,
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
         
         if (match) {
             Wikifier.linkFormatter.makeLink(A, match, this.callback, 'button');
@@ -2016,6 +2016,9 @@ function previous() {
 }
 
 function either() {
+    if (arguments[0] instanceof Array && arguments.length == 1) {
+        return either.apply(this,arguments[0]);
+    }
     return arguments[~~(Math.random()*arguments.length)];
 }
 
