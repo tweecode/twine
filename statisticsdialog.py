@@ -1,6 +1,6 @@
 import wx, re, locale
-from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
+import tweeregex
 import metrics
 
 class StatisticsDialog(wx.Dialog):
@@ -90,9 +90,9 @@ class StatisticsDialog(wx.Dialog):
                 counts['links'] += len(widget.passage.links)
                 counts['brokenLinks'] += len(widget.getBrokenLinks())
                 # Find variables
-                iterator = re.finditer(TweeLexer.MACRO_REGEX + "|" + TweeLexer.LINK_REGEX, widget.passage.text, re.U|re.I);
+                iterator = re.finditer(tweeregex.MACRO_REGEX + "|" + tweeregex.LINK_REGEX, widget.passage.text, re.U|re.I);
                 for p in iterator:
-                    iterator2 = re.finditer(TweeLexer.MACRO_PARAMS_REGEX, p.group(0), re.U|re.I)
+                    iterator2 = re.finditer(tweeregex.MACRO_PARAMS_REGEX, p.group(0), re.U|re.I)
                     for p2 in iterator2:
                         if p2.group(4):
                             variables.add(p2.group(4));
