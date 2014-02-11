@@ -1,82 +1,95 @@
 #!/usr/bin/env python2
 
 import sys, os.path, getopt, glob
-scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
-sys.path.append(os.path.join(scriptPath, 'lib'))
+from header import Header
 from tiddlywiki import TiddlyWiki
 from version import versionString
 
 
 def usage():
-	print >> sys.stderr, 'usage: twee [-a author] [-t target] [-m mergefile] [-s startpassage] source1 [source2..]'
+    print >> sys.stderr, 'usage: twee [-a author] [-t target] [-m mergefile] [-s startpassage] source1 [source2..]'
 
 
 class TweeApp(object):
 
-	NAME = 'Twee'
-	VERSION = versionString
+    NAME = 'Twee'
+    VERSION = versionString
 
-	def displayError(self, activity):
-		activity = activity.strip()
-		print >> sys.stderr, 'Error while ' + activity
-		exceptionValue = sys.exc_info()[1]
-		if exceptionValue is not None:
-			print >> sys.stderr, exceptionValue
-		print >> sys.stderr, ''
+    def __init__ (self, path):
+        """Initializes the application."""
+        self.builtinTargetsPath = path + os.sep + 'targets' + os.sep
 
-	def getPath(self):
-		return scriptPath
+    def displayError(self, activity):
+        activity = activity.strip()
+        print >> sys.stderr, 'Error while ' + activity
+        exceptionValue = sys.exc_info()[1]
+        if exceptionValue is not None:
+            print >> sys.stderr, exceptionValue
+        print >> sys.stderr, ''
 
 
 def main(argv):
 
-	# defaults
+    if not argv:
+        usage()
+        sys.exit(2)
 
-	author = 'twee'
-	target = 'sugarcane'
-	merge = []
-	start = ''
+    # defaults
 
-	# read command line switches
+    author = 'twee'
+    target = 'sugarcane'
+    merge = []
+    start = ''
 
-	try:
-		opts, args = getopt.getopt(argv, 'a:m:s:t:', ['author=', 'merge=', 'start=', 'target='])
-	except getopt.GetoptError:
-		usage()
-		sys.exit(2)
+    # read command line switches
 
-	for opt, arg in opts:
-		if (opt in ('-a', '--author')):
-			author = arg
-		elif (opt in ('-m', '--merge')):
-			merge.append(arg)
-		elif (opt in ('-s', '--start')):
-			start = arg
-		elif (opt in ('-t', '--target')):
-			target = arg
+    try:
+        opts, args = getopt.getopt(argv, 'a:m:s:t:', ['author=', 'merge=', 'start=', 'target='])
+    except getopt.GetoptError:
+        usage()
+        sys.exit(2)
 
-	sources = [
-		filename
-		for arg in args
-		for filename in glob.glob(arg)
-		]
+    for opt, arg in opts:
+        if (opt in ('-a', '--author')):
+            author = arg
+        elif (opt in ('-m', '--merge')):
+            merge.append(arg)
+        elif (opt in ('-s', '--start')):
+            start = arg
+        elif (opt in ('-t', '--target')):
+            target = arg
 
-	if len(sources) == 0:
-		print >> sys.stderr, 'twee: no source files specified\n'
-		sys.exit(2)
+    sources = [
+        filename
+        for arg in args
+        for filename in glob.glob(arg)
+        ]
 
-	# populate a TiddlyWiki
+    if len(sources) == 0:
+        print >> sys.stderr, 'twee: no source files specified'
+        sys.exit(2)
 
-	tw = TiddlyWiki(author)
-	for filename in merge:
-		tw.addHtmlFromFilename(filename)
-	for filename in sources:
-		tw.addTweeFromFilename(filename)
+    scriptPath = os.path.dirname(os.path.realpath(sys.argv[0]))
+    app = TweeApp(scriptPath)
 
-	# generate output
+    header = Header.factory(target, app.builtinTargetsPath + target + os.sep, app.builtinTargetsPath)
 
-	print tw.toHtml(TweeApp(), target = target, startAt = start)
+    # populate a TiddlyWiki
+
+    tw = TiddlyWiki(author)
+    for filename in merge:
+        tw.addHtmlFromFilename(filename)
+    for filename in sources:
+        tw.addTweeFromFilename(filename)
+
+    # generate output
+
+    output = tw.toHtml(app, header, startAt = start)
+    if sys.stdout.isatty():
+        print output
+    else:
+        print output.encode('utf_8_sig')
 
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
+    main(sys.argv[1:])

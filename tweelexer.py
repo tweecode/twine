@@ -1,24 +1,20 @@
-#!/usr/bin/env python
-
-#
-# TweeLexer
-# This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.
-# This needs to be passed the control it will be lexing, so it can
-# look up the body text as needed.
-#
-
 import re, wx, wx.stc
 
 class TweeLexer:
-    
-    def __init__ (self, control, frame):
+    """
+    This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.
+    This needs to be passed the control it will be lexing, so it can
+    look up the body text as needed.
+    """
+
+    def __init__(self, control, frame):
         self.ctrl = control
         self.frame = frame
         self.app = frame.app
         self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, self.lex)
         self.initStyles()
-        
-    def initStyles (self):
+
+    def initStyles(self):
         """
         Initialize style definitions. This is automatically invoked when
         the constructor is called, but should be called any time font
@@ -28,9 +24,9 @@ class TweeLexer:
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
-        
+
         self.ctrl.StyleClearAll()
-        
+
         # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
         for i in range(0,8):
             self.ctrl.StyleSetFont(i, bodyFont)
@@ -45,101 +41,101 @@ class TweeLexer:
                   self.HTML, self.HTML_BLOCK, self.MACRO, self.COMMENT, self.SILENT, self.EXTERNAL,
                   self.IMAGE, self.PARAM, self.PARAM_VAR, self.PARAM_STR, self.PARAM_NUM, self.PARAM_BOOL]:
             self.ctrl.StyleSetFont(i, bodyFont)
-            
+
         self.ctrl.StyleSetBold(self.GOOD_LINK, True)
         self.ctrl.StyleSetForeground(self.GOOD_LINK, self.GOOD_LINK_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.BAD_LINK, True)
         self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
-        
+
         self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
-        
+
         self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
         self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.HTML, True)
         self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
-        
+
         self.ctrl.StyleSetForeground(self.HTML_BLOCK, self.HTML_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.MACRO, True)
         self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
-        
+
         self.ctrl.StyleSetItalic(self.COMMENT, True)
         self.ctrl.StyleSetForeground(self.COMMENT, self.COMMENT_COLOR)
-        
+
         self.ctrl.StyleSetForeground(self.SILENT, self.COMMENT_COLOR)
-        
+
         self.ctrl.StyleSetFont(self.MONO, monoFont)
-        
+
         self.ctrl.StyleSetBold(self.EXTERNAL, True)
         self.ctrl.StyleSetForeground(self.EXTERNAL, self.EXTERNAL_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.IMAGE, True)
         self.ctrl.StyleSetForeground(self.IMAGE, self.IMAGE_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.PARAM, True)
         self.ctrl.StyleSetForeground(self.PARAM, self.PARAM_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.PARAM_VAR, True)
         self.ctrl.StyleSetForeground(self.PARAM_VAR, self.PARAM_VAR_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.PARAM_STR, True)
         self.ctrl.StyleSetForeground(self.PARAM_STR, self.PARAM_STR_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.PARAM_NUM, True)
         self.ctrl.StyleSetForeground(self.PARAM_NUM, self.PARAM_NUM_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.PARAM_BOOL, True)
         self.ctrl.StyleSetForeground(self.PARAM_BOOL, self.PARAM_BOOL_COLOR)
-      
+
     def lexMatchToken(self, text):
         m = text[:2].lower()
         if m in self.MARKUPS:
             return (self.MARKUP, self.MARKUPS[m])
-        
+
         # link
         m = re.match(self.LINK_REGEX,text,re.U|re.I)
         if m: return (self.GOOD_LINK, m)
-        
+
         # macro
         m = re.match(self.MACRO_REGEX,text,re.U|re.I)
         if m: return (self.MACRO, m)
-        
+
         # image (cannot have interior markup)
         m = re.match(self.IMAGE_REGEX,text,re.U|re.I)
         if m: return (self.IMAGE, m)
-        
+
         # Old-version HTML block (cannot have interior markup)
         m = re.match(self.HTML_BLOCK_REGEX,text,re.U|re.I)
         if m: return (self.HTML_BLOCK, m)
-        
+
         # Inline HTML tags
         m = re.match(self.HTML_REGEX,text,re.U|re.I)
         if m: return (self.HTML, m)
-        
+
         # Inline styles
         m = re.match(self.INLINE_STYLE_REGEX,text,re.U|re.I)
         if m: return (self.INLINE_STYLE, m)
-        
+
         # Monospace
         m = re.match(self.MONO_REGEX,text,re.U|re.I)
         if m: return (self.MONO, m)
-        
+
         # Comment
         m = re.match(self.COMMENT_REGEX,text,re.U|re.I)
         if m: return (self.COMMENT, m)
-        
+
         return (None, None)
-        
-    def lex (self, event):
+
+    def lex(self, event):
         """
         Lexes, or applies syntax highlighting, to text based on a
         wx.stc.EVT_STC_STYLENEEDED event.
         """
-        
+
         def applyParamStyle(pos2, contents):
             iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
             for param in iterator:
@@ -155,7 +151,7 @@ class TweeLexer:
                 elif param.group(4):
                     # Variable
                     self.applyStyle(pos2 + param.start(4), len(param.group(4)), self.PARAM_VAR)
-        
+
         def applyMacroStyle(pos, m):
             length = m.end(0)
             if self.passageExists(m.group(1)):
@@ -169,7 +165,7 @@ class TweeLexer:
                 pos2 = pos + m.start(group)
                 self.applyStyle(pos2, len(m.group(group)), self.PARAM)
                 applyParamStyle(pos2, contents)
-        
+
         pos = 0
         prev = 0
         text = self.ctrl.GetTextUTF8()
@@ -178,15 +174,16 @@ class TweeLexer:
         styleStart = pos
         inSilence = False
         macroNestStack = []; # macro nesting
-        
+        header = self.getHeader()
+
         self.applyStyle(0, len(text), self.DEFAULT);
-        
+
         iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.U|re.I), text[pos:]);
-        
+
         for p in iterator:
             prev = pos+1
             pos = p.start()
-            
+
             nextToken, m = self.lexMatchToken(p.group(0))
 
             # important: all style ends must be handled before beginnings
@@ -195,11 +192,11 @@ class TweeLexer:
             # markup
             if not inSilence and nextToken == self.MARKUP:
                 if (style <= self.THREE_STYLES and style & m) or style == self.MARKUP:
-                    self.applyStyle(styleStart, pos-styleStart+2, style) 
-                    style = styleStack.pop() if styleStack else self.DEFAULT 
+                    self.applyStyle(styleStart, pos-styleStart+2, style)
+                    style = styleStack.pop() if styleStack else self.DEFAULT
                     styleStart = pos+2
-                else: 
-                    self.applyStyle(styleStart, pos-styleStart, style)  
+                else:
+                    self.applyStyle(styleStart, pos-styleStart, style)
                     styleStack.append(style)
                     markup = m
                     if markup <= self.THREE_STYLES and style <= self.THREE_STYLES:
@@ -208,12 +205,12 @@ class TweeLexer:
                         style = markup
                     styleStart = pos
                 pos += 1
-                
+
             #link
             elif nextToken == self.GOOD_LINK:
                 length = m.end(0);
                 self.applyStyle(styleStart, pos-styleStart, style)
-                                            
+
                 # check for prettylinks
                 s2 = self.GOOD_LINK
                 if not m.group(2):
@@ -231,16 +228,16 @@ class TweeLexer:
                     applyParamStyle(pos + m.start(3), m.group(3))
                 pos += length-1
                 styleStart = pos+1
-                 
-            #macro               
+
+            #macro
             elif nextToken == self.MACRO:
                 name = m.group(1)
                 length = m.end(0)
                 # Finish the current style
                 self.applyStyle(styleStart, pos-styleStart, style)
                 styled = False
-                
-                for i in self.NESTED_MACROS:
+
+                for i in header.nested_macros():
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
                         styled = True
@@ -250,7 +247,7 @@ class TweeLexer:
                             inSilence = True;
                             styleStack.append(style)
                             style = self.SILENT
-                    elif name == ('end' + i):
+                    elif header.is_endtag(name, i):
                         if macroNestStack and macroNestStack[-1][0] == i:
                             # Re-style open macro
                             macroStart,macroMatch = macroNestStack.pop()[1:];
@@ -260,13 +257,13 @@ class TweeLexer:
                             self.applyStyle(pos, length, self.BAD_LINK)
                         if i=="silently":
                             inSilence = False;
-                            style = styleStack.pop() if styleStack else self.DEFAULT  
-                            
+                            style = styleStack.pop() if styleStack else self.DEFAULT
+
                 if not styled:
                     applyMacroStyle(pos,m)
                 pos += length-1
                 styleStart = pos+1
-                        
+
             # image (cannot have interior markup)
             elif nextToken == self.IMAGE:
                 length = m.end(0);
@@ -284,15 +281,15 @@ class TweeLexer:
                     self.applyStyle(pos, length, self.IMAGE)
                 pos += length-1
                 styleStart = pos+1
-                
+
             # Inline styles
             elif not inSilence and nextToken == self.INLINE_STYLE:
                 if (style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE):
-                    self.applyStyle(styleStart, pos-styleStart+2, style) 
-                    style = styleStack.pop() if styleStack else self.DEFAULT 
+                    self.applyStyle(styleStart, pos-styleStart+2, style)
+                    style = styleStack.pop() if styleStack else self.DEFAULT
                     styleStart = pos+2
                 else:
-                    self.applyStyle(styleStart, pos-styleStart, style)  
+                    self.applyStyle(styleStart, pos-styleStart, style)
                     styleStack.append(style)
                     n = re.match(r"((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;@]+);))+",text[pos+2:],re.U|re.I)
                     if n:
@@ -303,7 +300,7 @@ class TweeLexer:
                         length = 2
                     styleStart = pos
                     pos += length-1
-                
+
             # others
             elif nextToken in [self.HTML, self.HTML_BLOCK, self.COMMENT, self.MONO]:
                 length = m.end(0);
@@ -311,33 +308,37 @@ class TweeLexer:
                 self.applyStyle(pos, length, nextToken)
                 pos += length-1
                 styleStart = pos+1
-        
-        # Finish up unclosed styles
-        self.applyStyle(styleStart, len(text), style) 
 
-    def passageExists (self, title):
+        # Finish up unclosed styles
+        self.applyStyle(styleStart, len(text), style)
+
+    def passageExists(self, title):
         """
         Returns whether a given passage exists in the story.
         """
         return (self.frame.widget.parent.findWidget(title) != None)
-        
-    def applyStyle (self, start, end, style):
+
+    def applyStyle(self, start, end, style):
         """
         Applies a style to a certain range.
         """
         self.ctrl.StartStyling(start, self.TEXT_STYLES)
         self.ctrl.SetStyling(end, style)
 
+    def getHeader(self):
+        """Returns the current selected target header for this Twee Lexer."""
+        return self.frame.getHeader()
+
     # style constants
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
     GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
     BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(0,26)
-    
+
     # markup constants
-    
+
     MARKUPS = {"''" : BOLD, "//" : ITALIC, "__" : UNDERLINE, "^^" : MARKUP, "~~" : MARKUP, "==" : MARKUP}
-    
+
     # regexes
     LINK_REGEX = r"\[\[([^\|\]]*?)(?:\|(.*?))?\](\[.*?\])?\]"
     MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
@@ -347,10 +348,10 @@ class TweeLexer:
     INLINE_STYLE_REGEX = "@@"
     MONO_REGEX = r"^\{\{\{\n(?:(?:^[^\n]*\n)+?)(?:^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
     COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
-    
+
     COMBINED_REGEX = '(' + ')|('.join([ LINK_REGEX, MACRO_REGEX, IMAGE_REGEX, HTML_BLOCK_REGEX, HTML_REGEX, INLINE_STYLE_REGEX,\
                       MONO_REGEX, COMMENT_REGEX, r"''|\/\/|__|\^\^|~~|==" ]) + ')'
-                      
+
     # macro param regex - string or number or boolean or variable
     # (Mustn't match all-digit names)
     MACRO_PARAMS_VAR_REGEX = r'(\$[\w_\.]*[a-zA-Z_\.]+[\w_\.]*)'
@@ -358,20 +359,20 @@ class TweeLexer:
     # This isn't included because it's too general - but it's used by the broken link lexer
     # (Not including whitespace between name and () because of false positives)
     MACRO_PARAMS_FUNC_REGEX = r'([\w\d_\.]+\((.*?)\))'
-    
+
     MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
         +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
         +r'|(true|false|null|undefined)' \
         +r'|'+MACRO_PARAMS_VAR_REGEX \
         +r')'
-    
+
 
     # nested macros
-    
+
     NESTED_MACROS = [ "if", "silently" ]
-    
+
     # style colors
-    
+
     GOOD_LINK_COLOR = '#3333cc'
     EXTERNAL_COLOR = '#337acc'
     BAD_LINK_COLOR = '#cc3333'
@@ -380,17 +381,17 @@ class TweeLexer:
     COMMENT_COLOR = '#868686'
     IMAGE_COLOR = '#088A85'
     HTML_COLOR = '#4d4d9d'
-    
+
     # param colours
-    
+
     PARAM_COLOR = '#7f456a'
     PARAM_VAR_COLOR = '#005682'
     PARAM_BOOL_COLOR = '#626262'
     PARAM_STR_COLOR = '#008282'
     PARAM_NUM_COLOR = '#A15000'
-    
+
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
- 
+
 def badLinkStyle(dest):
     # Apply style for a link destination which does not seem to be an existent passage
     for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', '.', '/', '\\', '#']:

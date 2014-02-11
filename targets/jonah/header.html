@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--
 "VERSION"
 "TIME"
@@ -110,8 +111,13 @@ h3 {
 }
 #passages {
 	position:relative;
+	padding-bottom: 12em;
+}
+.storyElement {
+	white-space: pre-line;
 }
 .passage {
+	white-space: pre-wrap;
 	background-color: #f8f8f8;
 	font-size: 1.3em;
 	line-height: 175%;
@@ -125,9 +131,6 @@ h3 {
 .passage center {
 	max-width:50%;
 	margin:auto;
-}
-ul li {
-	list-style-type: square;
 }
 .toolbar a {
 	color: #999;
@@ -225,6 +228,17 @@ a.brokenLink {
 .passage ul {
 	margin-left: .5em;
 	padding-left: 1.5em;
+}
+li {
+	list-style-type: square;
+}
+.passage li[data-bullet] {
+	list-style-type: none;
+}
+.passage li[data-bullet]:before {
+	content: attr(data-bullet);
+	position: relative;
+	left: -1em;
 }
 .passage ol {
 	margin-left: .5em;

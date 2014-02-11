@@ -1,21 +1,17 @@
-#!/usr/bin/python
-
-#
-# PreferenceFrame
-# This allows the user to set their preferences. Changes automatically update as
-# the user makes them; when they're done, they close the window. 
-#
-
 import wx
 import metrics
 
-class PreferenceFrame (wx.Frame):
-    
-    def __init__ (self, app, parent = None):
+class PreferenceFrame(wx.Frame):
+    """
+    This allows the user to set their preferences. Changes automatically
+    update as the user makes them; when they're done, they close the window.
+    """
+
+    def __init__(self, app, parent = None):
         self.app = app
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.app.NAME + ' Preferences', \
                           style = wx.MINIMIZE_BOX | wx.CLOSE_BOX | wx.CAPTION | wx.SYSTEM_MENU)
-        
+
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
@@ -26,22 +22,22 @@ class PreferenceFrame (wx.Frame):
         self.editorFont.SetSelectedFont(self.getPrefFont('windowed'))
         self.editorFont.Bind(wx.EVT_FONTPICKER_CHANGED, lambda e: self.saveFontPref('windowed', \
                              self.editorFont.GetSelectedFont()))
-        
+
         self.monoFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
         self.monoFont.SetSelectedFont(self.getPrefFont('monospace'))
         self.monoFont.Bind(wx.EVT_FONTPICKER_CHANGED, lambda e: self.saveFontPref('monospace', \
                              self.monoFont.GetSelectedFont()))
-        
-        self.fsFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)        
+
+        self.fsFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
         self.fsFont.SetSelectedFont(self.getPrefFont('fs'))
         self.fsFont.Bind(wx.EVT_FONTPICKER_CHANGED, lambda e: self.saveFontPref('fs', \
                          self.fsFont.GetSelectedFont()))
-        
+
         self.fsTextColor = wx.ColourPickerCtrl(panel)
         self.fsTextColor.SetColour(self.app.config.Read('fsTextColor'))
         self.fsTextColor.Bind(wx.EVT_COLOURPICKER_CHANGED, lambda e: self.savePref('fsTextColor', \
                               self.fsTextColor.GetColour()))
-        
+
         self.fsBgColor = wx.ColourPickerCtrl(panel)
         self.fsBgColor.SetColour(self.app.config.Read('fsBgColor'))
         self.fsBgColor.Bind(wx.EVT_COLOURPICKER_CHANGED, lambda e: self.savePref('fsBgColor', \
@@ -54,7 +50,7 @@ class PreferenceFrame (wx.Frame):
         self.fsLineHeight = wx.ComboBox(fsLineHeightPanel, choices = ('100', '125', '150', '175', '200'))
         self.fsLineHeight.Bind(wx.EVT_TEXT, lambda e: self.savePref('fsLineHeight', int(self.fsLineHeight.GetValue())))
         self.fsLineHeight.SetValue(str(self.app.config.ReadInt('fslineHeight')))
-        
+
         fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.ALIGN_CENTER_VERTICAL)
         fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.ALIGN_CENTER_VERTICAL)
 
@@ -62,7 +58,7 @@ class PreferenceFrame (wx.Frame):
         self.fastStoryPanel.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('fastStoryPanel', \
                                                                           self.fastStoryPanel.GetValue()))
         self.fastStoryPanel.SetValue(self.app.config.ReadBool('fastStoryPanel'))
-        
+
         self.imageArrows = wx.CheckBox(panel, label = 'Connector arrows for images and stylesheets')
         self.imageArrows.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('imageArrows', \
                                                                           self.imageArrows.GetValue()))
@@ -84,25 +80,25 @@ class PreferenceFrame (wx.Frame):
         panelSizer.Add(self.fastStoryPanel)
         panelSizer.Add((1,2))
         panelSizer.Add(self.imageArrows)
-        
+
         panelSizer.Fit(self)
         borderSizer.Fit(self)
         self.SetIcon(self.app.icon)
         self.Show()
         self.panelSizer = panelSizer
         self.borderSizer = borderSizer
-        
-    def getPrefFont (self, key):
+
+    def getPrefFont(self, key):
         """
         Returns a font saved in preferences as a wx.Font instance.
         """
         return wx.Font(self.app.config.ReadInt(key + 'FontSize'), wx.FONTFAMILY_MODERN, \
                        wx.FONTSTYLE_NORMAL, wx.NORMAL, False, self.app.config.Read(key + 'FontFace'))
 
-    def savePref (self, key, value):
+    def savePref(self, key, value):
         """
         Saves changes to a preference and sends an update message to the application.
-        """        
+        """
         if isinstance(value, wx.Colour):
             self.app.config.Write(key, value.GetAsString(wx.C2S_HTML_SYNTAX))
         elif type(value) is int:
@@ -111,10 +107,10 @@ class PreferenceFrame (wx.Frame):
             self.app.config.WriteBool(key, value)
         else:
             self.app.config.Write(key, value)
-        
+
         self.app.applyPrefs()
 
-    def saveFontPref (self, key, font):
+    def saveFontPref(self, key, font):
         """
         Saves a user-chosen font to preference keys, then sends an update message to the application.
         """
@@ -123,4 +119,4 @@ class PreferenceFrame (wx.Frame):
         self.app.applyPrefs()
         self.panelSizer.Fit(self)
         self.borderSizer.Fit(self)
-        
+

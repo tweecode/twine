@@ -1,25 +1,22 @@
-#!/usr/bin/env python
-
-#
-# Images
-#
-# A module for handling base64 encoded images and other assets.
-#
+"""
+A module for handling base64 encoded images and other assets.
+"""
 
 import sys, cStringIO, wx, re
-    
+
 def AddURIPrefix(text, mimeType):
     """ Adds the Data URI MIME prefix to the base64 data"""
     # SVG MIME-type is the same for both images and fonts
     mimeType = mimeType.lower()
     if mimeType in 'gif|jpg|jpeg|png|webp|svg':
         mimeGroup = "image/"
-    elif mimeType in 'ttf|woff|otf':
+    elif mimeType == 'woff':
         mimeGroup = "application/font-"
+    elif mimeType in 'ttf|otf':
+        mimeGroup = "application/x-font-"
     else:
-        # Desperate (probably incorrect) guess
-        mimeGroup = "application/x-"
-    
+        mimeGroup = "application/octet-stream"
+
     # Correct certain MIME types
     if mimeType == "jpg":
         mimeType == "jpeg"
@@ -43,7 +40,7 @@ def Base64ToBitmap(text):
         return wx.BitmapFromImage(wx.ImageFromStream(stream))
     except:
         pass
-    
+
 def BitmapToBase64PNG(bmp):
     img = bmp.ConvertToImage()
     # "PngZL" in wxPython 2.9 is equivalent to wx.IMAGE_OPTION_PNG_COMPRESSION_LEVEL in wxPython Phoenix

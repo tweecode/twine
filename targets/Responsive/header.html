@@ -3,6 +3,7 @@
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--
 "VERSION"
 "TIME"
@@ -43,7 +44,6 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 -->
 <title>Responsive</title>
-<meta name="viewport" content="width=device-width">
 <script title="engine">
 (function(){
 
@@ -235,8 +235,8 @@ nav li:hover, nav li a:hover {
 
 #main-container { padding-top: 1em; }
 #passages { font-size: 12px; line-height: 16px; position:relative; }
-.passage ul{padding-top:1.3em;}
-.passage li{margin-right:6em;}
+.storyElement { white-space: pre-line; }
+.passage { white-space: pre-wrap; }
 .passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
 a.internalLink,a.externalLink,a.back,a.return {cursor: pointer;}
@@ -244,6 +244,10 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
 .marked[title]{cursor:help;}
 .passage ul{margin-left:.5em;padding-left:1.5em;}
+.content > ul{padding-top:1.3em;}
+.passage li{margin-right:6em;}
+.passage li[data-bullet] { list-style-type: none; }
+.passage li[data-bullet]:before { content: attr(data-bullet); position: relative; left: -1em; }
 .passage ol{margin-left:.5em;padding-left:1.5em;}
 .passage table{border-collapse:collapse;font-size:100%;margin:.8em 1.0em;}
 .passage th,.passage td,.passage tr,.passage caption{padding:3px;}
@@ -398,7 +402,7 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 					<div class="clearfix"></div>
 					<div id="storyAuthor" class="storyElement"></div>
 				</div>
-				<nav id="storyMenu" class="storyElement"></nav>
+				<nav id="storyMenu" class="storyElement" style="display:none"></nav>
 				<nav id="sidebar">
 					<ul>
 						<li id="snapback">Rewind</a></li>

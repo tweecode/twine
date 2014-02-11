@@ -82,7 +82,7 @@ function alterCSS(text) {
     text = text.replace(/:visited/g,".visitedLink");
     // Hoist @import
     text = text.replace(/@import\s+(?:url\s*\(\s*['"]?|['"])[^"'\s]+(?:['"]?\s*\)|['"])\s*([\w\s\(\)\d\:,\-]*);/g, function(e) {
-        temp += e;
+        temp += e; return '';
     });
     text = temp + text;
     
@@ -108,6 +108,8 @@ function throwError(a, b, tooltip) {
     if (a) {
         var elem = insertElement(a, "span", null, "marked", b);
         tooltip && elem.setAttribute("title", tooltip);
+    } else {
+        alert("There is a technical problem with this story: " + b + "."+softErrorMessage);
     }
 }
 Math.easeInOut = function (a) {
@@ -219,14 +221,18 @@ function fade(f, c) {
 }
 
 var scrollWindowInterval;
-function scrollWindowTo(e) {
+function scrollWindowTo(e, margin) {
     var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
         g = k(e),
-        c = Math.abs(d - g),
+        j = (d > g) ? -1 : 1,
         b = 0,
-        j = (d > g) ? -1 : 1;
-    scrollWindowInterval = window.setInterval(h, 25);
-
+        c = Math.abs(d - g);
+    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
+    if (c) {
+        scrollWindowInterval = window.setInterval(h, 25);
+    }
+    
     function h() {
         b += 0.1;
         window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
@@ -236,17 +242,16 @@ function scrollWindowTo(e) {
     }
 
     function k(o) {
-        var p = a(o);
-        var q = p + o.offsetHeight;
-        var l = window.scrollY ? window.scrollY : document.documentElement.scrollTop;
-        var m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
-        var n = l + m;
-        if (p < l) {
+        var p = a(o),
+            h = o.offsetHeight,
+            n = d + m;
+        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
+        if (p < d) {
             return p
         } else {
-            if (q > n) {
-                if (o.offsetHeight < m) {
-                    return (p - (m - o.offsetHeight) + 20)
+            if (p+h > n) {
+                if (h < m) {
+                    return (p - (m - h) + 20)
                 } else {
                     return p
                 }
@@ -440,9 +445,9 @@ var restart = History.prototype.restart = function () {
 
 var version = {
     major: 4,
-    minor: 1,
+    minor: 2,
     revision: 0,
-    date: new Date("January 1, 2013"),
+    date: new Date("2014"),
     extensions: {}
 };
 var testplay, tale, state, prerender = {}, postrender = {}, macros = window.macros = {};
@@ -542,7 +547,7 @@ macros.print = {
             var args = parser.fullArgs(macroName != "print"),
                 output = eval(args);
             if (output != null && (typeof output != "number" || !isNaN(output))) {
-                new Wikifier(place, output.toString());
+                new Wikifier(place, ''+output);
             }
         } catch (e) {
             throwError(place, "<<print>> bad expression: " + e.message, parser.fullMatch());
@@ -776,7 +781,7 @@ macros.choice = {
             insertElement(A, "span", null, "disabled", text); 
         }
         else {
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
             
             if (match) {
                 link = Wikifier.linkFormatter.makeLink(A,match,this.callback);
@@ -902,7 +907,7 @@ macros.checkbox = macros.radio = macros.textinput = {
         A.appendChild(input);
         
         if (C == "textinput" && D[1]) {
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
             
             if (match) {
                 Wikifier.linkFormatter.makeLink(A,match, macros.button.callback, 'button');
@@ -948,7 +953,7 @@ macros.button = {
     },
     handler: function (A, C, D, parser) {
         var link,
-            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullArgs());
+            match = new RegExp(Wikifier.linkFormatter.lookahead).exec(parser.fullMatch());
         
         if (match) {
             Wikifier.linkFormatter.makeLink(A, match, this.callback, 'button');
@@ -960,42 +965,50 @@ macros.button = {
 };
 
 function Passage(c, b, a, ofunc, okey) {
-    var t, k;
+    var t;
+    if (!this || this.constructor != Passage) {
+        throw new ReferenceError("passage() must be in lowercase");
+    }
     if (!this || this.constructor != Passage) {
         throw new ReferenceError("passage() incorrectly capitalised");
     }
     this.title = c;
+    ofunc = typeof ofunc == 'function' && okey != null && ofunc;
     if (b) {
         this.id = a;
-        if (ofunc != null && typeof ofunc == 'function' && okey != null) {
-            t = b.firstChild ? b.firstChild.nodeValue : "";
-            this.initialText = this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
-            this.tags = b.getAttribute("tags");
-            if (typeof this.tags == "string") {
+        // Load tags
+        this.tags = b.getAttribute("tags");
+        if (typeof this.tags == "string") {
+            if (ofunc) {
                 this.tags = ofunc(this.tags, okey);
-                this.tags = this.tags.readBracketedList();
-            } else this.tags = [];
+            }
+            this.tags = this.tags.readBracketedList();
+        } else this.tags = [];
+        // Load text
+        t = b.firstChild ? b.firstChild.nodeValue : "";
+        if (ofunc && !this.isImage()) {
+            this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
         } else {
-            this.initialText = this.text = Passage.unescapeLineBreaks(b.firstChild ? b.firstChild.nodeValue : "");
-            this.tags = b.getAttribute("tags");
-            if (typeof this.tags == "string") this.tags = this.tags.readBracketedList();
-            else this.tags = [];
+            this.text = Passage.unescapeLineBreaks(t);
         }
-        if (!~(this.tags.indexOf("Twine.image"))) {
+        // Preload linked images
+        if (!this.isImage()) {
             this.preloadImages();
         }
     } else {
-        this.initialText = this.text = '@@This passage does not exist: ' + c + '@@';
+        this.text = '@@This passage does not exist: ' + c + '@@';
         this.tags = [];
     }
 }
-
+Passage.prototype.isImage = function() {
+    return !!~(this.tags.indexOf("Twine.image"));
+}
 Passage.prototype.preloadImages = function() {
     var u = "\\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
-                d = c.exec(this.initialText);
+                d = c.exec(this.text);
                 if(d) {
                     i = new Image();
                     i.src = d[e];
@@ -1027,20 +1040,21 @@ Passage.prototype.processText = function() {
     if (~this.tags.indexOf("nobr")) {
         ret = ret.replace(/\n/g,"\u200c");
     }
-    if (~this.tags.indexOf("Twine.image")) {
+    if (this.isImage()) {
         ret = "[img[" + ret + "]]"
     }
     return ret;
 };
     
 function Tale() {
-    var a,b,c,lines,i,kv,ns,nsc,nope,
+    var a,b,c,lines,i,kv,ns,nsc,isImage,
         settings = this.storysettings = {
             lookup: function(a) {
                 return !~["0", "off", "false"].indexOf((this[a]+""));
             }
         },
         tiddlerTitle = '';
+    window.tale = this;
     function deswap(t, k) {
         var i,c,p,p1,up,r = '';
         for (i = 0; i < t.length; i++) {
@@ -1080,21 +1094,18 @@ function Tale() {
     //Load in the passages
     if (settings.obfuscate == 'swap' && settings.obfuscatekey) {
         ns = '';
-        nope = ":\\\"n0";
-        if (settings.obfuscatekey == 'rot13') {
-            settings.obfuscatekey = "anbocpdqerfsgthuivjwkxlymz";
-        }
         for (i = 0; i < settings.obfuscatekey.length; i++) {
             nsc = settings.obfuscatekey[i];
-            if (ns.indexOf(nsc) == -1 && nope.indexOf(nsc) == -1) ns = ns + nsc;
+            if (ns.indexOf(nsc) == -1 && ":\\\"n0".indexOf(nsc) == -1) ns = ns + nsc;
         }
         settings.obfuscatekey = ns;
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
-                if (tiddlerTitle != 'StorySettings') 
+                isImage = (c.getAttribute("tags")+"").indexOf("Twine.image")>-1;
+                if (tiddlerTitle != 'StorySettings' && !isImage) 
                     tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, deswap, settings.obfuscatekey);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && deswap, settings.obfuscatekey);
             }
         }
     } else {
@@ -1154,6 +1165,9 @@ Tale.prototype.lookup = function (h, g, a) {
 Tale.prototype.canUndo = function() {
     return this.storysettings.lookup('undo');
 };
+Tale.prototype.identity = function() {
+    return this.storysettings.identity || "game";
+};
 Tale.prototype.forEachStylesheet = function(tags, callback) {
     var passage, i
     tags = tags || [];
@@ -1185,7 +1199,7 @@ Tale.prototype.setPageElements = function() {
         setPageElement("storyAuthor", "StoryAuthor", "");
     }
     if (tale.has("StoryMenu")) {
-        document.getElementById("storyMenu").style.display = "block";
+        document.getElementById("storyMenu").setAttribute("style","");
         setPageElement("storyMenu", "StoryMenu", "");
     }
 };
@@ -1501,8 +1515,9 @@ Wikifier.formatters = [
 {
     name: "emdash",
     match: "--",
+    becomes: String.fromCharCode(8212),
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + String.fromCharCode(8212), String.fromCharCode(8212));
+        insertElement(a.output, "span", null, "char", this.becomes).setAttribute("data-char","emdash");
     }
 },
 {
@@ -1521,20 +1536,6 @@ Wikifier.formatters = [
     handler: Wikifier.formatHelpers.monospacedByLineHelper
 },
 {
-    name: "monospacedByLineForPlugin",
-    match: "^//\\{\\{\\{\\n",
-    lookahead: "^//\\{\\{\\{\\n\\n*((?:^[^\\n]*\\n)+?)(\\n*^//\\}\\}\\}$\\n?)",
-    handler: Wikifier.formatHelpers.monospacedByLineHelper
-},
-{
-    name: "wikifyCommentForPlugin",
-    match: "^/\\*\\*\\*\\n",
-    terminator: "^\\*\\*\\*/\\n",
-    handler: function (w) {
-        w.subWikify(w.output, this.terminator);
-    }
-},
-{
     name: "quoteByBlock",
     match: "^<<<\\n",
     terminator: "^<<<\\n",
@@ -1544,76 +1545,59 @@ Wikifier.formatters = [
     }
 },
 {
-    name: "quoteByLine",
-    match: "^>+",
-    terminator: "\\n",
-    element: "blockquote",
-    handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.match, "mg");
-        var placeStack = [w.output];
-        var currLevel = 0;
-        var newLevel = w.matchLength;
-        var t;
-        do {
-            if (newLevel > currLevel) {
-                for (t = currLevel; t < newLevel; t++)
-                placeStack.push(insertElement(placeStack[placeStack.length - 1], this.element));
-            } else if (newLevel < currLevel) {
-                for (t = currLevel; t > newLevel; t--)
-                placeStack.pop();
-            }
-            currLevel = newLevel;
-            w.subWikify(placeStack[placeStack.length - 1], this.terminator);
-            lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
-            if (matched) {
-                newLevel = lookaheadMatch[0].length;
-                w.nextMatch += lookaheadMatch[0].length;
-                insertElement(placeStack[placeStack.length - 1], "br");
-            }
-        } while (matched);
-    }
-},
-{
     name: "list",
-    match: "^(?:(?:\\*+)|(?:#+))",
-    lookahead: "^(?:(\\*+)|(#+))",
+    match: "^(?:(?:[>\\*=]+)|(?:#+))",
+    lookahead: "^(?:([>\\*=]+)|(#+))",
     terminator: "\\n",
-    outerElement: "ul",
-    itemElement: "li",
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var newType, newLevel, t, len, bulletType, lookaheadMatch, matched,
+            lookaheadRegExp = new RegExp(this.lookahead, "mg"),
+            placeStack = [w.output],
+            currType = null,
+            currLevel = 0;
+            
         w.nextMatch = w.matchStart;
-        var placeStack = [w.output];
-        var currType = null,
-            newType;
-        var currLevel = 0,
-            newLevel;
-        var t;
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
-            var lookaheadMatch = lookaheadRegExp.exec(w.source);
-            var matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
+            lookaheadMatch = lookaheadRegExp.exec(w.source);
+            matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
-                if (lookaheadMatch[1]) newType = "ul";
-                if (lookaheadMatch[2]) newType = "ol";
                 newLevel = lookaheadMatch[0].length;
-                w.nextMatch += lookaheadMatch[0].length;
+                // Non-conventional bullet points
+                if (lookaheadMatch[1]) {
+                    if (lookaheadMatch[1].slice(-2) == "->") {
+                        bulletType = '\u2192';
+                        newLevel--;
+                    }
+                    else if (lookaheadMatch[1].slice(-2) == "=>") {
+                        bulletType = '\u21d2';
+                        newLevel--;
+                    }
+                    else bulletType = lookaheadMatch[1].slice(-1);
+                    newType = "ul";
+                }
+                else if (lookaheadMatch[2]) {
+                    newType = "ol";
+                }
+                w.nextMatch += newLevel;
                 if (newLevel > currLevel) {
-                    for (t = currLevel; t < newLevel; t++)
-                    placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                    for (t = currLevel; t < newLevel; t++) {
+                        placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
+                    }
                 } else if (newLevel < currLevel) {
                     for (t = currLevel; t > newLevel; t--)
-                    placeStack.pop();
+                        placeStack.pop();
                 } else if (newLevel == currLevel && newType != currType) {
                     placeStack.pop();
                     placeStack.push(insertElement(placeStack[placeStack.length - 1], newType));
                 }
                 currLevel = newLevel;
                 currType = newType;
-                var e = insertElement(placeStack[placeStack.length - 1], "li");
-                w.subWikify(e, this.terminator);
+                t = insertElement(placeStack[placeStack.length - 1], "li");
+                if (bulletType != "*" && bulletType != "#") {
+                    t.setAttribute("data-bullet", bulletType);
+                }
+                w.subWikify(t, this.terminator);
             }
         } while (matched);
     }
@@ -1827,13 +1811,6 @@ Wikifier.formatters = [
     }
 },
 {
-    name: "lineBreak",
-    match: "\\n",
-    handler: function (w) {
-        insertElement(w.output, "br");
-    }
-},
-{
     name: "continuedLine",
     match: "\\\\\\s*?\\n",
     handler: function(a) {
@@ -1892,10 +1869,11 @@ Wikifier.formatters = [
 },
 {
     name: "char",
-    match: ".",
+    match: "[^\n]",
     handler: function (a) {
-        insertElement(a.output, "span", null, "char " + (a.matchText == " " ? "space" :
-            a.matchText == "\t" ? "tab" : a.matchText), a.matchText);
+        // Line breaks do NOT get their own charspans
+        insertElement(a.output, "span", null, "char", a.matchText).setAttribute("data-char", a.matchText == " " ? "space" :
+            a.matchText == "\t" ? "tab" : a.matchText);
     }
 }
 ];
@@ -1924,7 +1902,7 @@ Wikifier.linkFunction = function(title, el, callback) {
 Wikifier.createInternalLink = function (place, title, callback, type) {
     var tag = (type == "button" ? 'button' : 'a'),
         suffix = (type == "button" ? "Button" : "Link"),
-        el = insertElement(place, tag, title);
+        el = insertElement(place, tag);
 
     if (tale.has(title)) {
         el.className = 'internal'+suffix;
@@ -1964,9 +1942,9 @@ if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
         anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
     }
 };
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*"+
-    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "\\.")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "\\.")+"*)+)";
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
+    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
 
 // Functions usable by custom scripts
 // This includes restart(), above.
@@ -2041,6 +2019,9 @@ function previous() {
 }
 
 function either() {
+    if (arguments[0] instanceof Array && arguments.length == 1) {
+        return either.apply(this,arguments[0]);
+    }
     return arguments[~~(Math.random()*arguments.length)];
 }
 
@@ -2056,15 +2037,15 @@ function scriptEval(s) {
     try {
         eval(s.text);
     } catch (e) {
-        alert("There is a technical problem with this story (" + s.title + ": " + e.message + ")."+softErrorMessage);
+        alert("There is a technical problem with this " + tale.identity() + " (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
 
 /* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but parts of the story may not work properly.";
+var softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
 window.onerror = function (msg, a, b, c, error) {
-    var s = (error && (".\n\n" + error.stack + "\n\n")) || (" (" + msg + ").\n");
-    alert("Sorry to interrupt, but this story's code has got itself in a mess" + s + softErrorMessage.slice(1));
+    var s = (error && (".\n\n" + error.stack.replace(/\([^\)]+\)/g,'') + "\n\n")) || (" (" + msg + ").\n");
+    alert("Sorry to interrupt, but this " + ((tale && tale.identity && tale.identity()) || "page") + "'s code has got itself in a mess" + s + softErrorMessage.slice(1));
     window.onerror = null;
 };
 
@@ -2089,7 +2070,7 @@ function main() {
     }
     
     if (!window.JSON || !document.querySelector) {
-        return (passages.innerHTML = "This story requires a newer web browser. Sorry.");
+        return (passages.innerHTML = "This " + tale.identity() + " requires a newer web browser. Sorry.");
     } else {
         passages.innerHTML = "";
     }
@@ -2099,7 +2080,7 @@ function main() {
         imgs = tale.lookup("tags", "Twine.image");
         for (i = 0; i < imgs.length; i++) {
             if (imgs[i].text.length >= 32768) {
-                alert("NOTE: This story's HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
+                alert("NOTE: This " + tale.identity() + "'s HTML file contains embedded images that may be too large for this browser to display."+softErrorMessage);
                 break;
             }
         }
@@ -2118,7 +2099,7 @@ function main() {
             sanityCheck('init() of the custom macro "'+i+'"');
         }
     }
-    
+
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];
