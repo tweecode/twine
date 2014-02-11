@@ -211,6 +211,10 @@ class PassageFrame(wx.Frame):
             self.bodyInput.SetFocus()
             self.bodyInput.SetSelection(-1, -1)
 
+        # Hack to force titles (>18 char) to display correctly.
+        # NOTE: stops working if moved above bodyInput code. 
+        self.titleInput.SetInsertionPoint(0)
+
         self.SetIcon(self.app.icon)
         self.Show(True)
 
