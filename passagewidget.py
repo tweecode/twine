@@ -160,7 +160,7 @@ class PassageWidget:
 
     def getBrokenLinks(self):
         """Returns a list of broken links in this widget."""
-        return filter(lambda a: not self.parent.findWidget(a), self.passage.links)
+        return filter(lambda a: not self.parent.findWidget(a) and not self.parent.externalPassageExists(a), self.passage.links)
 
     def setSelected(self, value, exclusive = True):
         """
