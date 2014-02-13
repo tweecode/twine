@@ -1,4 +1,4 @@
-import sys, os, re, threading, wx, wx.animate, base64, time
+import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time
 import metrics, images
 from tweelexer import TweeLexer, badLinkStyle
 from tiddlywiki import TiddlyWiki
@@ -703,7 +703,8 @@ class StorySettingsFrame(PassageFrame):
 
         # controls
 
-        self.panel = wx.Panel(self)
+        self.panel = wx.lib.scrolledpanel.ScrolledPanel(self)
+        self.panel.SetupScrolling()
         allSizer = wx.BoxSizer(wx.VERTICAL)
         self.panel.SetSizer(allSizer)
 

@@ -1,4 +1,5 @@
 import re, wx, wx.stc
+import tweeregex
 
 class TweeLexer:
     """
@@ -97,35 +98,35 @@ class TweeLexer:
             return (self.MARKUP, self.MARKUPS[m])
 
         # link
-        m = re.match(self.LINK_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.LINK_REGEX,text,re.U|re.I)
         if m: return (self.GOOD_LINK, m)
 
         # macro
-        m = re.match(self.MACRO_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.MACRO_REGEX,text,re.U|re.I)
         if m: return (self.MACRO, m)
 
         # image (cannot have interior markup)
-        m = re.match(self.IMAGE_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.IMAGE_REGEX,text,re.U|re.I)
         if m: return (self.IMAGE, m)
 
         # Old-version HTML block (cannot have interior markup)
-        m = re.match(self.HTML_BLOCK_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.HTML_BLOCK_REGEX,text,re.U|re.I)
         if m: return (self.HTML_BLOCK, m)
 
         # Inline HTML tags
-        m = re.match(self.HTML_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.HTML_REGEX,text,re.U|re.I)
         if m: return (self.HTML, m)
 
         # Inline styles
-        m = re.match(self.INLINE_STYLE_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.INLINE_STYLE_REGEX,text,re.U|re.I)
         if m: return (self.INLINE_STYLE, m)
 
         # Monospace
-        m = re.match(self.MONO_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.MONO_REGEX,text,re.U|re.I)
         if m: return (self.MONO, m)
 
         # Comment
-        m = re.match(self.COMMENT_REGEX,text,re.U|re.I)
+        m = re.match(tweeregex.COMMENT_REGEX,text,re.U|re.I)
         if m: return (self.COMMENT, m)
 
         return (None, None)
@@ -137,7 +138,7 @@ class TweeLexer:
         """
 
         def applyParamStyle(pos2, contents):
-            iterator = re.finditer(self.MACRO_PARAMS_REGEX, contents, re.U)
+            iterator = re.finditer(tweeregex.MACRO_PARAMS_REGEX, contents, re.U)
             for param in iterator:
                 if param.group(1):
                     # String
@@ -178,7 +179,7 @@ class TweeLexer:
 
         self.applyStyle(0, len(text), self.DEFAULT);
 
-        iterator = re.finditer(re.compile(self.COMBINED_REGEX, re.U|re.I), text[pos:]);
+        iterator = re.finditer(re.compile(tweeregex.COMBINED_REGEX, re.U|re.I), text[pos:]);
 
         for p in iterator:
             prev = pos+1
@@ -339,34 +340,6 @@ class TweeLexer:
 
     MARKUPS = {"''" : BOLD, "//" : ITALIC, "__" : UNDERLINE, "^^" : MARKUP, "~~" : MARKUP, "==" : MARKUP}
 
-    # regexes
-    LINK_REGEX = r"\[\[([^\|\]]*?)(?:\|(.*?))?\](\[.*?\])?\]"
-    MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
-    IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
-    HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
-    HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
-    INLINE_STYLE_REGEX = "@@"
-    MONO_REGEX = r"^\{\{\{\n(?:(?:^[^\n]*\n)+?)(?:^\}\}\}$\n?)|\{\{\{((?:.|\n)*?)\}\}\}"
-    COMMENT_REGEX = r"/%((?:.|\n)*?)%/"
-
-    COMBINED_REGEX = '(' + ')|('.join([ LINK_REGEX, MACRO_REGEX, IMAGE_REGEX, HTML_BLOCK_REGEX, HTML_REGEX, INLINE_STYLE_REGEX,\
-                      MONO_REGEX, COMMENT_REGEX, r"''|\/\/|__|\^\^|~~|==" ]) + ')'
-
-    # macro param regex - string or number or boolean or variable
-    # (Mustn't match all-digit names)
-    MACRO_PARAMS_VAR_REGEX = r'(\$[\w_\.]*[a-zA-Z_\.]+[\w_\.]*)'
-
-    # This isn't included because it's too general - but it's used by the broken link lexer
-    # (Not including whitespace between name and () because of false positives)
-    MACRO_PARAMS_FUNC_REGEX = r'([\w\d_\.]+\((.*?)\))'
-
-    MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]]*)\]\]))' \
-        +r'|\b(\-?\d+\.?(?:[eE][+\-]?\d+)?|NaN)\b' \
-        +r'|(true|false|null|undefined)' \
-        +r'|'+MACRO_PARAMS_VAR_REGEX \
-        +r')'
-
-
     # nested macros
 
     NESTED_MACROS = [ "if", "silently" ]
@@ -397,5 +370,5 @@ def badLinkStyle(dest):
     for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', '.', '/', '\\', '#']:
         if t in dest.lower():
             return TweeLexer.EXTERNAL
-    iscode = re.search(TweeLexer.MACRO_PARAMS_VAR_REGEX+"|"+TweeLexer.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+    iscode = re.search(tweeregex.MACRO_PARAMS_VAR_REGEX+"|"+tweeregex.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
     return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK

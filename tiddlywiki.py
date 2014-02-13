@@ -11,7 +11,7 @@ that translate between Twee and TiddlyWiki output seamlessly.
 """
 
 import re, datetime, time, locale, os, sys, tempfile, codecs
-from tweelexer import TweeLexer
+import tweeregex
 
 class TiddlyWiki:
     """An entire TiddlyWiki."""
@@ -201,16 +201,16 @@ class TiddlyWiki:
         for i in order:
             text = rtf_encode(self.tiddlers[i].text)
             text = re.sub(r'\n', '\\\n', text) # newlines
-            text = re.sub(TweeLexer.LINK_REGEX, r'\\b\cf2 \ul \1\ulnone \cf0 \\b0', text) # links
+            text = re.sub(tweeregex.LINK_REGEX, r'\\b\cf2 \ul \1\ulnone \cf0 \\b0', text) # links
             text = re.sub(r"''(.*?)''", r'\\b \1\\b0 ', text) # bold
             text = re.sub(r'\/\/(.*?)\/\/', r'\i \1\i0 ', text) # italics
             text = re.sub(r"\^\^(.*?)\^\^", r'\\super \1\\nosupersub ', text) # sup
             text = re.sub(r"~~(.*?)~~", r'\\sub \1\\nosupersub ', text) # sub
             text = re.sub(r"==(.*?)==", r'\\strike \1\\strike0 ', text) # strike
             text = re.sub(r'(\<\<.*?\>\>)', r'\\f1\cf1 \1\cf0\\f0', text) # macros
-            text = re.sub(TweeLexer.HTML_REGEX, r'\\f1\cf1 \g<0>\cf0\\f0', text) # macros
-            text = re.sub(TweeLexer.MONO_REGEX, r'\\f1 \1\\f0', text) # monospace
-            text = re.sub(TweeLexer.COMMENT_REGEX, '', text) # comments
+            text = re.sub(tweeregex.HTML_REGEX, r'\\f1\cf1 \g<0>\cf0\\f0', text) # macros
+            text = re.sub(tweeregex.MONO_REGEX, r'\\f1 \1\\f0', text) # monospace
+            text = re.sub(tweeregex.COMMENT_REGEX, '', text) # comments
 
             output += r'\fs24\b1' + rtf_encode(self.tiddlers[i].title) + r'\b0\fs20' + '\\\n'
             output += text + '\\\n\\\n'
@@ -500,7 +500,7 @@ class Tiddler:
 
         self.macros = []
         # other macros (including shorthand <<display>>)
-        for m in re.finditer(TweeLexer.MACRO_REGEX, self.text):
+        for m in re.finditer(tweeregex.MACRO_REGEX, self.text):
             # Exclude shorthand <<print>>
             if m.group(1) and m.group(1)[0] != '$':
                 self.macros.append(m.group(1))
@@ -509,11 +509,11 @@ class Tiddler:
         links = set()
 
         # Regular hyperlinks (also matches wiki-style links inside macros)
-        for m in re.finditer(TweeLexer.LINK_REGEX, self.text):
+        for m in re.finditer(tweeregex.LINK_REGEX, self.text):
             links.add(m.group(2) or m.group(1))
 
         # Include images
-        for m in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
+        for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             if m.group(5):
                 links.add(m.group(5))
 
@@ -532,7 +532,7 @@ class Tiddler:
         # Images
 
         images = set()
-        for block in re.finditer(TweeLexer.IMAGE_REGEX, self.text):
+        for block in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             images.add(block.group(4))
 
         self.images = list(images)
