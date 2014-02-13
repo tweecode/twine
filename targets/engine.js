@@ -1046,6 +1046,7 @@ Passage.prototype.processText = function() {
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,isImage,
         settings = this.storysettings = {
+            // The two runtime settings (undo and bookmark) default to true.
             lookup: function(a) {
                 return !~["0", "off", "false"].indexOf((this[a]+""));
             }
@@ -1385,11 +1386,7 @@ Wikifier.formatHelpers = {
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source);
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart) {
-            var text = lookaheadMatch[1];
-
-            // IE specific hack
-            if (navigator.userAgent.indexOf("msie") != -1 && navigator.userAgent.indexOf("opera") == -1) text = text.replace(/\n/g, "\r");
-            var e = insertElement(w.output, "pre", null, null, text);
+            insertElement(w.output, "pre", null, null, lookaheadMatch[1]);
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
