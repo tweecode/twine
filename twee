@@ -74,12 +74,13 @@ def main(argv):
     # populate a TiddlyWiki
 
     tw = TiddlyWiki(author)
+    order = []
     for filename in sources:
-        tw.addTweeFromFilename(filename)
+        order += tw.addTweeFromFilename(filename)
 
     # generate output
 
-    output = tw.toHtml(app, header, startAt = start)
+    output = tw.toHtml(app, header, order, startAt = start)
     if sys.stdout.isatty():
         print output
     else:
