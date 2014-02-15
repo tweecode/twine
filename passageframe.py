@@ -687,8 +687,8 @@ class PassageFrame(wx.Frame):
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 
 
-class StorySettingsFrame(PassageFrame):
-    """Special type of PassageFrame which presents the current header's StorySettings."""
+class StorySettingsFrame(wx.Frame):
+    """A window which presents the current header's StorySettings."""
 
     def __init__(self, parent, widget, app):
         self.widget = widget
@@ -773,10 +773,10 @@ class StorySettingsFrame(PassageFrame):
         self.widget.passage.update()
 
 
-class ImageFrame(PassageFrame):
+class ImageFrame(wx.Frame):
     """
-    Special type of PassageFrame which only displays passages whose text consists of base64
-    encoded images - the image is converted to a bitmap and displayed, if possible.
+    A window which only displays passages whose text consists of base64 encoded images -
+    the image is converted to a bitmap and displayed, if possible.
     """
 
     def __init__(self, parent, widget, app):
