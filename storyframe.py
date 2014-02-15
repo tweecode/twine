@@ -415,10 +415,6 @@ class StoryFrame(wx.Frame):
             self.toolbar.Realize()
             self.toolbar.Hide()
 
-    def __del__(self):
-        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
-            os.remove(self.lastTestBuild.name)
-
     def revert(self, event = None):
         """Reverts to the last saved version of the story file."""
         bits = os.path.splitext(self.saveDestination)
@@ -470,6 +466,13 @@ class StoryFrame(wx.Frame):
         for w in list(self.storyPanel.widgets):
             if isinstance(w, PassageWidget):
                 w.closeEditor()
+
+        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
+            try:
+                os.remove(self.lastTestBuild.name)
+            except OSError, ex:
+                print >>sys.stderr, 'Failed to remove lastest test build:', ex
+        self.lastTestBuild = None
 
         self.app.removeStory(self, byMenu)
         if event != None:
