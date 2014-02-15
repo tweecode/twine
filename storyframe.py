@@ -361,6 +361,11 @@ class StoryFrame(wx.Frame):
         self.menus.Append(helpMenu, '&Help')
         self.SetMenuBar(self.menus)
 
+        # enable/disable paste menu option depending on clipboard contents
+
+        self.clipboardMonitor = ClipboardMonitor(self.menus.FindItemById(wx.ID_PASTE).Enable)
+        self.clipboardMonitor.Start(100)
+
         # extra shortcuts
 
         self.SetAcceleratorTable(wx.AcceleratorTable([ \
@@ -1038,11 +1043,6 @@ You can also include URLs of .tws and .twee files, too."""
         hasSelection = self.storyPanel.hasSelection()
         multipleSelection = self.storyPanel.hasMultipleSelection()
 
-        canPaste = False
-        if wx.TheClipboard.Open():
-            canPaste = wx.TheClipboard.IsSupported(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
-            wx.TheClipboard.Close()
-
         # window title
 
         if self.saveDestination == '':
@@ -1086,8 +1086,6 @@ You can also include URLs of .tws and .twee files, too."""
         copyItem.Enable(hasSelection)
         deleteItem = self.menus.FindItemById(wx.ID_DELETE)
         deleteItem.Enable(hasSelection)
-        pasteItem = self.menus.FindItemById(wx.ID_PASTE)
-        pasteItem.Enable(canPaste)
 
         findAgainItem = self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT)
         findAgainItem.Enable(self.storyPanel.lastSearchRegexp != None)
@@ -1223,3 +1221,24 @@ You can also include URLs of .tws and .twee files, too."""
     # misc stuff
 
     DEFAULT_TITLE = 'Untitled Story'
+
+
+class ClipboardMonitor(wx.Timer):
+    """
+    Monitors the clipboard and notifies a callback when the format of the contents
+    changes from or to Twine passage data.
+    """
+
+    def __init__(self, callback):
+        wx.Timer.__init__(self)
+        self.callback = callback
+        self.dataFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
+        self.state = None
+
+    def Notify(self):
+        if wx.TheClipboard.Open():
+            newState = wx.TheClipboard.IsSupported(self.dataFormat)
+            wx.TheClipboard.Close()
+            if newState != self.state:
+                self.state = newState
+                self.callback(newState)
