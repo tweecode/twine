@@ -1310,13 +1310,14 @@ Wikifier.prototype.fullArgs = function (includeName) {
 
 Wikifier.parse = function (input) {
     var m, re, b = input, found = [],
+        // Regex fragment: is the preceding match outside a string?
         g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
     
     function alter(from,to) {
         return b.replace(new RegExp(from+g,"gi"),to);
     }
     // Extract all the variables, and set them to 0 if undefined.
-    re = new RegExp(Wikifier.textPrimitives.variable,"gi");
+    re = new RegExp(Wikifier.textPrimitives.variable+g,"gi");
     while (m = re.exec(input)) {
         if (!~found.indexOf(m[0])) {
             // This deliberately contains a 'null or undefined' check
@@ -2034,7 +2035,12 @@ function scriptEval(s) {
         alert("There is a technical problem with this " + tale.identity() + " (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
 }
-
+/* Unload prompt */
+window.onbeforeunload = function() {
+    if (tale && tale.storysettings.lookup("exitprompt") && state && state.history.length > 1) {
+        return "You are about to end this " + tale.identity() + ".";
+    }
+};
 /* Error reporting */
 var softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
 window.onerror = function (msg, a, b, c, error) {

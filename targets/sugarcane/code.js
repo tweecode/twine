@@ -44,7 +44,7 @@ History.prototype.display = function (title, source, type, callback) {
         this.saveVariables(c, source, callback);
         if (hasPushState && tale.canUndo()) {
             try {
-                sessionStorage.setItem("history"+this.id, JSON.stringify(this.history));
+                sessionStorage.setItem("Twine.History"+this.id, JSON.stringify(this.history));
                 this.pushState(this.history.length <= 2 && window.history.state == "");
             } catch(e) {
                 alert("Your browser couldn't save the state of the " + tale.identity() +".\n"+
@@ -282,7 +282,7 @@ macros.back.onclick = function(back, steps) {
 window.onpopstate = function(e) {
     var title, hist, steps, s = e && e.state;
     if (s && s.id && s.length != null) {
-        hist = JSON.parse(sessionStorage.getItem("history"+s.id)),
+        hist = JSON.parse(sessionStorage.getItem("Twine.History"+s.id)),
         steps = hist.length-s.length;
     }
     if (hist != null && steps != null) {

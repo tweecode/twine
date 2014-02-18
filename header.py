@@ -49,6 +49,12 @@ class Header(object):
                 "default": "on"
             },{
                 "type": "checkbox",
+                "name": "exitprompt",
+                "label": "Prompt before closing or reloading the page",
+                "desc": "In most browsers, this asks the player to confirm closing or reloading the \npage after they've made at least 1 move.",
+                "default": "off"
+            },{
+                "type": "checkbox",
                 "name": "obfuscate",
                 "label": "Obfuscate the HTML source to obscure spoilers",
                 "values": ("swap","off")
@@ -60,7 +66,7 @@ class Header(object):
             },{
                 "type": "text",
                 "name": "identity",
-                "label": "What your game identifies as:",
+                "label": "What your work identifies as:",
                 "desc": "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
                 "default": "game"
             },{

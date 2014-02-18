@@ -695,7 +695,7 @@ class StorySettingsFrame(PassageFrame):
         self.app = app
 
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.widget.passage.title + ' - ' + self.app.NAME, \
-                          size = (450, 500), style=wx.DEFAULT_FRAME_STYLE)
+                          size = (450, 550), style=wx.DEFAULT_FRAME_STYLE)
         # menus
 
         self.menus = wx.MenuBar()
