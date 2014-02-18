@@ -158,25 +158,27 @@ class StoryPanel(wx.ScrolledWindow):
         self.Refresh()
 
     def pasteWidgets(self):
-        """Pastes widgets into the clipboard."""
-        format = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
+        """Pastes widgets from the clipboard."""
+        clipFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
+        clipData = wx.CustomDataObject(clipFormat)
 
-        if wx.TheClipboard.Open() and wx.TheClipboard.IsSupported(format):
-            clipData = wx.CustomDataObject(format)
-            wx.TheClipboard.GetData(clipData)
+        if wx.TheClipboard.Open():
+            gotData = wx.TheClipboard.IsSupported(clipFormat) and wx.TheClipboard.GetData(clipData)
             wx.TheClipboard.Close()
-            data = pickle.loads(clipData.GetData())
 
-            self.eachWidget(lambda w: w.setSelected(False, False))
+            if gotData:
+                data = pickle.loads(clipData.GetData())
 
-            for widget in data:
-                newPassage = PassageWidget(self, self.app, state = widget, title = self.untitledName(widget['passage'].title))
-                newPassage.findSpace()
-                newPassage.setSelected(True, False)
-                self.widgets.append(newPassage)
+                self.eachWidget(lambda w: w.setSelected(False, False))
 
-            self.parent.setDirty(True, action = 'Paste')
-            self.Refresh()
+                for widget in data:
+                    newPassage = PassageWidget(self, self.app, state = widget, title = self.untitledName(widget['passage'].title))
+                    newPassage.findSpace()
+                    newPassage.setSelected(True, False)
+                    self.widgets.append(newPassage)
+
+                self.parent.setDirty(True, action = 'Paste')
+                self.Refresh()
 
     def removeWidget(self, widget, saveUndo = False):
         """

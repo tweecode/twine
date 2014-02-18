@@ -975,7 +975,7 @@ class ImageFrame(PassageFrame):
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
-        if clip.Open() and self.image:
+        if self.image and clip.Open():
             clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
