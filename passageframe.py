@@ -695,7 +695,7 @@ class StorySettingsFrame(PassageFrame):
         self.app = app
 
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.widget.passage.title + ' - ' + self.app.NAME, \
-                          size = (450, 500), style=wx.DEFAULT_FRAME_STYLE)
+                          size = (450, 550), style=wx.DEFAULT_FRAME_STYLE)
         # menus
 
         self.menus = wx.MenuBar()
@@ -975,7 +975,7 @@ class ImageFrame(PassageFrame):
     def copyImage(self, event = None):
         """Copy the bitmap to the clipboard"""
         clip = wx.TheClipboard
-        if clip.Open() and self.image:
+        if self.image and clip.Open():
             clip.SetData(wx.BitmapDataObject(self.image.GetBitmap() if not self.gif else self.gif.GetInactiveBitmap()))
             clip.Flush()
             clip.Close()
