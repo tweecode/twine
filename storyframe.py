@@ -846,6 +846,11 @@ You can also include URLs of .tws and .twee files, too."""
         """
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
+        if self.saveDestination == '':
+            twinedocdir = os.getcwd()
+        else:
+            twinedocdir = os.path.dirname(self.saveDestination)
+        
         excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS
         for line in lines:
@@ -853,11 +858,10 @@ You can also include URLs of .tws and .twee files, too."""
                 if line.strip():
                     extension = os.path.splitext(line)[1]
                     if extension == '.tws':
-
                         if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
                             openedFile = urllib.urlopen(line)
                         else:
-                            openedFile = open(line, 'r')
+                            openedFile = open(os.path.join(twinedocdir, line), 'r')
                         s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
                         openedFile.close()
 

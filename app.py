@@ -287,14 +287,16 @@ class App(wx.App):
             # Windows py2exe'd apps add an extraneous library.zip at the end
             scriptPath = re.sub('\\\\\w*.zip', '', scriptPath)
         elif sys.platform == "darwin":
-            scriptPath = re.sub('[^/]+.app/.*', '', scriptPath)
+            scriptPath = re.sub('MacOS\/.*', '', scriptPath)
 
         scriptPath += os.sep
         self.iconsPath = scriptPath + 'icons' + os.sep
         self.builtinTargetsPath = scriptPath + 'targets' + os.sep
 
         if sys.platform == "darwin":
-            self.externalTargetsPath = re.sub('[^/]+.app/.*', '', self.builtinTargetsPath) + 'targets' + os.sep
+            self.externalTargetsPath = re.sub('[^/]+.app/.*', 'targets' + os.sep, self.builtinTargetsPath)
+            if not os.path.isdir(self.externalTargetsPath):
+                self.externalTargetsPath = ''
         else:
             self.externalTargetsPath = ''
 
