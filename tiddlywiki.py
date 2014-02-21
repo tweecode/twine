@@ -305,6 +305,7 @@ class Tiddler:
         self.displays = []
         self.images = []
         self.macros = []
+        self.modifier = None
 
         """Pass source code, and optionally 'twee' or 'html'"""
         if type == 'twee':
@@ -403,6 +404,12 @@ class Tiddler:
         modified = modified_re.search(source)
         if (modified):
             self.modified = decode_date(modified.group(1))
+
+        # modifier
+        modifier_re = re.compile(r'(?:data\-)?modifier="([^"]*?)"')
+        modifier = modifier_re.search(source)
+        if modifier:
+            self.modifier = modifier.group(1)
 
         # position
         self.pos = [0,0]
