@@ -1,0 +1,170 @@
+#!/usr/bin/env python2
+
+from tiddlywiki import TiddlyWiki
+
+from collections import defaultdict
+from getopt import GetoptError, getopt
+from glob import glob
+import re, sys
+
+
+verbose = False
+
+
+def detectCompiler(head, wiki):
+    '''Do a best effort to determine which program compiled the HTML.
+    Returns a pair consisting of the tool name in lower case and the version string.
+    If the tool name or the version string cannot be determined, the corresponding
+    position in the pair will be None.
+    '''
+    tool, version = None, None
+
+    # Look for "VERSION" replacement.
+    # Twine/Twee uses "Made in", Tweego uses "Compiled with".
+    m = re.search(r'(?:Made in|Compiled with) ([^(\n]*)(\(.*?\))?', head)
+    if m:
+        madeParts = m.group(1).split()
+        if madeParts:
+            tool = madeParts[0].lower()
+            if tool == 'tweego':
+                version = m.group(2).lstrip('(').split(';')[0].rstrip()
+            elif len(madeParts) == 2:
+                version = madeParts[1]
+    if verbose:
+        print >>sys.stderr, '"VERSION" string:', tool, version
+
+    # Look at the modifier (author) of the tiddlers (passages).
+    if tool is None or verbose:
+        modifierCounts = defaultdict(int)
+        for tiddler in wiki.tiddlers.itervalues():
+            modifierCounts[tiddler.modifier] += 1
+        modifiers = sorted(modifierCounts.iteritems(), key = lambda (name, count): count, reverse = True)
+        if verbose:
+            print >>sys.stderr, 'Passage creators:', ', '.join(
+                '%s (%d passages)' % (name or 'unknown', count)
+                for name, count in modifiers
+                )
+        if tool is None and modifiers:
+            tool = modifiers[0][0]
+
+    return tool, version
+
+
+def makeOrder(wiki):
+    '''Computes a linear passage order for the given story.
+    '''
+    tiddlers = wiki.tiddlers
+    storyPassages = set(
+        name
+        for name, tiddler in tiddlers.iteritems()
+        if tiddler.isStoryPassage()
+        )
+    infoPassages = set(tiddlers) - storyPassages
+    ordered = []
+
+    # Begin with the special passages, in a fixed order.
+    for name in ('StoryBanner', 'StoryTitle', 'StorySubtitle', 'StoryAuthor', 'StoryCaption',
+            'StoryMenu', 'MenuStory', 'MenuOptions', 'MenuShare',
+            'StorySettings', 'StoryIncludes', 'StoryInit', 'PassageReady', 'PassageDone'):
+        if name in infoPassages:
+            ordered.append(name)
+            infoPassages.remove(name)
+
+    # Add passages with special tags, in a fixed tag order.
+    for tag in ('script', 'widget', 'stylesheet', 'Twine.image', 'annotation'):
+        tagged = set(passage for passage in infoPassages if tag in tiddlers[passage].tags)
+        ordered.extend(sorted(tagged))
+        infoPassages -= tagged
+
+    # Append any remaining info passages.
+    ordered.extend(sorted(infoPassages))
+
+    # Append all story passages.
+    ordered.extend(sorted(storyPassages))
+
+    return ordered
+
+
+def usage():
+    print >> sys.stderr, 'usage: untwee [-r|--reorder auto|on|off] source'
+
+def main(argv):
+
+    if not argv:
+        usage()
+        sys.exit(2)
+
+    # read command line arguments
+
+    try:
+        opts, args = getopt(argv, 'r:', ['reorder='])
+    except GetoptError:
+        usage()
+        sys.exit(2)
+
+    reorder = None
+    for opt, arg in opts:
+        if opt in ('-r', '--reorder'):
+            try:
+                reorder = {'auto': None, 'on': True, 'off': False}[arg]
+            except KeyError:
+                print >> sys.stderr, 'Invalid argument for %s: %s' % (opt, arg)
+                usage()
+                sys.exit(2)
+
+    sources = [
+        filename
+        for arg in args
+        for filename in glob(arg)
+        ]
+    if len(sources) != 1:
+        print >> sys.stderr, 'untwee: %s HTML files specified' % ('multiple' if sources else 'no')
+        sys.exit(2)
+    source, = sources
+
+    # populate a TiddlyWiki
+
+    wiki = TiddlyWiki()
+    html = wiki.read(source)
+    order = wiki.addHtml(html)
+
+    # figure out which tool generated the HTML
+
+    m = re.search(r'<head>(.*?)</head>', html, re.I | re.S)
+    head = m.group(1) if m else ''
+
+    tool, version = detectCompiler(head, wiki)
+    print >>sys.stderr, 'Compiled by:', 'unknown tool' if tool is None else \
+            '%s %s' % (tool.capitalize(), version or '(unknown version)')
+
+    # determine passage order
+
+    if reorder is None: # autodetect
+        if tool == 'tweego':
+            # Tweego has always preserved order.
+            reorder = False
+        elif tool == 'twee':
+            # Order preservation was added during the Twine 1.4.2 development cycle.
+            reorder = version in (None, '1.4', '1.4.1')
+        else:
+            # Twine doesn't have an order to preserve.
+            # Braid doesn't preserve order.
+            reorder = True
+
+    if reorder:
+        print >>sys.stderr, 'Reordering passages.'
+        order = makeOrder(wiki)
+    else:
+        print >>sys.stderr, 'Preserving passage order.'
+
+    # generate output
+
+    output = wiki.toTwee(order)
+    if sys.stdout.isatty():
+        print output
+    else:
+        print output.encode('utf_8_sig')
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

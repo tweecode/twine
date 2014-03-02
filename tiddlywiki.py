@@ -26,14 +26,15 @@ class TiddlyWiki:
         return name in self.tiddlers
 
     def toTwee(self, order = None):
-        """Returns Twee source code for this TiddlyWiki."""
-        if not order: order = self.tiddlers.keys()
-        output = u''
-
-        for i in order:
-            output += self.tiddlers[i].toTwee()
-
-        return output
+        """Returns Twee source code for this TiddlyWiki.
+        The 'order' argument is a sequence of passage titles specifying the order
+        in which passages should appear in the output string; by default passages
+        are returned in arbitrary order.
+        """
+        tiddlers = self.tiddlers
+        if order is None:
+            order = tiddlers.keys()
+        return u''.join(tiddlers[i].toTwee() for i in order)
 
     def read(self, filename):
         try:
@@ -304,6 +305,7 @@ class Tiddler:
         self.displays = []
         self.images = []
         self.macros = []
+        self.modifier = None
 
         """Pass source code, and optionally 'twee' or 'html'"""
         if type == 'twee':
@@ -402,6 +404,12 @@ class Tiddler:
         modified = modified_re.search(source)
         if (modified):
             self.modified = decode_date(modified.group(1))
+
+        # modifier
+        modifier_re = re.compile(r'(?:data\-)?modifier="([^"]*?)"')
+        modifier = modifier_re.search(source)
+        if modifier:
+            self.modifier = modifier.group(1)
 
         # position
         self.pos = [0,0]
