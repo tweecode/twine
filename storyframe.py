@@ -415,10 +415,6 @@ class StoryFrame(wx.Frame):
             self.toolbar.Realize()
             self.toolbar.Hide()
 
-    def __del__(self):
-        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
-            os.remove(self.lastTestBuild.name)
-
     def revert(self, event = None):
         """Reverts to the last saved version of the story file."""
         bits = os.path.splitext(self.saveDestination)
@@ -470,6 +466,13 @@ class StoryFrame(wx.Frame):
         for w in list(self.storyPanel.widgets):
             if isinstance(w, PassageWidget):
                 w.closeEditor()
+
+        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
+            try:
+                os.remove(self.lastTestBuild.name)
+            except OSError, ex:
+                print >>sys.stderr, 'Failed to remove lastest test build:', ex
+        self.lastTestBuild = None
 
         self.app.removeStory(self, byMenu)
         if event != None:
@@ -716,43 +719,45 @@ class StoryFrame(wx.Frame):
             self.app.displayError('importing a font')
             return False
 
-    def createInfoPassage(self, event = None):
-        """Create, or otherwise open, one of the """
+    def defaultTextForPassage(self, title):
+        if title == 'Start':
+            return "Your story will display this passage first. Edit it by double clicking it."
+
+        elif title == 'StoryTitle':
+            return self.DEFAULT_TITLE
+
+        elif title == 'StorySubtitle':
+            return "This text appears below the story's title."
+
+        elif title == 'StoryAuthor':
+            return "Anonymous"
+
+        elif title == 'StoryMenu':
+            return "This passage's text will be included in the menu for this story."
+
+        elif title == 'StoryInit':
+            return """/% Place your story's setup code in this passage.
+Any macros in this passage will be run before the Start passage (or any passage you wish to Test Play) is run. %/
+"""
+
+        elif title == 'StoryIncludes':
+            return """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
+
+You can also include URLs of .tws and .twee files, too.
+"""
+
+        else:
+            return ""
+
+    def createInfoPassage(self, event):
+        """Open an editor for a special passage; create it if it doesn't exist yet."""
+
         id = event.GetId()
         title = self.storySettingsMenu.FindItemById(id).GetLabel()
-        defaultText = ""
-        found = False
 
-        if id == self.STORYSETTINGS_TITLE:
-            defaultText = self.DEFAULT_TITLE
-
-        elif id == self.STORYSETTINGS_SUBTITLE:
-            defaultText = "This text appears below the story's title."
-
-        elif id == self.STORYSETTINGS_AUTHOR:
-            defaultText = "Anonymous"
-
-        elif id == self.STORYSETTINGS_MENU:
-            defaultText = "This passage's text will be included in the menu for this story."
-
-        elif id == self.STORYSETTINGS_INCLUDES:
-            defaultText = """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
-
-You can also include URLs of .tws and .twee files, too."""
-
-        elif id == self.STORYSETTINGS_INIT:
-            defaultText = "/% Place your story's setup code in this passage."\
-                          "Any macros in this passage will be run before the Start passage" \
-                          "(or any passage you wish to Test Play) is run. %/"
-
-        for widget in self.storyPanel.widgets:
-            if widget.passage.title == title:
-                found = True
-                editingWidget = widget
-                break
-
-        if not found:
-            editingWidget = self.storyPanel.newWidget(title = title, text = defaultText)
+        editingWidget = self.storyPanel.findWidget(title)
+        if editingWidget is None:
+            editingWidget = self.storyPanel.newWidget(title = title, text = self.defaultTextForPassage(title))
 
         editingWidget.openEditor()
 

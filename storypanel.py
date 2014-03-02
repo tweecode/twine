@@ -50,9 +50,8 @@ class StoryPanel(wx.ScrolledWindow):
                 self.snapping = state['snapping']
         else:
             self.scale = 1
-            self.newWidget(title = StoryPanel.FIRST_TITLE, text = StoryPanel.FIRST_TEXT, quietly = True)
-            self.newWidget(title = "StoryTitle", text = self.parent.DEFAULT_TITLE, quietly = True)
-            self.newWidget(title = "StoryAuthor", text = "Anonymous", quietly = True)
+            for title in ('Start', 'StoryTitle', 'StoryAuthor'):
+                self.newWidget(title = title, text = self.parent.defaultTextForPassage(title), quietly = True)
 
         self.pushUndo(action = '')
         self.undoPointer -= 1
@@ -935,8 +934,6 @@ class StoryPanel(wx.ScrolledWindow):
 
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
-    FIRST_TITLE = 'Start'
-    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'
     FIRST_CSS = """/* Your story will use the CSS in this passage to style the page.
 Give this passage more tags, and it will only affect passages with those tags.
 Example selectors: */
