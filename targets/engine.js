@@ -1001,7 +1001,7 @@ Passage.prototype.isImage = function() {
     return !!~(this.tags.indexOf("Twine.image"));
 }
 Passage.prototype.preloadImages = function() {
-    var u = "\\s*['\"]?([^\"']+\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
+    var u = "\\s*['\"]?([^\"']+\\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
@@ -1834,12 +1834,13 @@ Wikifier.formatters = [
         }
     },
     handler: function (a) {
-        var e, isvoid, lookaheadRegExp, lookaheadMatch, lookahead,
+        var e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
-          tn = re && re[1];
-        if(tn && tn.toLowerCase() != "html") {
+          tn = re && re[1] && re[1].toLowerCase();
+        if(tn && tn != "html") {
             lookahead = "<\\/\\s*" + tn + "\\s*>";
-            isvoid = (this.voids.indexOf(tn.toLowerCase()) != -1);
+            isvoid = (this.voids.indexOf(tn) != -1);
+            isstyle = tn == "style" || tn == "script";
             lookaheadRegExp = new RegExp(lookahead, "mg");
             lookaheadRegExp.lastIndex = a.matchStart;
             lookaheadMatch = lookaheadRegExp.exec(a.source);
@@ -1849,7 +1850,11 @@ Wikifier.formatters = [
                 while(e.firstChild) {
                     e = e.firstChild;
                 }
-                if (!isvoid) {
+                if (isstyle) {
+                    e.innerHTML = a.source.slice(a.nextMatch, lookaheadMatch.index);
+                    a.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
+                }
+                else if (!isvoid) {
                     a.subWikify(e, lookahead);
                 }
                 if (e.tagName.toLowerCase() == 'table') {
