@@ -992,6 +992,12 @@ function Passage(c, b, a, ofunc, okey) {
         if (!this.isImage()) {
             this.preloadImages();
         }
+        // Check for the .char selector, or the [data-char] selector
+        // False positives aren't a big issue.
+        if (/\.char\b|\[data\-char\b/.exec(this.text) && Wikifier.charSpanFormatter) {
+            Wikifier.formatters.push(Wikifier.charSpanFormatter);
+            delete Wikifier.charSpanFormatter;
+        }
     } else {
         this.text = '@@This passage does not exist: ' + c + '@@';
         this.tags = [];
@@ -1806,6 +1812,13 @@ Wikifier.formatters = [
     }
 },
 {
+    name: "lineBreak",
+    match: "\\n",
+    handler: function (w) {
+        insertElement(w.output, "br");
+    }
+},
+{
     name: "continuedLine",
     match: "\\\\\\s*?\\n",
     handler: function(a) {
@@ -1866,8 +1879,9 @@ Wikifier.formatters = [
             }
         }
     }
-},
-{
+}];
+// Optional - included if the ".char" selector appears anywhere in the story.
+Wikifier.charSpanFormatter = {
     name: "char",
     match: "[^\n]",
     handler: function (a) {
@@ -1875,8 +1889,8 @@ Wikifier.formatters = [
         insertElement(a.output, "span", null, "char", a.matchText).setAttribute("data-char", a.matchText == " " ? "space" :
             a.matchText == "\t" ? "tab" : a.matchText);
     }
-}
-];
+};
+
 Wikifier.parsePassageTitle = function(title) {
     if (title && !tale.has(title)) {
         try {

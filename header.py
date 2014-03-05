@@ -73,12 +73,12 @@ class Header(object):
                 "type": "checkbox",
                 "name": "jquery",
                 "label": "Include the jQuery script library?",
-                "desc": "Individual scripts may force this on by containing the text 'requires jQuery'.",
+                "desc": "This enables the jQuery() function and the $() shorthand.\nIndividual scripts may force this on by containing the text 'requires jQuery'.",
             },{
                 "type": "checkbox",
                 "name": "modernizr",
                 "label": "Include the Modernizr script library?",
-                "desc": "Individual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
+                "desc": "This adds CSS classes to the <html> element that can be used to write\nmore compatible CSS or scripts. See http://modernizr.com/docs for details.\nIndividual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
             }]
 
     def is_endtag(self, name, tag):
