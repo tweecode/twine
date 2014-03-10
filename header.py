@@ -57,7 +57,8 @@ class Header(object):
                 "type": "checkbox",
                 "name": "obfuscate",
                 "label": "Obfuscate the HTML source to obscure spoilers",
-                "values": ("swap","off")
+                "values": ("swap","off"),
+                "default": "off"
             },{
                 "type": "text",
                 "name": "obfuscatekey",

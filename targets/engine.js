@@ -466,13 +466,14 @@ macros.display = {
         if (macroName != "display") {
             output = macroName;
             // Shorthand displays can have parameters
-            params = name.readMacroParams(true);
+            params = parser.fullMatch().replace(/^\S*|>>$/g,'').readMacroParams(true);
+            // The above line recreates params, with the quotes.
             try {
                 for(j=0; j < params.length; j++) {
                     params[j] = eval(Wikifier.parse(params[j]));
                 }
             } catch (e) {
-                throwError(place, "<<" + macroName + " " + name + ">> bad argument: " + params[j], parser.fullMatch());
+                throwError(place, parser.fullMatch() + " bad argument: " + params[j], parser.fullMatch());
                 return
             }
         }
@@ -488,7 +489,7 @@ macros.display = {
                     output = name;
                 }
                 else {
-                    throwError(place, "<<" + macroName + ">> bad expression: " + e.message,
+                    throwError(place, parser.fullMatch() + " bad expression: " + e.message,
                         parser.fullMatch());
                     return
                 }
@@ -815,7 +816,7 @@ macros.back = {
                     stepsParam2 = eval(Wikifier.parse(stepsParam2));
                 }
                 catch(r) {
-                    throwError(a, "<<"+b + ">> bad expression: " + r.message, parser.fullMatch())
+                    throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
                     return;
                 }
             }
@@ -847,7 +848,7 @@ macros.back = {
                         e = eval(Wikifier.parse(e[0]));
                     }
                     catch(r) {
-                        throwError(a, "<<" + b + ">> bad expression: " + r.message, parser.fullMatch())
+                        throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
                         return;
                     }
                 }
@@ -1005,9 +1006,10 @@ function Passage(c, b, a, ofunc, okey) {
 }
 Passage.prototype.isImage = function() {
     return !!~(this.tags.indexOf("Twine.image"));
-}
+};
 Passage.prototype.preloadImages = function() {
-    var u = "\\s*['\"]?([^\"']+\\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
+    // Don't preload URLs containing '$' - suspect that they are variables.
+    var u = "\\s*['\"]?([^\"'$]+\\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
@@ -1656,24 +1658,33 @@ Wikifier.formatters = [
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
     lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mig");
+        var e, imgPassages, imgname, img, j, lookaheadMatch,
+            lookaheadRegExp = new RegExp(this.lookahead, "mig");
         lookaheadRegExp.lastIndex = w.matchStart;
-        var lookaheadMatch = lookaheadRegExp.exec(w.source);
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketed link
+        lookaheadMatch = lookaheadRegExp.exec(w.source);
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
         {
-            var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
+            e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
             if (title) {
                 e = Wikifier.linkFormatter.makeInternalOrExternal(w.output, title);
             }
-            var img = insertElement(e, "img");
+            img = insertElement(e, "img");
             if (lookaheadMatch[1]) img.align = "left";
             else if (lookaheadMatch[2]) img.align = "right";
             if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
-            img.src = lookaheadMatch[4];
+            // Try to parse it as a variable
+            try {
+                imgname = eval(Wikifier.parse(lookaheadMatch[4]));
+            }
+            catch(e) {
+            }
+            if (!imgname) {
+                imgname = lookaheadMatch[4];
+            }
             // Base64 passage transclusion
-            var imgPassages = tale.lookup("tags", "Twine.image");
-            for (var j = 0; j < imgPassages.length; j++) {
-                if (imgPassages[j].title == lookaheadMatch[4]) {
+            imgPassages = tale.lookup("tags", "Twine.image");
+            for (j = 0; j < imgPassages.length; j++) {
+                if (imgPassages[j].title == imgname) {
                     img.src = imgPassages[j].text;
                     break;
                 }

@@ -721,9 +721,8 @@ class StorySettingsFrame(wx.Frame):
                     currentValue = data.get('default', 'off')
                     self.saveSetting(name, currentValue)
                 checkbox.SetValue(currentValue not in ["off", "false", '0'])
-
                 values = data.get("values", ("on","off"))
-                checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name:
+                checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name, values=values:
                               self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
                 allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
 
