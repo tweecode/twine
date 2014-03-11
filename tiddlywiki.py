@@ -445,22 +445,18 @@ class Tiddler:
                 text = encoder(text)
             return text
 
-        now = time.localtime()
-        output = ''
-        title = self.title.replace('"','&quot;')
-        output = u'<div tiddler="' + applyEncoders(argEncoders, title) + '" tags="'
-        for tag in self.tags:
-            output += applyEncoders(argEncoders, tag + ' ')
-        output = output.strip()
+        args = (
+            ('tiddler', applyEncoders(argEncoders, self.title.replace('"', '&quot;'))),
+            ('tags', ' '.join(applyEncoders(argEncoders, tag) for tag in self.tags)),
+            ('created', encode_date(self.created)),
+            ('modifier', author.replace('"', '&quot;')),
+            ('twine-position', '%d,%d' % tuple(self.pos)),
+            )
 
-        output += '" modified="' + encode_date(self.modified) + '"'
-        output += ' created="' + encode_date(self.created) + '"'
-        if hasattr(self, 'pos'):
-            output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
-        output += ' modifier="' + author.replace('"','&quot;') + '">'
-        output += encode_text(applyEncoders(bodyEncoders, self.text))
-
-        return output + '</div>'
+        return u'<div%s>%s</div>' % (
+            ''.join(' %s="%s"' % arg for arg in args),
+            encode_text(applyEncoders(bodyEncoders, self.text))
+            )
 
 
     def toTwee(self):
