@@ -422,8 +422,13 @@ class Tiddler:
         self.pos = [0,0]
         pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
         pos = pos_re.search(source)
-        if (pos):
-            self.pos = map(int, pos.group(1).split(','))
+        if pos:
+            coord = pos.group(1).split(',')
+            if len(coord) == 2:
+                try:
+                    self.pos = map(int, coord)
+                except ValueError:
+                    pass
 
         # body text
         self.text = ''
