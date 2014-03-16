@@ -4,7 +4,7 @@
 **
 */
 Tale.prototype.canBookmark = function() {
-    return this.canUndo() && (this.storysettings.lookup('bookmark'));
+    return this.canUndo() && (this.storysettings.lookup('bookmark',true));
 };
 History.prototype.init = function () {
     if (!this.restore()) {

@@ -15,7 +15,7 @@ var hasPushState = !!window.history && (typeof window.history.pushState == "func
 }(window.sessionStorage));
 
 Tale.prototype.canBookmark = function() {
-    return this.canUndo() && (this.storysettings.lookup('bookmark') || !hasPushState);
+    return this.canUndo() && (this.storysettings.lookup('bookmark',true) || !hasPushState);
 };
 History.prototype.init = function () {
     var a = this;

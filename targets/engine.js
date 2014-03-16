@@ -178,6 +178,8 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     }
     return -1
 });
+Array.prototype.forEach || (Array.prototype.forEach=function(fun){if(this==null){throw TypeError()}var t=Object(this);var len=+t.length;if(typeof fun!="function"){throw TypeError()}var thisArg=arguments.length>=2?arguments[1]:void 0;for(var i=0;i<len;i++){if(i in t){fun.call(thisArg,t[i],i,t)}}});
+
 /* btoa/atob polyfill by github.com/davidchambers */
 (function(){function t(t){this.message=t}var e=window,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";t.prototype=Error(),t.prototype.name="InvalidCharacterError",e.btoa||(e.btoa=function(e){for(var o,n,a=0,i=r,c="";e.charAt(0|a)||(i="=",a%1);c+=i.charAt(63&o>>8-8*(a%1))){if(n=e.charCodeAt(a+=.75),n>255)throw new t();o=o<<8|n}return c}),e.atob||(e.atob=function(e){if(e=e.replace(/=+$/,""),1==e.length%4)throw new t();for(var o,n,a=0,i=0,c="";n=e.charAt(i++);~n&&(o=a%4?64*o+n:n,a++%4)?c+=String.fromCharCode(255&o>>(6&-2*a)):0)n=r.indexOf(n);return c})})();
 
@@ -1054,8 +1056,9 @@ Passage.prototype.processText = function() {
 function Tale() {
     var a,b,c,lines,i,kv,ns,nsc,isImage,
         settings = this.storysettings = {
-            // The two runtime settings (undo and bookmark) default to true.
-            lookup: function(a) {
+            lookup: function(a, dfault) {
+                // The two runtime settings (undo and bookmark) default to true.
+                if (!(a in this)) return dfault;
                 return !~["0", "off", "false"].indexOf((this[a]+""));
             }
         },
@@ -1169,7 +1172,7 @@ Tale.prototype.lookup = function (h, g, a) {
     return d
 };
 Tale.prototype.canUndo = function() {
-    return this.storysettings.lookup('undo');
+    return this.storysettings.lookup('undo',true);
 };
 Tale.prototype.identity = function() {
     return this.storysettings.identity || "game";
@@ -1858,7 +1861,7 @@ Wikifier.formatters = [
         }
     },
     handler: function (a) {
-        var e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
+        var tmp, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
           tn = re && re[1] && re[1].toLowerCase();
         if(tn && tn != "html") {
@@ -1869,17 +1872,23 @@ Wikifier.formatters = [
             lookaheadRegExp.lastIndex = a.matchStart;
             lookaheadMatch = lookaheadRegExp.exec(a.source);
             if (lookaheadMatch || isvoid) {
-                e = document.createElement(a.output.tagName);
-                e.innerHTML = a.matchText;
-                while(e.firstChild) {
-                    e = e.firstChild;
-                }
                 if (isstyle) {
-                    e.innerHTML = a.source.slice(a.nextMatch, lookaheadMatch.index);
+                    e = document.createElement(tn);
+                    e.type = "text/css"; // IE8 compatibility
+                    tmp = a.source.slice(a.nextMatch, lookaheadMatch.index);
+                    e.styleSheet ? (e.styleSheet.cssText = tmp) : (e.innerHTML = tmp);
                     a.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
                 }
-                else if (!isvoid) {
-                    a.subWikify(e, lookahead);
+                else {
+                    // Creating a loose <tr> element creates it wrapped inside a <tbody> element.
+                    e = document.createElement(a.output.tagName);
+                    e.innerHTML = a.matchText;
+                    while(e.firstChild) {
+                        e = e.firstChild;
+                    }
+                    if (!isvoid) {
+                        a.subWikify(e, lookahead);
+                    }
                 }
                 if (e.tagName.toLowerCase() == 'table') {
                     this.cleanupTables.call(this,e);
@@ -2067,7 +2076,7 @@ function scriptEval(s) {
 }
 /* Unload prompt */
 window.onbeforeunload = function() {
-    if (tale && tale.storysettings.lookup("exitprompt") && state && state.history.length > 1) {
+    if (tale && tale.storysettings.lookup("exitprompt",false) && state && state.history.length > 1) {
         return "You are about to end this " + tale.identity() + ".";
     }
 };
