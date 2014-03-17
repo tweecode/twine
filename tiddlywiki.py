@@ -140,6 +140,9 @@ class TiddlyWiki:
         else:
             output = output.replace('"MODERNIZR"','')
 
+        argEncoders = []
+        bodyEncoders = []
+
         obfuscate = 'obfuscate' in self.storysettings and \
             self.storysettings['obfuscate'] == 'swap' and 'obfuscatekey' in self.storysettings;
 
@@ -152,15 +155,19 @@ class TiddlyWiki:
                 if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
                     nss = nss + nsc
             self.storysettings['obfuscatekey'] = nss
+            obfuscationEncoder = lambda text, key = self.storysettings['obfuscatekey']: \
+                    encode_obfuscate_swap(text, key)
+            obfuscateArgEncoders = argEncoders + [obfuscationEncoder]
+            obfuscateBodyEncoders = bodyEncoders + [obfuscationEncoder]
 
         storyfragments = []
         for i in order:
             tiddler = self.tiddlers[i]
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
                 if not obfuscate or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(self.author))
+                    storyfragments.append(tiddler.toHtml(self.author, argEncoders, bodyEncoders))
                 else:
-                    storyfragments.append(tiddler.toHtml(self.author, obfuscation = True, obfuscationkey = self.storysettings['obfuscatekey']))
+                    storyfragments.append(tiddler.toHtml(self.author, obfuscationArgEncoders, obfuscationBodyEncoders))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY"') > 0:
@@ -415,8 +422,13 @@ class Tiddler:
         self.pos = [0,0]
         pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
         pos = pos_re.search(source)
-        if (pos):
-            self.pos = map(int, pos.group(1).split(','))
+        if pos:
+            coord = pos.group(1).split(',')
+            if len(coord) == 2:
+                try:
+                    self.pos = map(int, coord)
+                except ValueError:
+                    pass
 
         # body text
         self.text = ''
@@ -427,30 +439,29 @@ class Tiddler:
             if obfuscationkey:
                 self.text = encode_obfuscate_swap(self.text, obfuscationkey);
 
-    def toHtml(self, author = 'twee', obfuscation = False, obfuscationkey = ''):
-        """Returns an HTML representation of this tiddler."""
+    def toHtml(self, author, argEncoders, bodyEncoders):
+        """Returns an HTML representation of this tiddler.
+        The encoder arguments are sequences of functions that take a single text argument
+        and return a modified version of the given text.
+        """
 
-        now = time.localtime()
-        output = ''
-        title = self.title.replace('"','&quot;')
-        if not obfuscation:
-            output = u'<div tiddler="' + title + '" tags="'
-            for tag in self.tags:
-                output += tag + ' '
-        else:
-            output = u'<div tiddler="' + encode_obfuscate_swap(title, obfuscationkey) + '" tags="'
-            for tag in self.tags:
-                output += encode_obfuscate_swap(tag + ' ', obfuscationkey)
-        output = output.strip()
+        def applyEncoders(encoders, text):
+            for encoder in encoders:
+                text = encoder(text)
+            return text
 
-        output += '" modified="' + encode_date(self.modified) + '"'
-        output += ' created="' + encode_date(self.created) + '"'
-        if hasattr(self, 'pos'):
-            output += ' twine-position="' + str(int(self.pos[0])) + ',' + str(int(self.pos[1])) + '"'
-        output += ' modifier="' + author.replace('"','&quot;') + '">'
-        output += encode_text(self.text, obfuscation, obfuscationkey)
+        args = (
+            ('tiddler', applyEncoders(argEncoders, self.title.replace('"', '&quot;'))),
+            ('tags', ' '.join(applyEncoders(argEncoders, tag) for tag in self.tags)),
+            ('created', encode_date(self.created)),
+            ('modifier', author.replace('"', '&quot;')),
+            ('twine-position', '%d,%d' % tuple(self.pos)),
+            )
 
-        return output + '</div>'
+        return u'<div%s>%s</div>' % (
+            ''.join(' %s="%s"' % arg for arg in args),
+            encode_text(applyEncoders(bodyEncoders, self.text))
+            )
 
 
     def toTwee(self):
@@ -550,11 +561,9 @@ class Tiddler:
 #
 
 
-def encode_text(text, obfuscation = None, obfuscationkey = ''):
+def encode_text(text):
     """Encodes a string for use in HTML output."""
-    output = text
-    if obfuscation: output = encode_obfuscate_swap(output, obfuscationkey)
-    output = output.replace('\\', '\s') \
+    output = text.replace('\\', '\s') \
         .replace('\t', '\\t') \
         .replace('<', '&lt;') \
         .replace('>', '&gt;') \
