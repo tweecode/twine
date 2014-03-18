@@ -36,6 +36,18 @@ class Header(object):
         obfuscatekey = ''.join(obfuscatekey)
 
         return [{
+                "type": "text",
+                "name": "identity",
+                "label": "What your work identifies as:",
+                "desc": "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
+                "default": "game"
+            },{
+                "type": "text",
+                "name": "description",
+                "label": "A short description of your work:",
+                "desc": "This is inserted in the HTML file's <meta> description tag, used by\nsearch engines and other automated tools.",
+                "default": ""
+            },{
                 "type": "checkbox",
                 "name": "undo",
                 "label": "Let the player undo moves",
@@ -64,12 +76,6 @@ class Header(object):
                 "name": "obfuscatekey",
                 "label": "Obfuscation key:",
                 "default": obfuscatekey
-            },{
-                "type": "text",
-                "name": "identity",
-                "label": "What your work identifies as:",
-                "desc": "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
-                "default": "game"
             },{
                 "type": "checkbox",
                 "name": "jquery",

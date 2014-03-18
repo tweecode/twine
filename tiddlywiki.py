@@ -110,7 +110,15 @@ class TiddlyWiki:
 
         # Insert the Backup Story Title
         if defaultName:
-            output = output.replace('"Untitled Story"', '"'+defaultName.replace('"',r'\"')+'"')
+            name = defaultName.replace('"',r'\"')
+            output = re.sub('<title>.*?</title>', '<title>'+name+'</title>', output) \
+                .replace('"Untitled Story"', '"'+name+'"')
+                
+        # Insert the description
+        
+        if "description" in self.storysettings:
+            output = re.sub('<meta name="description" content="">', \
+                lambda a: a.group(0).replace('""', '"' + self.storysettings['description'] + '"'), output)
 
         falseOpts = ["false", "off", "0"]
 
@@ -167,7 +175,7 @@ class TiddlyWiki:
                 if not obfuscate or tiddler.title == 'StorySettings' or tiddler.isImage() :
                     storyfragments.append(tiddler.toHtml(self.author, argEncoders, bodyEncoders))
                 else:
-                    storyfragments.append(tiddler.toHtml(self.author, obfuscationArgEncoders, obfuscationBodyEncoders))
+                    storyfragments.append(tiddler.toHtml(self.author, obfuscateArgEncoders, obfuscateBodyEncoders))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY"') > 0:
