@@ -800,6 +800,7 @@ You can also include URLs of .tws and .twee files, too.
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
+                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
                     # Might as well suppress the warning for a StoryIncludes file
                     hasstartpassage = True
                 elif TiddlyWiki.NOINCLUDE_TAGS.isdisjoint(widget.passage.tags):
@@ -814,13 +815,9 @@ You can also include URLs of .tws and .twee files, too.
                                       + 'Your story will build but the web browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
 
+            
             for widget in self.storyPanel.widgets:
-                if widget.passage.title == 'StoryIncludes':
-                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
-                    break
-
-            # Decode story settings
-            for widget in self.storyPanel.widgets:
+                # Decode story settings
                 if widget.passage.title == 'StorySettings':
                     lines = widget.passage.text.splitlines()
                     for line in lines:
@@ -828,7 +825,7 @@ You can also include URLs of .tws and .twee files, too.
                             (skey,svalue) = line.split(':')
                             skey = skey.strip().lower()
                             svalue = svalue.strip().lower()
-                            tw.storysettings[skey] = svalue or True
+                            tw.storysettings[skey] = svalue
                     break
 
             # Write the output file
