@@ -30,11 +30,6 @@ class Header(object):
     def storySettings(self):
         """Returns a list of StorySettings dictionaries."""
 
-        # Randomise the obfuscate key
-        obfuscatekey = list('anbocpdqerfsgthuivjwkxlymz')
-        shuffle(obfuscatekey)
-        obfuscatekey = ''.join(obfuscatekey)
-
         return [{
                 "type": "text",
                 "name": "identity",
@@ -68,14 +63,8 @@ class Header(object):
             },{
                 "type": "checkbox",
                 "name": "obfuscate",
-                "label": "Obfuscate the HTML source to obscure spoilers",
-                "values": ("swap","off"),
+                "label": "Use ROT13 to obscure spoilers in the HTML source code?",
                 "default": "off"
-            },{
-                "type": "text",
-                "name": "obfuscatekey",
-                "label": "Obfuscation key:",
-                "default": obfuscatekey
             },{
                 "type": "checkbox",
                 "name": "jquery",

@@ -750,11 +750,12 @@ class StorySettingsFrame(wx.Frame):
                 allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
 
         self.SetIcon(self.app.icon)
+
         self.Layout()
         self.Show(True)
 
     def getSetting(self, valueName):
-        search = re.search("^"+valueName +r"\s*:\s*(.+?)\s*$", self.widget.passage.text, flags=re.I|re.M)
+        search = re.search(r"(?:^|\n)"+valueName + r"\s*:\s*(\w*)\s*(?:\n|$)", self.widget.passage.text, flags=re.I)
         if search:
             return search.group(1)
         return ''
@@ -952,7 +953,6 @@ class ImageFrame(wx.Frame):
         t = self.widget.passage.text;
         # Get the extension
         extension = images.GetImageType(t)
-        print extension
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 

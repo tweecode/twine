@@ -1,3 +1,9 @@
+/*
+**
+** Basic utility functions
+**
+*/
+
 function clone(a) {
     var b = {};
     if (!a || typeof a != "object") {
@@ -61,7 +67,69 @@ function setPageElement(c, b, a) {
     }
 }
 
-// Kept for custom script use
+var scrollWindowInterval;
+function scrollWindowTo(e, margin) {
+    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
+        g = k(e),
+        j = (d > g) ? -1 : 1,
+        b = 0,
+        c = Math.abs(d - g);
+    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
+    if (c) {
+        scrollWindowInterval = window.setInterval(h, 25);
+    }
+    
+    function h() {
+        b += 0.1;
+        window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
+        if (b >= 1) {
+            window.clearInterval(scrollWindowInterval)
+        }
+    }
+
+    function k(o) {
+        var p = a(o),
+            h = o.offsetHeight,
+            n = d + m;
+        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
+        if (p < d) {
+            return p
+        } else {
+            if (p+h > n) {
+                if (h < m) {
+                    return (p - (m - h) + 20)
+                } else {
+                    return p
+                }
+            } else {
+                return p
+            }
+        }
+    }
+
+    function a(l) {
+        var m = 0;
+        while (l.offsetParent) {
+            m += l.offsetTop;
+            l = l.offsetParent
+        }
+        return m
+    }
+}
+
+function delta(old,neu) {
+    var vars, ret = {};
+    if (old && neu) {
+        for (vars in neu) {
+            if (neu[vars] !== old[vars]) {
+                ret[vars] = neu[vars];
+            }
+        }
+    }
+    return ret;
+}
+
 function addStyle(b) {
     if (document.createStyleSheet) {
         document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "&nbsp;<style>" + b + "</style>")
@@ -159,15 +227,22 @@ String.prototype.readBracketedList = function () {
     } while (c);
     return (f)
 };
+
+function rot13(s) {
+  return s.replace(/[a-zA-Z]/g, function(c) {
+    return String.fromCharCode((c<="Z" ? 90 : 122) >= (c=c.charCodeAt()+13) ? c : c-26);
+  });
+}
+
+/*
+**
+** Polyfills
+**
+*/
+
 String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
 });
-String.prototype.unDash = function () {
-    var s = this.split("-");
-    if (s.length > 1) for (var t = 1; t < s.length; t++)
-    s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
-    return s.join("");
-}
 Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     d = (d == null) ? 0 : d;
     var a = this.length;
@@ -183,6 +258,7 @@ Array.prototype.forEach || (Array.prototype.forEach=function(fun){if(this==null)
 /* btoa/atob polyfill by github.com/davidchambers */
 (function(){function t(t){this.message=t}var e=window,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";t.prototype=Error(),t.prototype.name="InvalidCharacterError",e.btoa||(e.btoa=function(e){for(var o,n,a=0,i=r,c="";e.charAt(0|a)||(i="=",a%1);c+=i.charAt(63&o>>8-8*(a%1))){if(n=e.charCodeAt(a+=.75),n>255)throw new t();o=o<<8|n}return c}),e.atob||(e.atob=function(e){if(e=e.replace(/=+$/,""),1==e.length%4)throw new t();for(var o,n,a=0,i=0,c="";n=e.charAt(i++);~n&&(o=a%4?64*o+n:n,a++%4)?c+=String.fromCharCode(255&o>>(6&-2*a)):0)n=r.indexOf(n);return c})})();
 
+/* Polyfill for fade transition */
 var hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
 
 function fade(f, c) {
@@ -222,68 +298,11 @@ function fade(f, c) {
     }
 }
 
-var scrollWindowInterval;
-function scrollWindowTo(e, margin) {
-    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
-        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
-        g = k(e),
-        j = (d > g) ? -1 : 1,
-        b = 0,
-        c = Math.abs(d - g);
-    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
-    if (c) {
-        scrollWindowInterval = window.setInterval(h, 25);
-    }
-    
-    function h() {
-        b += 0.1;
-        window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
-        if (b >= 1) {
-            window.clearInterval(scrollWindowInterval)
-        }
-    }
-
-    function k(o) {
-        var p = a(o),
-            h = o.offsetHeight,
-            n = d + m;
-        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
-        if (p < d) {
-            return p
-        } else {
-            if (p+h > n) {
-                if (h < m) {
-                    return (p - (m - h) + 20)
-                } else {
-                    return p
-                }
-            } else {
-                return p
-            }
-        }
-    }
-
-    function a(l) {
-        var m = 0;
-        while (l.offsetParent) {
-            m += l.offsetTop;
-            l = l.offsetParent
-        }
-        return m
-    }
-}
-
-function delta(old,neu) {
-    var vars, ret = {};
-    if (old && neu) {
-        for (vars in neu) {
-            if (neu[vars] !== old[vars]) {
-                ret[vars] = neu[vars];
-            }
-        }
-    }
-    return ret;
-}
+/*
+**
+** History object
+**
+*/
 
 function History() {
     this.history = [{
@@ -444,6 +463,12 @@ var restart = History.prototype.restart = function () {
         window.location.hash = "";
     }
 };
+
+/*
+**
+** Macros
+**
+*/
 
 var version = {
     major: 4,
@@ -967,27 +992,33 @@ macros.button = {
     }
 };
 
-function Passage(c, b, a, ofunc, okey) {
+/*
+**
+** Passage object
+**
+*/
+
+function Passage(c, b, a, ofunc) {
     var t;
     if (!this || this.constructor != Passage) {
         throw new ReferenceError("passage() must be in lowercase");
     }
     this.title = c;
-    ofunc = typeof ofunc == 'function' && okey != null && ofunc;
+    ofunc = typeof ofunc == 'function' && ofunc;
     if (b) {
         this.id = a;
         // Load tags
         this.tags = b.getAttribute("tags");
         if (typeof this.tags == "string") {
             if (ofunc) {
-                this.tags = ofunc(this.tags, okey);
+                this.tags = ofunc(this.tags);
             }
             this.tags = this.tags.readBracketedList();
         } else this.tags = [];
         // Load text
         t = b.firstChild ? b.firstChild.nodeValue : "";
         if (ofunc && !this.isImage()) {
-            this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
+            this.text = ofunc(Passage.unescapeLineBreaks(t));
         } else {
             this.text = Passage.unescapeLineBreaks(t);
         }
@@ -1052,34 +1083,24 @@ Passage.prototype.processText = function() {
     }
     return ret;
 };
-    
+
+/*
+**
+** Tale object
+**
+*/
+
 function Tale() {
-    var a,b,c,lines,i,kv,ns,nsc,isImage,
+    var a,b,c,lines,i,kv,nsc,isImage,
         settings = this.storysettings = {
             lookup: function(a, dfault) {
                 // The two runtime settings (undo and bookmark) default to true.
                 if (!(a in this)) return dfault;
-                return !~["0", "off", "false"].indexOf((this[a]+""));
+                return (this[a]+"") != "off";
             }
         },
         tiddlerTitle = '';
     window.tale = this;
-    function deswap(t, k) {
-        var i,c,p,p1,up,r = '';
-        for (i = 0; i < t.length; i++) {
-            c = t.charAt(i);
-            up = (c == c.toUpperCase());
-            p = k.indexOf(c.toLowerCase());
-            if (p > -1) {
-                p1 = p + (p % 2 == 0 ? 1 : -1);
-                if (p1 >= k.length) p1 = p;
-                c = k.charAt(p1);
-                up && (c = c.toUpperCase());
-            }
-            r = r + c;
-        }
-        return r
-    }
     this.passages = {};
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
@@ -1101,20 +1122,14 @@ function Tale() {
         }
     }
     //Load in the passages
-    if (settings.obfuscate == 'swap' && settings.obfuscatekey) {
-        ns = '';
-        for (i = 0; i < settings.obfuscatekey.length; i++) {
-            nsc = settings.obfuscatekey[i];
-            if (ns.indexOf(nsc) == -1 && ":\\\"n0".indexOf(nsc) == -1) ns = ns + nsc;
-        }
-        settings.obfuscatekey = ns;
+    if (settings.obfuscate != 'off') {
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
                 isImage = (c.getAttribute("tags")+"").indexOf("Twine.image")>-1;
                 if (tiddlerTitle != 'StorySettings' && !isImage) 
-                    tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && deswap, settings.obfuscatekey);
+                    tiddlerTitle = rot13(tiddlerTitle);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && rot13);
             }
         }
     } else {
@@ -1212,6 +1227,12 @@ Tale.prototype.setPageElements = function() {
         setPageElement("storyMenu", "StoryMenu", "");
     }
 };
+
+/*
+**
+** Wikifier object
+**
+*/
 
 function Wikifier(place, source) {
     this.source = source;
@@ -1362,7 +1383,14 @@ Wikifier.formatHelpers = {
             styles = [],
             lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
             lookaheadRegExp = new RegExp(lookahead, "mg"),
-            hadStyle = false;
+            hadStyle = false,
+            unDash = function (str) {
+                var s = str.split("-");
+                if (s.length > 1) for (var t = 1; t < s.length; t++)
+                s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
+                return s.join("");
+            };
+        
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
             lookaheadMatch = lookaheadRegExp.exec(w.source);
@@ -1370,10 +1398,10 @@ Wikifier.formatHelpers = {
             if (gotMatch) {
                 hadStyle = true;
                 if (lookaheadMatch[1]) {
-                    s = lookaheadMatch[1].unDash();
+                    s = unDash(lookaheadMatch[1]);
                     v = lookaheadMatch[2];
                 } else {
-                    s = lookaheadMatch[3].unDash();
+                    s = unDash(lookaheadMatch[3]);
                     v = lookaheadMatch[4];
                 }
                 switch (s) {
@@ -1980,7 +2008,7 @@ Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.r
     Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
     Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
 
-// Functions usable by custom scripts
+// Functions usable solely by custom scripts
 // This includes restart(), above.
 function visited(e) {
     var ret = 0, i = 0;

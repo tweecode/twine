@@ -151,31 +151,17 @@ class TiddlyWiki:
         argEncoders = []
         bodyEncoders = []
 
-        obfuscate = 'obfuscate' in self.storysettings and \
-            self.storysettings['obfuscate'] == 'swap' and 'obfuscatekey' in self.storysettings;
-
-        if obfuscate:
-            # Quick Rot13 shortcut
-            if self.storysettings['obfuscatekey'] == 'rot13':
-                self.storysettings['obfuscatekey'] = "anbocpdqerfsgthuivjwkxlymz";
-            nss = u''
-            for nsc in self.storysettings['obfuscatekey']:
-                if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
-                    nss = nss + nsc
-            self.storysettings['obfuscatekey'] = nss
-            obfuscationEncoder = lambda text, key = self.storysettings['obfuscatekey']: \
-                    encode_obfuscate_swap(text, key)
-            obfuscateArgEncoders = argEncoders + [obfuscationEncoder]
-            obfuscateBodyEncoders = bodyEncoders + [obfuscationEncoder]
+        rot13 = 'obfuscate' in self.storysettings and \
+            self.storysettings['obfuscate'] != 'off';
 
         storyfragments = []
         for i in order:
             tiddler = self.tiddlers[i]
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
-                if not obfuscate or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(self.author, argEncoders, bodyEncoders))
+                if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
+                    storyfragments.append(tiddler.toHtml(self.author, rot13))
                 else:
-                    storyfragments.append(tiddler.toHtml(self.author, obfuscateArgEncoders, obfuscateBodyEncoders))
+                    storyfragments.append(tiddler.toHtml(self.author, rot13))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY"') > 0:
@@ -255,31 +241,36 @@ class TiddlyWiki:
         Returns the tiddler titles in the order they occurred in the HTML.
         """
         order = []
-        divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?>(.*)</div>', source,
+        divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?(?: hidden)?>(.*)</div>', source,
                         re.DOTALL)
         if divs:
             divs = divs.group(1);
             # HTML may be obfuscated.
-            obfuscationkey = ''
+            obfuscatekey = ''
             storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
             storysettings = re.search(r'<div'+storysettings_re, divs, re.DOTALL)
             if storysettings:
                 ssTiddler = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
-                if re.search(r'obfuscate\s*:\s*swap\s*[\n$]', ssTiddler.text, re.I):
-                    match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*[\n$]', ssTiddler.text, re.I)
+                if re.search(r'obfuscate\s*:\s*(?:[^o]|o(?!ff))*\s*(?:\n|$)', ssTiddler.text, re.I):
+                    # Find the legacy 'obfuscatekey' option from 1.4.0.
+                    # If absent, assume rot13
+                    match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*(?:\n|$)', ssTiddler.text, re.I)
                     if match:
-                        obfuscationkey = match.group(1)
+                        obfuscatekey = match.group(1)
                         nss = u''
-                        for nsc in obfuscationkey:
+                        for nsc in obfuscatekey:
                             if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
                                 nss = nss + nsc
-                        obfuscationkey = nss
+                        obfuscatekey = nss
+                    else:
+                        obfuscatekey = "anbocpdqerfsgthuivjwkxlymz"
+                    print obfuscatekey
                 divs = divs[:storysettings.start(0)] + divs[storysettings.end(0)+1:]
 
             for div in divs.split('<div'):
                 div.strip()
                 if div:
-                    tiddler = Tiddler('<div' + div, 'html', obfuscationkey)
+                    tiddler = Tiddler('<div' + div, 'html', obfuscatekey)
                     self.addTiddler(tiddler)
                     order.append(tiddler.title)
         return order
@@ -314,7 +305,7 @@ class TiddlyWiki:
 class Tiddler:
     """A single tiddler in a TiddlyWiki."""
 
-    def __init__(self, source, type = 'twee', obfuscationkey = ""):
+    def __init__(self, source, type = 'twee', obfuscatekey = ""):
         # cache of passage names linked from this one
         self.links = []
         self.displays = []
@@ -326,7 +317,7 @@ class Tiddler:
         if type == 'twee':
             self.initTwee(source)
         else:
-            self.initHtml(source, obfuscationkey)
+            self.initHtml(source, obfuscatekey)
 
     def __getstate__(self):
         """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
@@ -381,9 +372,29 @@ class Tiddler:
         self.text = self.text.strip()
 
 
-    def initHtml(self, source, obfuscationkey = ""):
+    def initHtml(self, source, obfuscatekey = ""):
         """Initializes a Tiddler from HTML source code."""
 
+        def decode_obfuscate_swap(text):
+            """
+            Does basic character pair swapping obfuscation.
+            No longer used since 1.4.2, but can decode passages from 1.4.0 and 1.4.1
+            """
+            r = ''
+            for c in text:
+                upper = c.isupper()
+                p = obfuscatekey.find(c.lower())
+                if p <> -1:
+                    if p % 2 == 0:
+                        p1 = p + 1
+                        if p1 >= len(obfuscatekey):
+                            p1 = p
+                    else:
+                        p1 = p - 1
+                    c = obfuscatekey[p1].upper() if upper else obfuscatekey[p1]
+                r = r + c
+            return r
+        
         # title
 
         self.title = 'Untitled Passage'
@@ -391,8 +402,8 @@ class Tiddler:
         title = title_re.search(source)
         if title:
             self.title = title.group(1)
-            if obfuscationkey:
-                self.title = encode_obfuscate_swap(self.title, obfuscationkey);
+            if obfuscatekey:
+                self.title = decode_obfuscate_swap(self.title);
 
         # tags
 
@@ -400,8 +411,8 @@ class Tiddler:
         tags_re = re.compile(r'(?:data\-)?tags="([^"]*?)"')
         tags = tags_re.search(source)
         if tags and tags.group(1) != '':
-            if obfuscationkey:
-                self.tags = encode_obfuscate_swap(tags.group(1), obfuscationkey).split(' ');
+            if obfuscatekey:
+                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ');
             else: self.tags = tags.group(1).split(' ')
 
         # creation date
@@ -444,23 +455,21 @@ class Tiddler:
         text = text_re.search(source)
         if (text):
             self.text = decode_text(text.group(1))
-            if obfuscationkey:
-                self.text = encode_obfuscate_swap(self.text, obfuscationkey);
+            if obfuscatekey:
+                self.text = decode_obfuscate_swap(self.text)
 
-    def toHtml(self, author, argEncoders, bodyEncoders):
+    def toHtml(self, author, rot13):
         """Returns an HTML representation of this tiddler.
         The encoder arguments are sequences of functions that take a single text argument
         and return a modified version of the given text.
         """
 
-        def applyEncoders(encoders, text):
-            for encoder in encoders:
-                text = encoder(text)
-            return text
+        def applyRot13(text):
+            return text.decode('rot13') if rot13 else text
 
         args = (
-            ('tiddler', applyEncoders(argEncoders, self.title.replace('"', '&quot;'))),
-            ('tags', ' '.join(applyEncoders(argEncoders, tag) for tag in self.tags)),
+            ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
+            ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
             ('created', encode_date(self.created)),
             ('modifier', author.replace('"', '&quot;')),
             ('twine-position', '%d,%d' % tuple(self.pos)),
@@ -468,7 +477,7 @@ class Tiddler:
 
         return u'<div%s>%s</div>' % (
             ''.join(' %s="%s"' % arg for arg in args),
-            encode_text(applyEncoders(bodyEncoders, self.text))
+            encode_text(applyRot13(self.text))
             )
 
 
@@ -568,7 +577,6 @@ class Tiddler:
 # Helper functions
 #
 
-
 def encode_text(text):
     """Encodes a string for use in HTML output."""
     output = text.replace('\\', '\s') \
@@ -579,23 +587,6 @@ def encode_text(text):
         .replace('\0', '&#0;')
     output = re.sub(r'\r?\n', r'\\n', output)
     return output
-
-def encode_obfuscate_swap(text, obfuscationkey):
-    """Does basic character pair swapping obfuscation"""
-    r = ''
-    for c in text:
-        upper = c.isupper()
-        p = obfuscationkey.find(c.lower())
-        if p <> -1:
-            if p % 2 == 0:
-                p1 = p + 1
-                if p1 >= len(obfuscationkey):
-                    p1 = p
-            else:
-                p1 = p - 1
-            c = obfuscationkey[p1].upper() if upper else obfuscationkey[p1]
-        r = r + c
-    return r
 
 def decode_text(text):
     """Decodes a string from HTML."""
