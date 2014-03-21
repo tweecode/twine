@@ -64,6 +64,7 @@ class Header(object):
                 "type": "checkbox",
                 "name": "obfuscate",
                 "label": "Use ROT13 to obscure spoilers in the HTML source code?",
+                "values": ("rot13", "off"),
                 "default": "off"
             },{
                 "type": "checkbox",

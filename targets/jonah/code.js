@@ -104,7 +104,7 @@ Passage.prototype.render = function () {
         if (t.label == "bookmark" && !tale.canBookmark()) {
             continue;
         }
-        var C = insertElement(D, 'a', null, "toolbar-" + t.label.replace(/ .*/g.''));
+        var C = insertElement(D, 'a', null, "toolbar-" + t.label.replace(/ .*/g,''));
         insertText(C, t.label);
         C.passage = this;
         if (t.href) {

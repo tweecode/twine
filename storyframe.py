@@ -824,7 +824,7 @@ You can also include URLs of .tws and .twee files, too.
                         if ':' in line:
                             (skey,svalue) = line.split(':')
                             skey = skey.strip().lower()
-                            svalue = svalue.strip().lower()
+                            svalue = svalue.strip()
                             tw.storysettings[skey] = svalue
                     break
 

@@ -120,11 +120,9 @@ class TiddlyWiki:
             output = re.sub('<meta name="description" content="">', \
                 lambda a: a.group(0).replace('""', '"' + self.storysettings['description'] + '"'), output)
 
-        falseOpts = ["false", "off", "0"]
-
         # Check if the scripts are personally requesting jQuery or Modernizr
-        jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] not in falseOpts
-        modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] not in falseOpts
+        jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] != "off"
+        modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] != "off"
 
         for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
             if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
@@ -159,7 +157,7 @@ class TiddlyWiki:
             tiddler = self.tiddlers[i]
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
                 if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(self.author, rot13))
+                    storyfragments.append(tiddler.toHtml(self.author, False))
                 else:
                     storyfragments.append(tiddler.toHtml(self.author, rot13))
         storycode = u''.join(storyfragments)
@@ -251,20 +249,20 @@ class TiddlyWiki:
             storysettings = re.search(r'<div'+storysettings_re, divs, re.DOTALL)
             if storysettings:
                 ssTiddler = self.addTiddler(Tiddler(storysettings.group(0), 'html'))
-                if re.search(r'obfuscate\s*:\s*(?:[^o]|o(?!ff))*\s*(?:\n|$)', ssTiddler.text, re.I):
-                    # Find the legacy 'obfuscatekey' option from 1.4.0.
-                    # If absent, assume rot13
-                    match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*(?:\n|$)', ssTiddler.text, re.I)
-                    if match:
-                        obfuscatekey = match.group(1)
-                        nss = u''
-                        for nsc in obfuscatekey:
-                            if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
-                                nss = nss + nsc
-                        obfuscatekey = nss
+                obfuscate = re.search(r'obfuscate\s*:\s*((?:[^\no]|o(?!ff))*)\s*(?:\n|$)', ssTiddler.text, re.I)
+                if obfuscate:
+                    if "swap" in obfuscate.group(1):
+                        # Find the legacy 'obfuscatekey' option from 1.4.0.
+                        match = re.search(r'obfuscatekey\s*:\s*(\w*)\s*(?:\n|$)', ssTiddler.text, re.I)
+                        if match:
+                            obfuscatekey = match.group(1)
+                            nss = u''
+                            for nsc in obfuscatekey:
+                                if nss.find(nsc) == -1 and not nsc in ':\\\"n0':
+                                    nss = nss + nsc
+                            obfuscatekey = nss
                     else:
                         obfuscatekey = "anbocpdqerfsgthuivjwkxlymz"
-                    print obfuscatekey
                 divs = divs[:storysettings.start(0)] + divs[storysettings.end(0)+1:]
 
             for div in divs.split('<div'):
