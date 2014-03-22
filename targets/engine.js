@@ -1244,6 +1244,16 @@ function Wikifier(place, source) {
     this.subWikify(this.output);
 }
 
+Wikifier.textPrimitives = {
+    upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
+    lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
+    anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+}
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
+    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
+Wikifier.textPrimitives.unquoted = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
+
 Wikifier.prototype.assembleFormatterMatches = function (formatters) {
     this.formatters = [];
     var pattern = [];
@@ -1334,7 +1344,7 @@ Wikifier.prototype.fullMatch = function() {
 
 Wikifier.prototype.fullArgs = function (includeName) {
     var source = this.source.replace(/\u200c/g," "),
-        endPos = source.indexOf('>>', this.matchStart),
+        endPos = this.nextMatch-2,
         startPos = source.indexOf(includeName ? '<<' : ' ', this.matchStart);
     if (!~startPos || !~endPos || endPos <= startPos) {
         return "";
@@ -1344,8 +1354,7 @@ Wikifier.prototype.fullArgs = function (includeName) {
 
 Wikifier.parse = function (input) {
     var m, re, b = input, found = [],
-        // Regex fragment: is the preceding match outside a string?
-        g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
+        g = Wikifier.textPrimitives.unquoted;
     
     function alter(from,to) {
         return b.replace(new RegExp(from+g,"gi"),to);
@@ -1649,7 +1658,7 @@ Wikifier.formatters = [
 (Wikifier.linkFormatter = {
     name: "prettyLink",
     match: "\\[\\[",
-    lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
+    lookahead: "\\[\\[([^\\|]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
     makeInternalOrExternal: function(out,title,callback,type) {
         if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match,"g") || ~title.search(/[\.\\\/#]/)))
             return Wikifier.createExternalLink(out, title, callback, type); 
@@ -1729,7 +1738,9 @@ Wikifier.formatters = [
 {
     name: "macro",
     match: "<<",
-    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>(?!>))*)>>",
+    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>"
+        + Wikifier.textPrimitives.unquoted.replace("?=","?!")
+        + ")*)>>",
     handler: function (w) {
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
@@ -1993,22 +2004,6 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
 
     return el;
 };
-if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
-    Wikifier.textPrimitives = {
-        upperLetter: "[A-Z\u00c0-\u00de]",
-        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
-        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
-    }
-} else {
-    Wikifier.textPrimitives = {
-        upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
-        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
-        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
-    }
-};
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
-    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
 
 // Functions usable solely by custom scripts
 // This includes restart(), above.
