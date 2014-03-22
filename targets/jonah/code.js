@@ -44,6 +44,7 @@ History.prototype.display = function (name, source, type, callback) {
     if (type != "back") {
         this.saveVariables(D, source, callback);
     }
+    this.bookmarkURL = this.save();
     F = D.render();
     if (type != "quietly") {
         if (hasTransition) {
@@ -108,7 +109,7 @@ Passage.prototype.render = function () {
         insertText(C, t.label);
         C.passage = this;
         if (t.href) {
-            C.href = t.href(E)
+            C.href = t.href()
         }
         C.title = t.tooltip;
         C.onclick = t.activate
@@ -128,8 +129,8 @@ Passage.prototype.render = function () {
 Passage.toolbarItems = [{
     label: "bookmark",
     tooltip: "Bookmark this point in the story",
-    href: function (A) {
-        return (state.save(A))
+    href: function () {
+        return (state.bookmarkURL)
     },
     activate: function () {}
 }, {

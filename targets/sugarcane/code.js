@@ -53,7 +53,7 @@ History.prototype.display = function (title, source, type, callback) {
             }
         }
     }
-    bookmarkhref = this.save();
+    this.bookmarkURL = this.save();
     e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
@@ -83,11 +83,11 @@ History.prototype.display = function (title, source, type, callback) {
     tale.setPageElements();
     if (tale.canUndo()) {
         if (!hasPushState && type != "back") {
-            this.hash = bookmarkhref;
+            this.hash = this.bookmarkURL;
             window.location.hash = this.hash;
         } else if (tale.canBookmark()) {
             var bookmark = document.getElementById("bookmark");
-            bookmark && (bookmark.href = bookmarkhref);
+            bookmark && (bookmark.href = this.bookmarkURL);
         }
     }
     window.scroll(0, 0)

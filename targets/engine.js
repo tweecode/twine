@@ -311,6 +311,8 @@ function History() {
     }]
     // Unique identifier for this game session
     this.id = new Date().getTime()+'';
+    // URL of the bookmark link
+    this.bookmarkURL = '';
 }
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -391,7 +393,7 @@ History.prototype.decodeHistory = function(str, prev) {
     }
 };
 
-History.prototype.save = function (c) {
+History.prototype.save = function() {
     var hist, b, a = "";
 
     for (b = this.history.length - 1; b >= 0; b--) {
@@ -408,11 +410,11 @@ History.prototype.restore = function () {
     var a, b, c, vars;
 
     try {
-        if (testplay) {
-            this.display(testplay, null, 'quietly');
-            return true
-        }
         if (!window.location.hash || (window.location.hash == "#")) {
+            if (testplay) {
+                this.display(testplay, null, 'quietly');
+                return true
+            }
             return false
         }
         if (window.location.hash.substr(0, 2) == '#!') {
@@ -1122,7 +1124,7 @@ function Tale() {
         }
     }
     //Load in the passages
-    if (settings.obfuscate != 'off') {
+    if (settings.obfuscate == 'rot13') {
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
@@ -1628,7 +1630,7 @@ Wikifier.formatters = [
                 currLevel = newLevel;
                 currType = newType;
                 t = insertElement(placeStack[placeStack.length - 1], "li");
-                if (bulletType != "*" && bulletType != "#") {
+                if (bulletType && bulletType != "*") {
                     t.setAttribute("data-bullet", bulletType);
                 }
                 w.subWikify(t, this.terminator);
@@ -2093,6 +2095,10 @@ function parameter(n) {
         return macros.display.parameters[n];
     }
     return 0
+}
+
+function bookmark() {
+    return state.bookmarkURL || "#";
 }
 
 function scriptEval(s) {

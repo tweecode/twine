@@ -151,10 +151,20 @@ class TiddlyWiki:
 
         rot13 = 'obfuscate' in self.storysettings and \
             self.storysettings['obfuscate'] != 'off';
+        # In case it was set to "swap" (legacy 1.4.1 file),
+        # alter and remove old properties.
+        if rot13:
+            self.storysettings['obfuscate'] = "rot13"
+            if 'obfuscatekey' in self.storysettings:
+                del self.storysettings['obfuscatekey']
 
+        # Finally add the passage data
         storyfragments = []
         for i in order:
             tiddler = self.tiddlers[i]
+            # Strip out comments from storysettings and reflect any alterations made
+            if tiddler.title == 'StorySettings':
+                tiddler.text = ''.join([(str(k)+":"+str(v)+"\n") for k,v in self.storysettings.iteritems()])
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
                 if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
                     storyfragments.append(tiddler.toHtml(self.author, False))
