@@ -36,7 +36,7 @@ hasPushState && (History.prototype.pushState = function(replace, uri) {
     window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
 });
 History.prototype.display = function (title, source, type, callback) {
-    var e, bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+    var i, e, q, bookmark, bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
     if (c==null) {
         return;
     }
@@ -57,8 +57,8 @@ History.prototype.display = function (title, source, type, callback) {
     e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
-            for(var i = 0; i < p.childNodes.length; i += 1) {
-                var q = p.childNodes[i];
+            for(i = 0; i < p.childNodes.length; i += 1) {
+                q = p.childNodes[i];
                 q.classList.add("transition-out");
                 setTimeout((function(a) { return function () {
                     if(a.parentNode) a.parentNode.removeChild(a);
@@ -86,7 +86,7 @@ History.prototype.display = function (title, source, type, callback) {
             this.hash = this.bookmarkURL;
             window.location.hash = this.hash;
         } else if (tale.canBookmark()) {
-            var bookmark = document.getElementById("bookmark");
+            bookmark = document.getElementById("bookmark");
             bookmark && (bookmark.href = this.bookmarkURL);
         }
     }

@@ -240,7 +240,7 @@ class StoryFrame(wx.Frame):
         self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, 'From &File...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
         self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE_URL, 'From Web &URL...')
-        self.Bind(wx.EVT_MENU, self.importImageURL, id = StoryFrame.STORY_IMPORT_IMAGE_URL)
+        self.Bind(wx.EVT_MENU, self.importImageURLDialog, id = StoryFrame.STORY_IMPORT_IMAGE_URL)
 
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Import &Image', self.importImageMenu)
 
@@ -604,29 +604,53 @@ class StoryFrame(wx.Frame):
         except:
             self.app.displayError('importing')
 
-    def importImageURL(self, event = None):
+    def importImageURL(self, url, showdialog = True):
+        """
+        Downloads the image file from the url and creates a passage.
+        Returns the resulting passage name, or None
+        """
+        try:
+            # Download the file
+            urlfile = urllib.urlopen(url)
+            path = urlparse.urlsplit(url)[2]
+            title = os.path.splitext(os.path.basename(path))[0]
+            file = urlfile.read().encode('base64').replace('\n', '')
+
+            # Now that the file's read, check the info
+            maintype = urlfile.info().getmaintype();
+            if maintype != "image":
+                raise Exception("The server served "+maintype+" instead of an image.")
+            # Convert the file
+            mimeType = urlfile.info().gettype()
+            urlfile.close()
+            text = "data:"+mimeType+";base64,"+file
+            return self.finishImportImage(text, title, showdialog=showdialog)
+        except:
+            self.app.displayError('importing from the web')
+            return None
+            
+    def importImageURLDialog(self, event = None):
         dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
         if dialog.ShowModal() == wx.ID_OK:
-            try:
-                # Download the file
-                url = dialog.GetValue()
-                urlfile = urllib.urlopen(url)
-                path = urlparse.urlsplit(url)[2]
-                title = os.path.splitext(os.path.basename(path))[0]
-                file = urlfile.read().encode('base64').replace('\n', '')
+            self.importImageURL(dialog.GetValue())
 
-                # Now that the file's read, check the info
-                maintype = urlfile.info().getmaintype();
-                if maintype != "image":
-                    raise Exception("The server served "+maintype+" instead of an image.")
-                # Convert the file
-                mimeType = urlfile.info().gettype()
-                urlfile.close()
-                text = "data:"+mimeType+";base64,"+file
-                self.importImage(text, title)
-            except:
-                self.app.displayError('importing from the web')
-
+    def importImageFile(self, file, replace = None, showdialog = True):
+        """
+        Perform the file I/O to import an image file, then add it as an image passage.
+        Returns the name of the resulting passage, or None
+        """
+        try:
+            if not replace:
+                text, title = self.openFileAsBase64(file)
+                return self.finishImportImage(text, title, showdialog=showdialog)
+            else:
+                replace.passage.text = self.openFileAsBase64(file)[0]
+                replace.updateBitmap()
+                return replace.passage.title
+        except IOError:
+            self.app.displayError('importing an image')
+            return None
+        
     def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
            replace is a Tiddler, if any, that will be replaced by the image."""
@@ -640,15 +664,7 @@ class StoryFrame(wx.Frame):
                                    'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             file = dialog.GetFile() if useImageDialog else dialog.GetPath()
-            try:
-                if not replace:
-                    text, title = self.openFileAsBase64(file)
-                    self.importImage(text, title)
-                else:
-                    replace.passage.text = self.openFileAsBase64(file)[0]
-                    replace.updateBitmap()
-            except IOError:
-                self.app.displayError('importing an image')
+            self.importImageFile(file, replace)
 
     def importFontDialog(self, event = None):
         """Asks the user to choose a font file to import, then imports into the current story."""
@@ -675,7 +691,7 @@ class StoryFrame(wx.Frame):
             except: pass
         return title
 
-    def importImage(self, text, title, showdialog = True):
+    def finishImportImage(self, text, title, showdialog = True):
         """Imports an image into the story as an image passage."""
         # Check for title usage
         title = self.newTitle(title)
@@ -687,7 +703,7 @@ class StoryFrame(wx.Frame):
                                       '[img[' + title + ']]', 'Image added', \
                                       wx.ICON_INFORMATION | wx.OK)
             dialog.ShowModal()
-        return True
+        return title
 
     def importFont(self, file, showdialog = True):
         """Imports a font into the story as a font passage."""
@@ -849,14 +865,17 @@ You can also include URLs of .tws and .twee files, too.
         except:
             self.app.displayError('building your story')
 
+    def getLocalDir(self):
+        if self.saveDestination == '':
+            return os.getcwd()
+        else:
+            return os.path.dirname(self.saveDestination)
+    
     def buildIncludes(self, tw, lines):
         """
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
-        if self.saveDestination == '':
-            twinedocdir = os.getcwd()
-        else:
-            twinedocdir = os.path.dirname(self.saveDestination)
+        twinedocdir = self.getLocalDir()
         
         excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS

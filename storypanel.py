@@ -1065,7 +1065,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
                         self.panel.parent.importHtml(file)
                     elif re.search(imageRegex, fname):
                         text, title = self.panel.parent.openFileAsBase64(fname)
-                        imagesImported += 1 if self.panel.parent.importImage(text, title, showdialog = not multipleImages) else 0
+                        imagesImported += 1 if self.panel.parent.finishImportImage(text, title, showdialog = not multipleImages) else 0
 
                 if imagesImported > 1:
                     dialog = wx.MessageDialog(self.panel.parent, 'Multiple image files imported successfully.', 'Images added', \
