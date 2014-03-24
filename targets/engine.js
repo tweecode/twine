@@ -312,7 +312,7 @@ function History() {
     // Unique identifier for this game session
     this.id = new Date().getTime()+'';
     // URL of the bookmark link
-    this.bookmarkURL = '';
+    this.hash = '';
 }
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -349,7 +349,7 @@ History.prototype.encodeHistory = function(b, noVars) {
     return ret
 };
 
-History.prototype.decodeHistory = function(str, prev) {
+History.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
         ret = { variables: clone(prev.variables) || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
@@ -424,7 +424,7 @@ History.prototype.restore = function () {
         }
         a = window.location.hash.replace("#", "").split(".");
         for (b = 0; b < a.length; b++) {
-            vars = this.decodeHistory(a[b], vars || {});
+            vars = History.decodeHistory(a[b], vars || {});
             if (vars) {
                 if (b == a.length - 1) {
                     vars.variables = clone(this.history[0].variables);
@@ -1084,6 +1084,9 @@ Passage.prototype.processText = function() {
         ret = "[img[" + ret + "]]"
     }
     return ret;
+};
+Passage.prototype.toJSON = function() {
+    return this.id;
 };
 
 /*
@@ -2093,7 +2096,7 @@ function parameter(n) {
 }
 
 function bookmark() {
-    return state.bookmarkURL || "#";
+    return state.hash || "#";
 }
 
 function scriptEval(s) {
