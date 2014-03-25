@@ -616,7 +616,18 @@ macros["if"] = {
             currentCond = parser.fullArgs(),
             currentClause = "",
             t = 0,
-            nesting = 0;
+            nesting = 0,
+            checkBadCond = function(c, name) {
+                // Forbid the assignment = in <<if>> clauses
+                // Look for =, but not ==, ===, !=, !==, <=, >= or ~=, or in quoted strings
+                if (c.match("[^=<>!~]=(?!=)" + Wikifier.textPrimitives.unquoted)) {
+                    throwError(place, "<<" + name + ">>: use 'is' instead of '='", c);
+                    return true;
+                }
+            };
+        if (checkBadCond(parser.fullMatch(), "if")) {
+            return;
+        }
         for (var i = 0; i < src.length; i++) {
             if (src.substr(i, 9) == "<<endif>>") {
                 nesting--;
@@ -633,7 +644,11 @@ macros["if"] = {
                 currentClause="";
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
-                    currentCond = Wikifier.parse(src.slice(i+9,t));
+                    currentCond = src.slice(i+9,t);
+                    if (checkBadCond(currentCond, "else if")) {
+                        return;
+                    }
+                    currentCond = Wikifier.parse(currentCond);
                 }
                 else {
                     currentCond = "true";
@@ -655,7 +670,7 @@ macros["if"] = {
                     }
                 }
             } else {
-                throwError(place, "can't find matching endif", parser.fullMatch());
+                throwError(place, "I can't find a matching <<endif>>", parser.fullMatch());
             }
         } catch (e) {
             throwError(place, "<<if>> bad condition: " + e.message, !i ? parser.fullMatch()
