@@ -698,16 +698,13 @@ class StoryPanel(wx.ScrolledWindow):
             if widget.passage.title == title: return widget
         return None
 
-    def passageExists(self, title, includeExternal = False):
+    def passageExists(self, title, includeExternal = True):
         """
         Returns whether a given passage exists in the story.
         
         If includeExternal then will also check external passages referenced via StoryIncludes
         """
-        found = (self.findWidget(title) != None)
-        if not found and includeExternal:
-            found = self.externalPassageExists(title)
-        return found
+        return self.findWidget(title) != None or (includeExternal and self.externalPassageExists(title))
 
     def clearExternalPassages(self):
         """Clear the externalPassages set"""
@@ -1047,8 +1044,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
                 if "|" in text:
                     return None
                 else:
-                    otherTitled = self.panel.findWidget(text)
-                    if otherTitled and otherTitled.passage.title == text:
+                    if self.panel.passageExists(text):
                         return None
 
                 self.panel.newWidget(title = text, pos = (x, y))

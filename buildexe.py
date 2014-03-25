@@ -78,6 +78,7 @@ setup(
 
             # other icons
             'icons' + os.sep + 'brokenemblem.png',
+            'icons' + os.sep + 'externalemblem.png',
             'appicons' + os.sep + 'app.ico',
         ]),
     ],

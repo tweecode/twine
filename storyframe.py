@@ -327,7 +327,9 @@ class StoryFrame(wx.Frame):
 
         buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&View Last Build\tCtrl-L')
         self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.BUILD_VIEW_LAST)
-
+        
+        buildMenu.AppendSeparator()
+        
         self.autobuildmenuitem = buildMenu.Append(StoryFrame.BUILD_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
         buildMenu.Check(StoryFrame.BUILD_AUTO_BUILD, False)
@@ -681,7 +683,7 @@ class StoryFrame(wx.Frame):
 
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""
-        while self.storyPanel.findWidget(title):
+        while self.storyPanel.passageExists(title):
             try:
                 match = re.search(r'(\s\d+)$', title)
                 if match:
@@ -771,6 +773,7 @@ You can also include URLs of .tws and .twee files, too.
         id = event.GetId()
         title = self.storySettingsMenu.FindItemById(id).GetLabel()
 
+        # What to do about StoryIncludes files?
         editingWidget = self.storyPanel.findWidget(title)
         if editingWidget is None:
             editingWidget = self.storyPanel.newWidget(title = title, text = self.defaultTextForPassage(title))
@@ -864,7 +867,7 @@ You can also include URLs of .tws and .twee files, too.
                 if displayAfter: self.viewBuild()
         except:
             self.app.displayError('building your story')
-
+    
     def getLocalDir(self):
         if self.saveDestination == '':
             return os.getcwd()

@@ -23,6 +23,7 @@ class PassageWidget:
         self.app = app
         self.dimmed = False
         self.brokenEmblem = wx.Bitmap(self.app.iconsPath + 'brokenemblem.png')
+        self.externalEmblem = wx.Bitmap(self.app.iconsPath + 'externalemblem.png')
         self.paintBuffer = wx.MemoryDC()
         self.paintBufferBounds = None
         pos = list(pos)
@@ -156,11 +157,15 @@ class PassageWidget:
 
     def getShorthandDisplays(self):
         """Returns a list of macro tags which match passage names."""
-        return filter(lambda a: self.parent.findWidget(a), self.passage.macros)
+        return filter(lambda a: self.parent.passageExists(a), self.passage.macros)
 
     def getBrokenLinks(self):
         """Returns a list of broken links in this widget."""
-        return filter(lambda a: not self.parent.findWidget(a) and not self.parent.externalPassageExists(a), self.passage.links)
+        return filter(lambda a: not self.parent.passageExists(a), self.passage.links)
+    
+    def getExternalLinks(self):
+        """Returns a list of external passages in this widget."""
+        return filter(lambda a: self.parent.externalPassageExists(a), self.passage.links)
 
     def setSelected(self, value, exclusive = True):
         """
@@ -712,15 +717,20 @@ class PassageWidget:
         # draw a broken link emblem in the bottom right if necessary
         # fixme: not sure how to do this with transparency
 
-        if len(self.getBrokenLinks()):
-            emblemSize = self.brokenEmblem.GetSize()
+        def showEmblem(emblem, gc=gc, size=size, inset=inset):
+            emblemSize = emblem.GetSize()
             emblemPos = [ size.width - (emblemSize[0] + inset), \
                           size.height - (emblemSize[1] + inset) ]
 
             if isinstance(gc, wx.GraphicsContext):
-                gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
+                gc.DrawBitmap(emblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
             else:
-                gc.DrawBitmap(self.brokenEmblem, emblemPos[0], emblemPos[1])
+                gc.DrawBitmap(emblem, emblemPos[0], emblemPos[1])
+            
+        if len(self.getBrokenLinks()):
+            showEmblem(self.brokenEmblem)
+        elif len(self.getExternalLinks()):
+            showEmblem(self.externalEmblem)
 
         # finally, draw a selection over ourselves if we're selected
 

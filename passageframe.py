@@ -251,6 +251,9 @@ class PassageFrame(wx.Frame):
             if otherTitled and otherTitled != self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
                 error()
+            elif self.widget.parent.externalPassageExists(title):
+                self.titleLabel.SetLabel("Used by a StoryIncludes file.")
+                error()
             elif "|" in title or "]" in title:
                 self.titleLabel.SetLabel("No | or ] symbols allowed!")
                 error()

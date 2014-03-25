@@ -479,12 +479,12 @@ class Tiddler:
             ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
             ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
             ('created', encode_date(self.created)),
-            ('modifier', author.replace('"', '&quot;')),
-            ('twine-position', '%d,%d' % tuple(self.pos)),
+            ('modifier', author.replace('"', '&quot;'))
             )
 
-        return u'<div%s>%s</div>' % (
+        return u'<div%s%s>%s</div>' % (
             ''.join(' %s="%s"' % arg for arg in args),
+            'twine-position=%d,%d' % tuple(self.pos) if hasattr(self, "pos") else "",
             encode_text(applyRot13(self.text))
             )
 
