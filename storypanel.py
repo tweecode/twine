@@ -28,6 +28,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
+        self.externalPassages = set()
         self.draggingMarquee = False
         self.draggingWidgets = None
         self.notDraggingWidgets = None
@@ -696,6 +697,29 @@ class StoryPanel(wx.ScrolledWindow):
         for widget in self.widgets:
             if widget.passage.title == title: return widget
         return None
+
+    def passageExists(self, title, includeExternal = False):
+        """
+        Returns whether a given passage exists in the story.
+        
+        If includeExternal then will also check external passages referenced via StoryIncludes
+        """
+        found = (self.findWidget(title) != None)
+        if not found and includeExternal:
+            found = self.externalPassageExists(title)
+        return found
+
+    def clearExternalPassages(self):
+        """Clear the externalPassages set"""
+        self.externalPassages.clear()
+
+    def addExternalPassage(self, title):
+        """Add a title to the set of external passages"""
+        self.externalPassages.add(title)
+
+    def externalPassageExists(self, title):
+        """Add a title to the set of external passages"""
+        return (title in self.externalPassages)
 
     def toPixels(self, logicals, scaleOnly = False):
         """

@@ -672,6 +672,8 @@ class PassageFrame(wx.Frame):
                         found = True
                         break
 
+                if not found and self.widget.parent.externalPassageExists(link): found = True
+
                 if not found: broken.append(link)
 
         # incoming links

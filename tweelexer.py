@@ -317,7 +317,7 @@ class TweeLexer:
         """
         Returns whether a given passage exists in the story.
         """
-        return (self.frame.widget.parent.findWidget(title) != None)
+        return (self.frame.widget.parent.passageExists(title, True))
 
     def applyStyle(self, start, end, style):
         """

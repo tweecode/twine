@@ -879,6 +879,7 @@ You can also include URLs of .tws and .twee files, too.
         
         excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS
+        self.storyPanel.clearExternalPassages()
         for line in lines:
             try:
                 if line.strip():
@@ -903,6 +904,8 @@ You can also include URLs of .tws and .twee files, too.
                                     raise Exception('A passage titled "'+ widget.passage.title + '" has been included by a previous StoryIncludes file')
 
                                 tw.addTiddler(widget.passage)
+                                self.storyPanel.addExternalPassage(widget.passage.title)
+
                         s.Destroy()
 
                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -929,6 +932,8 @@ You can also include URLs of .tws and .twee files, too.
                             if passage.title not in excludepassages \
                             and excludetags.isdisjoint(passage.tags):
                                 tw.addTiddler(passage)
+                                self.storyPanel.addExternalPassage(passage.title)
+
                     else:
                         raise Exception('File format not recognized')
             except:
