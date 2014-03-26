@@ -325,8 +325,8 @@ class StoryFrame(wx.Frame):
         buildMenu.Append(StoryFrame.BUILD_REBUILD, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.BUILD_REBUILD)
 
-        buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&View Last Build\tCtrl-L')
-        self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.BUILD_VIEW_LAST)
+        buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&Rebuild and View\tCtrl-L')
+        self.Bind(wx.EVT_MENU, lambda e: self.rebuild(displayAfter = True), id = StoryFrame.BUILD_VIEW_LAST)
         
         buildMenu.AppendSeparator()
         

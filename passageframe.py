@@ -329,56 +329,57 @@ class PassageFrame(wx.Frame):
         
         # Offer to create passage for broken links
         
-        brokens = self.widget.getBrokenLinks()
-        if brokens:
-            if len(brokens) > 1:
-                brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
-            else:
-                brokenmsg = 'create the passage "' + brokens[0] + '"?'
-            dialog = wx.MessageDialog(self, 'Do you want to ' + brokenmsg, 'Create Passages', \
-                                              wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
-            check = dialog.ShowModal();
-            if check == wx.ID_YES:
-                for title in brokens:
-                    self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
-            elif check == wx.ID_CANCEL:
-                return
-            
-        # Offer to import external images
-        
-        regex = tweeregex.EXTERNAL_IMAGE_REGEX
-        externalimages = re.finditer(regex, self.widget.passage.text)
-        check = None
-        downloadedurls = {}
-        storyframe = self.widget.parent.parent
-        for img in externalimages:
-            if not check:
-                dialog = wx.MessageDialog(self, 'Do you want to import the image files linked\nin this passage into the story file?', 'Import Images', \
-                                              wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
-                check = dialog.ShowModal()
-                if check == wx.ID_NO:
-                    break  
+        if self.app.config.ReadBool('createPassagePrompt'):
+            brokens = links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            if brokens :
+                if len(brokens) > 1:
+                    brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
+                else:
+                    brokenmsg = 'create the passage "' + brokens[0] + '"?'
+                dialog = wx.MessageDialog(self, 'Do you want to ' + brokenmsg, 'Create Passages', \
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                check = dialog.ShowModal();
+                if check == wx.ID_YES:
+                    for title in brokens:
+                        self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
                 elif check == wx.ID_CANCEL:
                     return
-            # Download the image if it's at an absolute URL
-            imgurl = img.group(4) or img.group(7)
-            if not imgurl:
-                continue
-            # If we've downloaded it before, don't do it again
-            if imgurl not in downloadedurls:
-                # Internet image, or local image?
-                if any(imgurl.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                    imgpassagename = storyframe.importImageURL(imgurl, showdialog=False)
-                else:
-                    imgpassagename = storyframe.importImageFile(storyframe.getLocalDir()+os.sep+imgurl, showdialog=False)
-                if not imgpassagename:
-                    continue
-                downloadedurls[imgurl] = imgpassagename
             
-        # Replace all found images
-        for old, new in downloadedurls.iteritems():
-            self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
-                                              lambda m: m.group(0).replace(old, new), self.widget.passage.text)
+        # Offer to import external images
+        if self.app.config.ReadBool('importImagePrompt'):
+            regex = tweeregex.EXTERNAL_IMAGE_REGEX
+            externalimages = re.finditer(regex, self.widget.passage.text)
+            check = None
+            downloadedurls = {}
+            storyframe = self.widget.parent.parent
+            for img in externalimages:
+                if not check:
+                    dialog = wx.MessageDialog(self, 'Do you want to import the image files linked\nin this passage into the story file?', 'Import Images', \
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                    check = dialog.ShowModal()
+                    if check == wx.ID_NO:
+                        break  
+                    elif check == wx.ID_CANCEL:
+                        return
+                # Download the image if it's at an absolute URL
+                imgurl = img.group(4) or img.group(7)
+                if not imgurl:
+                    continue
+                # If we've downloaded it before, don't do it again
+                if imgurl not in downloadedurls:
+                    # Internet image, or local image?
+                    if any(imgurl.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                        imgpassagename = storyframe.importImageURL(imgurl, showdialog=False)
+                    else:
+                        imgpassagename = storyframe.importImageFile(storyframe.getLocalDir()+os.sep+imgurl, showdialog=False)
+                    if not imgpassagename:
+                        continue
+                    downloadedurls[imgurl] = imgpassagename
+            
+            # Replace all found images
+            for old, new in downloadedurls.iteritems():
+                self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
+                                                  lambda m: m.group(0).replace(old, new), self.widget.passage.text)
         self.widget.passage.update()
         event.Skip()
 

@@ -260,6 +260,10 @@ class App(wx.App):
             self.config.WriteBool('fastStoryPanel', False)
         if not self.config.HasEntry('imageArrows'):
             self.config.WriteBool('imageArrows', True)
+        if not self.config.HasEntry('createPassagePrompt'):
+            self.config.WriteBool('createPassagePrompt', True)
+        if not self.config.HasEntry('importImagePrompt'):
+            self.config.WriteBool('importImagePrompt', True)
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""

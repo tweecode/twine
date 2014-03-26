@@ -25,18 +25,15 @@ class PassageWidget:
         self.brokenEmblem = wx.Bitmap(self.app.iconsPath + 'brokenemblem.png')
         self.externalEmblem = wx.Bitmap(self.app.iconsPath + 'externalemblem.png')
         self.paintBuffer = wx.MemoryDC()
-        self.paintBufferBounds = None
-        pos = list(pos)
-
+        self.paintBufferBounds = None        
         if state:
             self.passage = state['passage']
-            self.pos = state['pos']
+            self.pos = list(pos) if pos != (0,0) else state['pos']
             self.selected = state['selected']
         else:
             self.passage = tiddlywiki.Tiddler('')
             self.selected = False
             self.pos = list(pos)
-
         if title: self.passage.title = title
         if text: self.passage.text = text
         if tags: self.passage.tags += tags
