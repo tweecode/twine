@@ -1,4 +1,4 @@
-import os, imp
+import os, imp, re, tweeregex
 from collections import OrderedDict
 from random import shuffle
 
@@ -78,13 +78,34 @@ class Header(object):
                 "desc": "This adds CSS classes to the <html> element that can be used to write\nmore compatible CSS or scripts. See http://modernizr.com/docs for details.\nIndividual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
             }]
 
-    def is_endtag(self, name, tag):
+    def isEndTag(self, name, tag):
         """Return true if the name is equal to an endtag."""
         return (name == ('end' + tag))
 
-    def nested_macros(self):
+    def nestedMacros(self):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
+    
+    def passageChecks(self):
+        """
+        Returns a list of checks to perform on the passage whenever it's closed.
+        Each function should return a string warning message, or None
+        """
+        def checkIfMacro(passage):
+            # Check that the single = assignment isn't present in an if/elseif condition.
+            ifMacroRegex = tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)")
+            iter = re.finditer(ifMacroRegex, passage.text)
+            for i in iter:
+                if re.search(r"[^=<>!~]=(?!=)" + tweeregex.UNQUOTED_REGEX, i.group(2)):
+                    return i.group(0) + " contains the = operator.\nPlease use 'is' instead of '=' in <<if>> and <<else>> tags."
+        
+        def checkScriptTagInScriptPassage(passage):
+            # Check that s script passage does not contain "<script type='text/javascript>" style tags.
+            if passage.isScript():
+                if re.search(r"(?:</?script\b(?:[^>]|>" + tweeregex.QUOTED_REGEX + ")*>)" + tweeregex.UNQUOTED_REGEX, passage.text):
+                    return "This script contains a HTML <script> tag.\nScript passages should only contain Javascript code, not raw HTML."
+        
+        return [checkIfMacro, checkScriptTagInScriptPassage]
 
     @staticmethod
     def factory(type, path, builtinPath):

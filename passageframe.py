@@ -319,6 +319,11 @@ class PassageFrame(wx.Frame):
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
 
+    def syntaxCheck(self):
+        """
+        Check that the passage macro syntax is well-formed.
+        """
+        
     def closeEditor(self, event = None):
         """
         Do extra stuff on closing the editor
@@ -326,6 +331,15 @@ class PassageFrame(wx.Frame):
         #Closes this editor's fullscreen counterpart, if any.
         try: self.fullscreen.Destroy()
         except: pass
+        
+        # Show warnings
+        if self.app.config.ReadBool('passageWarnings'):
+            checks = self.widget.parent.parent.header.passageChecks()
+            for check in checks:
+                result = check(self.widget.passage)
+                if result:
+                    wx.MessageDialog(self, result, 'Warning', wx.ICON_WARNING).ShowModal()
+        
         
         # Offer to create passage for broken links
         
@@ -337,8 +351,8 @@ class PassageFrame(wx.Frame):
                 else:
                     brokenmsg = 'create the passage "' + brokens[0] + '"?'
                 dialog = wx.MessageDialog(self, 'Do you want to ' + brokenmsg, 'Create Passages', \
-                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
-                check = dialog.ShowModal();
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+                check = dialog.ShowModal()
                 if check == wx.ID_YES:
                     for title in brokens:
                         self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))

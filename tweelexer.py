@@ -247,7 +247,7 @@ class TweeLexer:
                 self.applyStyle(styleStart, pos-styleStart, style)
                 styled = False
 
-                for i in header.nested_macros():
+                for i in header.nestedMacros():
                     # For matching pairs of macros (if/endif etc)
                     if name == i:
                         styled = True
@@ -257,7 +257,7 @@ class TweeLexer:
                             inSilence = True;
                             styleStack.append(style)
                             style = self.SILENT
-                    elif header.is_endtag(name, i):
+                    elif header.isEndTag(name, i):
                         if macroNestStack and macroNestStack[-1][0] == i:
                             # Re-style open macro
                             macroStart,macroMatch = macroNestStack.pop()[1:];

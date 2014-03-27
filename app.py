@@ -228,42 +228,44 @@ class App(wx.App):
 
     def loadPrefs(self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
-        self.config = wx.Config('Twine')
+        sc = self.config = wx.Config('Twine')
 
         monoFont = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
 
-        if not self.config.HasEntry('savePath'):
-            self.config.Write('savePath', os.path.expanduser('~'))
-        if not self.config.HasEntry('fsTextColor'):
-            self.config.Write('fsTextColor', '#afcdff')
-        if not self.config.HasEntry('fsBgColor'):
-            self.config.Write('fsBgColor', '#100088')
-        if not self.config.HasEntry('fsFontFace'):
-            self.config.Write('fsFontFace', metrics.face('mono'))
-        if not self.config.HasEntry('fsFontSize'):
-            self.config.WriteInt('fsFontSize', metrics.size('fsEditorBody'))
-        if not self.config.HasEntry('fsLineHeight'):
-            self.config.WriteInt('fsLineHeight', 120)
-        if not self.config.HasEntry('windowedFontFace'):
-            self.config.Write('windowedFontFace', metrics.face('mono'))
-        if not self.config.HasEntry('monospaceFontFace'):
-            self.config.Write('monospaceFontFace', metrics.face('mono2'))
-        if not self.config.HasEntry('windowedFontSize'):
-            self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
-        if not self.config.HasEntry('monospaceFontSize'):
-            self.config.WriteInt('monospaceFontSize', metrics.size('editorBody'))
-        if not self.config.HasEntry('storyFrameToolbar'):
-            self.config.WriteBool('storyFrameToolbar', True)
-        if not self.config.HasEntry('storyPanelSnap'):
-            self.config.WriteBool('storyPanelSnap', False)
-        if not self.config.HasEntry('fastStoryPanel'):
-            self.config.WriteBool('fastStoryPanel', False)
-        if not self.config.HasEntry('imageArrows'):
-            self.config.WriteBool('imageArrows', True)
-        if not self.config.HasEntry('createPassagePrompt'):
-            self.config.WriteBool('createPassagePrompt', True)
-        if not self.config.HasEntry('importImagePrompt'):
-            self.config.WriteBool('importImagePrompt', True)
+        if not sc.HasEntry('savePath'):
+            sc.Write('savePath', os.path.expanduser('~'))
+        if not sc.HasEntry('fsTextColor'):
+            sc.Write('fsTextColor', '#afcdff')
+        if not sc.HasEntry('fsBgColor'):
+            sc.Write('fsBgColor', '#100088')
+        if not sc.HasEntry('fsFontFace'):
+            sc.Write('fsFontFace', metrics.face('mono'))
+        if not sc.HasEntry('fsFontSize'):
+            sc.WriteInt('fsFontSize', metrics.size('fsEditorBody'))
+        if not sc.HasEntry('fsLineHeight'):
+            sc.WriteInt('fsLineHeight', 120)
+        if not sc.HasEntry('windowedFontFace'):
+            sc.Write('windowedFontFace', metrics.face('mono'))
+        if not sc.HasEntry('monospaceFontFace'):
+            sc.Write('monospaceFontFace', metrics.face('mono2'))
+        if not sc.HasEntry('windowedFontSize'):
+            sc.WriteInt('windowedFontSize', metrics.size('editorBody'))
+        if not sc.HasEntry('monospaceFontSize'):
+            sc.WriteInt('monospaceFontSize', metrics.size('editorBody'))
+        if not sc.HasEntry('storyFrameToolbar'):
+            sc.WriteBool('storyFrameToolbar', True)
+        if not sc.HasEntry('storyPanelSnap'):
+            sc.WriteBool('storyPanelSnap', False)
+        if not sc.HasEntry('fastStoryPanel'):
+            sc.WriteBool('fastStoryPanel', False)
+        if not sc.HasEntry('imageArrows'):
+            sc.WriteBool('imageArrows', True)
+        if not sc.HasEntry('createPassagePrompt'):
+            sc.WriteBool('createPassagePrompt', True)
+        if not sc.HasEntry('importImagePrompt'):
+            sc.WriteBool('importImagePrompt', True)
+        if not sc.HasEntry('passageWarnings'):
+            sc.WriteBool('passageWarnings', True)
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""

@@ -15,7 +15,7 @@ class PreferenceFrame(wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(11, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(12, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -74,6 +74,11 @@ class PreferenceFrame(wx.Frame):
                                                                           self.importImagePrompt.GetValue()))
         self.importImagePrompt.SetValue(self.app.config.ReadBool('importImagePrompt'))
 
+        self.passageWarnings = wx.CheckBox(panel, label = 'Warn about possible passage code errors.')
+        self.passageWarnings.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('passageWarnings', \
+                                                                          self.passageWarnings.GetValue()))
+        self.passageWarnings.SetValue(self.app.config.ReadBool('passageWarnings'))
+
         panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
         panelSizer.Add(wx.StaticText(panel, label = 'Monospace Font'), flag = wx.ALIGN_CENTER_VERTICAL)
@@ -96,6 +101,8 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(self.createPassagePrompt)
         panelSizer.Add((1,2))
         panelSizer.Add(self.importImagePrompt)
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.passageWarnings)
         
         panelSizer.Fit(self)
         borderSizer.Fit(self)
