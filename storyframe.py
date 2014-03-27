@@ -240,7 +240,7 @@ class StoryFrame(wx.Frame):
         self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE, 'From &File...')
         self.Bind(wx.EVT_MENU, self.importImageDialog, id = StoryFrame.STORY_IMPORT_IMAGE)
         self.importImageMenu.Append(StoryFrame.STORY_IMPORT_IMAGE_URL, 'From Web &URL...')
-        self.Bind(wx.EVT_MENU, self.importImageURL, id = StoryFrame.STORY_IMPORT_IMAGE_URL)
+        self.Bind(wx.EVT_MENU, self.importImageURLDialog, id = StoryFrame.STORY_IMPORT_IMAGE_URL)
 
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Import &Image', self.importImageMenu)
 
@@ -325,9 +325,11 @@ class StoryFrame(wx.Frame):
         buildMenu.Append(StoryFrame.BUILD_REBUILD, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.rebuild, id = StoryFrame.BUILD_REBUILD)
 
-        buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&View Last Build\tCtrl-L')
-        self.Bind(wx.EVT_MENU, self.viewBuild, id = StoryFrame.BUILD_VIEW_LAST)
-
+        buildMenu.Append(StoryFrame.BUILD_VIEW_LAST, '&Rebuild and View\tCtrl-L')
+        self.Bind(wx.EVT_MENU, lambda e: self.rebuild(displayAfter = True), id = StoryFrame.BUILD_VIEW_LAST)
+        
+        buildMenu.AppendSeparator()
+        
         self.autobuildmenuitem = buildMenu.Append(StoryFrame.BUILD_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
         buildMenu.Check(StoryFrame.BUILD_AUTO_BUILD, False)
@@ -415,10 +417,6 @@ class StoryFrame(wx.Frame):
             self.toolbar.Realize()
             self.toolbar.Hide()
 
-    def __del__(self):
-        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
-            os.remove(self.lastTestBuild.name)
-
     def revert(self, event = None):
         """Reverts to the last saved version of the story file."""
         bits = os.path.splitext(self.saveDestination)
@@ -470,6 +468,13 @@ class StoryFrame(wx.Frame):
         for w in list(self.storyPanel.widgets):
             if isinstance(w, PassageWidget):
                 w.closeEditor()
+
+        if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
+            try:
+                os.remove(self.lastTestBuild.name)
+            except OSError, ex:
+                print >>sys.stderr, 'Failed to remove lastest test build:', ex
+        self.lastTestBuild = None
 
         self.app.removeStory(self, byMenu)
         if event != None:
@@ -601,29 +606,53 @@ class StoryFrame(wx.Frame):
         except:
             self.app.displayError('importing')
 
-    def importImageURL(self, event = None):
+    def importImageURL(self, url, showdialog = True):
+        """
+        Downloads the image file from the url and creates a passage.
+        Returns the resulting passage name, or None
+        """
+        try:
+            # Download the file
+            urlfile = urllib.urlopen(url)
+            path = urlparse.urlsplit(url)[2]
+            title = os.path.splitext(os.path.basename(path))[0]
+            file = urlfile.read().encode('base64').replace('\n', '')
+
+            # Now that the file's read, check the info
+            maintype = urlfile.info().getmaintype();
+            if maintype != "image":
+                raise Exception("The server served "+maintype+" instead of an image.")
+            # Convert the file
+            mimeType = urlfile.info().gettype()
+            urlfile.close()
+            text = "data:"+mimeType+";base64,"+file
+            return self.finishImportImage(text, title, showdialog=showdialog)
+        except:
+            self.app.displayError('importing from the web')
+            return None
+            
+    def importImageURLDialog(self, event = None):
         dialog = wx.TextEntryDialog(self, "Enter the image URL (GIFs, JPEGs, PNGs, SVGs and WebPs only)", "Import Image from Web", "http://")
         if dialog.ShowModal() == wx.ID_OK:
-            try:
-                # Download the file
-                url = dialog.GetValue()
-                urlfile = urllib.urlopen(url)
-                path = urlparse.urlsplit(url)[2]
-                title = os.path.splitext(os.path.basename(path))[0]
-                file = urlfile.read().encode('base64').replace('\n', '')
+            self.importImageURL(dialog.GetValue())
 
-                # Now that the file's read, check the info
-                maintype = urlfile.info().getmaintype();
-                if maintype != "image":
-                    raise Exception("The server served "+maintype+" instead of an image.")
-                # Convert the file
-                mimeType = urlfile.info().gettype()
-                urlfile.close()
-                text = "data:"+mimeType+";base64,"+file
-                self.importImage(text, title)
-            except:
-                self.app.displayError('importing from the web')
-
+    def importImageFile(self, file, replace = None, showdialog = True):
+        """
+        Perform the file I/O to import an image file, then add it as an image passage.
+        Returns the name of the resulting passage, or None
+        """
+        try:
+            if not replace:
+                text, title = self.openFileAsBase64(file)
+                return self.finishImportImage(text, title, showdialog=showdialog)
+            else:
+                replace.passage.text = self.openFileAsBase64(file)[0]
+                replace.updateBitmap()
+                return replace.passage.title
+        except IOError:
+            self.app.displayError('importing an image')
+            return None
+        
     def importImageDialog(self, event = None, useImageDialog = False, replace = None):
         """Asks the user to choose an image file to import, then imports into the current story.
            replace is a Tiddler, if any, that will be replaced by the image."""
@@ -637,15 +666,7 @@ class StoryFrame(wx.Frame):
                                    'Web Image File|*.gif;*.jpg;*.jpeg;*.png;*.webp;*.svg|All Files (*.*)|*.*', wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             file = dialog.GetFile() if useImageDialog else dialog.GetPath()
-            try:
-                if not replace:
-                    text, title = self.openFileAsBase64(file)
-                    self.importImage(text, title)
-                else:
-                    replace.passage.text = self.openFileAsBase64(file)[0]
-                    replace.updateBitmap()
-            except IOError:
-                self.app.displayError('importing an image')
+            self.importImageFile(file, replace)
 
     def importFontDialog(self, event = None):
         """Asks the user to choose a font file to import, then imports into the current story."""
@@ -662,7 +683,7 @@ class StoryFrame(wx.Frame):
 
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""
-        while self.storyPanel.findWidget(title):
+        while self.storyPanel.passageExists(title):
             try:
                 match = re.search(r'(\s\d+)$', title)
                 if match:
@@ -672,7 +693,7 @@ class StoryFrame(wx.Frame):
             except: pass
         return title
 
-    def importImage(self, text, title, showdialog = True):
+    def finishImportImage(self, text, title, showdialog = True):
         """Imports an image into the story as an image passage."""
         # Check for title usage
         title = self.newTitle(title)
@@ -684,7 +705,7 @@ class StoryFrame(wx.Frame):
                                       '[img[' + title + ']]', 'Image added', \
                                       wx.ICON_INFORMATION | wx.OK)
             dialog.ShowModal()
-        return True
+        return title
 
     def importFont(self, file, showdialog = True):
         """Imports a font into the story as a font passage."""
@@ -716,43 +737,46 @@ class StoryFrame(wx.Frame):
             self.app.displayError('importing a font')
             return False
 
-    def createInfoPassage(self, event = None):
-        """Create, or otherwise open, one of the """
+    def defaultTextForPassage(self, title):
+        if title == 'Start':
+            return "Your story will display this passage first. Edit it by double clicking it."
+
+        elif title == 'StoryTitle':
+            return self.DEFAULT_TITLE
+
+        elif title == 'StorySubtitle':
+            return "This text appears below the story's title."
+
+        elif title == 'StoryAuthor':
+            return "Anonymous"
+
+        elif title == 'StoryMenu':
+            return "This passage's text will be included in the menu for this story."
+
+        elif title == 'StoryInit':
+            return """/% Place your story's setup code in this passage.
+Any macros in this passage will be run before the Start passage (or any passage you wish to Test Play) is run. %/
+"""
+
+        elif title == 'StoryIncludes':
+            return """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
+
+You can also include URLs of .tws and .twee files, too.
+"""
+
+        else:
+            return ""
+
+    def createInfoPassage(self, event):
+        """Open an editor for a special passage; create it if it doesn't exist yet."""
+
         id = event.GetId()
         title = self.storySettingsMenu.FindItemById(id).GetLabel()
-        defaultText = ""
-        found = False
 
-        if id == self.STORYSETTINGS_TITLE:
-            defaultText = self.DEFAULT_TITLE
-
-        elif id == self.STORYSETTINGS_SUBTITLE:
-            defaultText = "This text appears below the story's title."
-
-        elif id == self.STORYSETTINGS_AUTHOR:
-            defaultText = "Anonymous"
-
-        elif id == self.STORYSETTINGS_MENU:
-            defaultText = "This passage's text will be included in the menu for this story."
-
-        elif id == self.STORYSETTINGS_INCLUDES:
-            defaultText = """List the file paths of any .twee or .tws files that should be merged into this story when it's built.
-
-You can also include URLs of .tws and .twee files, too."""
-
-        elif id == self.STORYSETTINGS_INIT:
-            defaultText = "/% Place your story's setup code in this passage."\
-                          "Any macros in this passage will be run before the Start passage" \
-                          "(or any passage you wish to Test Play) is run. %/"
-
-        for widget in self.storyPanel.widgets:
-            if widget.passage.title == title:
-                found = True
-                editingWidget = widget
-                break
-
-        if not found:
-            editingWidget = self.storyPanel.newWidget(title = title, text = defaultText)
+        # What to do about StoryIncludes files?
+        editingWidget = self.storyPanel.findWidget(title)
+        if editingWidget is None:
+            editingWidget = self.storyPanel.newWidget(title = title, text = self.defaultTextForPassage(title))
 
         editingWidget.openEditor()
 
@@ -795,6 +819,7 @@ You can also include URLs of .tws and .twee files, too."""
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
+                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
                     # Might as well suppress the warning for a StoryIncludes file
                     hasstartpassage = True
                 elif TiddlyWiki.NOINCLUDE_TAGS.isdisjoint(widget.passage.tags):
@@ -809,21 +834,17 @@ You can also include URLs of .tws and .twee files, too."""
                                       + 'Your story will build but the web browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
 
+            
             for widget in self.storyPanel.widgets:
-                if widget.passage.title == 'StoryIncludes':
-                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
-                    break
-
-            # Decode story settings
-            for widget in self.storyPanel.widgets:
+                # Decode story settings
                 if widget.passage.title == 'StorySettings':
                     lines = widget.passage.text.splitlines()
                     for line in lines:
                         if ':' in line:
                             (skey,svalue) = line.split(':')
                             skey = skey.strip().lower()
-                            svalue = svalue.strip().lower()
-                            tw.storysettings[skey] = svalue or True
+                            svalue = svalue.strip()
+                            tw.storysettings[skey] = svalue
                     break
 
             # Write the output file
@@ -846,18 +867,22 @@ You can also include URLs of .tws and .twee files, too."""
                 if displayAfter: self.viewBuild()
         except:
             self.app.displayError('building your story')
-
+    
+    def getLocalDir(self):
+        if self.saveDestination == '':
+            return os.getcwd()
+        else:
+            return os.path.dirname(self.saveDestination)
+    
     def buildIncludes(self, tw, lines):
         """
         Modify the passed TiddlyWiki object by including passages from the given files.
         """
-        if self.saveDestination == '':
-            twinedocdir = os.getcwd()
-        else:
-            twinedocdir = os.path.dirname(self.saveDestination)
+        twinedocdir = self.getLocalDir()
         
         excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS
+        self.storyPanel.clearExternalPassages()
         for line in lines:
             try:
                 if line.strip():
@@ -882,6 +907,8 @@ You can also include URLs of .tws and .twee files, too."""
                                     raise Exception('A passage titled "'+ widget.passage.title + '" has been included by a previous StoryIncludes file')
 
                                 tw.addTiddler(widget.passage)
+                                self.storyPanel.addExternalPassage(widget.passage.title)
+
                         s.Destroy()
 
                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -908,6 +935,8 @@ You can also include URLs of .tws and .twee files, too."""
                             if passage.title not in excludepassages \
                             and excludetags.isdisjoint(passage.tags):
                                 tw.addTiddler(passage)
+                                self.storyPanel.addExternalPassage(passage.title)
+
                     else:
                         raise Exception('File format not recognized')
             except:

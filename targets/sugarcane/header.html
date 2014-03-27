@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
 <!--
 "VERSION"
 "TIME"
@@ -157,11 +158,7 @@ body {
 	padding-left: 1.5em;
 	position:relative;
 }
-.storyElement {
-	white-space: pre-line;
-}
 .passage {
-	white-space: pre-wrap;
 	font-size: 1.2em;
 	line-height: 175%;
 	margin-bottom: 2em;
@@ -307,8 +304,8 @@ img {
 <ul id="sidebar">
 <li id="title" class="storyElement"><span id="storyTitle" class="storyElement"></span><span id="storySubtitle" class="storyElement"></span><span id="titleSeparator"></span><span id="storyAuthor" class="storyElement"></span></li>
 <li id="storyMenu" class="storyElement" style="display:none"></li>
-<li id="snapback">Rewind</li>
-<li id="restart">Restart</li>
+<li><a href="javascript:;" id="snapback">Rewind</a></li>
+<li><a href="javascript:;" id="restart">Restart</a></li>
 <li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
 <li id="credits">
 This story was created with <a href="http://twinery.org/">Twine</a> and is powered by <a href="http://tiddlywiki.com/">TiddlyWiki</a>
@@ -319,4 +316,4 @@ This story was created with <a href="http://twinery.org/">Twine</a> and is power
 <noscript><div id="noscript">Please enable Javascript to play this story!</div></noscript>
 <style>#sidebar{display:none;}</style>
 </div>
-<div id="storeArea">"STORY"</div></body></html>
+<div id="storeArea" hidden>"STORY"</div></body></html>

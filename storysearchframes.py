@@ -1,5 +1,5 @@
 import re, wx
-from searchpanels import FindPanel
+from searchpanels import FindPanel, ReplacePanel
 
 class StoryFindFrame(wx.Frame):
     """

@@ -15,7 +15,7 @@ var hasPushState = !!window.history && (typeof window.history.pushState == "func
 }(window.sessionStorage));
 
 Tale.prototype.canBookmark = function() {
-    return this.canUndo() && (this.storysettings.lookup('bookmark') || !hasPushState);
+    return this.canUndo() && (this.storysettings.lookup('bookmark',true) || !hasPushState);
 };
 History.prototype.init = function () {
     var a = this;
@@ -36,7 +36,7 @@ hasPushState && (History.prototype.pushState = function(replace, uri) {
     window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
 });
 History.prototype.display = function (title, source, type, callback) {
-    var e, bookmarkhref, c = tale.get(title), p = document.getElementById("passages");
+    var i, e, q, bookmark, c = tale.get(title), p = document.getElementById("passages");
     if (c==null) {
         return;
     }
@@ -53,12 +53,12 @@ History.prototype.display = function (title, source, type, callback) {
             }
         }
     }
-    bookmarkhref = this.save();
+    this.hash = this.save();
     e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
-            for(var i = 0; i < p.childNodes.length; i += 1) {
-                var q = p.childNodes[i];
+            for(i = 0; i < p.childNodes.length; i += 1) {
+                q = p.childNodes[i];
                 q.classList.add("transition-out");
                 setTimeout((function(a) { return function () {
                     if(a.parentNode) a.parentNode.removeChild(a);
@@ -83,11 +83,10 @@ History.prototype.display = function (title, source, type, callback) {
     tale.setPageElements();
     if (tale.canUndo()) {
         if (!hasPushState && type != "back") {
-            this.hash = bookmarkhref;
             window.location.hash = this.hash;
         } else if (tale.canBookmark()) {
-            var bookmark = document.getElementById("bookmark");
-            bookmark && (bookmark.href = bookmarkhref);
+            bookmark = document.getElementById("bookmark");
+            bookmark && (bookmark.href = this.hash);
         }
     }
     window.scroll(0, 0)
@@ -206,21 +205,14 @@ var Interface = {
                 b = document.createElement("div");
                 b.pos = a;
                 b.onclick = function () {
-                    var p = this.pos;
-                    var n = state.history[p].passage.title;
-                    while(p >= 0) {
-                        if (state.history.length>1) {
-                            state.history.shift();
-                        }
-                        p--;
-                    }
-                    state.display(n);
+                    return macros.back.onclick(true, this.pos);
                 };
                 b.innerHTML = state.history[a].passage.excerpt();
                 menuelem.appendChild(b);
                 c = true
             }
         }
+        b = null
         if(!c) {
             b = document.createElement("div");
             b.innerHTML = "<i>No passages available</i>";
@@ -280,12 +272,18 @@ macros.back.onclick = function(back, steps) {
 };
 
 window.onpopstate = function(e) {
-    var title, hist, steps, s = e && e.state;
+    var title, hist, steps, i, s = e && e.state;
     if (s && s.id && s.length != null) {
-        hist = JSON.parse(sessionStorage.getItem("Twine.History"+s.id)),
-        steps = hist.length-s.length;
+        hist = JSON.parse(sessionStorage.getItem("Twine.History"+s.id));
+        if (hist) {
+            steps = hist.length-s.length;
+        }
     }
-    if (hist != null && steps != null) {
+    if (steps != null) {
+        // Restore references
+        for (i = 0; i < hist.length; i++) {
+            hist[i].passage = tale.get(hist[i].passage);
+        }
         state.history = hist;
         while(steps-- >= 0 && state.history.length>1) {
             title = state.history[0].passage.title;

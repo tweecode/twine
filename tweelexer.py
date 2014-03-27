@@ -38,7 +38,7 @@ class TweeLexer:
             if (i & 4):
                 self.ctrl.StyleSetUnderline(i, True)
 
-        for i in [self.GOOD_LINK, self.BAD_LINK, self.MARKUP, self.INLINE_STYLE, self.BAD_INLINE_STYLE,
+        for i in [self.GOOD_LINK, self.BAD_LINK, self.STORYINCLUDE_LINK, self.MARKUP, self.INLINE_STYLE, self.BAD_INLINE_STYLE,
                   self.HTML, self.HTML_BLOCK, self.MACRO, self.COMMENT, self.SILENT, self.EXTERNAL,
                   self.IMAGE, self.PARAM, self.PARAM_VAR, self.PARAM_STR, self.PARAM_NUM, self.PARAM_BOOL]:
             self.ctrl.StyleSetFont(i, bodyFont)
@@ -48,6 +48,9 @@ class TweeLexer:
 
         self.ctrl.StyleSetBold(self.BAD_LINK, True)
         self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
+        
+        self.ctrl.StyleSetBold(self.STORYINCLUDE_LINK, True)
+        self.ctrl.StyleSetForeground(self.STORYINCLUDE_LINK, self.STORYINCLUDE_COLOR)
 
         self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
 
@@ -157,6 +160,8 @@ class TweeLexer:
             length = m.end(0)
             if self.passageExists(m.group(1)):
                 self.applyStyle(pos, length, self.GOOD_LINK)
+            elif self.externalPassageExists(m.group(1)):
+                self.applyStyle(pos, length, self.STORYINCLUDE_LINK)
             else:
                 self.applyStyle(pos, length, self.MACRO)
             # Apply different style to the macro contents
@@ -215,10 +220,14 @@ class TweeLexer:
                 # check for prettylinks
                 s2 = self.GOOD_LINK
                 if not m.group(2):
-                    if not self.passageExists(m.group(1)):
+                    if self.externalPassageExists(m.group(1)):
+                        s2 = self.STORYINCLUDE_LINK
+                    elif not self.passageExists(m.group(1)):
                         s2 = badLinkStyle(m.group(1))
                 else:
-                    if not self.passageExists(m.group(2)):
+                    if self.externalPassageExists(m.group(2)):
+                        s2 = self.STORYINCLUDE_LINK
+                    elif not self.passageExists(m.group(2)):
                         s2 = badLinkStyle(m.group(2))
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
@@ -317,7 +326,13 @@ class TweeLexer:
         """
         Returns whether a given passage exists in the story.
         """
-        return (self.frame.widget.parent.findWidget(title) != None)
+        return (self.frame.widget.parent.passageExists(title, False))
+    
+    def externalPassageExists(self, title):
+        """
+        Returns whether a given passage exists in a StoryIncludes resource.
+        """
+        return (self.frame.widget.parent.externalPassageExists(title))
 
     def applyStyle(self, start, end, style):
         """
@@ -333,8 +348,8 @@ class TweeLexer:
     # style constants
     # ordering of BOLD through to THREE_STYLES is important
     DEFAULT, BOLD, ITALIC, BOLD_ITALIC, UNDERLINE, BOLD_UNDERLINE, ITALIC_UNDERLINE, THREE_STYLES, \
-    GOOD_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
-    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(0,26)
+    GOOD_LINK, STORYINCLUDE_LINK, BAD_LINK, MARKUP, MACRO, SILENT, COMMENT, MONO, IMAGE, EXTERNAL, HTML, HTML_BLOCK, INLINE_STYLE, \
+    BAD_INLINE_STYLE, PARAM_VAR, PARAM_STR, PARAM_NUM, PARAM_BOOL, PARAM = range(0,27)
 
     # markup constants
 
@@ -348,6 +363,7 @@ class TweeLexer:
 
     GOOD_LINK_COLOR = '#3333cc'
     EXTERNAL_COLOR = '#337acc'
+    STORYINCLUDE_COLOR = '#906fe2'
     BAD_LINK_COLOR = '#cc3333'
     MARKUP_COLOR = '#008200'
     MACRO_COLOR = '#a94286'

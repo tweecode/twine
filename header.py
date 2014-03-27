@@ -30,12 +30,19 @@ class Header(object):
     def storySettings(self):
         """Returns a list of StorySettings dictionaries."""
 
-        # Randomise the obfuscate key
-        obfuscatekey = list('anbocpdqerfsgthuivjwkxlymz')
-        shuffle(obfuscatekey)
-        obfuscatekey = ''.join(obfuscatekey)
-
         return [{
+                "type": "text",
+                "name": "identity",
+                "label": "What your work identifies as:",
+                "desc": "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
+                "default": "game"
+            },{
+                "type": "text",
+                "name": "description",
+                "label": "A short description of your work:",
+                "desc": "This is inserted in the HTML file's <meta> description tag, used by\nsearch engines and other automated tools.",
+                "default": ""
+            },{
                 "type": "checkbox",
                 "name": "undo",
                 "label": "Let the player undo moves",
@@ -56,29 +63,19 @@ class Header(object):
             },{
                 "type": "checkbox",
                 "name": "obfuscate",
-                "label": "Obfuscate the HTML source to obscure spoilers",
-                "values": ("swap","off")
-            },{
-                "type": "text",
-                "name": "obfuscatekey",
-                "label": "Obfuscation key:",
-                "default": obfuscatekey
-            },{
-                "type": "text",
-                "name": "identity",
-                "label": "What your work identifies as:",
-                "desc": "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
-                "default": "game"
+                "label": "Use ROT13 to obscure spoilers in the HTML source code?",
+                "values": ("rot13", "off"),
+                "default": "off"
             },{
                 "type": "checkbox",
                 "name": "jquery",
                 "label": "Include the jQuery script library?",
-                "desc": "Individual scripts may force this on by containing the text 'requires jQuery'.",
+                "desc": "This enables the jQuery() function and the $() shorthand.\nIndividual scripts may force this on by containing the text 'requires jQuery'.",
             },{
                 "type": "checkbox",
                 "name": "modernizr",
                 "label": "Include the Modernizr script library?",
-                "desc": "Individual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
+                "desc": "This adds CSS classes to the <html> element that can be used to write\nmore compatible CSS or scripts. See http://modernizr.com/docs for details.\nIndividual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
             }]
 
     def is_endtag(self, name, tag):

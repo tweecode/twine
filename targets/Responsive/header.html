@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
 <!--
 "VERSION"
 "TIME"
@@ -228,6 +229,7 @@ nav li:hover, nav li a:hover {
 #credits a { color:#999; text-decoration:none; }
 #credits a:hover { text-decoration:underline; }
 #storyMenu { display:none; }
+#sidebar > ul > li:empty { display:none; }
 
 .menu { position:absolute;display:none;background-color:#666;color:#fff;text-align:left;line-height:2em;}
 .menu div{padding:0 .4em;}
@@ -235,8 +237,6 @@ nav li:hover, nav li a:hover {
 
 #main-container { padding-top: 1em; }
 #passages { font-size: 12px; line-height: 16px; position:relative; }
-.storyElement { white-space: pre-line; }
-.passage { white-space: pre-wrap; }
 .passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
 a.internalLink,a.externalLink,a.back,a.return {cursor: pointer;}
@@ -405,8 +405,8 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 				<nav id="storyMenu" class="storyElement" style="display:none"></nav>
 				<nav id="sidebar">
 					<ul>
-						<li id="snapback">Rewind</a></li>
-						<li id="restart">Restart</a></li>
+						<li><a href="javascript:;" id="snapback">Rewind</a></li>
+						<li><a href="javascript:;" id="restart">Restart</a></li>
 						<li><a id="bookmark" title="Permanent link to this passage">Bookmark</a></li>
 					</ul>
 				</nav>
@@ -426,4 +426,4 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 			</div>
 		</footer>
 	</div>
-<div id="storeArea">"STORY"</div></body></html>
+<div id="storeArea" hidden>"STORY"</div></body></html>

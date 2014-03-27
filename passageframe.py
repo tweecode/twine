@@ -1,4 +1,4 @@
-import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time
+import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
 from tweelexer import TweeLexer, badLinkStyle
 from tiddlywiki import TiddlyWiki
@@ -55,6 +55,10 @@ class PassageFrame(wx.Frame):
 
         passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
+        
+        passageMenu.Append(PassageFrame.PASSAGE_TEST_HERE, '&Test Play From Here\tCtrl-T')
+        self.Bind(wx.EVT_MENU, lambda e: self.widget.parent.parent.testBuild(e, startAt = self.widget.passage.title),\
+                  id = PassageFrame.PASSAGE_TEST_HERE)
 
         passageMenu.AppendSeparator()
 
@@ -62,7 +66,7 @@ class PassageFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.openFullscreen, id = PassageFrame.PASSAGE_FULLSCREEN)
 
         passageMenu.Append(wx.ID_CLOSE, '&Close Passage\tCtrl-W')
-        self.Bind(wx.EVT_MENU, lambda e: self.Destroy(), id = wx.ID_CLOSE)
+        self.Bind(wx.EVT_MENU, lambda e: self.Close(), id = wx.ID_CLOSE)
 
         # Edit menu
 
@@ -203,7 +207,7 @@ class PassageFrame(wx.Frame):
         self.tagsInput.Bind(wx.EVT_TEXT, self.syncPassage)
         self.bodyInput.Bind(wx.stc.EVT_STC_CHANGE, self.syncPassage)
         self.bodyInput.Bind(wx.stc.EVT_STC_START_DRAG, self.prepDrag)
-        self.Bind(wx.EVT_CLOSE, self.closeFullscreen)
+        self.Bind(wx.EVT_CLOSE, self.closeEditor)
         self.Bind(wx.EVT_MENU_OPEN, self.updateSubmenus)
         self.Bind(wx.EVT_UPDATE_UI, self.updateUI)
 
@@ -246,6 +250,9 @@ class PassageFrame(wx.Frame):
             otherTitled = self.widget.parent.findWidget(title)
             if otherTitled and otherTitled != self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
+                error()
+            elif self.widget.parent.externalPassageExists(title):
+                self.titleLabel.SetLabel("Used by a StoryIncludes file.")
                 error()
             elif "|" in title or "]" in title:
                 self.titleLabel.SetLabel("No | or ] symbols allowed!")
@@ -312,10 +319,68 @@ class PassageFrame(wx.Frame):
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
 
-    def closeFullscreen(self, event = None):
-        """Closes this editor's fullscreen counterpart, if any."""
+    def closeEditor(self, event = None):
+        """
+        Do extra stuff on closing the editor
+        """
+        #Closes this editor's fullscreen counterpart, if any.
         try: self.fullscreen.Destroy()
         except: pass
+        
+        # Offer to create passage for broken links
+        
+        if self.app.config.ReadBool('createPassagePrompt'):
+            brokens = links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            if brokens :
+                if len(brokens) > 1:
+                    brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
+                else:
+                    brokenmsg = 'create the passage "' + brokens[0] + '"?'
+                dialog = wx.MessageDialog(self, 'Do you want to ' + brokenmsg, 'Create Passages', \
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                check = dialog.ShowModal();
+                if check == wx.ID_YES:
+                    for title in brokens:
+                        self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
+                elif check == wx.ID_CANCEL:
+                    return
+            
+        # Offer to import external images
+        if self.app.config.ReadBool('importImagePrompt'):
+            regex = tweeregex.EXTERNAL_IMAGE_REGEX
+            externalimages = re.finditer(regex, self.widget.passage.text)
+            check = None
+            downloadedurls = {}
+            storyframe = self.widget.parent.parent
+            for img in externalimages:
+                if not check:
+                    dialog = wx.MessageDialog(self, 'Do you want to import the image files linked\nin this passage into the story file?', 'Import Images', \
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                    check = dialog.ShowModal()
+                    if check == wx.ID_NO:
+                        break  
+                    elif check == wx.ID_CANCEL:
+                        return
+                # Download the image if it's at an absolute URL
+                imgurl = img.group(4) or img.group(7)
+                if not imgurl:
+                    continue
+                # If we've downloaded it before, don't do it again
+                if imgurl not in downloadedurls:
+                    # Internet image, or local image?
+                    if any(imgurl.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                        imgpassagename = storyframe.importImageURL(imgurl, showdialog=False)
+                    else:
+                        imgpassagename = storyframe.importImageFile(storyframe.getLocalDir()+os.sep+imgurl, showdialog=False)
+                    if not imgpassagename:
+                        continue
+                    downloadedurls[imgurl] = imgpassagename
+            
+            # Replace all found images
+            for old, new in downloadedurls.iteritems():
+                self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
+                                                  lambda m: m.group(0).replace(old, new), self.widget.passage.text)
+        self.widget.passage.update()
         event.Skip()
 
     def openOtherEditor(self, event = None, title = None):
@@ -336,13 +401,9 @@ class PassageFrame(wx.Frame):
 
         # check if the passage already exists
 
-        for widget in self.widget.parent.widgets:
-            if widget.passage.title == title:
-                found = True
-                editingWidget = widget
-                break
+        editingWidget = self.widget.parent.findWidget(title = title)
 
-        if not found:
+        if not editingWidget:
             editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
 
         editingWidget.openEditor()
@@ -615,6 +676,8 @@ class PassageFrame(wx.Frame):
                         found = True
                         break
 
+                if not found and self.widget.parent.externalPassageExists(link): found = True
+
                 if not found: broken.append(link)
 
         # incoming links
@@ -681,14 +744,14 @@ class PassageFrame(wx.Frame):
     # menu constants (not defined by wx)
 
     EDIT_FIND_NEXT = 2001
-    [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY] = range(1001,1004)
+    [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY, PASSAGE_TEST_HERE] = range(1001,1005)
     [HELP1, HELP2, HELP3, HELP4] = range(3001,3005)
 
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 
 
-class StorySettingsFrame(PassageFrame):
-    """Special type of PassageFrame which presents the current header's StorySettings."""
+class StorySettingsFrame(wx.Frame):
+    """A window which presents the current header's StorySettings."""
 
     def __init__(self, parent, widget, app):
         self.widget = widget
@@ -721,9 +784,8 @@ class StorySettingsFrame(PassageFrame):
                     currentValue = data.get('default', 'off')
                     self.saveSetting(name, currentValue)
                 checkbox.SetValue(currentValue not in ["off", "false", '0'])
-
                 values = data.get("values", ("on","off"))
-                checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name:
+                checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name, values=values:
                               self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
                 allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
 
@@ -751,11 +813,12 @@ class StorySettingsFrame(PassageFrame):
                 allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
 
         self.SetIcon(self.app.icon)
+
         self.Layout()
         self.Show(True)
 
     def getSetting(self, valueName):
-        search = re.search("^"+valueName +r"\s*:\s*(.+?)\s*$", self.widget.passage.text, flags=re.I|re.M)
+        search = re.search(r"(?:^|\n)"+valueName + r"\s*:\s*(\w*)\s*(?:\n|$)", self.widget.passage.text, flags=re.I)
         if search:
             return search.group(1)
         return ''
@@ -773,10 +836,10 @@ class StorySettingsFrame(PassageFrame):
         self.widget.passage.update()
 
 
-class ImageFrame(PassageFrame):
+class ImageFrame(wx.Frame):
     """
-    Special type of PassageFrame which only displays passages whose text consists of base64
-    encoded images - the image is converted to a bitmap and displayed, if possible.
+    A window which only displays passages whose text consists of base64 encoded images -
+    the image is converted to a bitmap and displayed, if possible.
     """
 
     def __init__(self, parent, widget, app):
@@ -953,7 +1016,6 @@ class ImageFrame(PassageFrame):
         t = self.widget.passage.text;
         # Get the extension
         extension = images.GetImageType(t)
-        print extension
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 

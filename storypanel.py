@@ -28,6 +28,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
+        self.externalPassages = set()
         self.draggingMarquee = False
         self.draggingWidgets = None
         self.notDraggingWidgets = None
@@ -50,9 +51,8 @@ class StoryPanel(wx.ScrolledWindow):
                 self.snapping = state['snapping']
         else:
             self.scale = 1
-            self.newWidget(title = StoryPanel.FIRST_TITLE, text = StoryPanel.FIRST_TEXT, quietly = True)
-            self.newWidget(title = "StoryTitle", text = self.parent.DEFAULT_TITLE, quietly = True)
-            self.newWidget(title = "StoryAuthor", text = "Anonymous", quietly = True)
+            for title in ('Start', 'StoryTitle', 'StoryAuthor'):
+                self.newWidget(title = title, text = self.parent.defaultTextForPassage(title), quietly = True)
 
         self.pushUndo(action = '')
         self.undoPointer -= 1
@@ -157,7 +157,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.removeWidgets()
         self.Refresh()
 
-    def pasteWidgets(self):
+    def pasteWidgets(self, pos = (0,0)):
         """Pastes widgets from the clipboard."""
         clipFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         clipData = wx.CustomDataObject(clipFormat)
@@ -172,7 +172,7 @@ class StoryPanel(wx.ScrolledWindow):
                 self.eachWidget(lambda w: w.setSelected(False, False))
 
                 for widget in data:
-                    newPassage = PassageWidget(self, self.app, state = widget, title = self.untitledName(widget['passage'].title))
+                    newPassage = PassageWidget(self, self.app, state = widget, pos = pos, title = self.untitledName(widget['passage'].title))
                     newPassage.findSpace()
                     newPassage.setSelected(True, False)
                     self.widgets.append(newPassage)
@@ -698,6 +698,26 @@ class StoryPanel(wx.ScrolledWindow):
             if widget.passage.title == title: return widget
         return None
 
+    def passageExists(self, title, includeExternal = True):
+        """
+        Returns whether a given passage exists in the story.
+        
+        If includeExternal then will also check external passages referenced via StoryIncludes
+        """
+        return self.findWidget(title) != None or (includeExternal and self.externalPassageExists(title))
+
+    def clearExternalPassages(self):
+        """Clear the externalPassages set"""
+        self.externalPassages.clear()
+
+    def addExternalPassage(self, title):
+        """Add a title to the set of external passages"""
+        self.externalPassages.add(title)
+
+    def externalPassageExists(self, title):
+        """Add a title to the set of external passages"""
+        return (title in self.externalPassages)
+
     def toPixels(self, logicals, scaleOnly = False):
         """
         Converts a tuple of logical coordinates to pixel coordinates. If you need to do just
@@ -935,8 +955,6 @@ class StoryPanel(wx.ScrolledWindow):
 
     INSET = (10, 10)
     ARROWHEAD_THRESHOLD = 0.5   # won't be drawn below this zoom level
-    FIRST_TITLE = 'Start'
-    FIRST_TEXT = 'Your story will display this passage first. Edit it by double clicking it.'
     FIRST_CSS = """/* Your story will use the CSS in this passage to style the page.
 Give this passage more tags, and it will only affect passages with those tags.
 Example selectors: */
@@ -977,6 +995,11 @@ class StoryPanelContext(wx.Menu):
         self.parent = parent
         self.pos = pos
 
+        if self.parent.parent.menus.IsEnabled(wx.ID_PASTE):
+            pastePassage = wx.MenuItem(self, wx.NewId(), 'Paste Passage Here')
+            self.AppendItem(pastePassage)
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(self.getPos()), id = pastePassage.GetId())
+            
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
@@ -995,12 +1018,15 @@ class StoryPanelContext(wx.Menu):
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, lambda e: self.newWidget(e, tags = ['annotation']), id = newPassage.GetId())
 
-    def newWidget(self, event, text = '', tags = []):
+    def getPos(self):
         pos = self.pos
         offset = self.parent.toPixels((PassageWidget.SIZE / 2, 0), scaleOnly = True)
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
-        self.parent.newWidget(pos = pos, text = text, tags = tags)
+        return pos
+    
+    def newWidget(self, event, text = '', tags = []):
+        self.parent.newWidget(pos = self.getPos(), text = text, tags = tags)
 
 # drag and drop listener
 
@@ -1026,8 +1052,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
                 if "|" in text:
                     return None
                 else:
-                    otherTitled = self.panel.findWidget(text)
-                    if otherTitled and otherTitled.passage.title == text:
+                    if self.panel.passageExists(text):
                         return None
 
                 self.panel.newWidget(title = text, pos = (x, y))
@@ -1068,7 +1093,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
                         self.panel.parent.importHtml(file)
                     elif re.search(imageRegex, fname):
                         text, title = self.panel.parent.openFileAsBase64(fname)
-                        imagesImported += 1 if self.panel.parent.importImage(text, title, showdialog = not multipleImages) else 0
+                        imagesImported += 1 if self.panel.parent.finishImportImage(text, title, showdialog = not multipleImages) else 0
 
                 if imagesImported > 1:
                     dialog = wx.MessageDialog(self.panel.parent, 'Multiple image files imported successfully.', 'Images added', \

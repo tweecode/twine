@@ -1,6 +1,8 @@
 # regexes
-LINK_REGEX = r"\[\[([^\|\]]*?)(?:\|(.*?))?\](\[.*?\])?\]"
-MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>(?!>))*)>>"
+
+UNQUOTED_REGEX = r"""(?=(?:[^"'\\]*(?:\\.|'(?:[^'\\]*\\.)*[^'\\]*'|"(?:[^"\\]*\\.)*[^"\\]*"))*[^'"]*$)"""
+LINK_REGEX = r"\[\[([^\|]*?)(?:\|(.*?))?\](\[.*?\])?\]"
+MACRO_REGEX = r"<<([^>\s]+)(?:\s*)((?:[^>]|>" + UNQUOTED_REGEX.replace('=','!') + ")*)>>"
 IMAGE_REGEX = r"\[([<]?)(>?)img\[(?:([^\|\]]+)\|)?([^\[\]\|]+)\](?:\[([^\]]*)\]?)?(\])"
 HTML_BLOCK_REGEX = r"<html>((?:.|\n)*?)</html>"
 HTML_REGEX = r"<(?:\/?\w+|\w+(?:(?:\s+\w+(?:\s*=\s*(?:\".*?\"|'.*?'|[^'\">\s]+))?)+\s*|\s*)\/?)>"
@@ -24,3 +26,12 @@ MACRO_PARAMS_REGEX = r'(?:("(?:[^\\"]|\\.)*"|\'(?:[^\\\']|\\.)*\'|(?:\[\[(?:[^\]
     +r'|(true|false|null|undefined)' \
     +r'|'+MACRO_PARAMS_VAR_REGEX \
     +r')'
+
+
+# This includes BMP even though you can't normally import it
+IMAGE_FILENAME_REGEX = r"[^\"']+\.(?:jpe?g|a?png|gif|bmp|webp|svg)"
+EXTERNAL_IMAGE_URL = r"\s*['\"]?(" + IMAGE_FILENAME_REGEX + ")['\"]?\s*"
+
+EXTERNAL_IMAGE_REGEX = IMAGE_REGEX.replace(r"([^\[\]\|]+)", EXTERNAL_IMAGE_URL)
+HTML_IMAGE_REGEX = r"src\s*=" + EXTERNAL_IMAGE_URL
+CSS_IMAGE_REGEX = r"url\s*\(" + EXTERNAL_IMAGE_URL + r"\)"

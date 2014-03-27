@@ -1,3 +1,9 @@
+/*
+**
+** Basic utility functions
+**
+*/
+
 function clone(a) {
     var b = {};
     if (!a || typeof a != "object") {
@@ -61,7 +67,69 @@ function setPageElement(c, b, a) {
     }
 }
 
-// Kept for custom script use
+var scrollWindowInterval;
+function scrollWindowTo(e, margin) {
+    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
+        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
+        g = k(e),
+        j = (d > g) ? -1 : 1,
+        b = 0,
+        c = Math.abs(d - g);
+    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
+    if (c) {
+        scrollWindowInterval = window.setInterval(h, 25);
+    }
+    
+    function h() {
+        b += 0.1;
+        window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
+        if (b >= 1) {
+            window.clearInterval(scrollWindowInterval)
+        }
+    }
+
+    function k(o) {
+        var p = a(o),
+            h = o.offsetHeight,
+            n = d + m;
+        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
+        if (p < d) {
+            return p
+        } else {
+            if (p+h > n) {
+                if (h < m) {
+                    return (p - (m - h) + 20)
+                } else {
+                    return p
+                }
+            } else {
+                return p
+            }
+        }
+    }
+
+    function a(l) {
+        var m = 0;
+        while (l.offsetParent) {
+            m += l.offsetTop;
+            l = l.offsetParent
+        }
+        return m
+    }
+}
+
+function delta(old,neu) {
+    var vars, ret = {};
+    if (old && neu) {
+        for (vars in neu) {
+            if (neu[vars] !== old[vars]) {
+                ret[vars] = neu[vars];
+            }
+        }
+    }
+    return ret;
+}
+
 function addStyle(b) {
     if (document.createStyleSheet) {
         document.getElementsByTagName("head")[0].insertAdjacentHTML("beforeEnd", "&nbsp;<style>" + b + "</style>")
@@ -159,15 +227,22 @@ String.prototype.readBracketedList = function () {
     } while (c);
     return (f)
 };
+
+function rot13(s) {
+  return s.replace(/[a-zA-Z]/g, function(c) {
+    return String.fromCharCode((c<="Z" ? 90 : 122) >= (c=c.charCodeAt()+13) ? c : c-26);
+  });
+}
+
+/*
+**
+** Polyfills
+**
+*/
+
 String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
 });
-String.prototype.unDash = function () {
-    var s = this.split("-");
-    if (s.length > 1) for (var t = 1; t < s.length; t++)
-    s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
-    return s.join("");
-}
 Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     d = (d == null) ? 0 : d;
     var a = this.length;
@@ -178,9 +253,12 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     }
     return -1
 });
+Array.prototype.forEach || (Array.prototype.forEach=function(fun){if(this==null){throw TypeError()}var t=Object(this);var len=+t.length;if(typeof fun!="function"){throw TypeError()}var thisArg=arguments.length>=2?arguments[1]:void 0;for(var i=0;i<len;i++){if(i in t){fun.call(thisArg,t[i],i,t)}}});
+
 /* btoa/atob polyfill by github.com/davidchambers */
 (function(){function t(t){this.message=t}var e=window,r="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";t.prototype=Error(),t.prototype.name="InvalidCharacterError",e.btoa||(e.btoa=function(e){for(var o,n,a=0,i=r,c="";e.charAt(0|a)||(i="=",a%1);c+=i.charAt(63&o>>8-8*(a%1))){if(n=e.charCodeAt(a+=.75),n>255)throw new t();o=o<<8|n}return c}),e.atob||(e.atob=function(e){if(e=e.replace(/=+$/,""),1==e.length%4)throw new t();for(var o,n,a=0,i=0,c="";n=e.charAt(i++);~n&&(o=a%4?64*o+n:n,a++%4)?c+=String.fromCharCode(255&o>>(6&-2*a)):0)n=r.indexOf(n);return c})})();
 
+/* Polyfill for fade transition */
 var hasTransition = 'transition' in document.documentElement.style || '-webkit-transition' in document.documentElement.style;
 
 function fade(f, c) {
@@ -220,68 +298,11 @@ function fade(f, c) {
     }
 }
 
-var scrollWindowInterval;
-function scrollWindowTo(e, margin) {
-    var d = window.scrollY ? window.scrollY : document.documentElement.scrollTop,
-        m = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight,
-        g = k(e),
-        j = (d > g) ? -1 : 1,
-        b = 0,
-        c = Math.abs(d - g);
-    scrollWindowInterval && window.clearInterval(scrollWindowInterval);
-    if (c) {
-        scrollWindowInterval = window.setInterval(h, 25);
-    }
-    
-    function h() {
-        b += 0.1;
-        window.scrollTo(0, d + j * (c * Math.easeInOut(b)));
-        if (b >= 1) {
-            window.clearInterval(scrollWindowInterval)
-        }
-    }
-
-    function k(o) {
-        var p = a(o),
-            h = o.offsetHeight,
-            n = d + m;
-        p = Math.min(Math.max(p + (margin || 0) * ( p < d ? -1 : 1), 0), n);
-        if (p < d) {
-            return p
-        } else {
-            if (p+h > n) {
-                if (h < m) {
-                    return (p - (m - h) + 20)
-                } else {
-                    return p
-                }
-            } else {
-                return p
-            }
-        }
-    }
-
-    function a(l) {
-        var m = 0;
-        while (l.offsetParent) {
-            m += l.offsetTop;
-            l = l.offsetParent
-        }
-        return m
-    }
-}
-
-function delta(old,neu) {
-    var vars, ret = {};
-    if (old && neu) {
-        for (vars in neu) {
-            if (neu[vars] !== old[vars]) {
-                ret[vars] = neu[vars];
-            }
-        }
-    }
-    return ret;
-}
+/*
+**
+** History object
+**
+*/
 
 function History() {
     this.history = [{
@@ -290,6 +311,8 @@ function History() {
     }]
     // Unique identifier for this game session
     this.id = new Date().getTime()+'';
+    // URL of the bookmark link
+    this.hash = '';
 }
 
 History.prototype.encodeHistory = function(b, noVars) {
@@ -326,7 +349,7 @@ History.prototype.encodeHistory = function(b, noVars) {
     return ret
 };
 
-History.prototype.decodeHistory = function(str, prev) {
+History.decodeHistory = function(str, prev) {
     var name, splits, variable, c, d, 
         ret = { variables: clone(prev.variables) || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
@@ -370,7 +393,7 @@ History.prototype.decodeHistory = function(str, prev) {
     }
 };
 
-History.prototype.save = function (c) {
+History.prototype.save = function() {
     var hist, b, a = "";
 
     for (b = this.history.length - 1; b >= 0; b--) {
@@ -387,11 +410,11 @@ History.prototype.restore = function () {
     var a, b, c, vars;
 
     try {
-        if (testplay) {
-            this.display(testplay, null, 'quietly');
-            return true
-        }
         if (!window.location.hash || (window.location.hash == "#")) {
+            if (testplay) {
+                this.display(testplay, null, 'quietly');
+                return true
+            }
             return false
         }
         if (window.location.hash.substr(0, 2) == '#!') {
@@ -401,7 +424,7 @@ History.prototype.restore = function () {
         }
         a = window.location.hash.replace("#", "").split(".");
         for (b = 0; b < a.length; b++) {
-            vars = this.decodeHistory(a[b], vars || {});
+            vars = History.decodeHistory(a[b], vars || {});
             if (vars) {
                 if (b == a.length - 1) {
                     vars.variables = clone(this.history[0].variables);
@@ -443,6 +466,12 @@ var restart = History.prototype.restart = function () {
     }
 };
 
+/*
+**
+** Macros
+**
+*/
+
 var version = {
     major: 4,
     minor: 2,
@@ -466,13 +495,14 @@ macros.display = {
         if (macroName != "display") {
             output = macroName;
             // Shorthand displays can have parameters
-            params = name.readMacroParams(true);
+            params = parser.fullMatch().replace(/^\S*|>>$/g,'').readMacroParams(true);
+            // The above line recreates params, with the quotes.
             try {
                 for(j=0; j < params.length; j++) {
                     params[j] = eval(Wikifier.parse(params[j]));
                 }
             } catch (e) {
-                throwError(place, "<<" + macroName + " " + name + ">> bad argument: " + params[j], parser.fullMatch());
+                throwError(place, parser.fullMatch() + " bad argument: " + params[j], parser.fullMatch());
                 return
             }
         }
@@ -488,7 +518,7 @@ macros.display = {
                     output = name;
                 }
                 else {
-                    throwError(place, "<<" + macroName + ">> bad expression: " + e.message,
+                    throwError(place, parser.fullMatch() + " bad expression: " + e.message,
                         parser.fullMatch());
                     return
                 }
@@ -586,7 +616,18 @@ macros["if"] = {
             currentCond = parser.fullArgs(),
             currentClause = "",
             t = 0,
-            nesting = 0;
+            nesting = 0,
+            checkBadCond = function(c, name) {
+                // Forbid the assignment = in <<if>> clauses
+                // Look for =, but not ==, ===, !=, !==, <=, >= or ~=, or in quoted strings
+                if (c.match("[^=<>!~]=(?!=)" + Wikifier.textPrimitives.unquoted)) {
+                    throwError(place, "<<" + name + ">>: use 'is' instead of '='", c);
+                    return true;
+                }
+            };
+        if (checkBadCond(parser.fullMatch(), "if")) {
+            return;
+        }
         for (var i = 0; i < src.length; i++) {
             if (src.substr(i, 9) == "<<endif>>") {
                 nesting--;
@@ -603,7 +644,11 @@ macros["if"] = {
                 currentClause="";
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
-                    currentCond = Wikifier.parse(src.slice(i+9,t));
+                    currentCond = src.slice(i+9,t);
+                    if (checkBadCond(currentCond, "else if")) {
+                        return;
+                    }
+                    currentCond = Wikifier.parse(currentCond);
                 }
                 else {
                     currentCond = "true";
@@ -625,7 +670,7 @@ macros["if"] = {
                     }
                 }
             } else {
-                throwError(place, "can't find matching endif", parser.fullMatch());
+                throwError(place, "I can't find a matching <<endif>>", parser.fullMatch());
             }
         } catch (e) {
             throwError(place, "<<if>> bad condition: " + e.message, !i ? parser.fullMatch()
@@ -815,7 +860,7 @@ macros.back = {
                     stepsParam2 = eval(Wikifier.parse(stepsParam2));
                 }
                 catch(r) {
-                    throwError(a, "<<"+b + ">> bad expression: " + r.message, parser.fullMatch())
+                    throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
                     return;
                 }
             }
@@ -847,7 +892,7 @@ macros.back = {
                         e = eval(Wikifier.parse(e[0]));
                     }
                     catch(r) {
-                        throwError(a, "<<" + b + ">> bad expression: " + r.message, parser.fullMatch())
+                        throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
                         return;
                     }
                 }
@@ -964,33 +1009,45 @@ macros.button = {
     }
 };
 
-function Passage(c, b, a, ofunc, okey) {
+/*
+**
+** Passage object
+**
+*/
+
+function Passage(c, b, a, ofunc) {
     var t;
     if (!this || this.constructor != Passage) {
         throw new ReferenceError("passage() must be in lowercase");
     }
     this.title = c;
-    ofunc = typeof ofunc == 'function' && okey != null && ofunc;
+    ofunc = typeof ofunc == 'function' && ofunc;
     if (b) {
         this.id = a;
         // Load tags
         this.tags = b.getAttribute("tags");
         if (typeof this.tags == "string") {
             if (ofunc) {
-                this.tags = ofunc(this.tags, okey);
+                this.tags = ofunc(this.tags);
             }
             this.tags = this.tags.readBracketedList();
         } else this.tags = [];
         // Load text
         t = b.firstChild ? b.firstChild.nodeValue : "";
         if (ofunc && !this.isImage()) {
-            this.text = ofunc(Passage.unescapeLineBreaks(t), okey);
+            this.text = ofunc(Passage.unescapeLineBreaks(t));
         } else {
             this.text = Passage.unescapeLineBreaks(t);
         }
         // Preload linked images
         if (!this.isImage()) {
             this.preloadImages();
+        }
+        // Check for the .char selector, or the [data-char] selector
+        // False positives aren't a big issue.
+        if (/\.char\b|\[data\-char\b/.exec(this.text) && Wikifier.charSpanFormatter) {
+            Wikifier.formatters.push(Wikifier.charSpanFormatter);
+            delete Wikifier.charSpanFormatter;
         }
     } else {
         this.text = '@@This passage does not exist: ' + c + '@@';
@@ -999,9 +1056,10 @@ function Passage(c, b, a, ofunc, okey) {
 }
 Passage.prototype.isImage = function() {
     return !!~(this.tags.indexOf("Twine.image"));
-}
+};
 Passage.prototype.preloadImages = function() {
-    var u = "\\s*['\"]?([^\"']+\\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
+    // Don't preload URLs containing '$' - suspect that they are variables.
+    var u = "\\s*['\"]?([^\"'$]+\\.(jpe?g|a?png|gif|bmp|webp|svg))['\"]?\\s*",
         k = function(c, e) {
             var i,d;
             do {
@@ -1042,33 +1100,27 @@ Passage.prototype.processText = function() {
     }
     return ret;
 };
-    
+Passage.prototype.toJSON = function() {
+    return this.id;
+};
+
+/*
+**
+** Tale object
+**
+*/
+
 function Tale() {
-    var a,b,c,lines,i,kv,ns,nsc,isImage,
+    var a,b,c,lines,i,kv,nsc,isImage,
         settings = this.storysettings = {
-            // The two runtime settings (undo and bookmark) default to true.
-            lookup: function(a) {
-                return !~["0", "off", "false"].indexOf((this[a]+""));
+            lookup: function(a, dfault) {
+                // The two runtime settings (undo and bookmark) default to true.
+                if (!(a in this)) return dfault;
+                return (this[a]+"") != "off";
             }
         },
         tiddlerTitle = '';
     window.tale = this;
-    function deswap(t, k) {
-        var i,c,p,p1,up,r = '';
-        for (i = 0; i < t.length; i++) {
-            c = t.charAt(i);
-            up = (c == c.toUpperCase());
-            p = k.indexOf(c.toLowerCase());
-            if (p > -1) {
-                p1 = p + (p % 2 == 0 ? 1 : -1);
-                if (p1 >= k.length) p1 = p;
-                c = k.charAt(p1);
-                up && (c = c.toUpperCase());
-            }
-            r = r + c;
-        }
-        return r
-    }
     this.passages = {};
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
@@ -1090,20 +1142,14 @@ function Tale() {
         }
     }
     //Load in the passages
-    if (settings.obfuscate == 'swap' && settings.obfuscatekey) {
-        ns = '';
-        for (i = 0; i < settings.obfuscatekey.length; i++) {
-            nsc = settings.obfuscatekey[i];
-            if (ns.indexOf(nsc) == -1 && ":\\\"n0".indexOf(nsc) == -1) ns = ns + nsc;
-        }
-        settings.obfuscatekey = ns;
+    if (settings.obfuscate == 'rot13') {
         for (b = 0; b < a.length; b++) {
             c = a[b];
             if (c.getAttribute && (tiddlerTitle = c.getAttribute("tiddler"))) {
                 isImage = (c.getAttribute("tags")+"").indexOf("Twine.image")>-1;
                 if (tiddlerTitle != 'StorySettings' && !isImage) 
-                    tiddlerTitle = deswap(tiddlerTitle, settings.obfuscatekey);
-                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && deswap, settings.obfuscatekey);
+                    tiddlerTitle = rot13(tiddlerTitle);
+                this.passages[tiddlerTitle] = new Passage(tiddlerTitle, c, b+1, !isImage && rot13);
             }
         }
     } else {
@@ -1161,7 +1207,7 @@ Tale.prototype.lookup = function (h, g, a) {
     return d
 };
 Tale.prototype.canUndo = function() {
-    return this.storysettings.lookup('undo');
+    return this.storysettings.lookup('undo',true);
 };
 Tale.prototype.identity = function() {
     return this.storysettings.identity || "game";
@@ -1202,6 +1248,12 @@ Tale.prototype.setPageElements = function() {
     }
 };
 
+/*
+**
+** Wikifier object
+**
+*/
+
 function Wikifier(place, source) {
     this.source = source;
     this.output = place;
@@ -1209,6 +1261,16 @@ function Wikifier(place, source) {
     this.assembleFormatterMatches(Wikifier.formatters);
     this.subWikify(this.output);
 }
+
+Wikifier.textPrimitives = {
+    upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
+    lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
+    anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
+}
+Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
+    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
+    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
+Wikifier.textPrimitives.unquoted = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
 
 Wikifier.prototype.assembleFormatterMatches = function (formatters) {
     this.formatters = [];
@@ -1300,7 +1362,7 @@ Wikifier.prototype.fullMatch = function() {
 
 Wikifier.prototype.fullArgs = function (includeName) {
     var source = this.source.replace(/\u200c/g," "),
-        endPos = source.indexOf('>>', this.matchStart),
+        endPos = this.nextMatch-2,
         startPos = source.indexOf(includeName ? '<<' : ' ', this.matchStart);
     if (!~startPos || !~endPos || endPos <= startPos) {
         return "";
@@ -1310,8 +1372,7 @@ Wikifier.prototype.fullArgs = function (includeName) {
 
 Wikifier.parse = function (input) {
     var m, re, b = input, found = [],
-        // Regex fragment: is the preceding match outside a string?
-        g = "(?=(?:[^\"'\\\\]*(?:\\\\.|'(?:[^'\\\\]*\\\\.)*[^'\\\\]*'|\"(?:[^\"\\\\]*\\\\.)*[^\"\\\\]*\"))*[^'\"]*$)";
+        g = Wikifier.textPrimitives.unquoted;
     
     function alter(from,to) {
         return b.replace(new RegExp(from+g,"gi"),to);
@@ -1351,7 +1412,14 @@ Wikifier.formatHelpers = {
             styles = [],
             lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
             lookaheadRegExp = new RegExp(lookahead, "mg"),
-            hadStyle = false;
+            hadStyle = false,
+            unDash = function (str) {
+                var s = str.split("-");
+                if (s.length > 1) for (var t = 1; t < s.length; t++)
+                s[t] = s[t].substr(0, 1).toUpperCase() + s[t].substr(1);
+                return s.join("");
+            };
+        
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
             lookaheadMatch = lookaheadRegExp.exec(w.source);
@@ -1359,10 +1427,10 @@ Wikifier.formatHelpers = {
             if (gotMatch) {
                 hadStyle = true;
                 if (lookaheadMatch[1]) {
-                    s = lookaheadMatch[1].unDash();
+                    s = unDash(lookaheadMatch[1]);
                     v = lookaheadMatch[2];
                 } else {
-                    s = lookaheadMatch[3].unDash();
+                    s = unDash(lookaheadMatch[3]);
                     v = lookaheadMatch[4];
                 }
                 switch (s) {
@@ -1589,7 +1657,7 @@ Wikifier.formatters = [
                 currLevel = newLevel;
                 currType = newType;
                 t = insertElement(placeStack[placeStack.length - 1], "li");
-                if (bulletType != "*" && bulletType != "#") {
+                if (bulletType && bulletType != "*") {
                     t.setAttribute("data-bullet", bulletType);
                 }
                 w.subWikify(t, this.terminator);
@@ -1608,7 +1676,7 @@ Wikifier.formatters = [
 (Wikifier.linkFormatter = {
     name: "prettyLink",
     match: "\\[\\[",
-    lookahead: "\\[\\[([^\\|\\]]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
+    lookahead: "\\[\\[([^\\|]*?)(?:\\|(.*?))?\\](?:\\[(.*?)\])?\\]",
     makeInternalOrExternal: function(out,title,callback,type) {
         if (title && !tale.has(title) && (title.match(Wikifier.urlFormatter.match,"g") || ~title.search(/[\.\\\/#]/)))
             return Wikifier.createExternalLink(out, title, callback, type); 
@@ -1650,24 +1718,33 @@ Wikifier.formatters = [
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
     lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mig");
+        var e, imgPassages, imgname, img, j, lookaheadMatch,
+            lookaheadRegExp = new RegExp(this.lookahead, "mig");
         lookaheadRegExp.lastIndex = w.matchStart;
-        var lookaheadMatch = lookaheadRegExp.exec(w.source);
-        if (lookaheadMatch && lookaheadMatch.index == w.matchStart) // Simple bracketed link
+        lookaheadMatch = lookaheadRegExp.exec(w.source);
+        if (lookaheadMatch && lookaheadMatch.index == w.matchStart)
         {
-            var e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
+            e = w.output, title = Wikifier.parsePassageTitle(lookaheadMatch[5])
             if (title) {
                 e = Wikifier.linkFormatter.makeInternalOrExternal(w.output, title);
             }
-            var img = insertElement(e, "img");
+            img = insertElement(e, "img");
             if (lookaheadMatch[1]) img.align = "left";
             else if (lookaheadMatch[2]) img.align = "right";
             if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
-            img.src = lookaheadMatch[4];
+            // Try to parse it as a variable
+            try {
+                imgname = eval(Wikifier.parse(lookaheadMatch[4]));
+            }
+            catch(e) {
+            }
+            if (!imgname) {
+                imgname = lookaheadMatch[4];
+            }
             // Base64 passage transclusion
-            var imgPassages = tale.lookup("tags", "Twine.image");
-            for (var j = 0; j < imgPassages.length; j++) {
-                if (imgPassages[j].title == lookaheadMatch[4]) {
+            imgPassages = tale.lookup("tags", "Twine.image");
+            for (j = 0; j < imgPassages.length; j++) {
+                if (imgPassages[j].title == imgname) {
                     img.src = imgPassages[j].text;
                     break;
                 }
@@ -1679,7 +1756,9 @@ Wikifier.formatters = [
 {
     name: "macro",
     match: "<<",
-    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>(?!>))*)>>",
+    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>"
+        + Wikifier.textPrimitives.unquoted.replace("?=","?!")
+        + ")*)>>",
     handler: function (w) {
         var lookaheadRegExp = new RegExp(this.lookahead, "mg");
         lookaheadRegExp.lastIndex = w.matchStart;
@@ -1806,6 +1885,13 @@ Wikifier.formatters = [
     }
 },
 {
+    name: "lineBreak",
+    match: "\\n",
+    handler: function (w) {
+        insertElement(w.output, "br");
+    }
+},
+{
     name: "continuedLine",
     match: "\\\\\\s*?\\n",
     handler: function(a) {
@@ -1834,7 +1920,7 @@ Wikifier.formatters = [
         }
     },
     handler: function (a) {
-        var e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
+        var tmp, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
           tn = re && re[1] && re[1].toLowerCase();
         if(tn && tn != "html") {
@@ -1845,17 +1931,23 @@ Wikifier.formatters = [
             lookaheadRegExp.lastIndex = a.matchStart;
             lookaheadMatch = lookaheadRegExp.exec(a.source);
             if (lookaheadMatch || isvoid) {
-                e = document.createElement(a.output.tagName);
-                e.innerHTML = a.matchText;
-                while(e.firstChild) {
-                    e = e.firstChild;
-                }
                 if (isstyle) {
-                    e.innerHTML = a.source.slice(a.nextMatch, lookaheadMatch.index);
+                    e = document.createElement(tn);
+                    e.type = "text/css"; // IE8 compatibility
+                    tmp = a.source.slice(a.nextMatch, lookaheadMatch.index);
+                    e.styleSheet ? (e.styleSheet.cssText = tmp) : (e.innerHTML = tmp);
                     a.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
                 }
-                else if (!isvoid) {
-                    a.subWikify(e, lookahead);
+                else {
+                    // Creating a loose <tr> element creates it wrapped inside a <tbody> element.
+                    e = document.createElement(a.output.tagName);
+                    e.innerHTML = a.matchText;
+                    while(e.firstChild) {
+                        e = e.firstChild;
+                    }
+                    if (!isvoid) {
+                        a.subWikify(e, lookahead);
+                    }
                 }
                 if (e.tagName.toLowerCase() == 'table') {
                     this.cleanupTables.call(this,e);
@@ -1866,8 +1958,9 @@ Wikifier.formatters = [
             }
         }
     }
-},
-{
+}];
+// Optional - included if the ".char" selector appears anywhere in the story.
+Wikifier.charSpanFormatter = {
     name: "char",
     match: "[^\n]",
     handler: function (a) {
@@ -1875,8 +1968,8 @@ Wikifier.formatters = [
         insertElement(a.output, "span", null, "char", a.matchText).setAttribute("data-char", a.matchText == " " ? "space" :
             a.matchText == "\t" ? "tab" : a.matchText);
     }
-}
-];
+};
+
 Wikifier.parsePassageTitle = function(title) {
     if (title && !tale.has(title)) {
         try {
@@ -1929,24 +2022,8 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
 
     return el;
 };
-if (!((new RegExp("[\u0150\u0170]", "g")).test("\u0150"))) {
-    Wikifier.textPrimitives = {
-        upperLetter: "[A-Z\u00c0-\u00de]",
-        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-]",
-        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-]"
-    }
-} else {
-    Wikifier.textPrimitives = {
-        upperLetter: "[A-Z\u00c0-\u00de\u0150\u0170]",
-        lowerLetter: "[a-z\u00df-\u00ff_0-9\\-\u0151\u0171]",
-        anyLetter: "[A-Za-z\u00c0-\u00de\u00df-\u00ff_0-9\\-\u0150\u0170\u0151\u0171]"
-    }
-};
-Wikifier.textPrimitives.variable = "\\$((?:"+Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*"+
-    Wikifier.textPrimitives.anyLetter.replace("0-9\\-", "")+"+"+
-    Wikifier.textPrimitives.anyLetter.replace("\\-", "")+"*)+)";
 
-// Functions usable by custom scripts
+// Functions usable solely by custom scripts
 // This includes restart(), above.
 function visited(e) {
     var ret = 0, i = 0;
@@ -2033,6 +2110,10 @@ function parameter(n) {
     return 0
 }
 
+function bookmark() {
+    return state.hash || "#";
+}
+
 function scriptEval(s) {
     try {
         eval(s.text);
@@ -2042,7 +2123,7 @@ function scriptEval(s) {
 }
 /* Unload prompt */
 window.onbeforeunload = function() {
-    if (tale && tale.storysettings.lookup("exitprompt") && state && state.history.length > 1) {
+    if (tale && tale.storysettings.lookup("exitprompt",false) && state && state.history.length > 1) {
         return "You are about to end this " + tale.identity() + ".";
     }
 };
