@@ -354,10 +354,14 @@ class PassageWidget:
             gc = wx.GraphicsContext.Create(gc)
 
         for link in self.linksAndDisplays():
-            if link in dontDraw: continue
-
+            if link in dontDraw \
+                or (link not in self.passage.links and not self.app.config.ReadBool('displayArrows')):
+                    continue
+            
             otherWidget = self.parent.findWidget(link)
-            if not otherWidget or not otherWidget.passage.isStoryPassage(): dontDraw.append(link)
+            
+            if not otherWidget or not otherWidget.passage.isStoryPassage():
+                dontDraw.append(link)
 
             if otherWidget and not otherWidget.dimmed:
                 color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in self.passage.links else PassageWidget.CONNECTOR_COLOR

@@ -232,40 +232,33 @@ class App(wx.App):
 
         monoFont = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
 
-        if not sc.HasEntry('savePath'):
-            sc.Write('savePath', os.path.expanduser('~'))
-        if not sc.HasEntry('fsTextColor'):
-            sc.Write('fsTextColor', '#afcdff')
-        if not sc.HasEntry('fsBgColor'):
-            sc.Write('fsBgColor', '#100088')
-        if not sc.HasEntry('fsFontFace'):
-            sc.Write('fsFontFace', metrics.face('mono'))
-        if not sc.HasEntry('fsFontSize'):
-            sc.WriteInt('fsFontSize', metrics.size('fsEditorBody'))
-        if not sc.HasEntry('fsLineHeight'):
-            sc.WriteInt('fsLineHeight', 120)
-        if not sc.HasEntry('windowedFontFace'):
-            sc.Write('windowedFontFace', metrics.face('mono'))
-        if not sc.HasEntry('monospaceFontFace'):
-            sc.Write('monospaceFontFace', metrics.face('mono2'))
-        if not sc.HasEntry('windowedFontSize'):
-            sc.WriteInt('windowedFontSize', metrics.size('editorBody'))
-        if not sc.HasEntry('monospaceFontSize'):
-            sc.WriteInt('monospaceFontSize', metrics.size('editorBody'))
-        if not sc.HasEntry('storyFrameToolbar'):
-            sc.WriteBool('storyFrameToolbar', True)
-        if not sc.HasEntry('storyPanelSnap'):
-            sc.WriteBool('storyPanelSnap', False)
-        if not sc.HasEntry('fastStoryPanel'):
-            sc.WriteBool('fastStoryPanel', False)
-        if not sc.HasEntry('imageArrows'):
-            sc.WriteBool('imageArrows', True)
-        if not sc.HasEntry('createPassagePrompt'):
-            sc.WriteBool('createPassagePrompt', True)
-        if not sc.HasEntry('importImagePrompt'):
-            sc.WriteBool('importImagePrompt', True)
-        if not sc.HasEntry('passageWarnings'):
-            sc.WriteBool('passageWarnings', True)
+        for k,v in {
+            'savePath' : os.path.expanduser('~'),
+            'fsTextColor' : '#afcdff',
+            'fsBgColor' : '#100088',
+            'fsFontFace' : metrics.face('mono'),
+            'fsFontSize' : metrics.size('fsEditorBody'),
+            'fsLineHeight' : 120,
+            'windowedFontFace' : metrics.face('mono'),
+            'monospaceFontFace' : metrics.face('mono2'),
+            'windowedFontSize' : metrics.size('editorBody'),
+            'monospaceFontSize' : metrics.size('editorBody'),
+            'storyFrameToolbar' : True,
+            'storyPanelSnap' : False,
+            'fastStoryPanel' : False,
+            'imageArrows' : True,
+            'displayArrows' : True,
+            'createPassagePrompt' : True,
+            'importImagePrompt' : True,
+            'passageWarnings' : True
+        }.iteritems():
+            if not sc.HasEntry(k):
+                if type(v) == str:
+                    sc.Write(k,v)
+                elif type(v) == int:
+                    sc.WriteInt(k,v)
+                elif type(v) == bool:
+                    sc.WriteBool(k,v)
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""
