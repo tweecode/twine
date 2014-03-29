@@ -331,6 +331,7 @@ class StoryPanel(wx.ScrolledWindow):
         Scroll event handler.
         """
         self.visibleWidgets = None
+        self.Refresh()
 
     def pushUndo(self, action):
         """
@@ -838,8 +839,8 @@ class StoryPanel(wx.ScrolledWindow):
                                    if (widget.dimmed
                                        or self.GetClientRect().Intersects(widget.getPixelRect())
                                        # It's also visible if an arrow FROM it intersects with the Client Rect
-                                       or [w2 for w2 in widget.getConnectedWidgetTitles()
-                                           if geometry.lineRectIntersection(self.findWidget(w2).getConnectorLine(widget), self.GetClientRect())])]
+                                       or [w2 for w2 in widget.getConnectedWidgets()
+                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), self.GetClientRect())])]
         
         # background
 
@@ -849,12 +850,11 @@ class StoryPanel(wx.ScrolledWindow):
 
         # connectors
 
-        badLinks = []
         arrowheads = (self.scale > StoryPanel.ARROWHEAD_THRESHOLD)
 
         for widget in self.visibleWidgets:
             if not widget.dimmed:
-                badLinks = widget.paintConnectors(gc, arrowheads, badLinks, updateRect)
+                widget.paintConnectors(gc, arrowheads, updateRect)
         
         for widget in self.visibleWidgets: 
             if updateRect.Intersects(widget.getPixelRect()):
@@ -1005,7 +1005,7 @@ body {
 \t
 }"""
     BACKGROUND_COLOR = '#555753'
-    FLAT_BG_COLOR = '#c9c9c9'
+    FLAT_BG_COLOR = '#c6c6c6'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
     EXTRA_SPACE = 200

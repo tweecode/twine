@@ -310,6 +310,9 @@ class StoryFrame(wx.Frame):
         # Build menu
 
         buildMenu = wx.Menu()
+        
+        buildMenu.Append(StoryFrame.BUILD_VERIFY, '&Verify All Passages')
+        self.Bind(wx.EVT_MENU, self.verify, id = StoryFrame.BUILD_VERIFY)
 
         buildMenu.Append(StoryFrame.BUILD_TEST, '&Test Play\tCtrl-T')
         self.Bind(wx.EVT_MENU, self.testBuild, id = StoryFrame.BUILD_TEST)
@@ -329,7 +332,7 @@ class StoryFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda e: self.rebuild(displayAfter = True), id = StoryFrame.BUILD_VIEW_LAST)
         
         buildMenu.AppendSeparator()
-        
+           
         self.autobuildmenuitem = buildMenu.Append(StoryFrame.BUILD_AUTO_BUILD, '&Auto Build', kind = wx.ITEM_CHECK)
         self.Bind(wx.EVT_MENU, self.autoBuild, self.autobuildmenuitem)
         buildMenu.Check(StoryFrame.BUILD_AUTO_BUILD, False)
@@ -794,6 +797,11 @@ You can also include URLs of .tws and .twee files, too.
         except:
             self.app.displayError('saving your story')
 
+    def verify(self, event = None):
+        """Runs the syntax checks on all passages."""
+        for widget in self.storyPanel.widgets:
+            if not widget.verifyText(self): break
+
     def build(self, event = None):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
         dialog = wx.FileDialog(self, 'Build Story', self.buildDestination or os.getcwd(), "", \
@@ -1230,7 +1238,7 @@ You can also include URLs of .tws and .twee files, too.
 
     STORY_FORMAT_BASE = 501
 
-    [BUILD_TEST, BUILD_TEST_HERE, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 607)
+    [BUILD_VERIFY, BUILD_TEST, BUILD_TEST_HERE, BUILD_BUILD, BUILD_REBUILD, BUILD_VIEW_LAST, BUILD_AUTO_BUILD] = range(601, 608)
 
     [HELP_MANUAL, HELP_GROUP, HELP_GITHUB, HELP_FORUM] = range(701,705)
 

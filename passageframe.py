@@ -1,4 +1,4 @@
-import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
+import sys, os, re, types, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
 from tweelexer import TweeLexer, badLinkStyle
 from tiddlywiki import TiddlyWiki
@@ -318,11 +318,6 @@ class PassageFrame(wx.Frame):
                                               title = self.widget.passage.title + ' - ' + self.app.NAME, \
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
-
-    def syntaxCheck(self):
-        """
-        Check that the passage macro syntax is well-formed.
-        """
         
     def closeEditor(self, event = None):
         """
@@ -332,14 +327,9 @@ class PassageFrame(wx.Frame):
         try: self.fullscreen.Destroy()
         except: pass
         
-        # Show warnings
+        # Show warnings, do replacements
         if self.app.config.ReadBool('passageWarnings'):
-            checks = self.widget.parent.parent.header.passageChecks()
-            for check in checks:
-                result = check(self.widget.passage)
-                if result:
-                    wx.MessageDialog(self, result, 'Warning', wx.ICON_WARNING).ShowModal()
-        
+            if not self.widget.verifyText(self): return
         
         # Offer to create passage for broken links
         

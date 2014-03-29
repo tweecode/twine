@@ -96,16 +96,37 @@ class Header(object):
             ifMacroRegex = tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)")
             iter = re.finditer(ifMacroRegex, passage.text)
             for i in iter:
-                if re.search(r"[^=<>!~]=(?!=)" + tweeregex.UNQUOTED_REGEX, i.group(2)):
-                    return i.group(0) + " contains the = operator.\nPlease use 'is' instead of '=' in <<if>> and <<else>> tags."
+                r = re.search(r"([^=<>!~])(=(?!=))(.?)" + tweeregex.UNQUOTED_REGEX, i.group(2))
+                if r:
+                    warning = i.group(0) + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else>> tags."
+                    insertion = "is"
+                    if r.group(1) != " ":
+                        insertion = " "+insertion
+                    if r.group(3) != " ":
+                        insertion += " "
+                    # Yield the warning message, and a 3-tuple consisting of
+                    # start index of replacement, the replacement, end index of replacement
+                    yield (warning, (i.start(2)+r.start(2), insertion, i.start(2)+r.end(2)))
         
         def checkScriptTagInScriptPassage(passage):
             # Check that s script passage does not contain "<script type='text/javascript>" style tags.
             if passage.isScript():
-                if re.search(r"(?:</?script\b(?:[^>]|>" + tweeregex.QUOTED_REGEX + ")*>)" + tweeregex.UNQUOTED_REGEX, passage.text):
-                    return "This script contains a HTML <script> tag.\nScript passages should only contain Javascript code, not raw HTML."
+                iter = re.finditer(r"(?:</?script\b(?:[^>]|>" + tweeregex.QUOTED_REGEX + ")*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
+                for i in iter:
+                    warning = "This script contains " + i.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
+                    # Yield the warning message, and a 3-tuple consisting of
+                    # start index of replacement, the replacement, end index of replacement
+                    yield (warning, (i.start(0),"", i.end(0)))
         
-        return [checkIfMacro, checkScriptTagInScriptPassage]
+        def checkHTTPSpelling(passage):
+            # Corrects the incorrect spellings "http//" and "http:/" (and their https variants)
+            iter = re.finditer(r"\bhttp(s?)(?:\/\/|\:\/(?=[^\/]))", passage.text)
+            for i in iter:
+                # Yield the warning message, and a 3-tuple consisting of
+                # start index of replacement, the replacement, end index of replacement
+                yield (r"You appear to have misspelled 'http" + i.group(1) + "://'.", (i.start(0),"http" + i.group(1) + "://", i.end(0)))
+        
+        return [checkIfMacro, checkScriptTagInScriptPassage, checkHTTPSpelling]
 
     @staticmethod
     def factory(type, path, builtinPath):

@@ -237,6 +237,41 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
+        
+
+    def verifyText(self, window):
+        """
+        Check that the passage syntax is well-formed.
+        Return False if the check was aborted, True otherwise
+        """
+        passage = self.passage
+        checks = self.parent.parent.header.passageChecks()
+        
+        broken = False
+        for check in checks:
+            
+            oldtext = passage.text
+            newtext = ""
+            index = 0
+            
+            iter = check(self.passage)
+            if iter:
+                for warning, replace in iter:
+                    answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
+                        .ShowModal()
+                    if answer == wx.ID_YES:
+                        newtext += oldtext[index:replace[0]] + replace[1]
+                        index = replace[2]
+                        if hasattr(self, 'passageFrame') and self.passageFrame:
+                            self.passageFrame.bodyInput.SetText(newtext + oldtext[index:])
+                    elif answer == wx.ID_CANCEL:
+                        broken = True
+                        break
+            
+            passage.text = newtext + oldtext[index:]
+            if broken:
+                return False
+        return True
 
     def intersectsAny(self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""
@@ -336,8 +371,6 @@ class PassageWidget:
         flat = self.app.config.ReadBool('flatDesign')
         
         arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
-        if flat:
-            arrowheadLength *= 0.75
         arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
                                                    distance = arrowheadLength)
 
@@ -351,38 +384,45 @@ class PassageWidget:
         arrowhead2 = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
                                                    distance = arrowheadLength)
 
-        if isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
-        elif flat:
+        
+        if flat:
             gc.SetBrush(wx.Brush(color))
-            gc.DrawPolygon([wx.Point(*end), wx.Point(*arrowhead2), wx.Point(*arrowhead)])
+            if isinstance(gc, wx.GraphicsContext):
+                gc.DrawLines([wx.Point2D(*arrowhead2), wx.Point2D(*end), wx.Point2D(*arrowhead) ])
+            else:
+                gc.DrawPolygon([wx.Point(*arrowhead2), wx.Point(*end), wx.Point(*arrowhead)])
+        elif isinstance(gc, wx.GraphicsContext):
+            gc.StrokeLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
         else:
             gc.DrawLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
 
 
-    def getConnectedWidgetTitles(self):
+    def getConnectedWidgets(self):
         """
         Returns a list of titles of all widgets that will have lines drawn to them.
         """
         ret = []
         for link in self.linksAndDisplays():
-            if (link in self.passage.links or not self.app.config.ReadBool('displayArrows')) \
-                    and self.parent.findWidget(link):
-                ret.append(link)
+            if (link in self.passage.links or self.app.config.ReadBool('displayArrows')):
+                widget = self.parent.findWidget(link)
+                if widget:
+                    ret.append(widget)
         
         if self.app.config.ReadBool('imageArrows'):
             for link in self.passage.images:
-                ret.append(link)
+                widget = self.parent.findWidget(link)
+                if widget:
+                    ret.append(widget)
             
             if self.passage.isStylesheet():
                 for t in self.passage.tags:
                     if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
                         for otherWidget in self.parent.taggedWidgets(t):
                             if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
-                                ret.append(otherWidget.passage.title)
+                                ret.append(otherWidget)
         return ret
             
-    def paintConnectors(self, gc, arrowheads = True, dontDraw = [], updateRect = None):
+    def paintConnectors(self, gc, arrowheads = True, updateRect = None):
         """
         Paints all connectors originating from this widget. This accepts
         a list of widget titles that will not be drawn to. It returns this
@@ -392,24 +432,19 @@ class PassageWidget:
         or wx.PaintDC.
         """
         
-        colors = PassageWidget.FLAT_COLORS if self.app.config.ReadBool('flatDesign') else PassageWidget.COLORS
+        flat = self.app.config.ReadBool('flatDesign')
+        colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
         
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
 
-        widgets = self.getConnectedWidgetTitles()
+        widgets = self.getConnectedWidgets()
         if widgets:
-            for link in widgets:
-                if link in dontDraw:
-                    continue
-                
-                otherWidget = self.parent.findWidget(link)
-                if not otherWidget:
-                    dontDraw.append(link)
-                    continue
+            for widget in widgets:
+                link = widget.passage.title
                 
                 if self.passage.isAnnotation():
-                    color = '#000000'
+                    color = colors['connectorAnnotation']
                 elif link in self.passage.links:
                     color = colors['connector']
                 elif link in self.passage.displays:
@@ -417,10 +452,8 @@ class PassageWidget:
                 elif link in self.passage.images:
                     color = colors['connectorResource']
                 
-                width = (2 if self.selected else 1)
-                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-        return dontDraw
+                width = (2 if self.selected else 1) * (2 * flat + 1)
+                self.paintConnectorTo(widget, arrowheads, color, width, gc, updateRect)
     
     def paint(self, dc):
         """
@@ -849,13 +882,14 @@ class PassageWidget:
                'greek': (102, 102, 102),
                'connector': (186, 189, 182),
                'connectorDisplay': (132, 164, 189),
-               'connectorResource': (110, 112, 107)
+               'connectorResource': (110, 112, 107),
+               'connectorAnnotation': (0, 0, 0),
             }
     FLAT_COLORS = {
                'frame': (0, 0, 0),
                'bodyStart':  (255, 255, 255),
                'bodyEnd':  (255, 255, 255),
-               'annotation': (122, 125, 120),
+               'annotation': (212, 212, 212),
                'startTitleBar': (75, 219, 36),
                'endTitleBar': (36, 54, 219),
                'titleBar': (36, 115, 219),
@@ -866,11 +900,12 @@ class PassageWidget:
                'privateTitleBar': (153, 153, 153),
                'titleText': (255, 255, 255),
                'excerptText': (96, 96, 96),
-               'annotationText': (255,255,255),
+               'annotationText': (0,0,0),
                'greek': (192, 192, 192),
                'connector': (161, 165, 156),
-               'connectorDisplay': (165, 189, 207),
+               'connectorDisplay': (137, 193, 235),
                'connectorResource': (186, 188, 185),
+               'connectorAnnotation': (255, 255, 255),
                'selection': (28, 102, 176)
             }
     DIMMED_ALPHA = 0.5
