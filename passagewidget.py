@@ -276,12 +276,10 @@ class PassageWidget:
         """If an image passage, updates the bitmap to match the contained base64 data."""
         if self.passage.isImage():
             self.bitmap = images.Base64ToBitmap(self.passage.text)
-
-    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
+        
+    def getConnectorLine(self, otherWidget):
         """
-        Paints a connecting line between this widget and another,
-        with optional arrowheads. You may pass either a wx.GraphicsContext
-        (anti-aliased drawing) or a wx.PaintDC.
+        Get the line that would be drawn between this widget and another.
         """
         start = self.parent.toPixels(self.getCenter())
         end = self.parent.toPixels(otherWidget.getCenter())
@@ -300,6 +298,17 @@ class PassageWidget:
         # Clip the end of the arrow
 
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
+        
+        return (start, end)
+        
+
+    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
+        """
+        Paints a connecting line between this widget and another,
+        with optional arrowheads. You may pass either a wx.GraphicsContext
+        (anti-aliased drawing) or a wx.PaintDC.
+        """
+        start, end = self.getConnectorLine(otherWidget)
 
         # does it actually need to be drawn?
 
@@ -340,6 +349,29 @@ class PassageWidget:
         else:
             gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
 
+
+    def getConnectedWidgetTitles(self):
+        """
+        Returns a list of titles of all widgets that will have lines drawn to them.
+        """
+        ret = []
+        for link in self.linksAndDisplays():
+            if (link in self.passage.links or not self.app.config.ReadBool('displayArrows')) \
+                    and self.parent.findWidget(link):
+                ret.append(link)
+        
+        if self.app.config.ReadBool('imageArrows'):
+            for link in self.passage.images:
+                ret.append(link)
+            
+            if self.passage.isStylesheet():
+                for t in self.passage.tags:
+                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                        for otherWidget in self.parent.taggedWidgets(t):
+                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
+                                ret.append(otherWidget.passage.title)
+        return ret
+            
     def paintConnectors(self, gc, arrowheads = True, dontDraw = [], updateRect = None):
         """
         Paints all connectors originating from this widget. This accepts
@@ -353,44 +385,31 @@ class PassageWidget:
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
 
-        for link in self.linksAndDisplays():
-            if link in dontDraw \
-                or (link not in self.passage.links and not self.app.config.ReadBool('displayArrows')):
+        widgets = self.getConnectedWidgetTitles()
+        if widgets:
+            for link in widgets:
+                if link in dontDraw:
                     continue
-            
-            otherWidget = self.parent.findWidget(link)
-            
-            if not otherWidget or not otherWidget.passage.isStoryPassage():
-                dontDraw.append(link)
-
-            if otherWidget and not otherWidget.dimmed:
-                color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in self.passage.links else PassageWidget.CONNECTOR_COLOR
-                # Special colour for annotations
+                
+                otherWidget = self.parent.findWidget(link)
+                if not otherWidget:
+                    dontDraw.append(link)
+                    continue
+                
                 if self.passage.isAnnotation():
                     color = '#000000'
-                width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
+                elif link in self.passage.links:
+                    color = PassageWidget.CONNECTOR_COLOR
+                elif link in self.passage.displays:
+                    color = PassageWidget.CONNECTOR_DISPLAY_COLOR
+                elif link in self.passage.images:
+                    color = PassageWidget.CONNECTOR_RESOURCE_COLOR
+                
+                width = (2 if self.selected else 1)
                 self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-        if self.app.config.ReadBool('imageArrows'):
-            for i in self.passage.images:
-                if i not in dontDraw:
-                    otherWidget = self.parent.findWidget(i)
-                    if otherWidget and not otherWidget.dimmed:
-                        color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                        width = (2 if self.selected else 1)
-                        self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-            if self.passage.isStylesheet():
-                for t in self.passage.tags:
-                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
-                        for otherWidget in self.parent.taggedWidgets(t):
-                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
-                                color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                                width = (2 if self.selected else 1)
-                                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
+            
         return dontDraw
-
+    
     def paint(self, dc):
         """
         Handles paint events, either blitting our paint buffer or
