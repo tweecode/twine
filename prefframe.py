@@ -15,7 +15,7 @@ class PreferenceFrame(wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(13, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(14, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -61,6 +61,7 @@ class PreferenceFrame(wx.Frame):
             attr.SetValue(self.app.config.ReadBool(name))
 
         checkbox(self, "fastStoryPanel", 'Faster but rougher story map display')
+        checkbox(self, "flatDesign", 'Flat Design(TM) mode')
         checkbox(self, "imageArrows", 'Connector arrows for images and stylesheets')
         checkbox(self, "displayArrows", 'Connector arrows for <<display>>ed passages')
         checkbox(self, "createPassagePrompt", 'Offer to create new passages for broken links')
@@ -81,6 +82,8 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.fastStoryPanel)
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.flatDesign)
         panelSizer.Add((1,2))
         panelSizer.Add(self.imageArrows)
         panelSizer.Add((1,2))

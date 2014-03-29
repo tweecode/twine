@@ -818,7 +818,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         updateRegion = self.GetUpdateRegion()
         updateRect = updateRegion.GetBox()
-        gc.SetBrush(wx.Brush(StoryPanel.BACKGROUND_COLOR))
+        gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign') else StoryPanel.BACKGROUND_COLOR ))
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
 
         # connectors
@@ -980,6 +980,7 @@ body {
 \t
 }"""
     BACKGROUND_COLOR = '#555753'
+    FLAT_BG_COLOR = '#c9c9c9'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
     EXTRA_SPACE = 200
