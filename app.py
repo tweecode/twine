@@ -243,7 +243,7 @@ class App(wx.App):
             'monospaceFontFace' : metrics.face('mono2'),
             'windowedFontSize' : metrics.size('editorBody'),
             'monospaceFontSize' : metrics.size('editorBody'),
-            'flatDesign' : True,
+            'flatDesign' : False,
             'storyFrameToolbar' : True,
             'storyPanelSnap' : False,
             'fastStoryPanel' : False,

@@ -239,15 +239,16 @@ class PassageWidget:
         except: pass
         
 
-    def verifyText(self, window):
+    def verifyPassage(self, window):
         """
         Check that the passage syntax is well-formed.
-        Return False if the check was aborted, True otherwise
+        Return -1 if the check was aborted, 0+ for each check made
         """
         passage = self.passage
         checks = self.parent.parent.header.passageChecks()
         
         broken = False
+        problems = 0
         for check in checks:
             
             oldtext = passage.text
@@ -257,6 +258,7 @@ class PassageWidget:
             iter = check(self.passage)
             if iter:
                 for warning, replace in iter:
+                    problems += 1
                     answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
                         .ShowModal()
                     if answer == wx.ID_YES:
@@ -270,8 +272,8 @@ class PassageWidget:
             
             passage.text = newtext + oldtext[index:]
             if broken:
-                return False
-        return True
+                return -1
+        return problems
 
     def intersectsAny(self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""

@@ -98,7 +98,7 @@ class Header(object):
             for i in iter:
                 r = re.search(r"([^=<>!~])(=(?!=))(.?)" + tweeregex.UNQUOTED_REGEX, i.group(2))
                 if r:
-                    warning = i.group(0) + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else>> tags."
+                    warning = i.group(0) + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else if>> tags."
                     insertion = "is"
                     if r.group(1) != " ":
                         insertion = " "+insertion

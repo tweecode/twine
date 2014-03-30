@@ -233,7 +233,7 @@ class PassageFrame(wx.Frame):
             tags += tag + ' '
 
         self.tagsInput.SetValue(tags)
-        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        self.SetTitle(self.widget.passage.title + ' - ' + self.widget.parent.parent.title + ' - ' + self.app.NAME)
 
     def syncPassage(self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
@@ -329,7 +329,7 @@ class PassageFrame(wx.Frame):
         
         # Show warnings, do replacements
         if self.app.config.ReadBool('passageWarnings'):
-            if not self.widget.verifyText(self): return
+            if self.widget.verifyPassage(self) == -1: return
         
         # Offer to create passage for broken links
         

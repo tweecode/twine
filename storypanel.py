@@ -331,7 +331,7 @@ class StoryPanel(wx.ScrolledWindow):
         Scroll event handler.
         """
         self.visibleWidgets = None
-        self.Refresh()
+        self.Update()
 
     def pushUndo(self, action):
         """

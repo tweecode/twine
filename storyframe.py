@@ -280,6 +280,11 @@ class StoryFrame(wx.Frame):
         self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_INCLUDES, 'StoryIncludes')
         self.Bind(wx.EVT_MENU, self.createInfoPassage, id = StoryFrame.STORYSETTINGS_INCLUDES)
 
+        self.storySettingsMenu.AppendSeparator()
+        
+        self.storySettingsMenu.Append(StoryFrame.STORYSETTINGS_HELP, 'About Special Passages')
+        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/special_passages'), id = StoryFrame.STORYSETTINGS_HELP)
+        
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
 
         self.storyMenu.AppendSeparator()
@@ -799,8 +804,15 @@ You can also include URLs of .tws and .twee files, too.
 
     def verify(self, event = None):
         """Runs the syntax checks on all passages."""
+        noprobs = True
         for widget in self.storyPanel.widgets:
-            if not widget.verifyText(self): break
+            result = widget.verifyPassage(self)
+            if result == -1: break
+            elif result > 0: noprobs = False
+        if noprobs:
+            wx.MessageDialog(self, "No obvious problems found in "+str(len(self.storyPanel.widgets)) + " passage" + ("s" if len(self.storyPanel.widgets)>1 else "")\
+                             + "\n\n(There may still be problems when the story is played, of course.)",
+                             "Verify All Passages", wx.ICON_INFORMATION).ShowModal()
 
     def build(self, event = None):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
@@ -1234,7 +1246,7 @@ You can also include URLs of .tws and .twee files, too.
 
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
      STORY_IMPORT_IMAGE, STORY_IMPORT_IMAGE_URL, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT] = range(401,419)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT, STORYSETTINGS_HELP] = range(401,420)
 
     STORY_FORMAT_BASE = 501
 
