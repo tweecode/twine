@@ -1746,11 +1746,9 @@ Wikifier.formatters = [
 {
     name: "macro",
     match: "<<",
-    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>"
-        + Wikifier.textPrimitives.unquoted.replace("?=","?!")
-        + ")*)>>",
+    lookahead: /<<([^>\s]+)(?:\s*)((?:\\.|'(?:[^'\\]*\\.)*[^'\\]*'|"(?:[^"\\]*\\.)*[^"\\]*"|[^>])*)>>/mg,
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var lookaheadRegExp = new RegExp(this.lookahead);
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source.replace(/\u200c/g,'\n'));
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {

@@ -447,13 +447,12 @@ class PassageWidget:
                 
                 if self.passage.isAnnotation():
                     color = colors['connectorAnnotation']
-                elif link in self.passage.links:
-                    color = colors['connector']
                 elif link in self.passage.displays:
                     color = colors['connectorDisplay']
                 elif link in self.passage.images:
                     color = colors['connectorResource']
-                
+                else:
+                    color = colors['connector']
                 width = (2 if self.selected else 1) * (2 * flat + 1)
                 self.paintConnectorTo(widget, arrowheads, color, width, gc, updateRect)
     
@@ -577,7 +576,7 @@ class PassageWidget:
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
         tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08,
-                                                                    0.88 if flat else 0.28, 0.68 if flat else 0.88)), self.dimmed)
+                                                                    0.58 if flat else 0.28, 0.88)), self.dimmed)
 
         # inset for text (we need to know this for layout purposes)
 
@@ -692,7 +691,7 @@ class PassageWidget:
 
                 # draw tags
 
-                tagTextColor = dim(colors['titleText' if flat else 'excerptText'], self.dimmed)
+                tagTextColor = dim(colors['frame'], self.dimmed)
 
                 if isinstance(gc, wx.GraphicsContext):
                     gc.SetFont(excerptFont, tagTextColor)
@@ -753,7 +752,7 @@ class PassageWidget:
                 width = size.width-4
                 gc.DrawRectangle(2, height, width, tagBarHeight)
 
-                gc.SetPen(wx.Pen(colors['titleText' if flat else 'greek'], PassageWidget.GREEK_HEIGHT))
+                gc.SetPen(wx.Pen(colors['greek'], PassageWidget.GREEK_HEIGHT))
                 height += inset
                 width = (width-inset*2)/2
 

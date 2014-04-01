@@ -325,8 +325,9 @@ class StoryPanel(wx.ScrolledWindow):
         sx = (widgetRect.x-20) / float(xUnit)
         sy = (widgetRect.y-20) / float(yUnit)
         self.Scroll(max(sx, 0), max(sy - 20, 0))
+        self.scroll()
         
-    def scroll(self, event):
+    def scroll(self, event = None):
         """
         Scroll event handler.
         """
