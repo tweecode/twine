@@ -111,7 +111,7 @@ class Header(object):
         def checkScriptTagInScriptPassage(passage):
             # Check that s script passage does not contain "<script type='text/javascript>" style tags.
             if passage.isScript():
-                iter = re.finditer(r"(?:</?script\b(?:[^>]|>" + tweeregex.QUOTED_REGEX + ")*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
+                iter = re.finditer(r"(?:</?script\b[^>]*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
                 for i in iter:
                     warning = "This script contains " + i.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
                     # Yield the warning message, and a 3-tuple consisting of
