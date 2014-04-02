@@ -33,11 +33,11 @@ class StoryPanel(wx.ScrolledWindow):
         self.draggingMarquee = False
         self.draggingWidgets = None
         self.notDraggingWidgets = None
-        self.scrolling = False
         self.undoStack = []
         self.undoPointer = -1
         self.lastSearchRegexp = None
         self.lastSearchFlags = None
+        self.lastScrollPos = -1
         self.trackinghover = None
         self.tooltiptimer = wx.PyTimer(self.tooltipShow)
         self.tooltipplace = ''
@@ -70,7 +70,6 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.SetDropTarget(StoryPanelDropTarget(self))
         self.Bind(wx.EVT_ERASE_BACKGROUND, lambda e: e)
-        self.Bind(wx.EVT_SCROLLWIN, self.scroll)
         self.Bind(wx.EVT_PAINT, self.paint)
         self.Bind(wx.EVT_SIZE, self.resize)
         self.Bind(wx.EVT_LEFT_DOWN, self.handleClick)
@@ -325,14 +324,6 @@ class StoryPanel(wx.ScrolledWindow):
         sx = (widgetRect.x-20) / float(xUnit)
         sy = (widgetRect.y-20) / float(yUnit)
         self.Scroll(max(sx, 0), max(sy - 20, 0))
-        self.scroll()
-        
-    def scroll(self, event = None):
-        """
-        Scroll event handler.
-        """
-        self.visibleWidgets = None
-        self.Update()
 
     def pushUndo(self, action):
         """
@@ -832,16 +823,17 @@ class StoryPanel(wx.ScrolledWindow):
         updateRect = self.GetUpdateRegion().GetBox()
         
         # Determine visible passages
-        
-        if self.visibleWidgets == None:
+        scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
+        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
+            self.lastScrollPos = scrollPos
             updateRect = self.GetClientRect()
             self.visibleWidgets = [widget for widget in self.widgets
                                    # It's visible if it's in the client rect, or is being moved.
                                    if (widget.dimmed
-                                       or self.GetClientRect().Intersects(widget.getPixelRect())
+                                       or updateRect.Intersects(widget.getPixelRect())
                                        # It's also visible if an arrow FROM it intersects with the Client Rect
                                        or [w2 for w2 in widget.getConnectedWidgets()
-                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), self.GetClientRect())])]
+                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
         
         # background
 
@@ -857,7 +849,8 @@ class StoryPanel(wx.ScrolledWindow):
             if not widget.dimmed:
                 widget.paintConnectors(gc, arrowheads, updateRect)
         
-        for widget in self.visibleWidgets: 
+        for widget in self.visibleWidgets:
+            # Could be "visible" only insofar as its arrow is visible
             if updateRect.Intersects(widget.getPixelRect()):
                 widget.paint(gc)
 

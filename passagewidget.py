@@ -447,9 +447,9 @@ class PassageWidget:
                 
                 if self.passage.isAnnotation():
                     color = colors['connectorAnnotation']
-                elif link in self.passage.displays:
+                elif (link in self.passage.displays + self.passage.macros) and link not in self.passage.links:
                     color = colors['connectorDisplay']
-                elif link in self.passage.images:
+                elif link in self.passage.images or self.passage.isStylesheet():
                     color = colors['connectorResource']
                 else:
                     color = colors['connector']
