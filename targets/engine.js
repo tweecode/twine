@@ -446,15 +446,15 @@ History.prototype.restore = function () {
 };
 
 History.prototype.saveVariables = function(c, el, callback) {
+
+    if (typeof callback == "function") {
+        callback.call(el);
+    }
+
     this.history.unshift({
         passage: c,
         variables: clone(this.history[0].variables)
     });
-    // Setter links
-    if (typeof callback == "function") {
-        callback.call(el);
-        this.history[1] && (this.history[1].linkVars = delta(this.history[1].variables,this.history[0].variables));
-    }
 };
 var restart = History.prototype.restart = function () {
     if (typeof window.history.replaceState == "function") {
@@ -616,18 +616,8 @@ macros["if"] = {
             currentCond = parser.fullArgs(),
             currentClause = "",
             t = 0,
-            nesting = 0,
-            checkBadCond = function(c, name) {
-                // Forbid the assignment = in <<if>> clauses
-                // Look for =, but not ==, ===, !=, !==, <=, >= or ~=, or in quoted strings
-                if (c.match("[^=<>!~]=(?!=)" + Wikifier.textPrimitives.unquoted)) {
-                    throwError(place, "<<" + name + ">>: use 'is' instead of '='", c);
-                    return true;
-                }
-            };
-        if (checkBadCond(parser.fullMatch(), "if")) {
-            return;
-        }
+            nesting = 0;
+        
         for (var i = 0; i < src.length; i++) {
             if (src.substr(i, 9) == "<<endif>>") {
                 nesting--;
@@ -645,9 +635,6 @@ macros["if"] = {
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
                     currentCond = src.slice(i+9,t);
-                    if (checkBadCond(currentCond, "else if")) {
-                        return;
-                    }
                     currentCond = Wikifier.parse(currentCond);
                 }
                 else {
@@ -1410,7 +1397,7 @@ Wikifier.formatHelpers = {
     inlineCssHelper: function (w) {
         var s, v, lookaheadMatch, gotMatch,
             styles = [],
-            lookahead = "(?:(" + Wikifier.textPrimitives.anyLetter + "+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:(" + Wikifier.textPrimitives.anyLetter + "+):([^;\\|\\n]+);)",
+            lookahead = Wikifier.styleByCharFormatter.lookahead,
             lookaheadRegExp = new RegExp(lookahead, "mg"),
             hadStyle = false,
             unDash = function (str) {
@@ -1420,13 +1407,16 @@ Wikifier.formatHelpers = {
                 return s.join("");
             };
         
+        styles.className = "";
         do {
             lookaheadRegExp.lastIndex = w.nextMatch;
             lookaheadMatch = lookaheadRegExp.exec(w.source);
             gotMatch = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (gotMatch) {
                 hadStyle = true;
-                if (lookaheadMatch[1]) {
+                if (lookaheadMatch[5]) {
+                    styles.className += lookaheadMatch[5].replace(/\./g," ") + " ";
+                } else if (lookaheadMatch[1]) {
                     s = unDash(lookaheadMatch[1]);
                     v = lookaheadMatch[2];
                 } else {
@@ -1756,11 +1746,9 @@ Wikifier.formatters = [
 {
     name: "macro",
     match: "<<",
-    lookahead: "<<([^>\\s]+)(?:\\s*)((?:[^>]|>"
-        + Wikifier.textPrimitives.unquoted.replace("?=","?!")
-        + ")*)>>",
+    lookahead: /<<([^>\s]+)(?:\s*)((?:\\.|'(?:[^'\\]*\\.)*[^'\\]*'|"(?:[^"\\]*\\.)*[^"\\]*"|[^>])*)>>/mg,
     handler: function (w) {
-        var lookaheadRegExp = new RegExp(this.lookahead, "mg");
+        var lookaheadRegExp = new RegExp(this.lookahead);
         lookaheadRegExp.lastIndex = w.matchStart;
         var lookaheadMatch = lookaheadRegExp.exec(w.source.replace(/\u200c/g,'\n'));
         if (lookaheadMatch && lookaheadMatch.index == w.matchStart && lookaheadMatch[1]) {
@@ -1869,21 +1857,28 @@ Wikifier.formatters = [
         }
     }
 },
-{
+(Wikifier.styleByCharFormatter = {
     name: "styleByChar",
     match: "@@",
     terminator: "@@",
-    lookahead: "(?:([^\\(@]+)\\(([^\\)]+)(?:\\):))|(?:([^:@]+):([^;]+);)",
+    lookahead: "(?:([^\\(@]+)\\(([^\\)\\|\\n]+)(?:\\):))|(?:([^\\.:@]+):([^;\\|\\n]+);)|(?:\\.([^;\\|\\n]+);)",
     handler: function (w) {
         var e = insertElement(w.output, "span", null, null, null);
         var styles = Wikifier.formatHelpers.inlineCssHelper(w);
-        if (styles.length == 0)
+        if (styles.length == 0) {
             e.className = "marked";
-        else for (var t = 0; t < styles.length; t++)
-            e.style[styles[t].style] = styles[t].value;
+        }
+        else {
+            for (var t = 0; t < styles.length; t++) {
+                e.style[styles[t].style] = styles[t].value;
+            }
+            if (typeof styles.className == "string") {
+                e.className = styles.className; 
+            }
+        }
         w.subWikify(e, this.terminator);
     }
-},
+}),
 {
     name: "lineBreak",
     match: "\\n",

@@ -29,6 +29,12 @@ History.prototype.closeLinks = function() {
         l[i].parentNode.removeChild(l[i]);
     }
 };
+// Change the URL without triggering a hashchange
+History.prototype.replaceURL = function() {
+    if (tale.storysettings.lookup('hash') && window.history && typeof window.history.replaceState == "function") {
+        window.history.replaceState({ id: this.id, length: this.history.length }, document.title, this.hash);
+    }
+};
 History.prototype.display = function (name, source, type, callback) {
     var el, D, F, p = document.getElementById("passages");
     if (!tale.canUndo()) {
@@ -44,7 +50,8 @@ History.prototype.display = function (name, source, type, callback) {
     if (type != "back") {
         this.saveVariables(D, source, callback);
     }
-    this.bookmarkURL = this.save();
+    this.hash = this.save();
+    this.replaceURL();
     F = D.render();
     if (type != "quietly") {
         if (hasTransition) {
@@ -91,6 +98,8 @@ History.prototype.rewindTo = function (C, instant) {
         this.history.shift();
         p = p2;
     }
+    this.hash = this.save();
+    this.replaceURL();
 };
 Passage.prototype.render = function () {
     var F, D, A, t, i, E = insertElement(null, 'div', 'passage' + this.title, 'passage');
@@ -130,7 +139,7 @@ Passage.toolbarItems = [{
     label: "bookmark",
     tooltip: "Bookmark this point in the story",
     href: function () {
-        return (state.bookmarkURL)
+        return (state.hash)
     },
     activate: function () {}
 }, {

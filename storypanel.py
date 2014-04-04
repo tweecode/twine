@@ -28,15 +28,16 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
+        self.visibleWidgets = None
         self.externalPassages = set()
         self.draggingMarquee = False
         self.draggingWidgets = None
         self.notDraggingWidgets = None
-        self.scrolling = False
         self.undoStack = []
         self.undoPointer = -1
         self.lastSearchRegexp = None
         self.lastSearchFlags = None
+        self.lastScrollPos = -1
         self.trackinghover = None
         self.tooltiptimer = wx.PyTimer(self.tooltipShow)
         self.tooltipplace = ''
@@ -96,8 +97,8 @@ class StoryPanel(wx.ScrolledWindow):
         new = PassageWidget(self, self.app, title = title, text = text, tags = tags, pos = pos)
         self.widgets.append(new)
         self.snapWidget(new, quietly)
-        self.Refresh()
         self.resize()
+        self.Refresh()
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
 
@@ -178,7 +179,9 @@ class StoryPanel(wx.ScrolledWindow):
                     self.widgets.append(newPassage)
 
                 self.parent.setDirty(True, action = 'Paste')
+                self.resize()
                 self.Refresh()
+
 
     def removeWidget(self, widget, saveUndo = False):
         """
@@ -186,6 +189,7 @@ class StoryPanel(wx.ScrolledWindow):
         but by default, it doesn't.
         """
         self.widgets.remove(widget)
+        if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
         if self.tooltipplace == widget:
             self.tooltipplace = None
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
@@ -228,6 +232,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         for widget in selected:
             self.widgets.remove(widget)
+            if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
             if self.tooltipplace == widget:
                 self.tooltipplace = None
         if len(selected):
@@ -336,13 +341,14 @@ class StoryPanel(wx.ScrolledWindow):
         for widget in self.widgets: state['widgets'].append(widget.serialize())
         self.undoStack.append(state)
         self.undoPointer += 1
-
+        
     def undo(self):
         """
         Restores the undo state at self.undoPointer to the current view, then
         decreases self.undoPointer by 1.
         """
         self.widgets = []
+        self.visibleWidgets = None
         state = self.undoStack[self.undoPointer]
         for widget in state['widgets']:
             self.widgets.append(PassageWidget(self, self.app, state = widget))
@@ -814,26 +820,38 @@ class StoryPanel(wx.ScrolledWindow):
         else:
             gc = wx.BufferedPaintDC(self)
 
+        updateRect = self.GetUpdateRegion().GetBox()
+        
+        # Determine visible passages
+        scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
+        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
+            self.lastScrollPos = scrollPos
+            updateRect = self.GetClientRect()
+            self.visibleWidgets = [widget for widget in self.widgets
+                                   # It's visible if it's in the client rect, or is being moved.
+                                   if (widget.dimmed
+                                       or updateRect.Intersects(widget.getPixelRect())
+                                       # It's also visible if an arrow FROM it intersects with the Client Rect
+                                       or [w2 for w2 in widget.getConnectedWidgets()
+                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
+        
         # background
 
-        updateRegion = self.GetUpdateRegion()
-        updateRect = updateRegion.GetBox()
-        gc.SetBrush(wx.Brush(StoryPanel.BACKGROUND_COLOR))
+        gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign') else StoryPanel.BACKGROUND_COLOR ))
+
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
 
         # connectors
 
-        badLinks = []
         arrowheads = (self.scale > StoryPanel.ARROWHEAD_THRESHOLD)
 
-        for widget in self.widgets:
-            if widget.dimmed: continue
-            badLinks = widget.paintConnectors(gc, arrowheads, badLinks, updateRect)
-
-        # widgets
-
-        for widget in self.widgets:
-            if updateRegion.IntersectRect(widget.getPixelRect()):
+        for widget in self.visibleWidgets:
+            if not widget.dimmed:
+                widget.paintConnectors(gc, arrowheads, updateRect)
+        
+        for widget in self.visibleWidgets:
+            # Could be "visible" only insofar as its arrow is visible
+            if updateRect.Intersects(widget.getPixelRect()):
                 widget.paint(gc)
 
         # marquee selection
@@ -868,6 +886,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.SetVirtualSize((maxWidth, maxHeight))
         self.SetScrollRate(StoryPanel.SCROLL_SPEED, StoryPanel.SCROLL_SPEED)
+        self.visibleWidgets = None
 
     def serialize(self):
         """Returns a dictionary of state suitable for pickling."""
@@ -980,6 +999,7 @@ body {
 \t
 }"""
     BACKGROUND_COLOR = '#555753'
+    FLAT_BG_COLOR = '#c6c6c6'
     MARQUEE_ALPHA = 32 # out of 256
     SCROLL_SPEED = 25
     EXTRA_SPACE = 200

@@ -228,42 +228,38 @@ class App(wx.App):
 
     def loadPrefs(self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
-        self.config = wx.Config('Twine')
+        sc = self.config = wx.Config('Twine')
 
         monoFont = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
 
-        if not self.config.HasEntry('savePath'):
-            self.config.Write('savePath', os.path.expanduser('~'))
-        if not self.config.HasEntry('fsTextColor'):
-            self.config.Write('fsTextColor', '#afcdff')
-        if not self.config.HasEntry('fsBgColor'):
-            self.config.Write('fsBgColor', '#100088')
-        if not self.config.HasEntry('fsFontFace'):
-            self.config.Write('fsFontFace', metrics.face('mono'))
-        if not self.config.HasEntry('fsFontSize'):
-            self.config.WriteInt('fsFontSize', metrics.size('fsEditorBody'))
-        if not self.config.HasEntry('fsLineHeight'):
-            self.config.WriteInt('fsLineHeight', 120)
-        if not self.config.HasEntry('windowedFontFace'):
-            self.config.Write('windowedFontFace', metrics.face('mono'))
-        if not self.config.HasEntry('monospaceFontFace'):
-            self.config.Write('monospaceFontFace', metrics.face('mono2'))
-        if not self.config.HasEntry('windowedFontSize'):
-            self.config.WriteInt('windowedFontSize', metrics.size('editorBody'))
-        if not self.config.HasEntry('monospaceFontSize'):
-            self.config.WriteInt('monospaceFontSize', metrics.size('editorBody'))
-        if not self.config.HasEntry('storyFrameToolbar'):
-            self.config.WriteBool('storyFrameToolbar', True)
-        if not self.config.HasEntry('storyPanelSnap'):
-            self.config.WriteBool('storyPanelSnap', False)
-        if not self.config.HasEntry('fastStoryPanel'):
-            self.config.WriteBool('fastStoryPanel', False)
-        if not self.config.HasEntry('imageArrows'):
-            self.config.WriteBool('imageArrows', True)
-        if not self.config.HasEntry('createPassagePrompt'):
-            self.config.WriteBool('createPassagePrompt', True)
-        if not self.config.HasEntry('importImagePrompt'):
-            self.config.WriteBool('importImagePrompt', True)
+        for k,v in {
+            'savePath' : os.path.expanduser('~'),
+            'fsTextColor' : '#afcdff',
+            'fsBgColor' : '#100088',
+            'fsFontFace' : metrics.face('mono'),
+            'fsFontSize' : metrics.size('fsEditorBody'),
+            'fsLineHeight' : 120,
+            'windowedFontFace' : metrics.face('mono'),
+            'monospaceFontFace' : metrics.face('mono2'),
+            'windowedFontSize' : metrics.size('editorBody'),
+            'monospaceFontSize' : metrics.size('editorBody'),
+            'flatDesign' : False,
+            'storyFrameToolbar' : True,
+            'storyPanelSnap' : False,
+            'fastStoryPanel' : False,
+            'imageArrows' : True,
+            'displayArrows' : True,
+            'createPassagePrompt' : True,
+            'importImagePrompt' : True,
+            'passageWarnings' : True
+        }.iteritems():
+            if not sc.HasEntry(k):
+                if type(v) == str:
+                    sc.Write(k,v)
+                elif type(v) == int:
+                    sc.WriteInt(k,v)
+                elif type(v) == bool:
+                    sc.WriteBool(k,v)
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""

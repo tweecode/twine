@@ -15,7 +15,7 @@ class PreferenceFrame(wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(11, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(14, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -53,26 +53,20 @@ class PreferenceFrame(wx.Frame):
 
         fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.ALIGN_CENTER_VERTICAL)
         fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.ALIGN_CENTER_VERTICAL)
-
-        self.fastStoryPanel = wx.CheckBox(panel, label = 'Faster but rougher story map display')
-        self.fastStoryPanel.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('fastStoryPanel', \
-                                                                          self.fastStoryPanel.GetValue()))
-        self.fastStoryPanel.SetValue(self.app.config.ReadBool('fastStoryPanel'))
-
-        self.imageArrows = wx.CheckBox(panel, label = 'Connector arrows for images and stylesheets')
-        self.imageArrows.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('imageArrows', \
-                                                                          self.imageArrows.GetValue()))
-        self.imageArrows.SetValue(self.app.config.ReadBool('imageArrows'))
         
-        self.createPassagePrompt = wx.CheckBox(panel, label = 'Offer to create new passages for broken links.')
-        self.createPassagePrompt.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('createPassagePrompt', \
-                                                                          self.createPassagePrompt.GetValue()))
-        self.createPassagePrompt.SetValue(self.app.config.ReadBool('createPassagePrompt'))
+        def checkbox(self, name, label, panel=panel):
+            setattr(self, name, wx.CheckBox(panel, label=label))
+            attr = getattr(self, name)
+            attr.Bind(wx.EVT_CHECKBOX, lambda e, name=name, attr=attr: self.savePref(name, attr.GetValue()))
+            attr.SetValue(self.app.config.ReadBool(name))
 
-        self.importImagePrompt = wx.CheckBox(panel, label = 'Offer to import externally linked images.')
-        self.importImagePrompt.Bind(wx.EVT_CHECKBOX, lambda e: self.savePref('importImagePrompt', \
-                                                                          self.importImagePrompt.GetValue()))
-        self.importImagePrompt.SetValue(self.app.config.ReadBool('importImagePrompt'))
+        checkbox(self, "fastStoryPanel", 'Faster but rougher story map display')
+        checkbox(self, "flatDesign", 'Flat Design(TM) mode')
+        checkbox(self, "imageArrows", 'Connector arrows for images and stylesheets')
+        checkbox(self, "displayArrows", 'Connector arrows for <<display>>ed passages')
+        checkbox(self, "createPassagePrompt", 'Offer to create new passages for broken links')
+        checkbox(self, "importImagePrompt", 'Offer to import externally linked images')  
+        checkbox(self, "passageWarnings", 'Warn about possible passage code errors')
 
         panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
@@ -89,13 +83,19 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.fastStoryPanel)
         panelSizer.Add((1,2))
+        panelSizer.Add(self.flatDesign)
+        panelSizer.Add((1,2))
         panelSizer.Add(self.imageArrows)
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.displayArrows)
         panelSizer.Add((1,2))
         panelSizer.Add(wx.StaticText(panel, label = 'When closing a passage:'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add((1,2))
         panelSizer.Add(self.createPassagePrompt)
         panelSizer.Add((1,2))
         panelSizer.Add(self.importImagePrompt)
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.passageWarnings)
         
         panelSizer.Fit(self)
         borderSizer.Fit(self)

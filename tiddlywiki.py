@@ -540,15 +540,16 @@ class Tiddler:
             return
 
         # <<display>>
-        self.displays = re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)
+        self.displays = list(set(re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)))
 
-        self.macros = []
+        macros = set()
         # other macros (including shorthand <<display>>)
         for m in re.finditer(tweeregex.MACRO_REGEX, self.text):
             # Exclude shorthand <<print>>
             if m.group(1) and m.group(1)[0] != '$':
-                self.macros.append(m.group(1))
-
+                macros.add(m.group(1))
+        self.macros = list(macros)
+        
         # avoid duplicates by collecting links in a set
         links = set()
 

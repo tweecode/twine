@@ -1,4 +1,4 @@
-import os, imp
+import os, imp, re, tweeregex
 from collections import OrderedDict
 from random import shuffle
 
@@ -53,7 +53,15 @@ class Header(object):
                 "name": "bookmark",
                 "label": "Let the player use passage bookmarks",
                 "desc": "This enables the Bookmark links in Jonah and Sugarcane.\n(If the player can't undo, bookmarks are always disabled.)",
+                "requires": "undo",
                 "default": "on"
+            },{
+                "type": "checkbox",
+                "name": "hash",
+                "label": "Automatic URL hash updates",
+                "desc": "The story's URL automatically updates, so that it always links to the \ncurrent passage. Naturally, this renders the bookmark link irrelevant.",
+                "requires": "undo",
+                "default": "off"
             },{
                 "type": "checkbox",
                 "name": "exitprompt",
@@ -78,13 +86,55 @@ class Header(object):
                 "desc": "This adds CSS classes to the <html> element that can be used to write\nmore compatible CSS or scripts. See http://modernizr.com/docs for details.\nIndividual scripts/stylesheets may force this on by containing the\ntext 'requires Modernizr'.",
             }]
 
-    def is_endtag(self, name, tag):
+    def isEndTag(self, name, tag):
         """Return true if the name is equal to an endtag."""
         return (name == ('end' + tag))
 
-    def nested_macros(self):
+    def nestedMacros(self):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
+    
+    def passageChecks(self):
+        """
+        Returns a list of checks to perform on the passage whenever it's closed.
+        Each function should return a string warning message, or None
+        """
+        def checkIfMacro(passage):
+            # Check that the single = assignment isn't present in an if/elseif condition.
+            ifMacroRegex = tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)")
+            iter = re.finditer(ifMacroRegex, passage.text)
+            for i in iter:
+                r = re.search(r"([^=<>!~])(=(?!=))(.?)" + tweeregex.UNQUOTED_REGEX, i.group(2))
+                if r:
+                    warning = i.group(0) + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else if>> tags."
+                    insertion = "is"
+                    if r.group(1) != " ":
+                        insertion = " "+insertion
+                    if r.group(3) != " ":
+                        insertion += " "
+                    # Yield the warning message, and a 3-tuple consisting of
+                    # start index of replacement, the replacement, end index of replacement
+                    yield (warning, (i.start(2)+r.start(2), insertion, i.start(2)+r.end(2)))
+        
+        def checkScriptTagInScriptPassage(passage):
+            # Check that s script passage does not contain "<script type='text/javascript>" style tags.
+            if passage.isScript():
+                iter = re.finditer(r"(?:</?script\b[^>]*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
+                for i in iter:
+                    warning = "This script contains " + i.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
+                    # Yield the warning message, and a 3-tuple consisting of
+                    # start index of replacement, the replacement, end index of replacement
+                    yield (warning, (i.start(0),"", i.end(0)))
+        
+        def checkHTTPSpelling(passage):
+            # Corrects the incorrect spellings "http//" and "http:/" (and their https variants)
+            iter = re.finditer(r"\bhttp(s?)(?:\/\/|\:\/(?=[^\/]))", passage.text)
+            for i in iter:
+                # Yield the warning message, and a 3-tuple consisting of
+                # start index of replacement, the replacement, end index of replacement
+                yield (r"You appear to have misspelled 'http" + i.group(1) + "://'.", (i.start(0),"http" + i.group(1) + "://", i.end(0)))
+        
+        return [checkIfMacro, checkScriptTagInScriptPassage, checkHTTPSpelling]
 
     @staticmethod
     def factory(type, path, builtinPath):

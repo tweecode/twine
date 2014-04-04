@@ -15,7 +15,7 @@ var hasPushState = !!window.history && (typeof window.history.pushState == "func
 }(window.sessionStorage));
 
 Tale.prototype.canBookmark = function() {
-    return this.canUndo() && (this.storysettings.lookup('bookmark',true) || !hasPushState);
+    return this.canUndo() && !this.storysettings.lookup('hash') && (this.storysettings.lookup('bookmark',true) || !hasPushState);
 };
 History.prototype.init = function () {
     var a = this;
@@ -36,16 +36,17 @@ hasPushState && (History.prototype.pushState = function(replace, uri) {
     window.history[replace ? "replaceState" : "pushState"]({ id: this.id, length: this.history.length }, document.title, uri);
 });
 History.prototype.display = function (title, source, type, callback) {
-    var i, e, q, bookmark, c = tale.get(title), p = document.getElementById("passages");
+    var i, e, q, bookmark, hash, c = tale.get(title), p = document.getElementById("passages");
     if (c==null) {
         return;
     }
     if (type != "back") {
         this.saveVariables(c, source, callback);
+        hash = (tale.storysettings.lookup('hash') && this.save()) || "";
         if (hasPushState && tale.canUndo()) {
             try {
                 sessionStorage.setItem("Twine.History"+this.id, JSON.stringify(this.history));
-                this.pushState(this.history.length <= 2 && window.history.state == "");
+                this.pushState(this.history.length <= 2 && window.history.state == "", hash);
             } catch(e) {
                 alert("Your browser couldn't save the state of the " + tale.identity() +".\n"+
                     "You may continue playing, but it will no longer be possible to undo moves from here on in.");
@@ -53,7 +54,7 @@ History.prototype.display = function (title, source, type, callback) {
             }
         }
     }
-    this.hash = this.save();
+    this.hash = hash || this.save();
     e = c.render();
     if (type != "quietly") {
         if (hasTransition) {
@@ -174,6 +175,9 @@ var Interface = {
             restart = document.getElementById("restart"),
             bookmark = document.getElementById("bookmark");
         main();
+        if (!tale) {
+            return;
+        }
         if (snapback) {
             if (!tale.lookup("tags", "bookmark").length) {
                 snapback.parentNode.removeChild(snapback);

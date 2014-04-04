@@ -237,6 +237,43 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
+        
+
+    def verifyPassage(self, window):
+        """
+        Check that the passage syntax is well-formed.
+        Return -1 if the check was aborted, 0+ for each check made
+        """
+        passage = self.passage
+        checks = self.parent.parent.header.passageChecks()
+        
+        broken = False
+        problems = 0
+        for check in checks:
+            
+            oldtext = passage.text
+            newtext = ""
+            index = 0
+            
+            iter = check(self.passage)
+            if iter:
+                for warning, replace in iter:
+                    problems += 1
+                    answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
+                        .ShowModal()
+                    if answer == wx.ID_YES:
+                        newtext += oldtext[index:replace[0]] + replace[1]
+                        index = replace[2]
+                        if hasattr(self, 'passageFrame') and self.passageFrame:
+                            self.passageFrame.bodyInput.SetText(newtext + oldtext[index:])
+                    elif answer == wx.ID_CANCEL:
+                        broken = True
+                        break
+            
+            passage.text = newtext + oldtext[index:]
+            if broken:
+                return -1
+        return problems
 
     def intersectsAny(self, dragging = False):
         """Returns whether this widget intersects any other in the same StoryPanel."""
@@ -267,6 +304,7 @@ class PassageWidget:
 
     def applyPrefs(self):
         """Passes on the message to any editor windows."""
+        self.clearPaintCache()
         try: self.passageFrame.applyPrefs()
         except: pass
         try: self.passageFrame.fullscreen.applyPrefs()
@@ -276,12 +314,10 @@ class PassageWidget:
         """If an image passage, updates the bitmap to match the contained base64 data."""
         if self.passage.isImage():
             self.bitmap = images.Base64ToBitmap(self.passage.text)
-
-    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
+        
+    def getConnectorLine(self, otherWidget):
         """
-        Paints a connecting line between this widget and another,
-        with optional arrowheads. You may pass either a wx.GraphicsContext
-        (anti-aliased drawing) or a wx.PaintDC.
+        Get the line that would be drawn between this widget and another.
         """
         start = self.parent.toPixels(self.getCenter())
         end = self.parent.toPixels(otherWidget.getCenter())
@@ -300,6 +336,17 @@ class PassageWidget:
         # Clip the end of the arrow
 
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
+        
+        return (start, end)
+        
+
+    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
+        """
+        Paints a connecting line between this widget and another,
+        with optional arrowheads. You may pass either a wx.GraphicsContext
+        (anti-aliased drawing) or a wx.PaintDC.
+        """
+        start, end = self.getConnectorLine(otherWidget)
 
         # does it actually need to be drawn?
 
@@ -323,24 +370,61 @@ class PassageWidget:
 
         if not arrowheads: return
 
+        flat = self.app.config.ReadBool('flatDesign')
+        
         arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
         arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
                                                    distance = arrowheadLength)
 
-        if isinstance(gc, wx.GraphicsContext):
+        if flat:
+            pass
+        elif isinstance(gc, wx.GraphicsContext):
             gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
         else:
             gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
 
-        arrowhead = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
+        arrowhead2 = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
                                                    distance = arrowheadLength)
 
-        if isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
+        
+        if flat:
+            gc.SetBrush(wx.Brush(color))
+            if isinstance(gc, wx.GraphicsContext):
+                gc.DrawLines([wx.Point2D(*arrowhead2), wx.Point2D(*end), wx.Point2D(*arrowhead) ])
+            else:
+                gc.DrawPolygon([wx.Point(*arrowhead2), wx.Point(*end), wx.Point(*arrowhead)])
+        elif isinstance(gc, wx.GraphicsContext):
+            gc.StrokeLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
         else:
-            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
+            gc.DrawLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
 
-    def paintConnectors(self, gc, arrowheads = True, dontDraw = [], updateRect = None):
+
+    def getConnectedWidgets(self):
+        """
+        Returns a list of titles of all widgets that will have lines drawn to them.
+        """
+        ret = []
+        for link in self.linksAndDisplays():
+            if (link in self.passage.links or self.app.config.ReadBool('displayArrows')):
+                widget = self.parent.findWidget(link)
+                if widget:
+                    ret.append(widget)
+        
+        if self.app.config.ReadBool('imageArrows'):
+            for link in self.passage.images:
+                widget = self.parent.findWidget(link)
+                if widget:
+                    ret.append(widget)
+            
+            if self.passage.isStylesheet():
+                for t in self.passage.tags:
+                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
+                        for otherWidget in self.parent.taggedWidgets(t):
+                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
+                                ret.append(otherWidget)
+        return ret
+            
+    def paintConnectors(self, gc, arrowheads = True, updateRect = None):
         """
         Paints all connectors originating from this widget. This accepts
         a list of widget titles that will not be drawn to. It returns this
@@ -349,44 +433,29 @@ class PassageWidget:
         As with other paint calls, you may pass either a wx.GraphicsContext
         or wx.PaintDC.
         """
-
+        
+        flat = self.app.config.ReadBool('flatDesign')
+        colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
+        
         if not self.app.config.ReadBool('fastStoryPanel'):
             gc = wx.GraphicsContext.Create(gc)
 
-        for link in self.linksAndDisplays():
-            if link in dontDraw: continue
-
-            otherWidget = self.parent.findWidget(link)
-            if not otherWidget or not otherWidget.passage.isStoryPassage(): dontDraw.append(link)
-
-            if otherWidget and not otherWidget.dimmed:
-                color = PassageWidget.CONNECTOR_DISPLAY_COLOR if link not in self.passage.links else PassageWidget.CONNECTOR_COLOR
-                # Special colour for annotations
+        widgets = self.getConnectedWidgets()
+        if widgets:
+            for widget in widgets:
+                link = widget.passage.title
+                
                 if self.passage.isAnnotation():
-                    color = '#000000'
-                width = PassageWidget.CONNECTOR_SELECTED_WIDTH if self.selected else PassageWidget.CONNECTOR_WIDTH
-                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-        if self.app.config.ReadBool('imageArrows'):
-            for i in self.passage.images:
-                if i not in dontDraw:
-                    otherWidget = self.parent.findWidget(i)
-                    if otherWidget and not otherWidget.dimmed:
-                        color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                        width = (2 if self.selected else 1)
-                        self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-            if self.passage.isStylesheet():
-                for t in self.passage.tags:
-                    if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
-                        for otherWidget in self.parent.taggedWidgets(t):
-                            if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
-                                color = PassageWidget.CONNECTOR_RESOURCE_COLOR
-                                width = (2 if self.selected else 1)
-                                self.paintConnectorTo(otherWidget, arrowheads, color, width, gc, updateRect)
-
-        return dontDraw
-
+                    color = colors['connectorAnnotation']
+                elif (link in self.passage.displays + self.passage.macros) and link not in self.passage.links:
+                    color = colors['connectorDisplay']
+                elif link in self.passage.images or self.passage.isStylesheet():
+                    color = colors['connectorResource']
+                else:
+                    color = colors['connector']
+                width = (2 if self.selected else 1) * (2 * flat + 1)
+                self.paintConnectorTo(widget, arrowheads, color, width, gc, updateRect)
+    
     def paint(self, dc):
         """
         Handles paint events, either blitting our paint buffer or
@@ -458,14 +527,18 @@ class PassageWidget:
             lines += currentLine
             return lines.split('\n')
 
-        def dim(c, dim):
+        # Which set of colors to use
+        flat = self.app.config.ReadBool('flatDesign')
+        colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
+        
+        def dim(c, dim, flat=flat):
             """Lowers a color's alpha if dim is true."""
             if isinstance(c, wx.Colour): c = list(c.Get(includeAlpha = True))
+            else : c = list(c)
             if len(c) < 4:
-                c = list(c)
                 c.append(255)
             if dim:
-                a = PassageWidget.DIMMED_ALPHA
+                a = PassageWidget.FLAT_DIMMED_ALPHA if flat else PassageWidget.DIMMED_ALPHA
                 if not self.app.config.ReadBool('fastStoryPanel'):
                     c[3] *= a
                 else:
@@ -473,7 +546,7 @@ class PassageWidget:
                     c[1] *= a
                     c[2] *= a
             return wx.Colour(*c)
-
+        
         # set up our buffer
 
         bitmap = wx.EmptyBitmap(size.width, size.height)
@@ -494,51 +567,65 @@ class PassageWidget:
         titleFontSize = max(titleFontSize, metrics.size('fontMin'))
         excerptFontSize = min(titleFontSize * 0.9, metrics.size('fontMax'))
         excerptFontSize = max(excerptFontSize, metrics.size('fontMin'))
-        titleFont = wx.Font(titleFontSize, wx.SWISS, wx.NORMAL, wx.BOLD, False, 'Arial')
-        excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
+        if self.app.config.ReadBool('flatDesign'):
+            titleFont = wx.Font(titleFontSize, wx.SWISS, wx.NORMAL, wx.LIGHT, False, 'Arial')
+            excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.LIGHT, False, 'Arial')
+        else:
+            titleFont = wx.Font(titleFontSize, wx.SWISS, wx.NORMAL, wx.BOLD, False, 'Arial')
+            excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
-        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08, 0.28, 0.88)), self.dimmed)
+        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08,
+                                                                    0.58 if flat else 0.28, 0.88)), self.dimmed)
 
         # inset for text (we need to know this for layout purposes)
 
         inset = titleFontHeight / 3
 
         # frame
-
         if self.passage.isAnnotation():
-            frameColor = PassageWidget.COLORS['frame']
-            c = wx.Colour(*PassageWidget.COLORS['annotation'])
+            frameColor = colors['frame']
+            c = wx.Colour(*colors['annotation'])
             frameInterior = (c,c)
         else:
-            frameColor = dim(PassageWidget.COLORS['frame'], self.dimmed)
-            frameInterior = (dim(PassageWidget.COLORS['bodyStart'], self.dimmed), \
-                         dim(PassageWidget.COLORS['bodyEnd'], self.dimmed))
-
-        gc.SetPen(wx.Pen(frameColor, 1))
-
-        if isinstance(gc, wx.GraphicsContext):
-            gc.SetBrush(gc.CreateLinearGradientBrush(0, 0, 0, size.height, \
-                                                     frameInterior[0], frameInterior[1]))
-        else:
-            gc.GradientFillLinear(wx.Rect(0, 0, size.width - 1, size.height - 1), \
-                            frameInterior[0], frameInterior[1], wx.SOUTH)
-            gc.SetBrush(wx.TRANSPARENT_BRUSH)
-
-        gc.DrawRectangle(0, 0, size.width - 1, size.height - 1)
-
-        if size.width > PassageWidget.MIN_GREEKING_SIZE * (2 if self.passage.isAnnotation() else 1):
-            # title bar
-
-            titleBarHeight = titleFontHeight + (2 * inset)
-            if self.passage.isAnnotation():
-                titleBarColor = frameInterior[0]
+            frameColor = dim(colors['frame'], self.dimmed)
+            frameInterior = (dim(colors['bodyStart'], self.dimmed), \
+                         dim(colors['bodyEnd'], self.dimmed))
+        
+        if not flat:
+            gc.SetPen(wx.Pen(frameColor, 1))
+    
+            if isinstance(gc, wx.GraphicsContext):
+                gc.SetBrush(gc.CreateLinearGradientBrush(0, 0, 0, size.height, \
+                                                         frameInterior[0], frameInterior[1]))
             else:
-                titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
-            gc.SetPen(wx.Pen(titleBarColor, 1))
-            gc.SetBrush(wx.Brush(titleBarColor))
+                gc.GradientFillLinear(wx.Rect(0, 0, size.width - 1, size.height - 1), \
+                                frameInterior[0], frameInterior[1], wx.SOUTH)
+                gc.SetBrush(wx.TRANSPARENT_BRUSH)
+    
+            gc.DrawRectangle(0, 0, size.width - 1, size.height - 1)
+        else:
+            gc.SetPen(wx.Pen(frameInterior[0]))
+            gc.SetBrush(wx.Brush(frameInterior[0]))
+            gc.DrawRectangle(0, 0, size.width, size.height)
+
+        greek = size.width <= PassageWidget.MIN_GREEKING_SIZE * (2 if self.passage.isAnnotation() else 1)
+        
+        # title bar
+
+        titleBarHeight = PassageWidget.GREEK_HEIGHT*3 if greek else titleFontHeight + (2 * inset)
+        if self.passage.isAnnotation():
+            titleBarColor = frameInterior[0]
+        else:
+            titleBarColor = dim(colors[self.getTitleColorIndex()], self.dimmed)
+        gc.SetPen(wx.Pen(titleBarColor, 1))
+        gc.SetBrush(wx.Brush(titleBarColor))
+        if flat:
+            gc.DrawRectangle(0, 0, size.width, titleBarHeight)
+        else:
             gc.DrawRectangle(1, 1, size.width - 3, titleBarHeight)
 
+        if not greek:
             # draw title
             # we let clipping prevent writing over the frame
 
@@ -549,7 +636,7 @@ class PassageWidget:
                 gc.DestroyClippingRegion()
                 gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), titleBarHeight - 2))
 
-            titleTextColor = dim(PassageWidget.COLORS['titleText'], self.dimmed)
+            titleTextColor = dim(colors['titleText'], self.dimmed)
 
             if isinstance(gc, wx.GraphicsContext):
                 gc.SetFont(titleFont, titleTextColor)
@@ -576,9 +663,9 @@ class PassageWidget:
                     gc.SetClippingRect(wx.Rect(inset, inset, size.width - (inset * 2), size.height - (inset * 2)-1))
 
                 if self.passage.isAnnotation():
-                    excerptTextColor = wx.Colour(*PassageWidget.COLORS['annotationText'])
+                    excerptTextColor = wx.Colour(*colors['annotationText'])
                 else:
-                    excerptTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
+                    excerptTextColor = dim(colors['excerptText'], self.dimmed)
 
                 if isinstance(gc, wx.GraphicsContext):
                     gc.SetFont(excerptFont, excerptTextColor)
@@ -604,7 +691,7 @@ class PassageWidget:
 
                 # draw tags
 
-                tagTextColor = dim(PassageWidget.COLORS['excerptText'], self.dimmed)
+                tagTextColor = dim(colors['frame'], self.dimmed)
 
                 if isinstance(gc, wx.GraphicsContext):
                     gc.SetFont(excerptFont, tagTextColor)
@@ -618,13 +705,8 @@ class PassageWidget:
                 gc.DrawText(text, inset*2, (size.height-tagBarHeight))
         else:
             # greek title
-            titleBarHeight = PassageWidget.GREEK_HEIGHT*3
-            titleBarColor = dim(PassageWidget.COLORS[self.getTitleColorIndex()], self.dimmed)
-            gc.SetPen(wx.Pen(titleBarColor, 1))
-            gc.SetBrush(wx.Brush(titleBarColor))
-            gc.DrawRectangle(1, 1, size.width - 3, PassageWidget.GREEK_HEIGHT * 3)
 
-            gc.SetPen(wx.Pen('#ffffff', PassageWidget.GREEK_HEIGHT))
+            gc.SetPen(wx.Pen(colors['titleText'], PassageWidget.GREEK_HEIGHT))
             height = inset
             width = (size.width - inset) / 2
 
@@ -638,8 +720,8 @@ class PassageWidget:
             # greek body text
             if not self.passage.isImage():
 
-                gc.SetPen(wx.Pen(self.COLORS['annotationText'] \
-                    if self.passage.isAnnotation() else '#666666', PassageWidget.GREEK_HEIGHT))
+                gc.SetPen(wx.Pen(colors['annotationText'] \
+                    if self.passage.isAnnotation() else colors['greek'], PassageWidget.GREEK_HEIGHT))
 
                 chars = len(self.passage.text)
                 while height < size.height - inset and chars > 0:
@@ -670,7 +752,7 @@ class PassageWidget:
                 width = size.width-4
                 gc.DrawRectangle(2, height, width, tagBarHeight)
 
-                gc.SetPen(wx.Pen('#666666', PassageWidget.GREEK_HEIGHT))
+                gc.SetPen(wx.Pen(colors['greek'], PassageWidget.GREEK_HEIGHT))
                 height += inset
                 width = (width-inset*2)/2
 
@@ -732,8 +814,11 @@ class PassageWidget:
         # finally, draw a selection over ourselves if we're selected
 
         if self.selected:
-            color = dim(wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT), self.dimmed)
-            gc.SetPen(wx.Pen(color, 2))
+            color = dim(titleBarColor if flat else wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT), self.dimmed)
+            if self.app.config.ReadBool('fastStoryPanel'):
+                gc.SetPen(wx.Pen(color, 2 + flat))
+            else:
+                gc.SetPen(wx.TRANSPARENT_PEN)
 
             if isinstance(gc, wx.GraphicsContext):
                 r, g, b = color.Get(False)
@@ -741,8 +826,8 @@ class PassageWidget:
                 gc.SetBrush(wx.Brush(color))
             else:
                 gc.SetBrush(wx.TRANSPARENT_BRUSH)
-
-            gc.DrawRectangle(1, 1, size.width - 2, size.height - 2)
+                
+            gc.DrawRectangle(0, 0, size.width, size.height)
 
         self.paintBufferBounds = size
 
@@ -779,7 +864,8 @@ class PassageWidget:
     GREEK_HEIGHT = 2
     SIZE = 120
     SHADOW_SIZE = 5
-    COLORS = { 'frame': (0, 0, 0), \
+    COLORS = {
+               'frame': (0, 0, 0), \
                'bodyStart': (255, 255, 255), \
                'bodyEnd': (212, 212, 212), \
                'annotation': (85, 87, 83), \
@@ -792,14 +878,41 @@ class PassageWidget:
                'imageTitleBar': (8, 138, 133), \
                'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
-               'excerptText': (0, 0, 0),\
-               'annotationText': (255,255,255) }
+               'excerptText': (0, 0, 0), \
+               'annotationText': (255,255,255), \
+               'greek': (102, 102, 102),
+               'connector': (186, 189, 182),
+               'connectorDisplay': (132, 164, 189),
+               'connectorResource': (110, 112, 107),
+               'connectorAnnotation': (0, 0, 0),
+            }
+    FLAT_COLORS = {
+               'frame': (0, 0, 0),
+               'bodyStart':  (255, 255, 255),
+               'bodyEnd':  (255, 255, 255),
+               'annotation': (212, 212, 212),
+               'startTitleBar': (75, 219, 36),
+               'endTitleBar': (36, 54, 219),
+               'titleBar': (36, 115, 219),
+               'storyInfoTitleBar':(41, 214, 113),
+               'scriptTitleBar': (226, 170, 80),
+               'stylesheetTitleBar': (234, 123, 184),
+               'imageTitleBar': (36, 219, 213),
+               'privateTitleBar': (153, 153, 153),
+               'titleText': (255, 255, 255),
+               'excerptText': (96, 96, 96),
+               'annotationText': (0,0,0),
+               'greek': (192, 192, 192),
+               'connector': (161, 165, 156),
+               'connectorDisplay': (137, 193, 235),
+               'connectorResource': (186, 188, 185),
+               'connectorAnnotation': (255, 255, 255),
+               'selection': (28, 102, 176)
+            }
     DIMMED_ALPHA = 0.5
+    FLAT_DIMMED_ALPHA = 0.9
     LINE_SPACING = 1.2
     CONNECTOR_WIDTH = 2.0
-    CONNECTOR_COLOR = '#babdb6'
-    CONNECTOR_RESOURCE_COLOR = '#6e706b'
-    CONNECTOR_DISPLAY_COLOR = '#84a4bd'
     CONNECTOR_SELECTED_WIDTH = 5.0
     ARROWHEAD_LENGTH = 10
     MIN_ARROWHEAD_LENGTH = 5
