@@ -53,7 +53,15 @@ class Header(object):
                 "name": "bookmark",
                 "label": "Let the player use passage bookmarks",
                 "desc": "This enables the Bookmark links in Jonah and Sugarcane.\n(If the player can't undo, bookmarks are always disabled.)",
+                "requires": "undo",
                 "default": "on"
+            },{
+                "type": "checkbox",
+                "name": "hash",
+                "label": "Automatic URL hash updates",
+                "desc": "The story's URL automatically updates, so that it always links to the \ncurrent passage. Naturally, this renders the bookmark link irrelevant.",
+                "requires": "undo",
+                "default": "off"
             },{
                 "type": "checkbox",
                 "name": "exitprompt",

@@ -776,13 +776,17 @@ class StorySettingsFrame(wx.Frame):
         self.panel.SetSizer(allSizer)
 
         # Read the storysettings definitions for this header
-        checkboxData = self.widget.parent.parent.header.storySettings()
-
-        for data in checkboxData:
+        self.storySettingsData = self.widget.parent.parent.header.storySettings()
+        
+        self.ctrls = {}
+        
+        for data in self.storySettingsData:
+            ctrlset = []
+            name = ''
             if data["type"] == "checkbox":
                 checkbox = wx.CheckBox(self.panel, label = data["label"])
                 name = data["name"]
-                # Read checkbox's current value, and default it if it's not present
+                # Read current value, and default it if it's not present
                 currentValue = self.getSetting(name).lower()
                 if not currentValue:
                     currentValue = data.get('default', 'off')
@@ -792,7 +796,8 @@ class StorySettingsFrame(wx.Frame):
                 checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name, values=values:
                               self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
                 allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
-
+                ctrlset.append(checkbox)
+            
             elif data["type"] == "text":
                 textlabel = wx.StaticText(self.panel, label = data["label"])
                 textctrl = wx.TextCtrl(self.panel)
@@ -811,16 +816,34 @@ class StorySettingsFrame(wx.Frame):
                 hSizer.Add(textlabel,1,wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
                 hSizer.Add(textctrl,1,wx.EXPAND)
                 allSizer.Add(hSizer,flag=wx.ALL|wx.EXPAND, border=metrics.size('windowBorder'))
-
+                ctrlset += [textlabel, textctrl]
+            else:
+                continue
+            
             if "desc" in data:
                 desc = wx.StaticText(self.panel, label = data["desc"])
                 allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
-
+                ctrlset.append(desc)
+            
+            self.ctrls[name] = ctrlset
+            
         self.SetIcon(self.app.icon)
 
         self.Layout()
+        self.enableCtrls()
         self.Show(True)
-
+        
+    def enableCtrls(self):
+        # Check if each ctrl has a requirement or an incompatibility,
+        # look it up, and enable/disable if so
+        for data in self.storySettingsData:
+            name = data["name"]
+            if name in self.ctrls:
+                if 'requires' in data:
+                    set = self.getSetting(data['requires'])
+                    for i in self.ctrls[name]:
+                        i.Enable(set not in ["off", "false", '0'])
+    
     def getSetting(self, valueName):
         search = re.search(r"(?:^|\n)"+valueName + r"\s*:\s*(\w*)\s*(?:\n|$)", self.widget.passage.text, flags=re.I)
         if search:
@@ -838,6 +861,7 @@ class StorySettingsFrame(wx.Frame):
         self.widget.parent.parent.setDirty(True)
         self.widget.clearPaintCache()
         self.widget.passage.update()
+        self.enableCtrls()
 
 
 class ImageFrame(wx.Frame):
