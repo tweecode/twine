@@ -1,4 +1,4 @@
-import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki
+import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki, tweelexer
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
@@ -237,39 +237,42 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
-        
-
+            
     def verifyPassage(self, window):
         """
         Check that the passage syntax is well-formed.
         Return -1 if the check was aborted, 0+ for each check made
         """
         passage = self.passage
-        checks = self.parent.parent.header.passageChecks()
+        checks = tweelexer.VerifyLexer(self).check()
         
         broken = False
         problems = 0
-        for check in checks:
-            
-            oldtext = passage.text
-            newtext = ""
-            index = 0
-            
-            iter = check(self.passage)
-            if iter:
-                for warning, replace in iter:
-                    problems += 1
-                    answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
-                        .ShowModal()
-                    if answer == wx.ID_YES:
-                        newtext += oldtext[index:replace[0]] + replace[1]
-                        index = replace[2]
-                        if hasattr(self, 'passageFrame') and self.passageFrame:
-                            self.passageFrame.bodyInput.SetText(newtext + oldtext[index:])
-                    elif answer == wx.ID_CANCEL:
-                        broken = True
-                        break
-            
+        
+        oldtext = passage.text
+        newtext = ""
+        index = 0
+        for warning, replace in checks:
+            problems += 1
+            if replace:
+                start, sub, end = replace
+                answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
+                    .ShowModal()
+                if answer == wx.ID_YES:
+                    newtext += oldtext[index:start] + sub
+                    index = end
+                    if hasattr(self, 'passageFrame') and self.passageFrame:
+                        self.passageFrame.bodyInput.SetText(newtext + oldtext[index:])
+                elif answer == wx.ID_CANCEL:
+                    broken = True
+                    break
+            else:
+                answer = wx.MessageDialog(window, warning+"\n\nKeep checking?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO) \
+                    .ShowModal()
+                if answer == wx.ID_NO:
+                    broken = True
+                    break
+                    
             passage.text = newtext + oldtext[index:]
             if broken:
                 return -1

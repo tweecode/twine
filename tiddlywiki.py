@@ -599,15 +599,12 @@ def encode_text(text):
 
 def decode_text(text):
     """Decodes a string from HTML."""
-    output = text
-    output = output.replace('\\n', '\n')
-    output = output.replace('\\t', '\t')
-    output = output.replace('\s', '\\')
-    output = output.replace('&lt;', '<')
-    output = output.replace('&gt;', '>')
-    output = output.replace('&quot;', '"')
-    return output
-
+    return text.replace('\\n', '\n') \
+        .replace('\\t', '\t') \
+        .replace('\s', '\\') \
+        .replace('&lt;', '<') \
+        .replace('&gt;', '>') \
+        .replace('&quot;', '"')
 
 def encode_date(date):
     """Encodes a datetime in TiddlyWiki format."""
