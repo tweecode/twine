@@ -1,4 +1,4 @@
-import os, imp, re, tweeregex
+import os, imp, re, tweeregex, tweelexer
 from collections import OrderedDict
 from random import shuffle
 
@@ -96,45 +96,62 @@ class Header(object):
     
     def passageChecks(self):
         """
-        Returns a list of checks to perform on the passage whenever it's closed.
-        Each function should return a string warning message, or None
+        Returns tuple of list of functions to perform on the passage whenever it's closed.
+        The main tuple's three lists are: Twine checks, then Stylesheet checks, then Script checks.
         """
-        def checkIfMacro(passage):
-            # Check that the single = assignment isn't present in an if/elseif condition.
-            ifMacroRegex = tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)")
-            iter = re.finditer(ifMacroRegex, passage.text)
-            for i in iter:
-                r = re.search(r"([^=<>!~])(=(?!=))(.?)" + tweeregex.UNQUOTED_REGEX, i.group(2))
-                if r:
-                    warning = i.group(0) + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else if>> tags."
-                    insertion = "is"
-                    if r.group(1) != " ":
-                        insertion = " "+insertion
-                    if r.group(3) != " ":
-                        insertion += " "
-                    # Yield the warning message, and a 3-tuple consisting of
-                    # start index of replacement, the replacement, end index of replacement
-                    yield (warning, (i.start(2)+r.start(2), insertion, i.start(2)+r.end(2)))
         
-        def checkScriptTagInScriptPassage(passage):
-            # Check that s script passage does not contain "<script type='text/javascript>" style tags.
-            if passage.isScript():
-                iter = re.finditer(r"(?:</?script\b[^>]*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
-                for i in iter:
-                    warning = "This script contains " + i.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
-                    # Yield the warning message, and a 3-tuple consisting of
-                    # start index of replacement, the replacement, end index of replacement
-                    yield (warning, (i.start(0),"", i.end(0)))
+        """
+        Twine code checks
+        Each function should return an iterable (or be a generator) of tuples containing:
+            * warning message string,
+            * None, or a tuple:
+                * start index where to begin substitution
+                * string to substitute
+                * end index
+        """
+        def checkUnmatchedMacro(tag, start, end, style, passage=None):
+            if style == tweelexer.TweeLexer.BAD_MACRO:
+                matchKind = "start" if "end" in tag else "end"
+                yield ("The macro tag " + tag + "\ndoes not have a matching " + matchKind + " tag.", None)
         
-        def checkHTTPSpelling(passage):
-            # Corrects the incorrect spellings "http//" and "http:/" (and their https variants)
-            iter = re.finditer(r"\bhttp(s?)(?:\/\/|\:\/(?=[^\/]))", passage.text)
-            for i in iter:
-                # Yield the warning message, and a 3-tuple consisting of
-                # start index of replacement, the replacement, end index of replacement
-                yield (r"You appear to have misspelled 'http" + i.group(1) + "://'.", (i.start(0),"http" + i.group(1) + "://", i.end(0)))
+        def checkIfMacro(tag, start, end, style, passage=None):
+            if style == tweelexer.TweeLexer.MACRO:
+                ifMacro = re.search(tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)"), tag)
+                if ifMacro:
+                    # Check that the single = assignment isn't present in an if/elseif condition.
+                    r = re.search(r"([^=<>!~])(=(?!=))(.?)" + tweeregex.UNQUOTED_REGEX, tag)
+                    if r:
+                        warning = tag + " contains the = operator.\nYou must use 'is' instead of '=' in <<if>> and <<else if>> tags."
+                        insertion = "is"
+                        if r.group(1) != " ":
+                            insertion = " "+insertion
+                        if r.group(3) != " ":
+                            insertion += " "
+                        # Return the warning message, and a 3-tuple consisting of
+                        # start index of replacement, the replacement, end index of replacement
+                        yield (warning, (start+r.start(2), insertion, start+r.end(2)))
+
+        def checkHTTPSpelling(tag, start, end, style, passage=None):
+            if style == tweelexer.TweeLexer.EXTERNAL:
+                # Corrects the incorrect spellings "http//" and "http:/" (and their https variants)
+                regex = re.search(r"\bhttp(s?)(?:\/\/|\:\/(?=[^\/]))", tag)
+                if regex:
+                    yield (r"You appear to have misspelled 'http" + regex.group(1) + "://'.",
+                            (start+regex.start(0), "http" + regex.group(1) + "://", start+regex.end(0)))
+            
+        """
+        Script checks
+        """
+        def checkScriptTagsInScriptPassage(passage):
+            # Check that a script passage does not contain "<script type='text/javascript'>" style tags.
+            ret = []
+            scriptTags = re.finditer(r"(?:</?script\b[^>]*>)" + tweeregex.UNQUOTED_REGEX, passage.text)
+            for scriptTag in scriptTags:
+                warning = "This script contains " + scriptTag.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
+                ret.append((warning, (scriptTag.start(0), "", scriptTag.end(0))))
+            return ret
         
-        return [checkIfMacro, checkScriptTagInScriptPassage, checkHTTPSpelling]
+        return ([checkUnmatchedMacro, checkIfMacro, checkHTTPSpelling],[],[checkScriptTagsInScriptPassage])
 
     @staticmethod
     def factory(type, path, builtinPath):
@@ -145,3 +162,4 @@ class Header(object):
         else:
             obj = Header(type, path, builtinPath)
         return obj
+
