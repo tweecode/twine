@@ -484,7 +484,7 @@ class Tiddler:
 
         return u'<div%s%s>%s</div>' % (
             ''.join(' %s="%s"' % arg for arg in args),
-            'twine-position=%d,%d' % tuple(self.pos) if hasattr(self, "pos") else "",
+            ' twine-position="%d,%d"' % tuple(self.pos) if hasattr(self, "pos") else "",
             encode_text(applyRot13(self.text))
             )
 
