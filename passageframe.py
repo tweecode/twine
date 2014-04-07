@@ -52,13 +52,17 @@ class PassageFrame(wx.Frame):
 
         passageMenu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.save, id = wx.ID_SAVE)
-
-        passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
-        self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
+        
+        passageMenu.Append(PassageFrame.PASSAGE_VERIFY, '&Verify Passage\tCtrl-E')
+        self.Bind(wx.EVT_MENU, lambda e: (self.widget.verifyPassage(self), self.offerAssistance()),\
+                  id = PassageFrame.PASSAGE_VERIFY)
         
         passageMenu.Append(PassageFrame.PASSAGE_TEST_HERE, '&Test Play From Here\tCtrl-T')
         self.Bind(wx.EVT_MENU, lambda e: self.widget.parent.parent.testBuild(e, startAt = self.widget.passage.title),\
                   id = PassageFrame.PASSAGE_TEST_HERE)
+        
+        passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
+        self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
 
         passageMenu.AppendSeparator()
 
@@ -319,20 +323,13 @@ class PassageFrame(wx.Frame):
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
         
-    def closeEditor(self, event = None):
+    def offerAssistance(self):
         """
-        Do extra stuff on closing the editor
+        Offer to fulfill certain incomplete tasks evident from the state of the passage text.
+        (Technically, none of this needs to be on passageFrame instead of passageWidget.)
         """
-        #Closes this editor's fullscreen counterpart, if any.
-        try: self.fullscreen.Destroy()
-        except: pass
-        
-        # Show warnings, do replacements
-        if self.app.config.ReadBool('passageWarnings'):
-            if self.widget.verifyPassage(self) == -1: return
         
         # Offer to create passage for broken links
-        
         if self.app.config.ReadBool('createPassagePrompt'):
             brokens = links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
             if brokens :
@@ -348,7 +345,7 @@ class PassageFrame(wx.Frame):
                         self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
                 elif check == wx.ID_CANCEL:
                     return
-            
+        
         # Offer to import external images
         if self.app.config.ReadBool('importImagePrompt'):
             regex = tweeregex.EXTERNAL_IMAGE_REGEX
@@ -384,6 +381,24 @@ class PassageFrame(wx.Frame):
             for old, new in downloadedurls.iteritems():
                 self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
                                                   lambda m: m.group(0).replace(old, new), self.widget.passage.text)
+        
+        self.bodyInput.SetText(self.widget.passage.text)
+        
+    def closeEditor(self, event = None):
+        """
+        Do extra stuff on closing the editor
+        """
+        #Closes this editor's fullscreen counterpart, if any.
+        try: self.fullscreen.Destroy()
+        except: pass
+        
+        # Show warnings, do replacements
+        if self.app.config.ReadBool('passageWarnings'):
+            if self.widget.verifyPassage(self) == -1: return
+        
+        # Do help    
+        self.offerAssistance()
+        
         self.widget.passage.update()
         event.Skip()
 
@@ -748,7 +763,7 @@ class PassageFrame(wx.Frame):
     # menu constants (not defined by wx)
 
     EDIT_FIND_NEXT = 2001
-    [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY, PASSAGE_TEST_HERE] = range(1001,1005)
+    [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY, PASSAGE_TEST_HERE, PASSAGE_VERIFY] = range(1001,1006)
     [HELP1, HELP2, HELP3, HELP4] = range(3001,3005)
 
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)

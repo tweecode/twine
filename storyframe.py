@@ -968,7 +968,7 @@ You can also include URLs of .tws and .twee files, too.
         """
         Opens the last built file in a Web browser.
         """
-        path = 'file://' + urllib.pathname2url(name or self.buildDestination)
+        path = u'file://' + urllib.pathname2url((name or self.buildDestination).encode('utf-8'))
         path = path.replace('file://///', 'file:///')
         wx.LaunchDefaultBrowser(path)
 

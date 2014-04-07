@@ -44,7 +44,7 @@ class PassageWidget:
 
     def getSize(self):
         """Returns this instance's logical size."""
-        if "annotation" in self.passage.tags:
+        if self.passage.isAnnotation():
             return (PassageWidget.SIZE+self.parent.GRID_SPACING, PassageWidget.SIZE+self.parent.GRID_SPACING)
         return (PassageWidget.SIZE, PassageWidget.SIZE)
 
@@ -241,7 +241,7 @@ class PassageWidget:
     def verifyPassage(self, window):
         """
         Check that the passage syntax is well-formed.
-        Return -1 if the check was aborted, 0+ for each check made
+        Return -(corrections made) if the check was aborted, +(corrections made) otherwise
         """
         passage = self.passage
         checks = tweelexer.VerifyLexer(self).check()
@@ -264,18 +264,15 @@ class PassageWidget:
                     if hasattr(self, 'passageFrame') and self.passageFrame:
                         self.passageFrame.bodyInput.SetText(newtext + oldtext[index:])
                 elif answer == wx.ID_CANCEL:
-                    broken = True
-                    break
+                    return -problems
             else:
                 answer = wx.MessageDialog(window, warning+"\n\nKeep checking?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO) \
                     .ShowModal()
                 if answer == wx.ID_NO:
-                    broken = True
-                    break
+                    return -problems
                     
             passage.text = newtext + oldtext[index:]
-            if broken:
-                return -1
+        
         return problems
 
     def intersectsAny(self, dragging = False):
