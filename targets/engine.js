@@ -1707,8 +1707,28 @@ Wikifier.formatters = [
     name: "image",
     match: "\\[(?:[<]{0,1})(?:[>]{0,1})[Ii][Mm][Gg]\\[",
     lookahead: "\\[([<]?)(>?)img\\[(?:([^\\|\\]]+)\\|)?([^\\[\\]\\|]+)\\](?:\\[([^\\]]*)\\]?)?(\\])",
+    importedImage: function(img, passageName) {
+        var imgPassages, imgname;
+        // Try to parse it as a variable
+        try {
+            imgname = eval(Wikifier.parse(passageName));
+        }
+        catch(e) {
+        }
+        if (!imgname) {
+            imgname = passageName;
+        }
+        // Base64 passage transclusion
+        imgPassages = tale.lookup("tags", "Twine.image");
+        for (j = 0; j < imgPassages.length; j++) {
+            if (imgPassages[j].title == imgname) {
+                img.src = imgPassages[j].text;
+                break;
+            }
+        }
+    },
     handler: function (w) {
-        var e, imgPassages, imgname, img, j, lookaheadMatch,
+        var e, img, j, lookaheadMatch,
             lookaheadRegExp = new RegExp(this.lookahead, "mig");
         lookaheadRegExp.lastIndex = w.matchStart;
         lookaheadMatch = lookaheadRegExp.exec(w.source);
@@ -1722,23 +1742,8 @@ Wikifier.formatters = [
             if (lookaheadMatch[1]) img.align = "left";
             else if (lookaheadMatch[2]) img.align = "right";
             if (lookaheadMatch[3]) img.title = lookaheadMatch[3];
-            // Try to parse it as a variable
-            try {
-                imgname = eval(Wikifier.parse(lookaheadMatch[4]));
-            }
-            catch(e) {
-            }
-            if (!imgname) {
-                imgname = lookaheadMatch[4];
-            }
-            // Base64 passage transclusion
-            imgPassages = tale.lookup("tags", "Twine.image");
-            for (j = 0; j < imgPassages.length; j++) {
-                if (imgPassages[j].title == imgname) {
-                    img.src = imgPassages[j].text;
-                    break;
-                }
-            }
+            // Setup the image if it's referencing an image passage.
+            this.importedImage(img,lookaheadMatch[4]);
             w.nextMatch = lookaheadMatch.index + lookaheadMatch[0].length;
         }
     }
@@ -1915,7 +1920,7 @@ Wikifier.formatters = [
         }
     },
     handler: function (a) {
-        var tmp, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
+        var tmp, passage, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
           tn = re && re[1] && re[1].toLowerCase();
         if(tn && tn != "html") {
@@ -1946,6 +1951,16 @@ Wikifier.formatters = [
                 }
                 if (e.tagName.toLowerCase() == 'table') {
                     this.cleanupTables.call(this,e);
+                }
+                // Special passage and imgpassage attributes, for referencing story resources
+                if (passage = e.getAttribute("passage")) {
+                    e.onclick = Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e);
+                    if (tn == "area") {
+                        e.setAttribute("href", "javascript:;");
+                    }
+                }
+                else if (passage = e.getAttribute("imgpassage")) {
+                    Wikifier.imageFormatter.importedImage(e, passage);
                 }
                 a.output.appendChild(e);
             } else {
