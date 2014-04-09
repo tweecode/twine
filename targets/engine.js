@@ -499,7 +499,9 @@ macros.display = {
             // The above line recreates params, with the quotes.
             try {
                 for(j=0; j < params.length; j++) {
-                    params[j] = eval(Wikifier.parse(params[j]));
+                    // eval("{x:1,y:1}") fails miserably unless the obj. literal
+                    // is not the first expression in the line (hence, "0,").
+                    params[j] = eval("0,"+Wikifier.parse(params[j]));
                 }
             } catch (e) {
                 throwError(place, parser.fullMatch() + " bad argument: " + params[j], parser.fullMatch());
@@ -575,7 +577,8 @@ macros.print = {
     handler: function (place, macroName, params, parser) {
         try {
             var args = parser.fullArgs(macroName != "print"),
-                output = eval(args);
+                // See comment within macros.display
+                output = eval("0,"+args);
             if (output != null && (typeof output != "number" || !isNaN(output))) {
                 new Wikifier(place, ''+output);
             }
@@ -1362,7 +1365,7 @@ Wikifier.parse = function (input) {
         g = Wikifier.textPrimitives.unquoted;
     
     function alter(from,to) {
-        return b.replace(new RegExp(from+g,"gi"),to);
+        return b.replace(new RegExp(from+g,"gim"),to);
     }
     // Extract all the variables, and set them to 0 if undefined.
     re = new RegExp(Wikifier.textPrimitives.variable+g,"gi");
