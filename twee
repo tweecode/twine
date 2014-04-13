@@ -8,6 +8,7 @@ from version import versionString
 
 def usage():
     print >> sys.stderr, 'usage: twee [-a author] [-t target] [-s startpassage] source1 [source2..]'
+    print >> sys.stderr, '       (source directories are recursively scanned for .tw/.twee files)'
 
 
 class TweeApp(object):
@@ -56,11 +57,16 @@ def main(argv):
         elif (opt in ('-t', '--target')):
             target = arg
 
-    sources = [
-        filename
-        for arg in args
-        for filename in glob.glob(arg)
-        ]
+    sources = []
+    for arg in args:
+        for source in glob.glob(arg):
+            if os.path.isdir(source):
+                for dirpath, dirnames, filenames in os.walk(source):
+                    for filename in filenames:
+                        if filename.endswith('.tw') or filename.endswith('.twee'):
+                            sources.append(os.path.join(dirpath, filename))
+            else:
+                sources.append(source)
 
     if len(sources) == 0:
         print >> sys.stderr, 'twee: no source files specified'
