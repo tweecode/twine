@@ -94,6 +94,10 @@ class Header(object):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
     
+    def invisiblePassageTags(self):
+        """Returns a list of passage tags which, for whatever reason, shouldn't be displayed on the Story Map."""
+        return frozenset(['nobr'])
+    
     def passageChecks(self):
         """
         Returns tuple of list of functions to perform on the passage whenever it's closed.

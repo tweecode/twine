@@ -577,6 +577,7 @@ class PassageWidget:
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
         tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08,
                                                                     0.58 if flat else 0.28, 0.88)), self.dimmed)
+        tags = set(self.passage.tags) - (tiddlywiki.TiddlyWiki.INFO_TAGS | self.getHeader().invisiblePassageTags() )
 
         # inset for text (we need to know this for layout purposes)
 
@@ -680,10 +681,9 @@ class PassageWidget:
                     excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
                         * min(1.75,max(1,1.75*size.width/260 if (self.passage.isAnnotation() and line) else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
-
-            if (self.passage.isStoryText() and self.passage.tags) or \
-                    (self.passage.isStylesheet() and len(self.passage.tags) > 1):
-
+            
+            if (self.passage.isStoryText() or self.passage.isStylesheet()) and tags:
+                
                 tagBarHeight = excerptFontHeight + (2 * inset)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
@@ -699,7 +699,7 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(tagTextColor)
 
-                text = wordWrap(" ".join(a for a in self.passage.tags if a not in tiddlywiki.TiddlyWiki.INFO_TAGS),
+                text = wordWrap(" ".join(tags),
                                 size.width - (inset * 2), gc)[0]
 
                 gc.DrawText(text, inset*2, (size.height-tagBarHeight))
@@ -742,8 +742,7 @@ class PassageWidget:
 
             # greek tags
 
-            if (self.passage.isStoryText() and self.passage.tags) or \
-                    (self.passage.isStylesheet() and len(self.passage.tags) > 1) :
+            if (self.passage.isStoryText() or self.passage.isStylesheet()) and tags:
 
                 tagBarHeight = PassageWidget.GREEK_HEIGHT*3
                 gc.SetPen(wx.Pen(tagBarColor, 1))

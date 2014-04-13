@@ -1343,7 +1343,9 @@ Wikifier.prototype.subWikify = function (output, terminator) {
 };
 
 Wikifier.prototype.outputText = function (place, startPos, endPos) {
-    insertText(place, this.source.substring(startPos, endPos));
+    if (place) {
+        insertText(place, this.source.substring(startPos, endPos));
+    }
 };
 
 Wikifier.prototype.fullMatch = function() {

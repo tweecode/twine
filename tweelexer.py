@@ -394,8 +394,8 @@ class TweeLexer:
 
 def badLinkStyle(dest):
     # Apply style for a link destination which does not seem to be an existent passage
-    for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', '.', '/', '\\', '#']:
-        if t in dest.lower():
+    for t in ['^http:', '^https:', '^ftp:', '^mailto:', '^javascript:', '^data:', r'[^\.\s]\.[^\.\s]', r'/', r'\\', r'\S#']:
+        if re.search(t, dest.lower()):
             return TweeLexer.EXTERNAL
     iscode = re.search(tweeregex.MACRO_PARAMS_VAR_REGEX+"|"+tweeregex.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
     return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK

@@ -9,7 +9,7 @@ Tale.prototype.canBookmark = function() {
 History.prototype.init = function () {
     if (!this.restore()) {
         if (tale.has("StoryInit")) {
-            new Wikifier(null, tale.get("StoryInit").text);
+            new Wikifier(insertElement(null, "span"), tale.get("StoryInit").text);
         }
         this.display("Start", null, "quietly");
         tale.setPageElements();

@@ -21,7 +21,7 @@ History.prototype.init = function () {
     var a = this;
     if (!this.restore()) {
         if (tale.has("StoryInit")) {
-            new Wikifier(null, tale.get("StoryInit").text);
+            new Wikifier(insertElement(null, "span"), tale.get("StoryInit").text);
         }
         this.display("Start", null)
     }
