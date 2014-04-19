@@ -29,7 +29,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.snapping = self.app.config.ReadBool('storyPanelSnap')
         self.widgets = []
         self.visibleWidgets = None
-        self.externalPassages = set()
+        self.includedPassages = set()
         self.draggingMarquee = False
         self.draggingWidgets = None
         self.notDraggingWidgets = None
@@ -704,25 +704,30 @@ class StoryPanel(wx.ScrolledWindow):
             if widget.passage.title == title: return widget
         return None
 
-    def passageExists(self, title, includeExternal = True):
+    def passageExists(self, title, includeIncluded = True):
         """
         Returns whether a given passage exists in the story.
         
-        If includeExternal then will also check external passages referenced via StoryIncludes
+        If includeIncluded then will also check external passages referenced via StoryIncludes
         """
-        return self.findWidget(title) != None or (includeExternal and self.externalPassageExists(title))
+        return self.findWidget(title) != None or (includeIncluded and self.includedPassageExists(title))
 
-    def clearExternalPassages(self):
-        """Clear the externalPassages set"""
-        self.externalPassages.clear()
+    def clearIncludedPassages(self):
+        """Clear the includedPassages set"""
+        self.includedPassages.clear()
 
-    def addExternalPassage(self, title):
+    def addIncludedPassage(self, title):
         """Add a title to the set of external passages"""
-        self.externalPassages.add(title)
+        self.includedPassages.add(title)
 
-    def externalPassageExists(self, title):
+    def includedPassageExists(self, title):
         """Add a title to the set of external passages"""
-        return (title in self.externalPassages)
+        return (title in self.includedPassages)
+    
+    def refreshIncludedPassageList(self):
+        for widget in self.widgets:
+            if widget.passage.title == 'StoryIncludes':
+                self.parent.readIncludes(widget.passage.text.splitlines(), lambda a: self.addIncludedPassage(a.title))
 
     def toPixels(self, logicals, scaleOnly = False):
         """

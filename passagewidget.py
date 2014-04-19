@@ -160,9 +160,9 @@ class PassageWidget:
         """Returns a list of broken links in this widget."""
         return filter(lambda a: not self.parent.passageExists(a), self.passage.links)
     
-    def getExternalLinks(self):
-        """Returns a list of external passages in this widget."""
-        return filter(lambda a: self.parent.externalPassageExists(a), self.passage.links)
+    def getIncludedLinks(self):
+        """Returns a list of included passages in this widget."""
+        return filter(lambda a: self.parent.includedPassageExists(a), self.passage.links)
 
     def setSelected(self, value, exclusive = True):
         """
@@ -809,7 +809,7 @@ class PassageWidget:
             
         if len(self.getBrokenLinks()):
             showEmblem(self.brokenEmblem)
-        elif len(self.getExternalLinks()):
+        elif len(self.getIncludedLinks()):
             showEmblem(self.externalEmblem)
 
         # finally, draw a selection over ourselves if we're selected
@@ -896,7 +896,7 @@ class PassageWidget:
                'excerptText': (96, 96, 96),
                'annotationText': (0,0,0),
                'greek': (192, 192, 192),
-               'connector': (161, 165, 156),
+               'connector': (143, 148, 137),
                'connectorDisplay': (137, 193, 235),
                'connectorResource': (186, 188, 185),
                'connectorAnnotation': (255, 255, 255),

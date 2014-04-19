@@ -36,7 +36,9 @@ class StoryFrame(wx.Frame):
             self.saveDestination = ''
             self.setTarget('sugarcane')
             self.storyPanel = StoryPanel(self, app)
-
+            
+        self.storyPanel.refreshIncludedPassageList()
+        
         # window events
 
         self.Bind(wx.EVT_CLOSE, self.checkClose)
@@ -839,9 +841,22 @@ You can also include URLs of .tws and .twee files, too.
             tw = TiddlyWiki()
             for widget in self.storyPanel.widgets:
                 if widget.passage.title == 'StoryIncludes':
-                    tw = self.buildIncludes(tw, widget.passage.text.splitlines()) or tw
+                    
+                    def callback(passage, tw=tw):
+                        # Check for uniqueness
+                        if self.storyPanel.findWidget(passage.title):
+                            # Not bothering with a Yes/No dialog here.
+                            raise Exception('A passage titled "'+ passage.title + '" is already present in this story')
+                        elif tw.hasTiddler(passage.title):
+                            raise Exception('A passage titled "'+ passage.title + '" has been included by a previous StoryIncludes file')
+
+                        tw.addTiddler(passage)
+                        self.storyPanel.addIncludedPassage(passage.title)
+                    
+                    self.readIncludes(widget.passage.text.splitlines(), callback)
                     # Might as well suppress the warning for a StoryIncludes file
                     hasstartpassage = True
+                    
                 elif TiddlyWiki.NOINCLUDE_TAGS.isdisjoint(widget.passage.tags):
                     widget.passage.pos = widget.pos
                     tw.addTiddler(widget.passage)
@@ -894,15 +909,17 @@ You can also include URLs of .tws and .twee files, too.
         else:
             return os.path.dirname(self.saveDestination)
     
-    def buildIncludes(self, tw, lines):
+    def readIncludes(self, lines, callback):
         """
-        Modify the passed TiddlyWiki object by including passages from the given files.
+        Examines all of the source files included via StoryIncludes, and performs a callback on each passage found.
+        
+        callback is a function that takes 1 Tiddler object.
         """
         twinedocdir = self.getLocalDir()
         
         excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS
-        self.storyPanel.clearExternalPassages()
+        self.storyPanel.clearIncludedPassages()
         for line in lines:
             try:
                 if line.strip():
@@ -918,17 +935,7 @@ You can also include URLs of .tws and .twee files, too.
                         for widget in s.storyPanel.widgets:
                             if widget.passage.title not in excludepassages \
                             and excludetags.isdisjoint(widget.passage.tags):
-
-                                # Check for uniqueness
-                                if self.storyPanel.findWidget(widget.passage.title):
-                                    # Not bothering with a Yes/No dialog here.
-                                    raise Exception('A passage titled "'+ widget.passage.title + '" is already present in this story')
-                                elif tw.hasTiddler(widget.passage.title):
-                                    raise Exception('A passage titled "'+ widget.passage.title + '" has been included by a previous StoryIncludes file')
-
-                                tw.addTiddler(widget.passage)
-                                self.storyPanel.addExternalPassage(widget.passage.title)
-
+                                callback(widget.passage)
                         s.Destroy()
 
                     elif extension == '.tw' or extension == '.txt' or extension == '.twee':
@@ -954,15 +961,12 @@ You can also include URLs of .tws and .twee files, too.
                             passage = tw1.tiddlers[tiddlerkey]
                             if passage.title not in excludepassages \
                             and excludetags.isdisjoint(passage.tags):
-                                tw.addTiddler(passage)
-                                self.storyPanel.addExternalPassage(passage.title)
+                                callback(passage)
 
                     else:
                         raise Exception('File format not recognized')
             except:
-                self.app.displayError('including the file named "' + line + '" which is referred to by the StoryIncludes passage\n')
-                return None
-        return tw
+                self.app.displayError('reading the file named "' + line + '" which is referred to by the StoryIncludes passage\n')
 
     def viewBuild(self, event = None, name = ''):
         """

@@ -261,7 +261,7 @@ class PassageFrame(wx.Frame):
             if otherTitled and otherTitled != self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
                 error()
-            elif self.widget.parent.externalPassageExists(title):
+            elif self.widget.parent.includedPassageExists(title):
                 self.titleLabel.SetLabel("Used by a StoryIncludes file.")
                 error()
             elif "|" in title or "]" in title:
@@ -701,7 +701,7 @@ class PassageFrame(wx.Frame):
                         found = True
                         break
 
-                if not found and self.widget.parent.externalPassageExists(link): found = True
+                if not found and self.widget.parent.includedPassageExists(link): found = True
 
                 if not found: broken.append(link)
 

@@ -160,7 +160,7 @@ class TweeLexer:
             length = m.end(0)
             if self.passageExists(m.group(1)):
                 self.applyStyle(pos, length, self.GOOD_LINK)
-            elif self.externalPassageExists(m.group(1)):
+            elif self.includedPassageExists(m.group(1)):
                 self.applyStyle(pos, length, self.STORYINCLUDE_LINK)
             else:
                 self.applyStyle(pos, length, self.MACRO)
@@ -220,12 +220,12 @@ class TweeLexer:
                 # check for prettylinks
                 s2 = self.GOOD_LINK
                 if not m.group(2):
-                    if self.externalPassageExists(m.group(1)):
+                    if self.includedPassageExists(m.group(1)):
                         s2 = self.STORYINCLUDE_LINK
                     elif not self.passageExists(m.group(1)):
                         s2 = TweeLexer.linkStyle(m.group(1))
                 else:
-                    if self.externalPassageExists(m.group(2)):
+                    if self.includedPassageExists(m.group(2)):
                         s2 = self.STORYINCLUDE_LINK
                     elif not self.passageExists(m.group(2)):
                         s2 = TweeLexer.linkStyle(m.group(2))
@@ -338,11 +338,11 @@ class TweeLexer:
         """
         return (self.frame.widget.parent.passageExists(title, False))
     
-    def externalPassageExists(self, title):
+    def includedPassageExists(self, title):
         """
         Returns whether a given passage exists in a StoryIncludes resource.
         """
-        return (self.frame.widget.parent.externalPassageExists(title))
+        return (self.frame.widget.parent.includedPassageExists(title))
 
     def applyStyle(self, start, end, style):
         """
@@ -358,8 +358,8 @@ class TweeLexer:
     @staticmethod
     def linkStyle(dest):
         """Apply style for a link destination which does not seem to be an existent passage"""
-        for t in ['^http:', '^https:', '^ftp:', '^mailto:', '^javascript:', '^data:', r'[^\.\s]\.[^\.\s]', r'/', r'\\', r'\S#']:
-            if re.search(t, dest.lower()):
+        for t in ['http:', 'https:', 'ftp:', 'mailto:', 'javascript:', 'data:', r'[\./]*/']:
+            if re.match(t, dest.lower()):
                 return TweeLexer.EXTERNAL
         iscode = re.search(tweeregex.MACRO_PARAMS_VAR_REGEX+"|"+tweeregex.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
         return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK
@@ -420,8 +420,8 @@ class VerifyLexer(TweeLexer):
     def passageExists(self, title):
         return (self.widget.parent.passageExists(title, False))
     
-    def externalPassageExists(self, title):
-        return (self.widget.parent.externalPassageExists(title))
+    def includedPassageExists(self, title):
+        return (self.widget.parent.includedPassageExists(title))
     
     def check(self):
         """Collect error messages for this passage, using the overridden applyStyles() method."""
