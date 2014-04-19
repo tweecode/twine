@@ -1,6 +1,7 @@
 import sys, os, re, types, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
-from tweelexer import TweeLexer, badLinkStyle
+from version import versionString
+from tweelexer import TweeLexer
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
@@ -31,7 +32,7 @@ class PassageFrame(wx.Frame):
         self.usingLexer = self.LEXER_NORMAL
         self.titleInvalid = False
 
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME + ' ' + versionString, \
                           size = PassageFrame.DEFAULT_SIZE)
 
         # Passage menu
@@ -226,6 +227,11 @@ class PassageFrame(wx.Frame):
         self.SetIcon(self.app.icon)
         self.Show(True)
 
+    def title(self, title = None):
+        if not title:
+            title = self.widget.passage.title
+        return title + ' - ' + self.widget.parent.parent.title + ' - ' + self.app.NAME + ' ' + versionString
+    
     def syncInputs(self):
         """Updates the inputs based on the passage's state."""
         self.titleInput.SetValue(self.widget.passage.title)
@@ -237,7 +243,7 @@ class PassageFrame(wx.Frame):
             tags += tag + ' '
 
         self.tagsInput.SetValue(tags)
-        self.SetTitle(self.widget.passage.title + ' - ' + self.widget.parent.parent.title + ' - ' + self.app.NAME)
+        self.SetTitle(self.title())
 
     def syncPassage(self, event = None):
         """Updates the passage based on the inputs; asks our matching widget to repaint."""
@@ -285,7 +291,7 @@ class PassageFrame(wx.Frame):
             if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
                 self.widget.parent.parent.autoBuildStart();
 
-        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        self.SetTitle(self.title())
 
         # immediately mark the story dirty
 
@@ -319,7 +325,7 @@ class PassageFrame(wx.Frame):
         """Opens a FullscreenEditFrame for this passage's body text."""
         self.Hide()
         self.fullscreen = FullscreenEditFrame(None, self.app, \
-                                              title = self.widget.passage.title + ' - ' + self.app.NAME, \
+                                              title = self.title(), \
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
         
@@ -331,7 +337,7 @@ class PassageFrame(wx.Frame):
         
         # Offer to create passage for broken links
         if self.app.config.ReadBool('createPassagePrompt'):
-            brokens = links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            brokens = links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
             if brokens :
                 if len(brokens) > 1:
                     brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
@@ -684,7 +690,7 @@ class PassageFrame(wx.Frame):
 
         # Remove externals
 
-        links = filter(lambda text: badLinkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
+        links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
         for link in links:
             if len(link) > 0:
                 found = False
@@ -769,14 +775,14 @@ class PassageFrame(wx.Frame):
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 
 
-class StorySettingsFrame(wx.Frame):
+class StorySettingsFrame(PassageFrame):
     """A window which presents the current header's StorySettings."""
 
     def __init__(self, parent, widget, app):
         self.widget = widget
         self.app = app
 
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.widget.passage.title + ' - ' + self.app.NAME, \
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = self.widget.passage.title + ' - ' + self.app.NAME + ' ' + versionString, \
                           size = (450, 550), style=wx.DEFAULT_FRAME_STYLE)
         # menus
 
@@ -792,6 +798,11 @@ class StorySettingsFrame(wx.Frame):
 
         # Read the storysettings definitions for this header
         self.storySettingsData = self.widget.parent.parent.header.storySettings()
+        
+        if not self.storySettingsData or type(self.storySettingsData) is str:
+            label = self.storySettingsData or "The currently selected story format does not use StorySettings."
+            allSizer.Add(wx.StaticText(self.panel, label = label),flag=wx.ALL|wx.EXPAND, border=metrics.size('windowBorder'))
+            self.storySettingsData = {}
         
         self.ctrls = {}
         
@@ -843,11 +854,11 @@ class StorySettingsFrame(wx.Frame):
             self.ctrls[name] = ctrlset
             
         self.SetIcon(self.app.icon)
-
+        self.SetTitle(self.title())
         self.Layout()
         self.enableCtrls()
         self.Show(True)
-        
+    
     def enableCtrls(self):
         # Check if each ctrl has a requirement or an incompatibility,
         # look it up, and enable/disable if so
@@ -892,7 +903,7 @@ class ImageFrame(wx.Frame):
         self.image = None
         self.gif = None
 
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME, \
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title = 'Untitled Passage - ' + self.app.NAME + ' ' + versionString, \
                           size = PassageFrame.DEFAULT_SIZE, style=wx.DEFAULT_FRAME_STYLE)
 
         # controls
@@ -909,7 +920,7 @@ class ImageFrame(wx.Frame):
         titleLabel = wx.StaticText(self.topControls, style = wx.ALIGN_RIGHT, label = PassageFrame.TITLE_LABEL)
         self.titleInput = wx.TextCtrl(self.topControls)
         self.titleInput.SetValue(self.widget.passage.title)
-        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        self.SetTitle(self.title())
 
         topSizer.Add(titleLabel, 0, flag = wx.ALL, border = metrics.size('focusRing'))
         topSizer.Add(self.titleInput, 1, flag = wx.EXPAND | wx.ALL, border = metrics.size('focusRing'))
@@ -982,7 +993,7 @@ class ImageFrame(wx.Frame):
             self.widget.passage.title = 'Untitled Image'
         self.widget.clearPaintCache()
 
-        self.SetTitle(self.widget.passage.title + ' - ' + self.app.NAME)
+        self.SetTitle(self.title())
 
         # immediately mark the story dirty
 

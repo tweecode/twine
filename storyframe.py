@@ -1,4 +1,4 @@
-import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images
+import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images, version
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
@@ -1104,7 +1104,7 @@ You can also include URLs of .tws and .twee files, too.
         dirty = ''
         if self.dirty: dirty = ' *'
 
-        self.SetTitle(self.title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME)
+        self.SetTitle(self.title + dirty + ' (' + percent + '%) ' + '- ' + self.app.NAME + ' ' + version.versionString)
 
         if not self.menus: return
 

@@ -223,12 +223,12 @@ class TweeLexer:
                     if self.externalPassageExists(m.group(1)):
                         s2 = self.STORYINCLUDE_LINK
                     elif not self.passageExists(m.group(1)):
-                        s2 = badLinkStyle(m.group(1))
+                        s2 = TweeLexer.linkStyle(m.group(1))
                 else:
                     if self.externalPassageExists(m.group(2)):
                         s2 = self.STORYINCLUDE_LINK
                     elif not self.passageExists(m.group(2)):
-                        s2 = badLinkStyle(m.group(2))
+                        s2 = TweeLexer.linkStyle(m.group(2))
                 self.applyStyle(pos, length, s2)
                 # Apply a plainer style to the text, if any
                 if m.group(2):
@@ -281,7 +281,7 @@ class TweeLexer:
                 if m.group(5):
                     self.applyStyle(pos, m.start(5), self.IMAGE)
                     if not self.passageExists(m.group(5)):
-                        s2 = badLinkStyle(m.group(5))
+                        s2 = TweeLexer.linkStyle(m.group(5))
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, s2)
                     else:
                         self.applyStyle(pos+m.start(5)-1, (m.end(5)-m.start(5))+2, self.GOOD_LINK)
@@ -354,6 +354,15 @@ class TweeLexer:
     def getHeader(self):
         """Returns the current selected target header for this Twee Lexer."""
         return self.frame.getHeader()
+    
+    @staticmethod
+    def linkStyle(dest):
+        """Apply style for a link destination which does not seem to be an existent passage"""
+        for t in ['^http:', '^https:', '^ftp:', '^mailto:', '^javascript:', '^data:', r'[^\.\s]\.[^\.\s]', r'/', r'\\', r'\S#']:
+            if re.search(t, dest.lower()):
+                return TweeLexer.EXTERNAL
+        iscode = re.search(tweeregex.MACRO_PARAMS_VAR_REGEX+"|"+tweeregex.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
+        return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK
 
     # style constants
     # ordering of BOLD through to THREE_STYLES is important
@@ -391,14 +400,6 @@ class TweeLexer:
     PARAM_NUM_COLOR = '#A15000'
 
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
-
-def badLinkStyle(dest):
-    # Apply style for a link destination which does not seem to be an existent passage
-    for t in ['^http:', '^https:', '^ftp:', '^mailto:', '^javascript:', '^data:', r'[^\.\s]\.[^\.\s]', r'/', r'\\', r'\S#']:
-        if re.search(t, dest.lower()):
-            return TweeLexer.EXTERNAL
-    iscode = re.search(tweeregex.MACRO_PARAMS_VAR_REGEX+"|"+tweeregex.MACRO_PARAMS_FUNC_REGEX, dest, re.U)
-    return TweeLexer.PARAM if iscode else TweeLexer.BAD_LINK
 
 
 """

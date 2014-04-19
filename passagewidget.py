@@ -472,27 +472,28 @@ class PassageWidget:
 
         dc.Blit(rect.x, rect.y, rect.width, rect.height, self.paintBuffer, 0, 0)
 
-    def getTitleColorIndex(self):
+    def getTitleColor(self):
         """
         Returns the title bar style that matches this widget's passage.
         """
+        flat = self.app.config.ReadBool('flatDesign')
+        # First, rely on the header to supply colours
+        custom = self.getHeader().passageTitleColor(self.passage)
+        if custom:
+            return custom[flat]
+        # Use default colours
         if self.passage.isAnnotation():
-            return 'annotation'
+            ind = 'annotation'
         elif self.passage.isImage():
-            return 'imageTitleBar'
+            ind = 'imageTitleBar'
         elif any(t.startswith('Twine.') for t in self.passage.tags):
-            return 'privateTitleBar'
-        elif 'script' in self.passage.tags:
-            return 'scriptTitleBar'
-        elif self.passage.isStylesheet():
-            return 'stylesheetTitleBar'
-        elif self.passage.title in tiddlywiki.TiddlyWiki.INFO_PASSAGES:
-            return 'storyInfoTitleBar'
-        elif self.passage.title == "Start":
-            return 'startTitleBar'
+            ind = 'privateTitleBar'
         elif not self.linksAndDisplays():
-            return 'endTitleBar'
-        return 'titleBar'
+            ind = 'endTitleBar'
+        else:
+            ind = 'titleBar'
+        colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
+        return colors[ind]
 
     def cachePaint(self, size):
         """
@@ -534,7 +535,8 @@ class PassageWidget:
         def dim(c, dim, flat=flat):
             """Lowers a color's alpha if dim is true."""
             if isinstance(c, wx.Colour): c = list(c.Get(includeAlpha = True))
-            else : c = list(c)
+            elif type(c) is str: c = list(ord(a) for a in c[1:].decode('hex'))
+            else: c = list(c)
             if len(c) < 4:
                 c.append(255)
             if dim:
@@ -618,7 +620,7 @@ class PassageWidget:
         if self.passage.isAnnotation():
             titleBarColor = frameInterior[0]
         else:
-            titleBarColor = dim(colors[self.getTitleColorIndex()], self.dimmed)
+            titleBarColor = dim(self.getTitleColor(), self.dimmed)
         gc.SetPen(wx.Pen(titleBarColor, 1))
         gc.SetBrush(wx.Brush(titleBarColor))
         if flat:
@@ -868,12 +870,8 @@ class PassageWidget:
                'bodyStart': (255, 255, 255), \
                'bodyEnd': (212, 212, 212), \
                'annotation': (85, 87, 83), \
-               'startTitleBar': (76, 163, 51), \
                'endTitleBar': (16, 51, 96), \
                'titleBar': (52, 101, 164), \
-               'storyInfoTitleBar': (28, 89, 74), \
-               'scriptTitleBar': (89, 66, 28), \
-               'stylesheetTitleBar': (111, 49, 83), \
                'imageTitleBar': (8, 138, 133), \
                'privateTitleBar': (130, 130, 130), \
                'titleText': (255, 255, 255), \
@@ -890,12 +888,8 @@ class PassageWidget:
                'bodyStart':  (255, 255, 255),
                'bodyEnd':  (255, 255, 255),
                'annotation': (212, 212, 212),
-               'startTitleBar': (75, 219, 36),
                'endTitleBar': (36, 54, 219),
                'titleBar': (36, 115, 219),
-               'storyInfoTitleBar':(41, 214, 113),
-               'scriptTitleBar': (226, 170, 80),
-               'stylesheetTitleBar': (234, 123, 184),
                'imageTitleBar': (36, 219, 213),
                'privateTitleBar': (153, 153, 153),
                'titleText': (255, 255, 255),

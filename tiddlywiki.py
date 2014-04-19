@@ -12,6 +12,7 @@ that translate between Twee and TiddlyWiki output seamlessly.
 
 import re, datetime, time, locale, os, sys, tempfile, codecs
 import tweeregex
+from tweelexer import TweeLexer
 
 class TiddlyWiki:
     """An entire TiddlyWiki."""
@@ -514,8 +515,12 @@ class Tiddler:
 
     def isScript(self):
         return 'script' in self.tags
-
+    
+    def isInfoPassage(self):
+        return self.title in TiddlyWiki.INFO_PASSAGES
+    
     def isStoryText(self):
+        """ Excludes passages which do not contain renderable Twine code. """
         return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
             and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
 
@@ -555,7 +560,10 @@ class Tiddler:
 
         # Regular hyperlinks (also matches wiki-style links inside macros)
         for m in re.finditer(tweeregex.LINK_REGEX, self.text):
-            links.add(m.group(2) or m.group(1))
+            # Exclude external links
+            link = m.group(2) or m.group(1)
+            if TweeLexer.linkStyle(link) != TweeLexer.EXTERNAL:
+                links.add(m.group(2) or m.group(1))
 
         # Include images
         for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):

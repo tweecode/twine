@@ -28,7 +28,10 @@ class Header(object):
         ])
 
     def storySettings(self):
-        """Returns a list of StorySettings dictionaries."""
+        """
+        Returns a list of StorySettings dictionaries.
+        Alternatively, it could return a string saying that it isn't supported, and suggesting an alternative.
+        """
 
         return [{
                 "type": "text",
@@ -94,9 +97,25 @@ class Header(object):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
     
+    def passageTitleColor(self, passage):
+        """
+        Returns a tuple pair of colours for a given passage's title.
+        Colours can be HTML 1 hex strings like "#555753", or int triples (85, 87, 83)
+        or wx.Colour objects.
+        First is the normal colour, second is the Flat Design(TM) colour.
+        """
+        if passage.isScript():
+            return ((89, 66, 28),(226, 170, 80))
+        elif passage.isStylesheet():
+            return ((111, 49, 83),(234, 123, 184))
+        elif passage.isInfoPassage():
+            return ((28, 89, 74), (41, 214, 113))
+        elif passage.title == "Start":
+            return ("#4ca333", "#4bdb24")
+        
     def invisiblePassageTags(self):
         """Returns a list of passage tags which, for whatever reason, shouldn't be displayed on the Story Map."""
-        return frozenset(['nobr'])
+        return frozenset()
     
     def passageChecks(self):
         """
