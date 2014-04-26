@@ -25,7 +25,8 @@ class TweeLexer:
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
-
+        
+        self.ctrl.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, bodyFont)
         self.ctrl.StyleClearAll()
 
         # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof

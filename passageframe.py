@@ -170,6 +170,7 @@ class PassageFrame(wx.Frame):
         self.bodyInput.SetUseHorizontalScrollBar(False)
         self.bodyInput.SetMargins(8, 8)
         self.bodyInput.SetMarginWidth(1, 0)
+        self.bodyInput.SetTabWidth(4)
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
