@@ -45,7 +45,7 @@ History.prototype.display = function (title, source, type, callback) {
         hash = (tale.storysettings.lookup('hash') && this.save()) || "";
         if (hasPushState && tale.canUndo()) {
             try {
-                sessionStorage.setItem("Twine.History"+this.id, JSON.stringify(this.history));
+                sessionStorage.setItem("Twine.History"+this.id, JSON.stringify(decompile(this.history)));
                 this.pushState(this.history.length <= 2 && window.history.state == "", hash);
             } catch(e) {
                 alert("Your browser couldn't save the state of the " + tale.identity() +".\n"+
@@ -259,8 +259,8 @@ macros.back.onclick = function(back, steps) {
     var title;
     if (back) {
         if (tale.canUndo()) {
-          window.history.go(-steps);
-          return;
+            window.history.go(-steps);
+            return;
         }
         while(steps-- >= 0 && state.history.length>1) {
             title = state.history[0].passage.title;
@@ -278,17 +278,14 @@ macros.back.onclick = function(back, steps) {
 window.onpopstate = function(e) {
     var title, hist, steps, i, s = e && e.state;
     if (s && s.id && s.length != null) {
-        hist = JSON.parse(sessionStorage.getItem("Twine.History"+s.id));
+        hist = recompile(JSON.parse(sessionStorage.getItem("Twine.History"+s.id)));
         if (hist) {
             steps = hist.length-s.length;
         }
     }
     if (steps != null) {
-        // Restore references
-        for (i = 0; i < hist.length; i++) {
-            hist[i].passage = tale.get(hist[i].passage);
-        }
         state.history = hist;
+        // Shift the position of history to match how far back we've gone
         while(steps-- >= 0 && state.history.length>1) {
             title = state.history[0].passage.title;
             state.history.shift();

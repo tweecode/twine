@@ -917,7 +917,6 @@ You can also include URLs of .tws and .twee files, too.
         """
         twinedocdir = self.getLocalDir()
         
-        excludepassages = TiddlyWiki.INFO_PASSAGES
         excludetags = TiddlyWiki.NOINCLUDE_TAGS
         self.storyPanel.clearIncludedPassages()
         for line in lines:
@@ -933,8 +932,7 @@ You can also include URLs of .tws and .twee files, too.
                         openedFile.close()
 
                         for widget in s.storyPanel.widgets:
-                            if widget.passage.title not in excludepassages \
-                            and excludetags.isdisjoint(widget.passage.tags):
+                            if excludetags.isdisjoint(widget.passage.tags):
                                 callback(widget.passage)
                         s.Destroy()
 
@@ -959,8 +957,7 @@ You can also include URLs of .tws and .twee files, too.
                         tiddlerkeys = tw1.tiddlers.keys()
                         for tiddlerkey in tiddlerkeys:
                             passage = tw1.tiddlers[tiddlerkey]
-                            if passage.title not in excludepassages \
-                            and excludetags.isdisjoint(passage.tags):
+                            if excludetags.isdisjoint(passage.tags):
                                 callback(passage)
 
                     else:

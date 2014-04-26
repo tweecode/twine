@@ -5,19 +5,41 @@
 */
 
 function clone(a) {
-    var b = {};
+    var constructor, b, proto;
+    // Primitive types and functions are flat-out passed by value.
     if (!a || typeof a != "object") {
         return a;
     }
+    constructor = a.constructor;
+    if (constructor == Date || constructor == RegExp) {
+        b = new constructor(a);
+    }
+    else if (constructor == Array) {
+        b = [];
+    }
+    else if (a.nodeType && typeof a.cloneNode == "function") {
+        b = a.cloneNode(true);
+    }
+    else if (typeof Object.create == "function") {
+        proto = (typeof Object.getPrototypeOf == "function" ? Object.getPrototypeOf(a) : a.__proto__);
+        b = proto ? Object.create(proto) : {};
+    }
+    else {
+        b = {};
+    }
+    // This should work on both arrays and objects equally -
+    // even copying expando properties foolishly added to arrays.
     for (var property in a) {
-        if (typeof a[property] == "object") {
-            try {
-                b[property] = JSON.parse(JSON.stringify(a[property]));
-                continue;
+        if (Object.prototype.hasOwnProperty.call(a,property)) {
+            if (typeof a[property] == "object") {
+                try {
+                    b[property] = clone(a[property]);
+                    continue;
+                }
+                catch(e) {}
             }
-            catch(e) {}
+            b[property] = a[property];
         }
-        b[property] = a[property];
     }
     return b;
 }
@@ -124,6 +146,70 @@ function delta(old,neu) {
         for (vars in neu) {
             if (neu[vars] !== old[vars]) {
                 ret[vars] = neu[vars];
+            }
+        }
+    }
+    return ret;
+}
+
+// Convert various exotic objects into JSON-serialisable plain objects.
+function decompile(val) {
+    var i, ret;
+    if ((typeof val != "object" && typeof val != "function") || !val) {
+        return val;
+    }
+    // Passage objects: store only their name
+    else if (val instanceof Passage) {
+        return { "[[Passage]]" : val.id };
+    }
+    else if (Array.isArray(val)) {
+        ret = [];
+    }
+    else {
+        ret = {};
+    }
+    // Deep-copy own properties
+    for (i in val) {
+        if (Object.prototype.hasOwnProperty.call(val,i)) {
+            ret[i] = decompile(val[i]);
+        }
+    }
+    // Functions: store the decompiled function body as a property
+    // arbitrarily called "[[Call]]".
+    if (typeof val == "function" || val instanceof RegExp) {
+        try {
+            // Check if it can be recompiled (i.e. isn't a bound or native)
+            internalEval(val+"");
+            ret["[[Call]]"] = val+"";
+        } catch(e) {
+            // Silently fail
+            ret["[[Call]]"] = "function(){}"
+        }
+    }
+    return ret;
+}
+
+// Reverses the effects of decompile()
+// Takes recently JSON.parse()d objects and makes them exotic again.
+function recompile(val) {
+    var i, ret = val;
+    if (val && typeof val == "object") {
+        // Passages
+        if (typeof val["[[Passage]]"] == "number") {
+            return tale.get(val["[[Passage]]"]);
+        }
+        // Functions/RegExps
+        if (typeof val["[[Call]]"] == "string") {
+            try {
+                ret = internalEval(val["[[Call]]"]);
+            }
+            catch(e){}
+        }
+        // Recursively recompile all properties
+        // or, if a function/regexp, deep-copy them to the new function.
+        for (i in val) {
+            if (Object.prototype.hasOwnProperty.call(val,i)) {
+                ret[i] = recompile(val[i]);
             }
         }
     }
@@ -243,6 +329,9 @@ function rot13(s) {
 String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
 });
+Array.isArray || (Array.isArray = function(arg) {
+    return Object.prototype.toString.call(arg) === '[object Array]';
+});
 Array.prototype.indexOf || (Array.prototype.indexOf = function (b, d) {
     d = (d == null) ? 0 : d;
     var a = this.length;
@@ -319,9 +408,9 @@ History.prototype.encodeHistory = function(b, noVars) {
     var ret = ".", vars, type, hist = this.history[b],
         d = this.history[b+1] ? delta(this.history[b+1].variables, hist.variables) : hist.variables;
     
-    function vtob(str) {
+    function vtob(val) {
         try {
-            return window.btoa(unescape(encodeURIComponent(JSON.stringify(str))));
+            return window.btoa(unescape(encodeURIComponent(JSON.stringify(decompile(val)))));
         } catch(e) {
             return "0";
         }
@@ -330,13 +419,13 @@ History.prototype.encodeHistory = function(b, noVars) {
     if (!hist.passage || hist.passage.id == null) {
         return ""
     }
-    ret += hist.passage.id.toString(36)
+    ret += hist.passage.id.toString(36);
     if (noVars) {
         return ret;
     }
     for (vars in d) {
         type = typeof d[vars];
-        if (type != "function" && type != "undefined") {
+        if (type != "undefined") {
             ret += "$" + vtob(vars) + "," + vtob(d[vars]);
         }
     }
@@ -350,13 +439,13 @@ History.prototype.encodeHistory = function(b, noVars) {
 };
 
 History.decodeHistory = function(str, prev) {
-    var name, splits, variable, c, d, 
+    var name, splits, variable, c, d,
         ret = { variables: clone(prev.variables) || {} },
         match = /([a-z0-9]+)((?:\$[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)((?:\[[A-Za-z0-9\+\/=]+,[A-Za-z0-9\+\/=]+)*)/g.exec(str);
     
     function btov(str) {
         try {
-            return JSON.parse(decodeURIComponent(escape(window.atob(str))));
+            return recompile(JSON.parse(decodeURIComponent(escape(window.atob(str)))));
         } catch(e) {
             return 0;
         }
@@ -499,9 +588,7 @@ macros.display = {
             // The above line recreates params, with the quotes.
             try {
                 for(j=0; j < params.length; j++) {
-                    // eval("{x:1,y:1}") fails miserably unless the obj. literal
-                    // is not the first expression in the line (hence, "0,").
-                    params[j] = eval("0,"+Wikifier.parse(params[j]));
+                    params[j] = internalEval(Wikifier.parse(params[j]));
                 }
             } catch (e) {
                 throwError(place, parser.fullMatch() + " bad argument: " + params[j], parser.fullMatch());
@@ -510,7 +597,7 @@ macros.display = {
         }
         else {
             try {
-                output = eval(name);
+                output = internalEval(name);
             }
             catch(e) {
             }
@@ -578,7 +665,7 @@ macros.print = {
         try {
             var args = parser.fullArgs(macroName != "print"),
                 // See comment within macros.display
-                output = eval("0,"+args);
+                output = internalEval(args);
             if (output != null && (typeof output != "number" || !isNaN(output))) {
                 new Wikifier(place, ''+output);
             }
@@ -598,7 +685,7 @@ macros.set = {
     },
     run: function (a,expression, parser) {
         try {
-            return eval(expression);
+            return internalEval(expression);
         } catch (e) {
             throwError(a, "bad expression: " + e.message, parser ? parser.fullMatch() : expression)
         }
@@ -654,7 +741,7 @@ macros["if"] = {
             if (endPos != -1) {
                 parser.nextMatch = endPos;
                 for(i=0;i<clauses.length;i++) {
-                    if (eval(conditions[i])) {
+                    if (internalEval(conditions[i])) {
                         new Wikifier(place, clauses[i]);
                         break;
                     }
@@ -847,7 +934,7 @@ macros.back = {
             stepsParam2 = e[stepsParam - 1];
             if(stepsParam2[0] == '$') {
                 try {
-                    stepsParam2 = eval(Wikifier.parse(stepsParam2));
+                    stepsParam2 = internalEval(Wikifier.parse(stepsParam2));
                 }
                 catch(r) {
                     throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
@@ -879,7 +966,7 @@ macros.back = {
             if(e[0]) {
                 if(e[0].charAt(0) == '$') {
                     try {
-                        e = eval(Wikifier.parse(e[0]));
+                        e = internalEval(Wikifier.parse(e[0]));
                     }
                     catch(r) {
                         throwError(a, parser.fullMatch() + " bad expression: " + r.message, parser.fullMatch())
@@ -1089,9 +1176,6 @@ Passage.prototype.processText = function() {
         ret = "[img[" + ret + "]]"
     }
     return ret;
-};
-Passage.prototype.toJSON = function() {
-    return this.id;
 };
 
 /*
@@ -1662,7 +1746,7 @@ Wikifier.formatters = [
 },
 (Wikifier.urlFormatter = {
     name: "urlLink",
-    match: "(?:http|https|mailto|javascript|ftp|data):[^\\s'\"]+(?:/|\\b)",
+    match: "(?:https?|mailto|javascript|ftp|data):[^\\s'\"]+(?:/|\\b)",
     handler: function (w) {
         var e = Wikifier.createExternalLink(w.output, w.matchText);
         w.outputText(e, w.matchStart, w.nextMatch);
@@ -1716,7 +1800,7 @@ Wikifier.formatters = [
         var imgPassages, imgname;
         // Try to parse it as a variable
         try {
-            imgname = eval(Wikifier.parse(passageName));
+            imgname = internalEval(Wikifier.parse(passageName));
         }
         catch(e) {
         }
@@ -1988,7 +2072,7 @@ Wikifier.charSpanFormatter = {
 Wikifier.parsePassageTitle = function(title) {
     if (title && !tale.has(title)) {
         try {
-            title = (eval(this.parse(title)) || title)+"";
+            title = (internalEval(this.parse(title)) || title)+"";
         }
         catch(e) {}
     }
@@ -2111,7 +2195,7 @@ function previous() {
 }
 
 function either() {
-    if (arguments[0] instanceof Array && arguments.length == 1) {
+    if (Array.isArray(arguments[0]) && arguments.length == 1) {
         return either.apply(this,arguments[0]);
     }
     return arguments[~~(Math.random()*arguments.length)];
@@ -2129,9 +2213,16 @@ function bookmark() {
     return state.hash || "#";
 }
 
+/* Used to eval within Twine, but outside the context of a particular function */
+function internalEval(s) {
+    // eval("{x:1,y:1}") fails miserably unless the obj. literal
+    // is not the first expression in the line (hence, "0,").
+    return eval("0,"+s);
+}
+/* Used to execute script passages */
 function scriptEval(s) {
     try {
-        eval(s.text);
+        eval("0,"+s.text);
     } catch (e) {
         alert("There is a technical problem with this " + tale.identity() + " (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
@@ -2143,11 +2234,17 @@ window.onbeforeunload = function() {
     }
 };
 /* Error reporting */
-var softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
+var oldOnError = window.onerror || null, 
+softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
+
 window.onerror = function (msg, a, b, c, error) {
     var s = (error && (".\n\n" + error.stack.replace(/\([^\)]+\)/g,'') + "\n\n")) || (" (" + msg + ").\n");
     alert("Sorry to interrupt, but this " + ((tale && tale.identity && tale.identity()) || "page") + "'s code has got itself in a mess" + s + softErrorMessage.slice(1));
-    window.onerror = null;
+    // Restore previous onerror
+    window.onerror = oldOnError;
+    if (typeof window.onerror == "function") {
+        window.onerror(msg, a, b, c, error);
+    }
 };
 
 /* Init function */
