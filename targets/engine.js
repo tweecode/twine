@@ -1989,7 +1989,7 @@ Wikifier.formatters = [
 },
 {
     name: "htmltag",
-    match: "<\\w+(?:(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.*?'|[^'\">\\s]+))?)+\\s*|\\s*)\\/?>",
+    match: "<(?:\\/?[\\w\\-]+|[\\w\\-]+(?:(?:\\s+[\\w\\-]+(?:\\s*=\\s*(?:\\\".*?\\\"|'.*?'|[^'\\\">\\s]+))?)+\\s*|\\s*)\\/?)>",
     tagname: "<(\\w+)",
     voids: ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"],
     tableElems: ["table","thead","tbody","tfoot","th","tr","td","colgroup","col","caption","figcaption"],
@@ -2041,15 +2041,17 @@ Wikifier.formatters = [
                 if (e.tagName.toLowerCase() == 'table') {
                     this.cleanupTables.call(this,e);
                 }
-                // Special passage and imgpassage attributes, for referencing story resources
-                if (passage = e.getAttribute("passage")) {
-                    e.onclick = Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e);
-                    if (tn == "area") {
-                        e.setAttribute("href", "javascript:;");
-                    }
-                }
-                else if (passage = e.getAttribute("imgpassage")) {
-                    Wikifier.imageFormatter.importedImage(e, passage);
+                // Special data-passage attribute
+                if (passage = e.getAttribute("data-passage")) {
+					if (tn != "img") { 
+						e.onclick = Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e);
+						if (tn == "area") {
+							e.setAttribute("href", "javascript:;");
+						}
+					}
+                    else {
+						Wikifier.imageFormatter.importedImage(e, passage);
+					}
                 }
                 a.output.appendChild(e);
             } else {

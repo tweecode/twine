@@ -174,6 +174,7 @@ class PassageFrame(wx.Frame):
         self.bodyInput.SetWrapMode(wx.stc.STC_WRAP_WORD)
         self.bodyInput.SetSelBackground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHT))
         self.bodyInput.SetSelForeground(True, wx.SystemSettings_GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        self.bodyInput.SetFocus()
 
         # The default keyboard shortcuts for StyledTextCtrl are
         # nonstandard on Mac OS X
@@ -891,7 +892,7 @@ class StorySettingsFrame(PassageFrame):
         self.enableCtrls()
 
 
-class ImageFrame(wx.Frame):
+class ImageFrame(PassageFrame):
     """
     A window which only displays passages whose text consists of base64 encoded images -
     the image is converted to a bitmap and displayed, if possible.

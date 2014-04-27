@@ -544,6 +544,10 @@ class Tiddler:
             self.macros = []
             return
 
+        images = set()
+        macros = set()
+        links = set()
+        
         # <<display>>
         self.displays = list(set(re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)))
 
@@ -554,9 +558,6 @@ class Tiddler:
             if m.group(1) and m.group(1)[0] != '$':
                 macros.add(m.group(1))
         self.macros = list(macros)
-        
-        # avoid duplicates by collecting links in a set
-        links = set()
 
         # Regular hyperlinks (also matches wiki-style links inside macros)
         for m in re.finditer(tweeregex.LINK_REGEX, self.text):
@@ -569,7 +570,16 @@ class Tiddler:
         for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             if m.group(5):
                 links.add(m.group(5))
-
+                
+        # HTML data-passage links
+        for m in re.finditer(tweeregex.HTML_REGEX, self.text):
+            attrs = m.group(2)
+            if attrs:
+                dataPassage = re.search(r"""data-passage\s*=\s*(?:([^<>'"=`\s]+)|'((?:[^'\\]*\\.)*[^'\\]*)'|"((?:[^"\\]*\\.)*[^"\\]*)")""", attrs)
+                if dataPassage:
+                    theSet = images if m.group(1) == "img" else links
+                    theSet.add(dataPassage.group(1) or dataPassage.group(2) or dataPassage.group(3))
+                
         # <<choice passage_name [link_text]>>
         for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
             item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)
@@ -584,7 +594,6 @@ class Tiddler:
 
         # Images
 
-        images = set()
         for block in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             images.add(block.group(4))
 
