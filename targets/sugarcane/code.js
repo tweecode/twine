@@ -181,12 +181,12 @@ var Interface = {
         if (snapback) {
             if (!tale.lookup("tags", "bookmark").length) {
                 snapback.parentNode.removeChild(snapback);
-            } else snapback.onclick = Interface.showSnapback;
+            } else addClickHandler(snapback, Interface.showSnapback);
         }
         if (bookmark && (!tale.canBookmark() || !hasPushState)) {
             bookmark.parentNode.removeChild(bookmark);
         }
-        restart && (restart.onclick = Interface.restart);
+        restart && addClickHandler(restart, Interface.restart);
     },
     restart: function () {
         if (confirm("Are you sure you want to restart this " + tale.identity() + "?")) {
@@ -208,9 +208,9 @@ var Interface = {
             if(state.history[a].passage && state.history[a].passage.tags.indexOf("bookmark") != -1) {
                 b = document.createElement("div");
                 b.pos = a;
-                b.onclick = function () {
+                addClickHandler(b, function () {
                     return macros.back.onclick(true, this.pos);
-                };
+                });
                 b.innerHTML = state.history[a].passage.excerpt();
                 menuelem.appendChild(b);
                 c = true
@@ -246,7 +246,7 @@ var Interface = {
         a.style.top = c.y + "px";
         a.style.left = c.x + "px";
         a.style.display = "block";
-        document.onclick = Interface.hideAllMenus;
+        addClickHandler(document, Interface.hideAllMenus);
         b.cancelBubble = true;
         if (b.stopPropagation) {
             b.stopPropagation()

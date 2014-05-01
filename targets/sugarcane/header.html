@@ -59,6 +59,84 @@ testplay = "START_AT";
 "MODERNIZR"
 </script>
 <style id="baseCSS">
+/* Sidebar */
+#sidebar {
+	position: fixed;
+	list-style: none;
+	width: 12em;
+}
+#sidebar #title, #sidebar #credits  {
+	cursor: auto;
+}
+#sidebar #storySubtitle, #sidebar #storyMenu {
+	display: block;
+}
+.menu {
+	position: absolute;
+	display: none;
+	z-index: 5;
+}
+/* Passages container */
+#passages {
+	margin-left: 18.2em;
+	position:relative;
+}
+/* Links */
+.passage a {
+	color: #4d6ad8;
+	font-weight: bold;
+	text-decoration: none;
+}
+.passage a:hover {
+	color: #8ea6ff;
+	text-decoration: underline;
+}
+a.internalLink, a.externalLink, a.back, a.return, [data-passage], .menu div {
+	cursor: pointer;
+}
+.marked {
+	background-color: red;
+	color: #000;
+}
+.marked[title] {
+	cursor: help;
+}
+.passage li[data-bullet] {
+	list-style-type: none;
+}
+.passage li[data-bullet]:before {
+	content: attr(data-bullet);
+	position: relative;
+	left: -1em;
+}
+#storeArea {
+	display: none;
+}
+#noscript {
+	margin-left: 18.2em;
+	font-size: 1.2em;
+	font-weight: bold;
+}
+/* HTML4 compatibility */
+img {
+	vertical-align:bottom;
+}
+@media screen and (max-width: 640px) {
+	#sidebar {
+		position: static;
+		margin: 0 auto;
+		padding: 0;
+	}
+	body #sidebar li  {
+		text-align: center;
+	}
+	#passages {
+		min-height: 100vh;
+		margin-left: 0em;
+	}
+}
+</style>
+<style id="mainCSS">
 body {
 	background-color: #000;
 	color: #fff;
@@ -67,10 +145,7 @@ body {
 	margin: 4em 15% 5% 5em;
 }
 #sidebar {
-	position: fixed;
-	width: 12em;
 	left: 7.5em;
-	list-style: none;
 	margin: 0;
 	padding: 0 1em 0 0;
 	font: bold 1.1em Verdana,sans-serif;
@@ -96,35 +171,27 @@ body {
 	text-decoration: none;
 }
 #sidebar #title {
-	color: #999;
 	font-size: 150%;
-	cursor: auto;
 }
-#sidebar #title a {
+#sidebar #title, #sidebar #title:hover, #sidebar #title a {
 	color: #999;
 }
 #sidebar #storySubtitle {
 	font-size: 75%;
-	display: block;
 }
 #storyAuthor {
 	font-size: 50%;
 }
 #sidebar #storyMenu {
-	display: block;
 	line-height: 2.5em;
 	margin-bottom: .5em;
 	color: #999;
 	cursor: auto;
 }
-#sidebar #title:hover {
-	color: #999;
-}
 #sidebar #credits {
 	padding-top: 2em;
 	font-weight: normal;
 	font-size: 80%;
-	cursor: auto;
 }
 #sidebar #credits:hover {
 	color: #333;
@@ -132,13 +199,14 @@ body {
 #sidebar #credits a {
 	text-decoration: none;
 }
+#passages {
+	border-left: 1px solid #333;
+	padding-left: 1.5em;
+}
 .menu {
-	position: absolute;
-	display: none;
 	background-color: #343434;
 	color: #fff;
 	opacity: .9;
-	z-index: 5;
 	border: 1px solid #fff;
 	text-align: left;
 	font: 1.1em Verdana;
@@ -152,73 +220,21 @@ body {
 	background-color: #fff;
 	color: #343434;
 }
-#passages {
-	margin-left: 18.2em;
-	border-left: 1px solid #333;
-	padding-left: 1.5em;
-	position:relative;
-}
 .passage {
 	font-size: 1.2em;
 	line-height: 175%;
 	margin-bottom: 2em;
 	text-align: left;
 }
-.passage center {
-	max-width:50%;
-	margin:auto;
-}
-.passage a {
-	color: #4d6ad8;
-	font-weight: bold;
-	text-decoration: none;
-}
-a.internalLink, a.externalLink, a.back, a.return, [data-passage] {
-	cursor: pointer;
-}
-.passage a:hover {
-	color: #8ea6ff;
-	text-decoration: underline;
-}
-a.brokenLink {
-	background-color: red;
-	text-decoration: none;
-	color: #000;
-}
-.disabled {
-	font-weight: bold;
-	color: #333;
-}
-.marked {
-	background-color: red;
-	color: #000;
-	margin-right: 12px;
-	padding: 3px;
-}
-.marked[title] {
-	cursor: help;
-}
 .content > ul {
 	padding-top: 1.3em;
 }
-.passage ul {
+.passage ul, .passage ol {
 	margin-left: .5em;
 	padding-left: 1.5em;
 }
 .passage li {
 	margin-right: 6em;
-}
-.passage li[data-bullet] {
-	list-style-type: none;
-}
-.passage li[data-bullet]:before {
-	content: attr(data-bullet);
-	position: relative;
-	left: -1em;
-}
-.passage ol {
-	margin-left: .5em;
-	padding-left: 1.5em;
 }
 .passage table {
 	border-collapse: collapse;
@@ -231,55 +247,35 @@ a.brokenLink {
 .passage hr {
 	height: 1px;
 }
-input, button {
-	background-color: #000;
-	color:#fff;
-	font-size: 1.2em;
+.passage center {
+	max-width:50%;
+	margin:auto;
 }
-button {
-	border: 2px outset #333;
-	border-radius:0.5em;
-	padding: 0.2em 0.8em;
+a.brokenLink {
+	background-color: red;
+	text-decoration: none;
+	color: #000;
 }
-button:active {
-	border-style:solid;
+.marked {
+	margin-right: 12px;
+	padding: 3px;
 }
-input[type=text] {
-	border: 2px solid #333;
-	width: 20%;
-}
-input[type=text]:hover {
-	border-color: #fff;
-}
-#storeArea {
-	display: none;
-}
-#noscript {
-	margin-left: 18.2em;
-	font-size: 1.2em;
+.disabled {
 	font-weight: bold;
-}
-img {
-	vertical-align:bottom;
+	color: #333;
 }
 @media screen and (max-width: 640px) {
 	body {
 		margin: 5%;
 	}
 	#sidebar {
-		position: static;
-		width: 100%;
-		padding: 0;
+		width:100%;
+		margin: 0;
 		border-bottom: 1px solid #333;
-	}
-	#sidebar li  {
-		text-align: center;
 	}
 	#passages {
 		padding-top: 2em;
-		margin-left: 0em;
 		border-left: 0;
-		min-height: 100vh;
 	}
 }
 </style>

@@ -20,12 +20,9 @@ function clone(a) {
     else if (a.nodeType && typeof a.cloneNode == "function") {
         b = a.cloneNode(true);
     }
-    else if (typeof Object.create == "function") {
+    else {
         proto = (typeof Object.getPrototypeOf == "function" ? Object.getPrototypeOf(a) : a.__proto__);
         b = proto ? Object.create(proto) : {};
-    }
-    else {
-        b = {};
     }
     // This should work on both arrays and objects equally -
     // even copying expando properties foolishly added to arrays.
@@ -58,6 +55,14 @@ function insertElement(a, d, f, c, e) {
         a.appendChild(b)
     }
     return b
+}
+
+function addClickHandler(el, fn) {
+    if (el.addEventListener) {
+        el.addEventListener('click', fn); 
+    } else if (el.attachEvent)  {
+        el.attachEvent('onclick', fn);
+    }
 }
 
 function insertText(a, b) {
@@ -140,6 +145,7 @@ function scrollWindowTo(e, margin) {
     }
 }
 
+// Returns an object containing the properties in neu which differ from old.
 function delta(old,neu) {
     var vars, ret = {};
     if (old && neu) {
@@ -326,6 +332,14 @@ function rot13(s) {
 **
 */
 
+Object.create || (function() {
+    var F = function(){};
+    Object.create = function (o) {
+        if (typeof o != 'object') throw TypeError();
+        F.prototype = o;
+        return new F();
+    };
+})();
 String.prototype.trim || (String.prototype.trim = function () {
     return this.replace(/^\s\s*/, "").replace(/\s\s*$/, "")
 });
@@ -547,7 +561,7 @@ History.prototype.saveVariables = function(c, el, callback) {
 };
 var restart = History.prototype.restart = function () {
     if (typeof window.history.replaceState == "function") {
-        this.pushState(true, window.location.href.replace(/#.*$/,''));
+        (typeof this.pushState == "function") && this.pushState(true, window.location.href.replace(/#.*$/,''));
         window.location.reload()
     }
     else {
@@ -990,9 +1004,9 @@ macros.back = {
         }
         el = document.createElement("a");
         el.className = b;
-        el.onclick = (function(b) { return function () {
+        addClickHandler(el, (function(b) { return function () {
             return macros.back.onclick(b == "back", steps, el)
-        }}(b));
+        }}(b)));
         el.innerHTML = labeltouse;
         a.appendChild(el);
     }
@@ -2043,15 +2057,15 @@ Wikifier.formatters = [
                 }
                 // Special data-passage attribute
                 if (passage = e.getAttribute("data-passage")) {
-					if (tn != "img") { 
-						e.onclick = Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e);
-						if (tn == "area") {
-							e.setAttribute("href", "javascript:;");
-						}
-					}
+                    if (tn != "img") { 
+                        addClickHandler(e, Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e));
+                        if (tn == "area") {
+                            e.setAttribute("href", "javascript:;");
+                        }
+                    }
                     else {
-						Wikifier.imageFormatter.importedImage(e, passage);
-					}
+                        Wikifier.imageFormatter.importedImage(e, passage);
+                    }
                 }
                 a.output.appendChild(e);
             } else {
@@ -2104,7 +2118,7 @@ Wikifier.createInternalLink = function (place, title, callback, type) {
     }
     else el.className = 'broken'+suffix;
 
-    el.onclick = Wikifier.linkFunction(title, el, callback);
+    addClickHandler(el, Wikifier.linkFunction(title, el, callback));
 
     if (place) place.appendChild(el);
 
@@ -2117,7 +2131,9 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
     el.href = url;
     el.className = "external"+(type == "button" ? "Button" : "Link");
     el.target = "_blank";
-    if (typeof callback == "function") el.onclick = callback;
+    if (typeof callback == "function") {
+        addClickHandler(el,callback);
+    }
     
     if (place) place.appendChild(el);
 
@@ -2145,22 +2161,28 @@ function visited(e) {
     return ret;
 }
 
+// Returns the number of times the player visited passages containing ALL
+// provided tags.
+// The tags can be several strings, or a single string with space-delimited tags.
 function visitedTag() {
-    var i, j, k, ret = 0;
+    var i, j, sh, ret = 0, tags = Array.prototype.slice.call(arguments);
+    if (tags.length == 1 && typeof tags[0] == "string") {
+        tags = tags.split(" ");
+    }
     if (!state) {
         return 0;
     }
-    for(i = 0; i<state.history.length && state.history[i].passage; i++) {
-        for(j = 0; j<state.history.length && state.history[i].passage; i++) {
-            for (k = 0; k < arguments.length || void ret++; k++) {
-                if(state.history[i].passage.tags.indexOf(arguments[k])==-1) {
-                    break;
-                }
+    sh = state.history;
+    for(i = 0; i<sh.length && sh[i].passage; i++) {
+        for (j = 0; j < tags.length || void ret++; j++) {
+            if(sh[i].passage.tags.indexOf(tags[j])==-1) {
+                break;
             }
         }
     }
     return ret;
 }
+var visitedTags = visitedTag;
 
 function turns() {
     return state.history.length-1;
@@ -2194,6 +2216,22 @@ function previous() {
         }
     }
     return ""
+}
+
+// A random integer function
+// 1 argument: random int from 0 to a inclusive
+// 2 arguments: random int from a to b inclusive (order irrelevant)
+function random(a, b) {
+    var from, to;
+    if (!b) {
+        from = 0;
+        to = a;
+    } else {
+        from = Math.min(a, b);
+        to = Math.max(a, b);
+    }
+    to += 1;
+    return~~ ((Math.random() * (to - from))) + from;
 }
 
 function either() {

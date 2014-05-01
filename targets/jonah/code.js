@@ -120,8 +120,11 @@ Passage.prototype.render = function () {
         if (t.href) {
             C.href = t.href()
         }
+        else {
+            C.href = "javascript:;"
+        }
         C.title = t.tooltip;
-        C.onclick = t.activate
+        addClickHandler(C, t.activate);
         C.div = E;
     }
     A = insertElement(E, 'div', '', 'body content');
@@ -262,11 +265,11 @@ function setupTagCSS() {
 };
 
 window.onload = function() {
-    document.getElementById("restart").onclick=function() {
+    addClickHandler(document.getElementById("restart"), function() {
         if (confirm("Are you sure you want to restart this " + tale.identity() + "?")) {
             state.restart();
         }
-    };
+    });
     main();
     setupTagCSS();
 };
