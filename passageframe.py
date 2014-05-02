@@ -122,17 +122,27 @@ class PassageFrame(wx.Frame):
 
         helpMenu = wx.Menu()
 
-        helpMenu.Append(PassageFrame.HELP1, 'About Passages')
-        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/passage'), id = PassageFrame.HELP1)
-
-        helpMenu.Append(PassageFrame.HELP2, 'About Text Syntax')
-        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/syntax'), id = PassageFrame.HELP2)
-
-        helpMenu.Append(PassageFrame.HELP3, 'About Links')
-        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/link'), id = PassageFrame.HELP3)
-
-        helpMenu.Append(PassageFrame.HELP4, 'About Tags')
-        self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/tag'), id = PassageFrame.HELP4)
+        if (self.widget.passage.isStylesheet()):
+            helpMenu.Append(PassageFrame.HELP1, 'About Stylesheets')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/stylesheet'), id = PassageFrame.HELP1)
+        elif (self.widget.passage.isScript()):
+            helpMenu.Append(PassageFrame.HELP1, 'About Scripts')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/script'), id = PassageFrame.HELP1)
+        else:
+            helpMenu.Append(PassageFrame.HELP1, 'About Passages')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/passage'), id = PassageFrame.HELP1)
+    
+            helpMenu.Append(PassageFrame.HELP2, 'About Text Syntax')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/syntax'), id = PassageFrame.HELP2)
+    
+            helpMenu.Append(PassageFrame.HELP3, 'About Links')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/link'), id = PassageFrame.HELP3)
+            
+            helpMenu.Append(PassageFrame.HELP4, 'About Macros')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/macro'), id = PassageFrame.HELP4)
+    
+            helpMenu.Append(PassageFrame.HELP5, 'About Tags')
+            self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/tag'), id = PassageFrame.HELP5)
 
         # menus
 
@@ -772,7 +782,7 @@ class PassageFrame(wx.Frame):
 
     EDIT_FIND_NEXT = 2001
     [PASSAGE_FULLSCREEN, PASSAGE_EDIT_SELECTION, PASSAGE_REBUILD_STORY, PASSAGE_TEST_HERE, PASSAGE_VERIFY] = range(1001,1006)
-    [HELP1, HELP2, HELP3, HELP4] = range(3001,3005)
+    [HELP1, HELP2, HELP3, HELP4, HELP5] = range(3001,3006)
 
     [LEXER_NONE, LEXER_NORMAL, LEXER_CSS] = range(0,3)
 

@@ -73,6 +73,13 @@ class Header(object):
                 "default": "off"
             },{
                 "type": "checkbox",
+                "name": "blankcss",
+                "label": "Don't use the Story Format's default CSS",
+                "desc": "Removes most of the story format's CSS styling, so that you can\nwrite stylesheets without having to override the default styles.\n"
+                        +"Individual stylesheets may force this on by containing the text 'blank stylesheet'",
+                "default": "off"
+            },{
+                "type": "checkbox",
                 "name": "obfuscate",
                 "label": "Use ROT13 to obscure spoilers in the HTML source code?",
                 "values": ("rot13", "off"),

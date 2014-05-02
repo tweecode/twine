@@ -1301,7 +1301,7 @@ Tale.prototype.identity = function() {
     return this.storysettings.identity || "game";
 };
 Tale.prototype.forEachStylesheet = function(tags, callback) {
-    var passage, i
+    var passage, i;
     tags = tags || [];
     
     if (typeof callback != "function")
@@ -2292,28 +2292,61 @@ var $;
 function main() {
     // Used by old custom scripts.
     // Cedes to jQuery if it exists.
+    // Since jQuery is inserted after this script element,
+    // wait until main() is called before doing this.
     $ = window.$ || function(a) {
         return (typeof a == "string" ? document.getElementById(a) : a);
     }
-    var imgs, scripts, macro, style, styleText = "", i, passages = document.getElementById("passages");
+    var imgs, scripts, macro, style, i,
+        styleText = "",
+        passages = document.getElementById("passages"),
+        defaultCSS = document.getElementById("defaultCSS");
     
+    // Run checks after custom macros are installed
     function sanityCheck(thing) {
+        var i, j, s = "NOTE: The " + thing,
+            checks = { prerender: prerender, postrender: postrender, macros: macros };
+        // Warn if prerender/postrender/macros aren't objects, and
+        // prerender/postrender's own properties aren't functions.
+        for (i in checks) {
+            if (Object.prototype.hasOwnProperty.call(checks, i) && !sanityCheck[i]) {
+                if (!checks[i] || typeof checks[i]  != "object") {
+                    alert(s + " seems to have corrupted the " + i + " object."+softErrorMessage);
+                    sanityCheck[i] = true;
+                    continue;
+                }
+                if (i != "macros") {
+                    for (j in checks[i]) {
+                        if (Object.prototype.hasOwnProperty.call(checks[i], j)
+                                && typeof checks[i][j] != "function") {
+                            alert(s + " added a property '" + j + "' to " + i + ", "
+                                +"which is a "+typeof checks[i][j]+", not a function."+softErrorMessage);
+                            sanityCheck[i] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         // Warn if display() was replaced improperly
         if (!sanityCheck.display) {
             if (History.prototype.display.length < 4 && !~History.prototype.display.toString().indexOf("arguments")) {
-                alert("NOTE: The " + thing + " contains a function that patches History.prototype.display, but takes the wrong number of arguments."+softErrorMessage);
+                alert(s + " contains a function that patches History.prototype.display, but takes the wrong number of arguments."+softErrorMessage);
             }
             sanityCheck.display = true;
         }
     }
     
+    // Check for basic compatibility
     if (!window.JSON || !document.querySelector) {
         return (passages.innerHTML = "This " + tale.identity() + " requires a newer web browser. Sorry.");
     } else {
         passages.innerHTML = "";
     }
+    // Initialise Tale
     tale = window.tale = new Tale();
     
+    // Check for IE8 image compatibility
     if (~document.documentElement.className.indexOf("lt-ie9")) {
         imgs = tale.lookup("tags", "Twine.image");
         for (i = 0; i < imgs.length; i++) {
@@ -2323,6 +2356,7 @@ function main() {
             }
         }
     }
+    // Run all script passages
     scripts = tale.lookup("tags", "script");
     for (i = 0; i < scripts.length; i++) {
         scriptEval(scripts[i]);
@@ -2337,20 +2371,30 @@ function main() {
             sanityCheck('init() of the custom macro "'+i+'"');
         }
     }
-
+    // Run all stylesheet passages
     style = document.getElementById("storyCSS");
     for (i in tale.passages) {
         i = tale.passages[i];
+        if (i.tags.indexOf("stylesheet")==-1) {
+            continue;
+        }
+        // No other tags?
         if (i.tags + "" == "stylesheet") {
             styleText += i.text;
         }
-        else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1 &&
-                i.tags.indexOf("stylesheet") >-1) {
+        else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1) {
             setTransitionCSS(i.text);
+        }
+        if (defaultCSS && i.text.toLowerCase().indexOf('blank stylesheet') >-1) {
+            defaultCSS.outerHTML = "";
+            defaultCSS = null;
         }
     }
     styleText = alterCSS(styleText);
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
+    if (defaultCSS && tale.storysettings.lookup("blankcss", false)) {
+        defaultCSS.outerHTML = "";
+    }
     
     state.init();
 }

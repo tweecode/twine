@@ -317,9 +317,6 @@ class StoryFrame(wx.Frame):
         # Build menu
 
         buildMenu = wx.Menu()
-        
-        buildMenu.Append(StoryFrame.BUILD_VERIFY, '&Verify All Passages')
-        self.Bind(wx.EVT_MENU, self.verify, id = StoryFrame.BUILD_VERIFY)
 
         buildMenu.Append(StoryFrame.BUILD_TEST, '&Test Play\tCtrl-T')
         self.Bind(wx.EVT_MENU, self.testBuild, id = StoryFrame.BUILD_TEST)
@@ -327,6 +324,9 @@ class StoryFrame(wx.Frame):
         buildMenu.Append(StoryFrame.BUILD_TEST_HERE, 'Test Play From Here\tCtrl-Shift-T')
         self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.eachSelectedWidget(lambda w: self.testBuild(startAt = w.passage.title)), \
             id = StoryFrame.BUILD_TEST_HERE)
+        
+        buildMenu.Append(StoryFrame.BUILD_VERIFY, '&Verify All Passages')
+        self.Bind(wx.EVT_MENU, self.verify, id = StoryFrame.BUILD_VERIFY)
 
         buildMenu.AppendSeparator()
         buildMenu.Append(StoryFrame.BUILD_BUILD, '&Build Story...\tCtrl-B')
