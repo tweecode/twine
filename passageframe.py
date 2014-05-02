@@ -1,7 +1,7 @@
 import sys, os, re, types, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
 from version import versionString
-from tweelexer import TweeLexer
+from tweelexer import TweeLexer, TweeStyler
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
@@ -200,7 +200,7 @@ class PassageFrame(wx.Frame):
 
         allSizer.Add(self.topControls, flag = wx.TOP | wx.LEFT | wx.RIGHT | wx.EXPAND, border = metrics.size('windowBorder'))
         allSizer.Add(self.bodyInput, proportion = 1, flag = wx.TOP | wx.EXPAND, border = metrics.size('relatedControls'))
-        self.lexer = TweeLexer(self.bodyInput, self)
+        self.lexer = TweeStyler(self.bodyInput, self)
         self.applyPrefs()
         self.syncInputs()
         self.bodyInput.EmptyUndoBuffer()
@@ -589,16 +589,16 @@ class PassageFrame(wx.Frame):
         if css:
             for i in range(1,17):
                 body.StyleSetFont(i, monoFont)
-            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeLexer.MACRO_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeLexer.COMMENT_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeLexer.GOOD_LINK_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeLexer.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeLexer.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeLexer.PARAM_BOOL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeLexer.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeLexer.PARAM_VAR_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeLexer.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeStyler.MACRO_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeStyler.COMMENT_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeStyler.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeStyler.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeStyler.MARKUP_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeStyler.PARAM_BOOL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeStyler.PARAM_VAR_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeStyler.GOOD_LINK_COLOR);
 
             for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG,
                       wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,

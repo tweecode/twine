@@ -2,99 +2,33 @@ import re, wx, wx.stc
 import tweeregex
 
 class TweeLexer:
-    """
-    This lexes (or syntax highlights) Twee syntax in a wx.StyledTextCtrl.
-    This needs to be passed the control it will be lexing, so it can
-    look up the body text as needed.
+    """Abstract base class that does lexical scanning on TiddlyWiki formatted text.
     """
 
-    def __init__(self, control, frame):
-        self.ctrl = control
-        self.frame = frame
-        self.app = frame.app
-        self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, self.lex)
-        self.initStyles()
-
-    def initStyles(self):
+    def getText(self):
+        """Returns the text to lex.
         """
-        Initialize style definitions. This is automatically invoked when
-        the constructor is called, but should be called any time font
-        preferences are changed.
+        raise NotImplementedError
+
+    def getHeader(self):
+        """Returns the current selected target header for this Twee Lexer.
         """
-        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
-                           wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
-        monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
-                           wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
+        raise NotImplementedError
 
-        self.ctrl.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, bodyFont)
-        self.ctrl.StyleClearAll()
+    def passageExists(self, title):
+        """Returns whether a given passage exists in the story.
+        """
+        raise NotImplementedError
 
-        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
-        for i in range(0,8):
-            self.ctrl.StyleSetFont(i, bodyFont)
-            if (i & 1):
-                self.ctrl.StyleSetBold(i, True)
-            if (i & 2):
-                self.ctrl.StyleSetItalic(i, True)
-            if (i & 4):
-                self.ctrl.StyleSetUnderline(i, True)
+    def includedPassageExists(self, title):
+        """Returns whether a given passage exists in a StoryIncludes resource.
+        """
+        raise NotImplementedError
 
-        for i in self.STYLE_CONSTANTS:
-            self.ctrl.StyleSetFont(i, bodyFont)
-
-        self.ctrl.StyleSetBold(self.GOOD_LINK, True)
-        self.ctrl.StyleSetForeground(self.GOOD_LINK, self.GOOD_LINK_COLOR)
-
-        self.ctrl.StyleSetBold(self.BAD_LINK, True)
-        self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
-        self.ctrl.StyleSetBold(self.BAD_MACRO, True)
-        self.ctrl.StyleSetForeground(self.BAD_MACRO, self.BAD_LINK_COLOR)
-
-        self.ctrl.StyleSetBold(self.STORYINCLUDE_LINK, True)
-        self.ctrl.StyleSetForeground(self.STORYINCLUDE_LINK, self.STORYINCLUDE_COLOR)
-
-        self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
-
-        self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
-
-        self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
-        self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
-
-        self.ctrl.StyleSetBold(self.HTML, True)
-        self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
-
-        self.ctrl.StyleSetForeground(self.HTML_BLOCK, self.HTML_COLOR)
-
-        self.ctrl.StyleSetBold(self.MACRO, True)
-        self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
-
-        self.ctrl.StyleSetItalic(self.COMMENT, True)
-        self.ctrl.StyleSetForeground(self.COMMENT, self.COMMENT_COLOR)
-
-        self.ctrl.StyleSetForeground(self.SILENT, self.COMMENT_COLOR)
-
-        self.ctrl.StyleSetFont(self.MONO, monoFont)
-
-        self.ctrl.StyleSetBold(self.EXTERNAL, True)
-        self.ctrl.StyleSetForeground(self.EXTERNAL, self.EXTERNAL_COLOR)
-
-        self.ctrl.StyleSetBold(self.IMAGE, True)
-        self.ctrl.StyleSetForeground(self.IMAGE, self.IMAGE_COLOR)
-
-        self.ctrl.StyleSetBold(self.PARAM, True)
-        self.ctrl.StyleSetForeground(self.PARAM, self.PARAM_COLOR)
-
-        self.ctrl.StyleSetBold(self.PARAM_VAR, True)
-        self.ctrl.StyleSetForeground(self.PARAM_VAR, self.PARAM_VAR_COLOR)
-
-        self.ctrl.StyleSetBold(self.PARAM_STR, True)
-        self.ctrl.StyleSetForeground(self.PARAM_STR, self.PARAM_STR_COLOR)
-
-        self.ctrl.StyleSetBold(self.PARAM_NUM, True)
-        self.ctrl.StyleSetForeground(self.PARAM_NUM, self.PARAM_NUM_COLOR)
-
-        self.ctrl.StyleSetBold(self.PARAM_BOOL, True)
-        self.ctrl.StyleSetForeground(self.PARAM_BOOL, self.PARAM_BOOL_COLOR)
+    def applyStyle(self, start, end, style):
+        """Applies a style to a certain range.
+        """
+        raise NotImplementedError
 
     def lexMatchToken(self, text):
         m = text[:2].lower()
@@ -135,10 +69,9 @@ class TweeLexer:
 
         return (None, None)
 
-    def lex(self, event = None):
-        """
-        Lexes, or applies syntax highlighting, to text based on a
-        wx.stc.EVT_STC_STYLENEEDED event.
+    def lex(self):
+        """Performs lexical analysis on the text.
+        Calls applyStyle() for each region found.
         """
 
         def applyParamStyle(pos2, contents):
@@ -327,35 +260,6 @@ class TweeLexer:
             macroStart,macroMatch = macroNestStack.pop()[1:];
             self.applyStyle(macroStart, macroMatch.end(0), self.BAD_MACRO)
 
-    def getText(self):
-        """
-        Returns the text to lex.
-        """
-        return self.ctrl.GetTextUTF8()
-
-    def passageExists(self, title):
-        """
-        Returns whether a given passage exists in the story.
-        """
-        return (self.frame.widget.parent.passageExists(title, False))
-
-    def includedPassageExists(self, title):
-        """
-        Returns whether a given passage exists in a StoryIncludes resource.
-        """
-        return (self.frame.widget.parent.includedPassageExists(title))
-
-    def applyStyle(self, start, end, style):
-        """
-        Applies a style to a certain range.
-        """
-        self.ctrl.StartStyling(start, self.TEXT_STYLES)
-        self.ctrl.SetStyling(end, style)
-
-    def getHeader(self):
-        """Returns the current selected target header for this Twee Lexer."""
-        return self.frame.getHeader()
-
     @staticmethod
     def linkStyle(dest):
         """Apply style for a link destination which does not seem to be an existent passage"""
@@ -380,6 +284,116 @@ class TweeLexer:
 
     NESTED_MACROS = [ "if", "silently" ]
 
+class TweeStyler(TweeLexer):
+    """Applies syntax highlighting for Twee syntax in a wx.StyledTextCtrl.
+    This needs to be passed the control it will be lexing, so it can
+    look up the body text as needed.
+    """
+
+    def __init__(self, control, frame):
+        self.ctrl = control
+        self.frame = frame
+        self.app = frame.app
+        self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, lambda event: self.lex())
+        self.initStyles()
+
+    def initStyles(self):
+        """
+        Initialize style definitions. This is automatically invoked when
+        the constructor is called, but should be called any time font
+        preferences are changed.
+        """
+        bodyFont = wx.Font(self.app.config.ReadInt('windowedFontSize'), wx.MODERN, wx.NORMAL, \
+                           wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
+        monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
+                           wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
+
+        self.ctrl.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, bodyFont)
+        self.ctrl.StyleClearAll()
+
+        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
+        for i in range(0,8):
+            self.ctrl.StyleSetFont(i, bodyFont)
+            if (i & 1):
+                self.ctrl.StyleSetBold(i, True)
+            if (i & 2):
+                self.ctrl.StyleSetItalic(i, True)
+            if (i & 4):
+                self.ctrl.StyleSetUnderline(i, True)
+
+        for i in self.STYLE_CONSTANTS:
+            self.ctrl.StyleSetFont(i, bodyFont)
+
+        self.ctrl.StyleSetBold(self.GOOD_LINK, True)
+        self.ctrl.StyleSetForeground(self.GOOD_LINK, self.GOOD_LINK_COLOR)
+
+        self.ctrl.StyleSetBold(self.BAD_LINK, True)
+        self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
+        self.ctrl.StyleSetBold(self.BAD_MACRO, True)
+        self.ctrl.StyleSetForeground(self.BAD_MACRO, self.BAD_LINK_COLOR)
+
+        self.ctrl.StyleSetBold(self.STORYINCLUDE_LINK, True)
+        self.ctrl.StyleSetForeground(self.STORYINCLUDE_LINK, self.STORYINCLUDE_COLOR)
+
+        self.ctrl.StyleSetForeground(self.MARKUP, self.MARKUP_COLOR)
+
+        self.ctrl.StyleSetForeground(self.INLINE_STYLE, self.MARKUP_COLOR)
+
+        self.ctrl.StyleSetBold(self.BAD_INLINE_STYLE, True)
+        self.ctrl.StyleSetForeground(self.BAD_INLINE_STYLE, self.BAD_LINK_COLOR)
+
+        self.ctrl.StyleSetBold(self.HTML, True)
+        self.ctrl.StyleSetForeground(self.HTML, self.HTML_COLOR)
+
+        self.ctrl.StyleSetForeground(self.HTML_BLOCK, self.HTML_COLOR)
+
+        self.ctrl.StyleSetBold(self.MACRO, True)
+        self.ctrl.StyleSetForeground(self.MACRO, self.MACRO_COLOR)
+
+        self.ctrl.StyleSetItalic(self.COMMENT, True)
+        self.ctrl.StyleSetForeground(self.COMMENT, self.COMMENT_COLOR)
+
+        self.ctrl.StyleSetForeground(self.SILENT, self.COMMENT_COLOR)
+
+        self.ctrl.StyleSetFont(self.MONO, monoFont)
+
+        self.ctrl.StyleSetBold(self.EXTERNAL, True)
+        self.ctrl.StyleSetForeground(self.EXTERNAL, self.EXTERNAL_COLOR)
+
+        self.ctrl.StyleSetBold(self.IMAGE, True)
+        self.ctrl.StyleSetForeground(self.IMAGE, self.IMAGE_COLOR)
+
+        self.ctrl.StyleSetBold(self.PARAM, True)
+        self.ctrl.StyleSetForeground(self.PARAM, self.PARAM_COLOR)
+
+        self.ctrl.StyleSetBold(self.PARAM_VAR, True)
+        self.ctrl.StyleSetForeground(self.PARAM_VAR, self.PARAM_VAR_COLOR)
+
+        self.ctrl.StyleSetBold(self.PARAM_STR, True)
+        self.ctrl.StyleSetForeground(self.PARAM_STR, self.PARAM_STR_COLOR)
+
+        self.ctrl.StyleSetBold(self.PARAM_NUM, True)
+        self.ctrl.StyleSetForeground(self.PARAM_NUM, self.PARAM_NUM_COLOR)
+
+        self.ctrl.StyleSetBold(self.PARAM_BOOL, True)
+        self.ctrl.StyleSetForeground(self.PARAM_BOOL, self.PARAM_BOOL_COLOR)
+
+    def getText(self):
+        return self.ctrl.GetTextUTF8()
+
+    def passageExists(self, title):
+        return (self.frame.widget.parent.passageExists(title, False))
+
+    def includedPassageExists(self, title):
+        return (self.frame.widget.parent.includedPassageExists(title))
+
+    def applyStyle(self, start, end, style):
+        self.ctrl.StartStyling(start, self.TEXT_STYLES)
+        self.ctrl.SetStyling(end, style)
+
+    def getHeader(self):
+        return self.frame.getHeader()
+
     # style colors
 
     GOOD_LINK_COLOR = '#3333cc'
@@ -403,10 +417,10 @@ class TweeLexer:
     TEXT_STYLES = 31    # mask for StartStyling() to indicate we're only changing text styles
 
 
-"""
-A subclass of the lexer that finds errors in place of styling text.
-"""
 class VerifyLexer(TweeLexer):
+    """Looks for errors in passage bodies.
+    """
+
     # Takes a PassageWidget instead of a PassageFrame
     def __init__(self, widget):
         self.widget = widget
