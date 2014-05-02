@@ -14,7 +14,7 @@ class TweeLexer:
         self.app = frame.app
         self.ctrl.Bind(wx.stc.EVT_STC_STYLENEEDED, self.lex)
         self.initStyles()
-        
+
     def initStyles(self):
         """
         Initialize style definitions. This is automatically invoked when
@@ -25,7 +25,7 @@ class TweeLexer:
                            wx.NORMAL, False, self.app.config.Read('windowedFontFace'))
         monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
-        
+
         self.ctrl.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, bodyFont)
         self.ctrl.StyleClearAll()
 
@@ -49,7 +49,7 @@ class TweeLexer:
         self.ctrl.StyleSetForeground(self.BAD_LINK, self.BAD_LINK_COLOR)
         self.ctrl.StyleSetBold(self.BAD_MACRO, True)
         self.ctrl.StyleSetForeground(self.BAD_MACRO, self.BAD_LINK_COLOR)
-        
+
         self.ctrl.StyleSetBold(self.STORYINCLUDE_LINK, True)
         self.ctrl.StyleSetForeground(self.STORYINCLUDE_LINK, self.STORYINCLUDE_COLOR)
 
@@ -321,7 +321,7 @@ class TweeLexer:
 
         # Finish up unclosed styles
         self.applyStyle(styleStart, len(text), style)
-        
+
         # Fix up unmatched macros
         while macroNestStack:
             macroStart,macroMatch = macroNestStack.pop()[1:];
@@ -332,13 +332,13 @@ class TweeLexer:
         Returns the text to lex.
         """
         return self.ctrl.GetTextUTF8()
-    
+
     def passageExists(self, title):
         """
         Returns whether a given passage exists in the story.
         """
         return (self.frame.widget.parent.passageExists(title, False))
-    
+
     def includedPassageExists(self, title):
         """
         Returns whether a given passage exists in a StoryIncludes resource.
@@ -355,7 +355,7 @@ class TweeLexer:
     def getHeader(self):
         """Returns the current selected target header for this Twee Lexer."""
         return self.frame.getHeader()
-    
+
     @staticmethod
     def linkStyle(dest):
         """Apply style for a link destination which does not seem to be an existent passage"""
@@ -411,34 +411,34 @@ class VerifyLexer(TweeLexer):
     def __init__(self, widget):
         self.widget = widget
         self.twineChecks, self.stylesheetChecks, self.scriptChecks = self.getHeader().passageChecks()
-        
+
     def getText(self):
         return self.widget.passage.text
-    
+
     def getHeader(self):
         return self.widget.parent.parent.header
 
     def passageExists(self, title):
         return (self.widget.parent.passageExists(title, False))
-    
+
     def includedPassageExists(self, title):
         return (self.widget.parent.includedPassageExists(title))
-    
+
     def check(self):
         """Collect error messages for this passage, using the overridden applyStyles() method."""
         self.errorList = []
         if self.widget.passage.isScript():
             for i in self.scriptChecks:
                 self.errorList += [e for e in i(passage=self.widget.passage)]
-        
+
         elif self.widget.passage.isStylesheet():
             for i in self.stylesheetChecks:
                 self.errorList += [e for e in i(passage=self.widget.passage)]
-        
+
         else:
             self.lex()
         return sorted(self.errorList, key = lambda a: (a[1][0] if a[1] else float('inf')))
-    
+
     def applyStyle(self, start, length, style):
         """Runs all of the checks on the current lex token, then saves errors produced."""
         end = start+length
