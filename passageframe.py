@@ -1,7 +1,8 @@
 import sys, os, re, types, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
 from version import versionString
-from tweelexer import TweeLexer, TweeStyler
+from tweelexer import TweeLexer
+from tweestyler import TweeStyler
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
