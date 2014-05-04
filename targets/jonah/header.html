@@ -87,13 +87,6 @@ function(b,a){var f=lexCss(b);a.startStylesheet&&a.startStylesheet();for(var c=0
 }
 .content a {
 	color: #4d6ad8;
-	font-weight: bold;
-	text-decoration: none;
-	cursor: pointer;
-}
-.content a:hover {
-	text-decoration: underline;
-	color: #8ea6ff;
 }
 a.internalLink, a.externalLink, a.back, a.return, [data-passage] {
 	cursor: pointer;
@@ -186,6 +179,14 @@ h3 {
 	font-size: 1.3em;
 	line-height: 175%;
 	margin-bottom: 2em;
+}
+.content a {
+	font-weight: bold;
+	text-decoration: none;
+}
+.content a:hover {
+	text-decoration: underline;
+	color: #8ea6ff;
 }
 .passage:not(:last-child):not(:hover) {
 	opacity: 0.4;

@@ -84,15 +84,13 @@ testplay = "START_AT";
 /* Links */
 .passage a {
 	color: #4d6ad8;
-	font-weight: bold;
-	text-decoration: none;
-}
-.passage a:hover {
-	color: #8ea6ff;
-	text-decoration: underline;
 }
 a.internalLink, a.externalLink, a.back, a.return, [data-passage], .menu div {
 	cursor: pointer;
+}
+a.brokenLink {
+	background-color: red;
+	color: #000;
 }
 .marked {
 	background-color: red;
@@ -226,6 +224,14 @@ body {
 	margin-bottom: 2em;
 	text-align: left;
 }
+.passage a {
+	font-weight: bold;
+	text-decoration: none;
+}
+.passage a:hover {
+	color: #8ea6ff;
+	text-decoration: underline;
+}
 .content > ul {
 	padding-top: 1.3em;
 }
@@ -250,11 +256,6 @@ body {
 .passage center {
 	max-width:50%;
 	margin:auto;
-}
-a.brokenLink {
-	background-color: red;
-	text-decoration: none;
-	color: #000;
 }
 .marked {
 	margin-right: 12px;

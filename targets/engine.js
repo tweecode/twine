@@ -1865,7 +1865,7 @@ Wikifier.formatters = [
             var name = lookaheadMatch[1];
             try {
                 var macro = macros[name];
-                if (macro && macro.handler) {
+                if (macro && typeof macro == "object" && macro.handler) {
                     macro.handler(w.output, name, params, w);
                 }
                 // Variable?
@@ -1876,7 +1876,7 @@ Wikifier.formatters = [
                 else if (tale.has(name)) {
                     macros.display.handler(w.output, name, [name].concat(params), w);
                 }
-                else throwError(w.output, 'Macro not found: ' + name, w.fullMatch());
+                else throwError(w.output, 'No macro or passage called "' + name + '"', w.fullMatch());
             } catch (e) {
                 throwError(w.output, 'Error executing macro ' + name + ': ' + e.toString(), w.fullMatch());
             }

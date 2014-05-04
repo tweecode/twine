@@ -67,7 +67,7 @@ testplay = "START_AT";
    ========================================================================== */
 
 article, aside, details, figcaption, figure, footer, header, hgroup, nav, section { display: block; }
-audio, canvas, video { display: inline-block; *display: inline; *zoom: 1; }
+audio, canvas, video { display: inline-block; }
 audio:not([controls]) { display: none; }
 [hidden] { display: none; }
 
@@ -91,7 +91,7 @@ dfn { font-style: italic; }
 hr { display: block; height: 1px; border: 0; border-top: 1px solid #ccc; margin: 1em 0; padding: 0; }
 ins { background: #ff9; color: #000; text-decoration: none; }
 mark { background: #ff0; color: #000; font-style: italic; font-weight: bold; }
-pre, code, kbd, samp { font-family: monospace, serif; _font-family: 'courier new', monospace; font-size: 1em; }
+pre, code, kbd, samp { font-family: monospace, serif; font-size: 1em; }
 pre { white-space: pre; white-space: pre-wrap; word-wrap: break-word; }
 q { quotes: none; }
 q:before, q:after { content: ""; content: none; }
@@ -105,7 +105,7 @@ ul, ol { margin: 1em 0; padding: 0 0 0 40px; }
 dd { margin: 0 0 0 40px; }
 nav ul, nav ol { list-style: none; list-style-image: none; margin: 0; padding: 0; }
 
-img { border: 0; -ms-interpolation-mode: bicubic; vertical-align: middle; }
+img { border: 0; -ms-interpolation-mode: bicubic; vertical-align: bottom; }
 
 svg:not(:root) { overflow: hidden; }
 
@@ -114,17 +114,16 @@ figure { margin: 0; }
 form { margin: 0; }
 fieldset { border: 0; margin: 0; padding: 0; }
 label { cursor: pointer; }
-legend { border: 0; *margin-left: -7px; padding: 0; white-space: normal; }
-button, input, select, textarea { font-size: 100%; margin: 0; vertical-align: baseline; *vertical-align: middle; }
+legend { border: 0; padding: 0; white-space: normal; }
+button, input, select, textarea { font-size: 100%; margin: 0; vertical-align: baseline; }
 button, input { line-height: normal; }
-button, input[type="button"], input[type="reset"], input[type="submit"] { cursor: pointer; -webkit-appearance: button; *overflow: visible; }
+button, input[type="button"], input[type="reset"], input[type="submit"] { cursor: pointer; -webkit-appearance: button; }
 button[disabled], input[disabled] { cursor: default; }
-input[type="checkbox"], input[type="radio"] { box-sizing: border-box; padding: 0; *width: 13px; *height: 13px; }
+input[type="checkbox"], input[type="radio"] { box-sizing: border-box; padding: 0; }
 input[type="search"] { -webkit-appearance: textfield; -moz-box-sizing: content-box; box-sizing: content-box; }
 input[type="search"]::-webkit-search-decoration, input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 button::-moz-focus-inner, input::-moz-focus-inner { border: 0; padding: 0; }
 textarea { overflow: auto; vertical-align: top; resize: vertical; }
-input:valid, textarea:valid {  }
 input:invalid, textarea:invalid { background-color: #f0dddd; }
 
 table { border-collapse: collapse; border-spacing: 0; }
@@ -132,13 +131,94 @@ td { vertical-align: top; }
 
 .chromeframe { margin: 0.2em 0; background: #ccc; color: black; padding: 0.2em 0; }
 
+/* ===== Primary Styles ========================================================
+   Author: Twine
+   ========================================================================== */
+
+#storeArea, #storyMenu {display:none; }
+#sidebar > ul > li:empty { display:none; }
+.menu { position:absolute; display:none; }
+#passages { position:relative; }
+a.internalLink,a.externalLink,a.back,a.return,[data-passage],.menu div:hover,nav li a:hover {cursor: pointer;}
+a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
+.marked{background-color:red;color:#000;}
+.marked[title]{cursor:help;}
+.passage li[data-bullet] { list-style-type: none; }
+.passage li[data-bullet]:before { content: attr(data-bullet); position: relative; left: -1em; }
+
+html, body, #non-footer-container { height: 100%; }
+body > #non-footer-container { height: auto; min-height: 100%; }
+#non-footer-container > :last-child { padding: 6em; }
+#footer-container {
+	position: relative;
+	margin-top: -6em;
+	overflow:hidden;
+	max-height: 6em;
+	clear:both;
+	box-sizing:border-box;
+	z-index:10;
+}
+
+/* ==============
+    MOBILE: Menu
+   ============== */
+
+nav li{
+	display:block;
+	margin-bottom:10px;
+	padding:15px 0;
+	text-align:center;
+}
+
+/* =============================================================================
+   Media Queries
+   ========================================================================== */
+
+@media only screen and (min-width: 480px) {
+	nav li{
+		float:left;
+		display:inline;
+		width:25%;
+	}
+}
+
+@media only screen and (min-width: 768px) {
+	#title{
+		float:left;
+	}
+	nav{
+		float:right;
+		width:38%;
+	}
+}
+@media only screen and (min-width: 960px) {
+	.wrapper{
+		width:864px; /* 1140px - 10% for margins */
+		margin:0 auto;
+	}
+}
+
+/* =============================================================================
+   Non-Semantic Helper Classes
+   ========================================================================== */
+
+.ir { display: block; border: 0; text-indent: -999em; overflow: hidden; background-color: transparent; background-repeat: no-repeat; text-align: left; direction: ltr; }
+.ir br { display: none; }
+.hidden { display: none !important; visibility: hidden; }
+.visuallyhidden { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
+.visuallyhidden.focusable:active, .visuallyhidden.focusable:focus { clip: auto; height: auto; margin: 0; overflow: visible; position: static; width: auto; }
+.invisible { visibility: hidden; }
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; }
+
+</style><style id="defaultCSS">
 
 /* ===== Initializr Styles =====================================================
    Author: Jonathan Verrecchia - verekia.com/initializr/responsive-template
    Modifications: Emmanuel Turner
    ========================================================================== */
 
-body{ font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; font-size: 12px; line-height: 16px; }
+body{ font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 12px; line-height: 16px; }
 
 .wrapper{
 	width:90%;
@@ -169,14 +249,8 @@ body{ font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; font-size: 12
    ============== */
 
 nav li{
-	display:block;
-	margin-bottom:10px;
-	padding:15px 0;
-
 	background:#666;
 	color:#fff;
-
-	text-align:center;
 	font-weight:bold;
 }
 
@@ -187,7 +261,6 @@ nav li a, nav li a:visited {
 
 nav li:hover, nav li a:hover {
 	color:#fff;
-	cursor:pointer;
 	text-decoration:underline;
 }
 
@@ -198,16 +271,6 @@ nav li:hover, nav li a:hover {
 #main{
 	padding:0 0 1.5em 0;
 }
-
-#main article h1{
-	font-size:2em;
-}
-
-#main aside{
-	color:white;
-	padding:0px 5% 10px;
-}
-
 #footer-container footer{
 	color:white;
 	padding:20px 0;
@@ -215,39 +278,31 @@ nav li:hover, nav li a:hover {
 
 
 /* ===== Primary Styles ========================================================
-   Author:
+   Author: Twine
    ========================================================================== */
 
-#storeArea{display:none; margin:0; padding:0; }
 #title { margin-top: 0.25em; margin-bottom: 0.25em; }
 #title div { margin: 0; padding: 0; }
 #storyTitle, #storySubtitle { float: left; margin-right: 1em; font-size: 2em; line-height: 1em; }
-#titleSeparator { display: none; }
 #storyAuthor { font-weight: bold; line-height: 1.5em; }
 #snapback #restart{margin:0;}
 #credits { color:#999; font-size: 0.8em; line-height: 1.0em; }
 #credits a { color:#999; text-decoration:none; }
 #credits a:hover { text-decoration:underline; }
-#storyMenu { display:none; }
-#sidebar > ul > li:empty { display:none; }
 
-.menu { position:absolute;display:none;background-color:#666;color:#fff;text-align:left;line-height:2em;}
+.menu { background-color:#666;color:#fff;text-align:left;line-height:2em;}
 .menu div{padding:0 .4em;}
-.menu div:hover{cursor:pointer;background-color:#fff;color:#666;}
+.menu div:hover{background-color:#fff;color:#666;}
 
 #main-container { padding-top: 1em; }
-#passages { font-size: 12px; line-height: 16px; position:relative; }
+#passages { font-size: 12px; line-height: 16px; }
 .passage a{text-decoration:none;}
 .passage a:hover{text-decoration:underline;}
-a.internalLink,a.externalLink,a.back,a.return,[data-passage] {cursor: pointer;}
-a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
+
 .marked{background-color:red;color:#000;margin-right:12px;padding:3px;}
-.marked[title]{cursor:help;}
 .passage ul{margin-left:.5em;padding-left:1.5em;}
 .content > ul{padding-top:1.3em;}
 .passage li{margin-right:6em;}
-.passage li[data-bullet] { list-style-type: none; }
-.passage li[data-bullet]:before { content: attr(data-bullet); position: relative; left: -1em; }
 .passage ol{margin-left:.5em;padding-left:1.5em;}
 .passage table{border-collapse:collapse;font-size:100%;margin:.8em 1.0em;}
 .passage th,.passage td,.passage tr,.passage caption{padding:3px;}
@@ -257,19 +312,7 @@ a.brokenLink{background-color:#fcc;text-decoration:none;color:#000;}
 .passage h2 { font-size:1.5em; line-height:1.5em; margin-top:0.5em; }
 .passage h3 { font-size:1em; line-height:1.5em; margin-top:0.5em; }
 .passage center { max-width:50%; margin:auto; }
-img { vertical-align:bottom; }
-html, body, #non-footer-container { height: 100%; }
-body > #non-footer-container { height: auto; min-height: 100%; }
-#non-footer-container > :last-child { padding: 6em; }
-#footer-container {
-	position: relative;
-	margin-top: -6em;
-	overflow:hidden;
-	max-height: 6em;
-	clear:both;
-	box-sizing:border-box;
-	z-index:10;
-}
+
 
 /* =============================================================================
    Media Queries
@@ -282,8 +325,6 @@ body > #non-footer-container { height: auto; min-height: 100%; }
    ==================== */
 
 	nav li{
-		float:left;
-		width:25%;
 		margin:0 0 0 1.7%;
 		padding:1.5em 2%;
 		margin-bottom:0;
@@ -293,14 +334,6 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 	nav li:last-child a{ margin-right:0; }
 	#title { margin-top: 0.5em; margin-bottom: 0.5em; }
 	#passages { font-size: 12px; line-height: 18px; }
-	
-/* ========================
-    INTERMEDIATE: IE Fixes
-   ======================== */
-
-	nav li{
-		display:inline;
-	}
 }
 
 @media only screen and (min-width: 768px) {
@@ -317,32 +350,13 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 /* ============
     WIDE: Menu
    ============ */
-	
-	#title{
-		float:left;
-	}
 
 	nav{
-		float:right;
-		width:38%;
 		margin-top: 0.5em;
 	}
 	#title { margin-top: 1em; margin-bottom: 0.5em; }
 	#passages { font-size: 14px; line-height: 21px; width: 640px; }
 
-/* ============
-    WIDE: Main
-   ============ */
-
-	#main article{
-		float:left;
-		width:57%;
-	}
-		
-	#main aside{
-		float:right;
-		width:28%;
-	}
 }
 
 @media only screen and (min-width: 960px) {
@@ -351,27 +365,9 @@ body > #non-footer-container { height: auto; min-height: 100%; }
     Maximal Width
    =============== */
 
-	.wrapper{
-		width:864px; /* 1140px - 10% for margins */
-		margin:0 auto;
-	}
 	nav { margin-top: 1em; }
 	#passages { font-size: 15px; line-height: 23px; width: 640px; }
 }
-
-/* =============================================================================
-   Non-Semantic Helper Classes
-   ========================================================================== */
-
-.ir { display: block; border: 0; text-indent: -999em; overflow: hidden; background-color: transparent; background-repeat: no-repeat; text-align: left; direction: ltr; *line-height: 0; }
-.ir br { display: none; }
-.hidden { display: none !important; visibility: hidden; }
-.visuallyhidden { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
-.visuallyhidden.focusable:active, .visuallyhidden.focusable:focus { clip: auto; height: auto; margin: 0; overflow: visible; position: static; width: auto; }
-.invisible { visibility: hidden; }
-.clearfix:before, .clearfix:after { content: ""; display: table; }
-.clearfix:after { clear: both; }
-.clearfix { *zoom: 1; }
 
 </style>
 <style id="transitionCSS">
@@ -398,7 +394,6 @@ body > #non-footer-container { height: auto; min-height: 100%; }
 				<div id="title">
 					<div id="storyTitle" class="storyElement"></div>
 					<div id="storySubtitle" class="storyElement"></div>
-					<div id="titleSeparator"></div>
 					<div class="clearfix"></div>
 					<div id="storyAuthor" class="storyElement"></div>
 				</div>
