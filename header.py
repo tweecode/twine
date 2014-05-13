@@ -144,6 +144,13 @@ class Header(object):
                 matchKind = "start" if "end" in tag else "end"
                 yield ("The macro tag " + tag + "\ndoes not have a matching " + matchKind + " tag.", None)
         
+        def checkInequalityExpression(tag, start, end, style, passage=None):
+            if style == tweelexer.TweeLexer.MACRO:
+                r = re.search(r"\s+((and|or|\|\||&&)\s+([gl]te?|is|n?eq|(?:[=!<]|>(?!>))=?))\s+" + tweeregex.UNQUOTED_REGEX, tag)
+                if r:
+                    yield (tag + ' contains "' + r.group(1) + '", which isn\'t valid code.\n'
+                            + 'There should probably be an expression, or a variable, between "' + r.group(2) + '" and "' + r.group(3) + '".', None)
+        
         def checkIfMacro(tag, start, end, style, passage=None):
             if style == tweelexer.TweeLexer.MACRO:
                 ifMacro = re.search(tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)"), tag)
@@ -181,7 +188,7 @@ class Header(object):
                 ret.append((warning, (scriptTag.start(0), "", scriptTag.end(0))))
             return ret
         
-        return ([checkUnmatchedMacro, checkIfMacro, checkHTTPSpelling],[],[checkScriptTagsInScriptPassage])
+        return ([checkUnmatchedMacro, checkInequalityExpression, checkIfMacro, checkHTTPSpelling],[],[checkScriptTagsInScriptPassage])
 
     @staticmethod
     def factory(type, path, builtinPath):
