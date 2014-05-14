@@ -28,18 +28,17 @@ class TweeStyler(TweeLexer):
         self.ctrl.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, bodyFont)
         self.ctrl.StyleClearAll()
 
-        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
-        for i in range(0,8):
+        for i in self.STYLE_CONSTANTS:
             self.ctrl.StyleSetFont(i, bodyFont)
+        
+        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof        
+        for i in range(0,8):
             if (i & 1):
                 self.ctrl.StyleSetBold(i, True)
             if (i & 2):
                 self.ctrl.StyleSetItalic(i, True)
             if (i & 4):
                 self.ctrl.StyleSetUnderline(i, True)
-
-        for i in self.STYLE_CONSTANTS:
-            self.ctrl.StyleSetFont(i, bodyFont)
 
         self.ctrl.StyleSetBold(self.GOOD_LINK, True)
         self.ctrl.StyleSetForeground(self.GOOD_LINK, self.GOOD_LINK_COLOR)

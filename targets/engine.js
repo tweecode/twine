@@ -972,7 +972,6 @@ macros.back = {
                 return;
             }
             labeltouse = e[labelParam + 1];
-            if(e[labelParam] == 'labeldefault') this.labeltext = labeltouse;
             e.splice(labelParam, 2);
         }
         // What's left is the passage name parameter
@@ -1854,7 +1853,7 @@ Wikifier.formatters = [
 {
     name: "macro",
     match: "<<",
-    lookahead: /<<([^>\s]+)(?:\s*)((?:\\.|'(?:[^'\\]*\\.)*[^'\\]*'|"(?:[^"\\]*\\.)*[^"\\]*"|[^>])*)>>/mg,
+    lookahead: /<<([^>\s]+)(?:\s*)((?:\\.|'(?:[^'\\]*\\.)*[^'\\]*'|"(?:[^"\\]*\\.)*[^"\\]*"|[^'"\\>]|>(?!>))*)>>/mg,
     handler: function (w) {
         var lookaheadRegExp = new RegExp(this.lookahead);
         lookaheadRegExp.lastIndex = w.matchStart;
