@@ -173,6 +173,9 @@ class TiddlyWiki:
                     storyfragments.append(tiddler.toHtml(self.author, rot13))
         storycode = u''.join(storyfragments)
 
+        if output.count('"STORY_SIZE"') > 0:
+            output = output.replace('"STORY_SIZE"', str(len(storyfragments)))
+        
         if output.count('"STORY"') > 0:
             output = output.replace('"STORY"', storycode)
         else:

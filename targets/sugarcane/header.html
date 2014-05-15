@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<!--[if lte IE 8]> <html class="lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html> <!--<![endif]-->
+<!--[if lte IE 8]><html class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html><!--<![endif]-->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -132,6 +132,13 @@ img {
 		min-height: 100vh;
 		margin-left: 0em;
 	}
+}
+#loadingbar {
+	position:fixed;
+	top:0;
+	left:0;
+	border-top: solid #4d6ad8 6px;
+	transition: width 0.5s;
 }
 </style>
 <style id="defaultCSS">
@@ -298,6 +305,7 @@ body {
 <style id="tagCSS"></style>
 </head>
 <body>
+<div id="loadingbar"></div>
 <ul id="sidebar">
 <li id="title" class="storyElement"><span id="storyTitle" class="storyElement"></span><span id="storySubtitle" class="storyElement"></span><span id="titleSeparator"></span><span id="storyAuthor" class="storyElement"></span></li>
 <li id="storyMenu" class="storyElement" style="display:none"></li>
@@ -311,6 +319,8 @@ This story was created with <a href="http://twinery.org/">Twine</a> and is power
 <div id="snapbackMenu" class="menu"></div>
 <div id="passages">
 <noscript><div id="noscript">Please enable Javascript to play this story!</div></noscript>
-<style>#sidebar{display:none;}</style>
+<style>
+#sidebar{display:none;}
+</style>
 </div>
-<div id="storeArea" hidden>"STORY"</div></body></html>
+<div id="storeArea" data-size="STORY_SIZE" hidden>"STORY"</div></body></html>

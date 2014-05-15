@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html>
+<!--[if lte IE 8]><html class="lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html><!--<![endif]-->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -133,12 +134,19 @@ a.brokenLink {
 #storeArea {
 	display: none;
 }
+img {
+	vertical-align:bottom;
+}
 #noscript {
 	font-size: 120%;
 	font-weight: bold;
 }
-img {
-	vertical-align:bottom;
+#loadingbar {
+	position:fixed;
+	top:0;
+	left:0;
+	border-top: solid #4d6ad8 6px;
+	transition: width 0.5s;
 }
 </style>
 <style id="defaultCSS">
@@ -298,6 +306,7 @@ li {
 <style id="tagCSS"></style>
 </head>
 <body>
+<div id="loadingbar"></div>
 <div id="floater"><div class="container">
 <div id="storyMenu" class="storyElement"></div>
 <p><a id="restart" href="#">Restart Story</a></p>
@@ -307,9 +316,12 @@ li {
 <h1><span id="storyTitle" class="storyElement"></span></h1>
 <h2><span id="storySubtitle" class="storyElement"></span></h2>
 <h3><span id="storyAuthor" class="storyElement"></span></h3>
-<div id="passages"><noscript><div id="noscript">Please enable Javascript to play this story!</div></noscript></div>
+<div id="passages"><noscript><div id="noscript">Please enable Javascript to play this story!</div></noscript>
+<style>
+#floater {display:none;}
+</style></div>
 <p id="footer">
 This story was created with <a class="externalLink" href="http://twinery.org/">Twine</a> and is powered by <a class="externalLink" href="http://www.tiddlywiki.com/">TiddlyWiki</a>.
 </p>
 </div></div>
-<div id="storeArea" hidden>"STORY"</div></body></html>
+<div id="storeArea" data-size="STORY_SIZE" hidden>"STORY"</div></body></html>

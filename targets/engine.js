@@ -2397,3 +2397,19 @@ function main() {
     
     state.init();
 }
+
+setTimeout(function f() {
+    var size, bar = document.getElementById("loadingbar"), store = document.getElementById("storeArea");
+	if (store) {
+	    size = store.getAttribute("data-size");
+		if (store.children.length <= size && !tale) {
+		    // +1 so that the bar can reach the end
+		    bar.style.width = ~~((store.children.length+1)/size*100)+"%";
+		}
+		else {
+			bar.outerHTML = "";
+		    return;
+		}
+	}
+	setTimeout(f,5);
+},5);
