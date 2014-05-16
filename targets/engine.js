@@ -269,7 +269,7 @@ function throwError(a, b, tooltip) {
         var elem = insertElement(a, "span", null, "marked", b);
         tooltip && elem.setAttribute("title", tooltip);
     } else {
-        alert("There is a technical problem with this story: " + b + "."+softErrorMessage);
+        alert("Regrettably, this " + tale.identity() + "'s code just ran into a problem:\n" + b + ".\n"+softErrorMessage);
     }
 }
 Math.easeInOut = function (a) {
@@ -620,17 +620,12 @@ macros.display = {
                 if (tale.has(name)) {
                     output = name;
                 }
-                else {
-                    throwError(place, parser.fullMatch() + " bad expression: " + e.message,
-                        parser.fullMatch());
-                    return
-                }
             }
         }
         if (!output) {
-            throwError(place, '"' +name + "\" did not evaluate to a passage name", parser.fullMatch());
+            throwError(place, '<<' + macroName + '>>: "' +name + "\" did not evaluate to a passage name", parser.fullMatch());
         } else if (!tale.has(output+"")) {
-            throwError(place, "The \"" + output + "\" passage does not exist", parser.fullMatch());
+            throwError(place, '<<' + macroName + ">>: The \"" + output + "\" passage does not exist", parser.fullMatch());
         } else {
             oldDisplayParams = this.parameters;
             this.parameters = params;
@@ -676,15 +671,15 @@ version.extensions.printMacro = {
 };
 macros.print = {
     handler: function (place, macroName, params, parser) {
+        var args = parser.fullArgs(macroName != "print"), output;
         try {
-            var args = parser.fullArgs(macroName != "print"),
-                // See comment within macros.display
-                output = internalEval(args);
+            // See comment within macros.display
+            output = internalEval(args);
             if (output != null && (typeof output != "number" || !isNaN(output))) {
                 new Wikifier(place, ''+output);
             }
         } catch (e) {
-            throwError(place, "<<print>> bad expression: " + e.message, parser.fullMatch());
+            throwError(place, "<<print>> bad expression: " + params.join(' '), parser.fullMatch());
         }
     }
 };
@@ -695,13 +690,13 @@ version.extensions.setMacro = {
 };
 macros.set = {
     handler: function (a, b, c, parser) {
-        macros.set.run(a, parser.fullArgs(), parser)
+        macros.set.run(a, parser.fullArgs(), parser, c.join(' '))
     },
-    run: function (a,expression, parser) {
+    run: function (a,expression, parser, original) {
         try {
             return internalEval(expression);
         } catch (e) {
-            throwError(a, "bad expression: " + e.message, parser ? parser.fullMatch() : expression)
+            throwError(a, "bad expression: " + (original || expression), parser ? parser.fullMatch() : expression)
         }
     }
 };
@@ -714,58 +709,65 @@ macros["if"] = {
     handler: function (place, macroName, params, parser) {
         var conditions = [],
             clauses = [],
+            rawConds = [],
             srcOffset = parser.source.indexOf(">>", parser.matchStart) + 2,
             src = parser.source.slice(srcOffset),
             endPos = -1,
+            rawCond = params.join(' '),
             currentCond = parser.fullArgs(),
             currentClause = "",
             t = 0,
-            nesting = 0;
+            nesting = 0,
+            i = 0;
         
-        for (var i = 0; i < src.length; i++) {
+        for (; i < src.length; i++) {
             if (src.substr(i, 9) == "<<endif>>") {
                 nesting--;
                 if (nesting < 0) {
                     endPos = srcOffset + i + 9;
+                    rawConds.push(rawCond);
                     conditions.push(currentCond.trim());
                     clauses.push(currentClause);
                     break;
                 }
             }
             if ((src.substr(i, 6) == "<<else") && !nesting) {
+                rawConds.push(rawCond);
                 conditions.push(currentCond.trim());
                 clauses.push(currentClause);
                 currentClause="";
                 t = src.indexOf(">>",i+6);
                 if(src.substr(i+6,4)==" if " || src.substr(i+6,3)=="if ") {
-                    currentCond = src.slice(i+9,t);
-                    currentCond = Wikifier.parse(currentCond);
+                    rawCond = src.slice(i+9,t);
+                    currentCond = Wikifier.parse(rawCond);
                 }
                 else {
+                    rawCond = "";
                     currentCond = "true";
                 }
-                i = t+2;
+                i = t+1;
             }
             if (src.substr(i, 5) == "<<if ") {
                 nesting++;
             }
             currentClause += src.charAt(i);
         }
-        try {
-            if (endPos != -1) {
-                parser.nextMatch = endPos;
+
+        if (endPos != -1) {
+            parser.nextMatch = endPos;
+            try {
                 for(i=0;i<clauses.length;i++) {
                     if (internalEval(conditions[i])) {
                         new Wikifier(place, clauses[i]);
                         break;
                     }
                 }
-            } else {
-                throwError(place, "I can't find a matching <<endif>>", parser.fullMatch());
+            } catch (e) {
+                throwError(place, "<<" + (i ? "else " : "") + "if>> bad condition: " + rawConds[i], !i ? parser.fullMatch()
+                    : "<<else if " + rawConds[i] + ">>");
             }
-        } catch (e) {
-            throwError(place, "<<if>> bad condition: " + e.message, !i ? parser.fullMatch()
-                : "<<else if " + conditions[i] + ">>");
+        } else {
+            throwError(place, "I can't find a matching <<endif>>", parser.fullMatch());
         }
     }
 };
@@ -782,7 +784,7 @@ macros.remember = {
     handler: function (place, macroName, params, parser) {
         var variable, value, re, match,
             statement = params.join(" ");
-        macros.set.run(place, parser.fullArgs());
+        macros.set.run(place, parser.fullArgs(), null, params.join(' '));
         if (!window.localStorage) {
             throwError(place, "<<remember>> can't be used "
                 + (window.location.protocol == "file:" ? " by local HTML files " : "") + " in this browser.",parser.fullMatch());
@@ -795,7 +797,7 @@ macros.remember = {
             try {
                 value = JSON.stringify(value);
             } catch (e) {
-                throwError(place, "can't remember $" + variable + " (" + (typeof value) + ")", parser.fullMatch());
+                throwError(place, "can't <<remember>> the variable $" + variable + " (" + (typeof value) + ")", parser.fullMatch());
                 return;
             }
             window.localStorage[this.prefix + variable] = value;
@@ -877,7 +879,7 @@ macros.nobr = macros.silently = {
             new Wikifier(macroName == "nobr" ? place : h, c);
             parser.nextMatch = d;
         } else {
-            throwError(place, "can't find matching end" + macroName, parser.fullMatch());
+            throwError(place, "can't find matching <<end" + macroName+">>", parser.fullMatch());
         }
     }
 };
@@ -968,7 +970,7 @@ macros.back = {
         labelParam = e.indexOf("label");
         if(labelParam > -1) {
             if(!e[labelParam + 1]) {
-                throwError(a, e[labelParam] + ' keyword needs an additional label parameter', parser.fullMatch());
+                throwError(a, parser.fullMatch() + ": " + e[labelParam] + ' keyword needs an additional label parameter', parser.fullMatch());
                 return;
             }
             labeltouse = e[labelParam + 1];
@@ -1464,7 +1466,8 @@ Wikifier.parse = function (input) {
         g = Wikifier.textPrimitives.unquoted;
     
     function alter(from,to) {
-        return b.replace(new RegExp(from+g,"gim"),to);
+        b = b.replace(new RegExp(from+g,"gim"),to);
+        return alter;
     }
     // Extract all the variables, and set them to 0 if undefined.
     re = new RegExp(Wikifier.textPrimitives.variable+g,"gi");
@@ -1475,20 +1478,20 @@ Wikifier.parse = function (input) {
             found.push(m[0]);
         }
     }
-    b = alter(Wikifier.textPrimitives.variable, "state.history[0].variables.$1");
+    alter(Wikifier.textPrimitives.variable, "state.history[0].variables.$1")
     // Old operators
-    b = alter("\\beq\\b", " == ");
-    b = alter("\\bneq\\b", " != ");
-    b = alter("\\bgt\\b", " > ");
-    b = alter("\\bgte\\b", " >= ");
-    b = alter("\\blt\\b", " < ");
-    b = alter("\\blte\\b", " <= ");
-    b = alter("\\band\\b", " && ");
-    b = alter("\\bor\\b", " || ");
-    b = alter("\\bnot\\b", " ! ");
+    ("\\beq\\b", " == ")
+    ("\\bneq\\b", " != ")
+    ("\\bgt\\b", " > ")
+    ("\\bgte\\b", " >= ")
+    ("\\blt\\b", " < ")
+    ("\\blte\\b", " <= ")
+    ("\\band\\b", " && ")
+    ("\\bor\\b", " || ")
+    ("\\bnot\\b", " ! ")
     // New operators
-    b = alter("\\bis\\b", " == ");
-    b = alter("\\bto\\b", " = ");
+    ("\\bis\\b", " == ")
+    ("\\bto\\b", " = ");
     return b
 };
 Wikifier.formatHelpers = {
@@ -1776,16 +1779,16 @@ Wikifier.formatters = [
             return Wikifier.createInternalLink(out, title, callback, type);
     },
     // This base callback executes the code in a setter 
-    makeCallback: function(out,code,callback) {
+    makeCallback: function(code,callback) {
         return function() {
-            macros.set.run(out, Wikifier.parse(code)); 
+            macros.set.run(null, Wikifier.parse(code), null, code); 
             typeof callback == "function" && callback.call(this);
         }
     },
     makeLink: function(out, match, callback2, type) {
         var link, title, callback;
         if (match[3]) { // Code
-            callback = this.makeCallback(out,match[3],callback2);
+            callback = this.makeCallback(match[3],callback2);
         }
         else {
             typeof callback2 == "function" && (callback = callback2);
@@ -2022,7 +2025,7 @@ Wikifier.formatters = [
         }
     },
     handler: function (a) {
-        var tmp, passage, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
+        var tmp, passage, setter, e, isvoid, isstyle, lookaheadRegExp, lookaheadMatch, lookahead,
           re = new RegExp(this.tagname).exec(a.matchText),
           tn = re && re[1] && re[1].toLowerCase();
         if(tn && tn != "html") {
@@ -2054,11 +2057,15 @@ Wikifier.formatters = [
                 if (e.tagName.toLowerCase() == 'table') {
                     this.cleanupTables.call(this,e);
                 }
+                // Special data-setter attribute
+                if (setter = e.getAttribute("data-setter")) {
+                    setter = Wikifier.linkFormatter.makeCallback(setter);
+                }
                 // Special data-passage attribute
                 if (passage = e.getAttribute("data-passage")) {
                     if (tn != "img") { 
-                        addClickHandler(e, Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e));
-                        if (tn == "area") {
+                        addClickHandler(e, Wikifier.linkFunction(Wikifier.parsePassageTitle(passage), e, setter));
+                        if (tn == "area" || tn == "a") {
                             e.setAttribute("href", "javascript:;");
                         }
                     }
@@ -2230,7 +2237,7 @@ function random(a, b) {
         to = Math.max(a, b);
     }
     to += 1;
-    return~~ ((Math.random() * (to - from))) + from;
+    return ~~((Math.random() * (to - from))) + from;
 }
 
 function either() {
@@ -2400,16 +2407,19 @@ function main() {
 
 setTimeout(function f() {
     var size, bar = document.getElementById("loadingbar"), store = document.getElementById("storeArea");
-	if (store) {
-	    size = store.getAttribute("data-size");
-		if (store.children.length <= size && !tale) {
-		    // +1 so that the bar can reach the end
-		    bar.style.width = ~~((store.children.length+1)/size*100)+"%";
-		}
-		else {
-			bar.outerHTML = "";
-		    return;
-		}
-	}
-	setTimeout(f,5);
+    if (!bar) {
+        return;
+    }
+    if (store) {
+        size = store.getAttribute("data-size");
+        if (store.children.length <= size && !tale) {
+            // +1 so that the bar can reach the end
+            bar.style.width = ~~((store.children.length+1)/size*100)+"%";
+        }
+        else {
+            bar.outerHTML = "";
+            return;
+        }
+    }
+    setTimeout(f,5);
 },5);
