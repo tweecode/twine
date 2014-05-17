@@ -163,6 +163,10 @@ class PassageWidget:
     def getIncludedLinks(self):
         """Returns a list of included passages in this widget."""
         return filter(lambda a: self.parent.includedPassageExists(a), self.passage.links)
+    
+    def getVariableLinks(self):
+        """Returns a list of links which use variables/functions, in this widget."""
+        return filter(lambda a: tweelexer.TweeLexer.linkStyle(a)==tweelexer.TweeLexer.PARAM, self.passage.links)
 
     def setSelected(self, value, exclusive = True):
         """
@@ -488,7 +492,7 @@ class PassageWidget:
             ind = 'imageTitleBar'
         elif any(t.startswith('Twine.') for t in self.passage.tags):
             ind = 'privateTitleBar'
-        elif not self.linksAndDisplays():
+        elif not self.linksAndDisplays() and not self.getIncludedLinks() and not self.passage.variableLinks:
             ind = 'endTitleBar'
         else:
             ind = 'titleBar'
@@ -809,7 +813,7 @@ class PassageWidget:
             
         if len(self.getBrokenLinks()):
             showEmblem(self.brokenEmblem)
-        elif len(self.getIncludedLinks()):
+        elif len(self.getIncludedLinks()) or len(self.passage.variableLinks):
             showEmblem(self.externalEmblem)
 
         # finally, draw a selection over ourselves if we're selected

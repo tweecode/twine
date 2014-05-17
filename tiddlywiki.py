@@ -277,7 +277,7 @@ class TiddlyWiki:
                             obfuscatekey = nss
                     else:
                         obfuscatekey = "anbocpdqerfsgthuivjwkxlymz"
-                divs = divs[:storysettings.start(0)] + divs[storysettings.end(0)+1:]
+                divs = divs[:storysettings.start(0)] + divs[storysettings.end(0):]
 
             for div in divs.split('<div'):
                 div.strip()
@@ -543,6 +543,7 @@ class Tiddler:
         if not self.isStoryText() and not self.isAnnotation() and not self.isStylesheet():
             self.displays = []
             self.links = []
+            self.variableLinks = []
             self.images = []
             self.macros = []
             return
@@ -550,6 +551,14 @@ class Tiddler:
         images = set()
         macros = set()
         links = set()
+        variableLinks = set()
+        
+        def addLink(link):
+            style = TweeLexer.linkStyle(link)
+            if style == TweeLexer.PARAM:
+                variableLinks.add(link)
+            elif style != TweeLexer.EXTERNAL:
+                links.add(link)
         
         # <<display>>
         self.displays = list(set(re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)))
@@ -564,15 +573,12 @@ class Tiddler:
 
         # Regular hyperlinks (also matches wiki-style links inside macros)
         for m in re.finditer(tweeregex.LINK_REGEX, self.text):
-            # Exclude external links
-            link = m.group(2) or m.group(1)
-            if TweeLexer.linkStyle(link) != TweeLexer.EXTERNAL:
-                links.add(m.group(2) or m.group(1))
+            addLink(m.group(2) or m.group(1))
 
         # Include images
         for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             if m.group(5):
-                links.add(m.group(5))
+                addLink(m.group(5))
                 
         # HTML data-passage links
         for m in re.finditer(tweeregex.HTML_REGEX, self.text):
@@ -580,8 +586,11 @@ class Tiddler:
             if attrs:
                 dataPassage = re.search(r"""data-passage\s*=\s*(?:([^<>'"=`\s]+)|'((?:[^'\\]*\\.)*[^'\\]*)'|"((?:[^"\\]*\\.)*[^"\\]*)")""", attrs)
                 if dataPassage:
-                    theSet = images if m.group(1) == "img" else links
-                    theSet.add(dataPassage.group(1) or dataPassage.group(2) or dataPassage.group(3))
+                    link = dataPassage.group(1) or dataPassage.group(2) or dataPassage.group(3)
+                    if m.group(1) == "img":
+                        images.add(link)
+                    else:
+                        addLink(link)
                 
         # <<choice passage_name [link_text]>>
         for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
@@ -594,6 +603,7 @@ class Tiddler:
             links.update(re.findall(r'[\'"](.*?)[\'"]', block))
 
         self.links = list(links)
+        self.variableLinks = list(variableLinks)
 
         # Images
 
