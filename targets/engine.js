@@ -515,6 +515,9 @@ History.prototype.restore = function () {
     try {
         if (!window.location.hash || (window.location.hash == "#")) {
             if (testplay) {
+                if (tale.has("StoryInit")) {
+                    new Wikifier(insertElement(null, "span"), tale.get("StoryInit").text);
+                }
                 this.display(testplay, null, 'quietly');
                 return true
             }

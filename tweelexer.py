@@ -234,7 +234,7 @@ class TweeLexer:
                 else:
                     self.applyStyle(styleStart, pos-styleStart, style)
                     styleStack.append(style)
-                    n = re.match(r"((?:([^\(@]+)\(([^\)]+)(?:\):))|(?:([^:@]+):([^;@]+);))+",text[pos+2:],re.U|re.I)
+                    n = re.match(tweeregex.INLINE_STYLE_PROP_REGEX,text[pos+2:],re.U|re.I)
                     if n:
                         style = self.INLINE_STYLE
                         length = len(n.group(0))+2

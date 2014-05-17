@@ -273,7 +273,7 @@ class PassageWidget:
                 answer = wx.MessageDialog(window, warning+"\n\nKeep checking?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO) \
                     .ShowModal()
                 if answer == wx.ID_NO:
-                    return -problems
+                    return problems
                     
             passage.text = newtext + oldtext[index:]
         
