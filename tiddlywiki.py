@@ -39,18 +39,16 @@ class TiddlyWiki:
 
     def read(self, filename):
         try:
-            source = codecs.open(filename, 'r', 'utf_8_sig', 'strict')
+            source = codecs.open(filename, 'rU', 'utf_8_sig', 'strict')
             w = source.read()
         except UnicodeDecodeError:
             try:
-                source = codecs.open(filename, 'r', 'utf16', 'strict')
+                source = codecs.open(filename, 'rU', 'utf16', 'strict')
                 w = source.read()
             except:
-                source = open(filename, 'rb')
+                source = open(filename, 'rU')
                 w = source.read()
         source.close()
-        # Normalise line endings
-        w = w.replace('\r\n','\n')
         return w
 
     def toHtml(self, app, header = None, order = None, startAt = '', defaultName = ''):

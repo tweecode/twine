@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import sys, os, locale, re, pickle, wx, platform
+import sys, os, locale, re, pickle, wx, platform, traceback
 import metrics
 from header import Header
 from storyframe import StoryFrame
@@ -271,8 +271,8 @@ class App(wx.App):
         when the error occurred (e.g. 'saving your story', 'building your story'.)
         """
         exception = sys.exc_info()
-        text = 'An error occurred while ' + activity + ' ('
-        text += str(exception[1]) + ').'
+        text = 'An error occurred while ' + activity + '.\n\n'
+        text += ''.join(traceback.format_exc(5))
         error = wx.MessageDialog(None, text, 'Error', wx.OK | wx.ICON_ERROR)
         error.ShowModal()
 

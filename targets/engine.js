@@ -724,16 +724,6 @@ macros["if"] = {
             i = 0;
         
         for (; i < src.length; i++) {
-            if (src.substr(i, 9) == "<<endif>>") {
-                nesting--;
-                if (nesting < 0) {
-                    endPos = srcOffset + i + 9;
-                    rawConds.push(rawCond);
-                    conditions.push(currentCond.trim());
-                    clauses.push(currentClause);
-                    break;
-                }
-            }
             if ((src.substr(i, 6) == "<<else") && !nesting) {
                 rawConds.push(rawCond);
                 conditions.push(currentCond.trim());
@@ -748,10 +738,20 @@ macros["if"] = {
                     rawCond = "";
                     currentCond = "true";
                 }
-                i = t+1;
+                i = t+2;
             }
             if (src.substr(i, 5) == "<<if ") {
                 nesting++;
+            }
+            if (src.substr(i, 9) == "<<endif>>") {
+                nesting--;
+                if (nesting < 0) {
+                    endPos = srcOffset + i + 9;
+                    rawConds.push(rawCond);
+                    conditions.push(currentCond.trim());
+                    clauses.push(currentClause);
+                    break;
+                }
             }
             currentClause += src.charAt(i);
         }
