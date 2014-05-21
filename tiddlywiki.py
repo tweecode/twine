@@ -172,7 +172,7 @@ class TiddlyWiki:
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY_SIZE"') > 0:
-            output = output.replace('"STORY_SIZE"', str(len(storyfragments)))
+            output = output.replace('"STORY_SIZE"', '"' + str(len(storyfragments)) + '"')
         
         if output.count('"STORY"') > 0:
             output = output.replace('"STORY"', storycode)
