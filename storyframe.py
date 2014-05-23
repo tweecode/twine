@@ -822,7 +822,8 @@ You can also include URLs of .tws and .twee files, too.
 
     def build(self, event = None):
         """Asks the user to choose a location to save a compiled story, then passed control to rebuild()."""
-        dialog = wx.FileDialog(self, 'Build Story', self.buildDestination or os.getcwd(), "", \
+        path, filename = os.path.split(self.buildDestination)
+        dialog = wx.FileDialog(self, 'Build Story', path or os.getcwd(), filename, \
                          "Web Page (*.html)|*.html", \
                            wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 
