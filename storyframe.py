@@ -609,8 +609,12 @@ class StoryFrame(wx.Frame):
                 for t in addedWidgets:
                     t.clearPaintCache()
             else:
+                if html:
+                    what = "compiled HTML"
+                else:
+                    what = "Twee source"
                 dialog = wx.MessageDialog(self, 'No passages were found in this file. Make sure ' + \
-                                          'this is a Twee source file.', 'No Passages Found', \
+                                          'this is a ' + what + ' file.', 'No Passages Found', \
                                           wx.ICON_INFORMATION | wx.OK)
                 dialog.ShowModal()
         except:
@@ -890,13 +894,13 @@ You can also include URLs of .tws and .twee files, too.
                     os.remove(self.lastTestBuild.name)
                 path = (os.path.exists(self.buildDestination) and self.buildDestination) \
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
-                self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'w', suffix = ".html", delete = False,
+                self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'wb', suffix = ".html", delete = False,
                     dir = (path and os.path.dirname(path)) or None)
                 self.lastTestBuild.write(tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title).encode('utf-8-sig'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
-                dest = open(self.buildDestination, 'w')
+                dest = open(self.buildDestination, 'wb')
                 dest.write(tw.toHtml(self.app, header, defaultName = self.title).encode('utf-8-sig'))
                 dest.close()
                 if displayAfter: self.viewBuild()
