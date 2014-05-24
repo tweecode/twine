@@ -172,7 +172,7 @@ class TiddlyWiki:
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY_SIZE"') > 0:
-            output = output.replace('"STORY_SIZE"', str(len(storyfragments)))
+            output = output.replace('"STORY_SIZE"', '"' + str(len(storyfragments)) + '"')
         
         if output.count('"STORY"') > 0:
             output = output.replace('"STORY"', storycode)
@@ -251,10 +251,10 @@ class TiddlyWiki:
         Returns the tiddler titles in the order they occurred in the HTML.
         """
         order = []
-        divs = re.search(r'<div\sid=["\']?store(?:A|-a)rea["\']?(?: hidden)?>(.*)</div>', source,
+        divs = re.search(r'<div\s+id=(["\']?)store(?:A|-a)rea\1(?:\s+data-size=(["\']?)\d+\2)?(?:\s+hidden)?\s*>(.*)</div>', source,
                         re.DOTALL)
         if divs:
-            divs = divs.group(1);
+            divs = divs.group(3);
             # HTML may be obfuscated.
             obfuscatekey = ''
             storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
