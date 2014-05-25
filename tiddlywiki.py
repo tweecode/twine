@@ -18,7 +18,6 @@ class TiddlyWiki:
     """An entire TiddlyWiki."""
 
     def __init__(self, author = 'twee'):
-        """Optionally pass an author name."""
         self.author = author
         self.tiddlers = {}
         self.storysettings = {}
@@ -51,7 +50,7 @@ class TiddlyWiki:
         source.close()
         return w
 
-    def toHtml(self, app, header = None, order = None, startAt = '', defaultName = ''):
+    def toHtml(self, app, header = None, order = None, startAt = '', defaultName = '', metadata = {}):
         """Returns HTML code for this TiddlyWiki."""
         if not order: order = self.tiddlers.keys()
         output = u''
@@ -102,35 +101,46 @@ class TiddlyWiki:
             output = output.replace('"START_AT"', '""')
 
         # Embed any engine related files required by the header.
+        
         embedded = header.filesToEmbed()
         for key in embedded.keys():
             output = insertEngine(app, output, embedded[key], key)
             if not output: return
 
         # Insert the Backup Story Title
+        
         if defaultName:
             name = defaultName.replace('"',r'\"')
-            output = re.sub('<title>.*?</title>', '<title>'+name+'</title>', output) \
+            # Just gonna assume the <title> has no attributes
+            output = re.sub(r'<title>.*?<\/title>', '<title>'+name+'</title>', output, count=1, flags=re.I|re.M) \
                 .replace('"Untitled Story"', '"'+name+'"')
                 
-        # Insert the description
+        # Insert the metadata
         
-        if "description" in self.storysettings:
-            output = re.sub('<meta name="description" content="">', \
-                lambda a: a.group(0).replace('""', '"' + self.storysettings['description'] + '"'), output)
+        metatags = ''
+        for name, content in metadata.iteritems():
+            if content:
+                metatags += '<meta name="' + name.replace('"','&quot;') + '" content="' + content.replace('"','&quot;') + '">\n'
+        
+        if metatags:
+            # Just gonna assume <head> contains no attributes containing > symbols.
+            output = re.sub(r'<head[^>]*>\s*\n?', lambda a: a.group(0) + metatags, output, flags=re.I, count=1)
 
         # Check if the scripts are personally requesting jQuery or Modernizr
         jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] != "off"
         modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] != "off"
-
+        blankCSS = 'blankcss' in self.storysettings and self.storysettings['blankcss'] != "off"
+        
         for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
             if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
                 jquery = True
             if not modernizr and re.search(r'requires? modernizr', i.text, re.I):
                 modernizr = True
-            if jquery and modernizr:
+            if not blankCSS and i.isStylesheet() and re.search(r'blank stylesheet', i.text, re.I):
+                blankCSS = True
+            if jquery and modernizr and noDefaultCSS:
                 break
-
+        
         # Insert jQuery
         if jquery:
             output = insertEngine(app, output, app.builtinTargetsPath + 'jquery.js', '"JQUERY"')
@@ -144,6 +154,11 @@ class TiddlyWiki:
             if not output: return
         else:
             output = output.replace('"MODERNIZR"','')
+            
+        # Remove default CSS
+        if blankCSS:
+            # Just gonna assume the html id is quoted correctly if at all.
+            output = re.sub(r'<style\s+id=["\']?defaultCSS["\']?\s*>(?:[^<]|<(?!\/style>))*<\/style>', '', output, flags=re.I|re.M, count=1)
 
         argEncoders = []
         bodyEncoders = []

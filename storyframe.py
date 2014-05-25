@@ -5,6 +5,7 @@ from storypanel import StoryPanel
 from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
+from storymetadataframe import StoryMetadataFrame
 
 class StoryFrame(wx.Frame):
     """
@@ -26,14 +27,18 @@ class StoryFrame(wx.Frame):
         # inner state
 
         if (state):
-            self.buildDestination = state['buildDestination']
-            self.saveDestination = state['saveDestination']
-            self.setTarget(state['target'].lower())
+            self.buildDestination = state.get('buildDestination','')
+            self.saveDestination = state.get('saveDestination','')
+            self.setTarget(state.get('target','sugarcane').lower())
+            self.identity = state.get('identity','')
+            self.description = state.get('description','')
             self.storyPanel = StoryPanel(self, app, state = state['storyPanel'])
             self.pristine = False
         else:
             self.buildDestination = ''
             self.saveDestination = ''
+            self.identity = ''
+            self.description = ''
             self.setTarget('sugarcane')
             self.storyPanel = StoryPanel(self, app)
             
@@ -291,9 +296,6 @@ class StoryFrame(wx.Frame):
 
         self.storyMenu.AppendSeparator()
 
-        self.storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
-        self.Bind(wx.EVT_MENU, self.stats, id = StoryFrame.STORY_STATS)
-
         # Story Format submenu
 
         storyFormatMenu = wx.Menu()
@@ -313,6 +315,12 @@ class StoryFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, lambda e: self.app.storyFormatHelp(), id = StoryFrame.STORY_FORMAT_HELP)
 
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Story &Format', storyFormatMenu)
+        
+        self.storyMenu.Append(StoryFrame.STORY_METADATA, 'Story &Metadata...')
+        self.Bind(wx.EVT_MENU, self.showMetadata, id = StoryFrame.STORY_METADATA)
+
+        self.storyMenu.Append(StoryFrame.STORY_STATS, 'Story &Statistics\tCtrl-I')
+        self.Bind(wx.EVT_MENU, self.stats, id = StoryFrame.STORY_STATS)
 
         # Build menu
 
@@ -889,6 +897,7 @@ You can also include URLs of .tws and .twee files, too.
 
             # Write the output file
             header = self.app.headers.get(self.target)
+            metadata = {'description': self.description, 'identity': self.identity}
             if temp:
                 # This implicitly closes the previous test build
                 if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
@@ -897,12 +906,12 @@ You can also include URLs of .tws and .twee files, too.
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
                 self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'wb', suffix = ".html", delete = False,
                     dir = (path and os.path.dirname(path)) or None)
-                self.lastTestBuild.write(tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title).encode('utf-8-sig'))
+                self.lastTestBuild.write(tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title, metadata = metadata).encode('utf-8-sig'))
                 self.lastTestBuild.close()
                 if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'wb')
-                dest.write(tw.toHtml(self.app, header, defaultName = self.title).encode('utf-8-sig'))
+                dest.write(tw.toHtml(self.app, header, defaultName = self.title, metadata = metadata).encode('utf-8-sig'))
                 dest.close()
                 if displayAfter: self.viewBuild()
         except:
@@ -1023,6 +1032,21 @@ You can also include URLs of .tws and .twee files, too.
 
         statFrame = StatisticsDialog(parent = self, storyPanel = self.storyPanel, app = self.app)
         statFrame.ShowModal()
+
+    def showMetadata(self, event = None):
+        """
+        Shows a StoryMetadataFrame for this frame.
+        """
+
+        if (not hasattr(self, 'metadataFrame')):
+            self.metadataFrame = StoryMetadataFrame(parent = self, app = self.app)
+        else:
+            try:
+                self.metadataFrame.Raise()
+            except wx._core.PyDeadObjectError:
+                # user closed the frame, so we need to recreate it
+                delattr(self, 'metadataFrame')
+                self.showMetadata(event)
 
     def showFind(self, event = None):
         """
@@ -1221,7 +1245,9 @@ You can also include URLs of .tws and .twee files, too.
         """Returns a dictionary of state suitable for pickling."""
         return { 'target': self.target, 'buildDestination': self.buildDestination, \
                  'saveDestination': self.saveDestination, \
-                 'storyPanel': self.storyPanel.serialize() }
+                 'storyPanel': self.storyPanel.serialize(),
+                 'identity': self.identity,
+                 'description': self.description }
 
     def serialize_noprivate(self, dest):
         """Returns a dictionary of state suitable for pickling."""
@@ -1250,9 +1276,9 @@ You can also include URLs of .tws and .twee files, too.
     VIEW_CLEANUP = 302
     VIEW_TOOLBAR = 303
 
-    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, \
+    [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, STORY_METADATA, \
      STORY_IMPORT_IMAGE, STORY_IMPORT_IMAGE_URL, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT, STORYSETTINGS_HELP] = range(401,420)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT, STORYSETTINGS_HELP] = range(401,421)
 
     STORY_FORMAT_BASE = 501
 

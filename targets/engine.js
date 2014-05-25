@@ -27,7 +27,7 @@ function clone(a) {
     // This should work on both arrays and objects equally -
     // even copying expando properties foolishly added to arrays.
     for (var property in a) {
-        if (Object.prototype.hasOwnProperty.call(a,property)) {
+        if (Object.prototype.hasOwnProperty.call(a,property) && !isCyclic(a[property])) {
             if (typeof a[property] == "object") {
                 try {
                     b[property] = clone(a[property]);
@@ -40,6 +40,26 @@ function clone(a) {
     }
     return b;
 }
+
+function isCyclic(obj) {
+    var properties = [];
+    return (function recurse(obj) {
+        var key, i, ownProps = [];
+        if (obj && typeof obj == "object") {
+            if (properties.indexOf(obj) > -1) {
+                return true;
+            }
+            properties.push(obj);
+            for (key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj,key) && recurse(obj[key])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }(obj));
+}
+
 function insertElement(a, d, f, c, e) {
     var b = document.createElement(d);
     if (f) {
@@ -176,7 +196,7 @@ function decompile(val) {
     }
     // Deep-copy own properties
     for (i in val) {
-        if (Object.prototype.hasOwnProperty.call(val,i)) {
+        if (Object.prototype.hasOwnProperty.call(val,i) && !isCyclic(val[i])) {
             ret[i] = decompile(val[i]);
         }
     }
@@ -1301,8 +1321,13 @@ Tale.prototype.lookup = function (h, g, a) {
 Tale.prototype.canUndo = function() {
     return this.storysettings.lookup('undo',true);
 };
-Tale.prototype.identity = function() {
-    return this.storysettings.identity || "game";
+Tale.prototype.identity = function () {
+    var meta = document.querySelector("meta[name='identity']"),
+        identity = meta ? meta.getAttribute("content") : "game";
+    
+    return (Tale.prototype.identity = function() {
+        return identity;
+    })();
 };
 Tale.prototype.forEachStylesheet = function(tags, callback) {
     var passage, i;
@@ -2284,7 +2309,7 @@ window.onbeforeunload = function() {
 };
 /* Error reporting */
 var oldOnError = window.onerror || null, 
-softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
+softErrorMessage = "You may be able to continue playing, but some parts may not work properly.";
 
 window.onerror = function (msg, a, b, c, error) {
     var s = (error && (".\n\n" + error.stack.replace(/\([^\)]+\)/g,'') + "\n\n")) || (" (" + msg + ").\n");
@@ -2308,8 +2333,7 @@ function main() {
     }
     var imgs, scripts, macro, style, i,
         styleText = "",
-        passages = document.getElementById("passages"),
-        defaultCSS = document.getElementById("defaultCSS");
+        passages = document.getElementById("passages");
     
     // Run checks after custom macros are installed
     function sanityCheck(thing) {
@@ -2394,16 +2418,9 @@ function main() {
         else if (i.tags.length == 2 && i.tags.indexOf("transition") >-1) {
             setTransitionCSS(i.text);
         }
-        if (defaultCSS && i.text.toLowerCase().indexOf('blank stylesheet') >-1) {
-            defaultCSS.outerHTML = "";
-            defaultCSS = null;
-        }
     }
     styleText = alterCSS(styleText);
     style.styleSheet ? (style.styleSheet.cssText = styleText) : (style.innerHTML = styleText);
-    if (defaultCSS && tale.storysettings.lookup("blankcss", false)) {
-        defaultCSS.outerHTML = "";
-    }
     
     state.init();
 }
