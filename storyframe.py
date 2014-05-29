@@ -918,10 +918,10 @@ You can also include URLs of .tws and .twee files, too.
             self.app.displayError('building your story')
     
     def getLocalDir(self):
-        if self.saveDestination == '':
-            return os.getcwd()
-        else:
-            return os.path.dirname(self.saveDestination)
+        dir = (self.saveDestination != '' and os.path.dirname(self.saveDestination)) or None
+        if not os.path.isdir(dir):
+            dir = os.getcwd()
+        return dir
     
     def readIncludes(self, lines, callback):
         """
