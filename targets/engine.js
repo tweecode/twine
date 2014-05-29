@@ -2296,7 +2296,7 @@ function internalEval(s) {
 /* Used to execute script passages */
 function scriptEval(s) {
     try {
-        eval("0,"+s.text);
+        eval(s.text);
     } catch (e) {
         alert("There is a technical problem with this " + tale.identity() + " (" + s.title + ": " + e.message + ")."+softErrorMessage);
     }
