@@ -631,8 +631,10 @@ class Tiddler:
 
 def encode_text(text):
     """Encodes a string for use in HTML output."""
-    output = text.replace('\\', '\s') \
+    output = text \
+        .replace('\\', '\s') \
         .replace('\t', '\\t') \
+        .replace('&', '&amp;') \
         .replace('<', '&lt;') \
         .replace('>', '&gt;') \
         .replace('"', '&quot;') \
@@ -642,12 +644,14 @@ def encode_text(text):
 
 def decode_text(text):
     """Decodes a string from HTML."""
-    return text.replace('\\n', '\n') \
+    return text \
+        .replace('\\n', '\n') \
         .replace('\\t', '\t') \
         .replace('\s', '\\') \
-        .replace('&lt;', '<') \
+        .replace('&quot;', '"') \
         .replace('&gt;', '>') \
-        .replace('&quot;', '"')
+        .replace('&lt;', '<') \
+        .replace('&amp;', '&')
 
 def encode_date(date):
     """Encodes a datetime in TiddlyWiki format."""

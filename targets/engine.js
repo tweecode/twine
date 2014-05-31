@@ -2032,6 +2032,16 @@ Wikifier.formatters = [
     }
 },
 {
+	name: "htmlCharacterReference",
+	match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
+	handler: function(w)
+	{
+		var el = document.createElement("div");
+		el.innerHTML = w.matchText;
+		insertText(w.output, el.textContent);
+	}
+},
+{
     name: "htmltag",
     match: "<(?:\\/?[\\w\\-]+|[\\w\\-]+(?:(?:\\s+[\\w\\-]+(?:\\s*=\\s*(?:\\\".*?\\\"|'.*?'|[^'\\\">\\s]+))?)+\\s*|\\s*)\\/?)>",
     tagname: "<(\\w+)",
