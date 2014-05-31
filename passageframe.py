@@ -401,7 +401,8 @@ class PassageFrame(wx.Frame):
                 self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
                                                   lambda m: m.group(0).replace(old, new), self.widget.passage.text)
         
-        self.bodyInput.SetText(self.widget.passage.text)
+        if self.bodyInput.GetText() != self.widget.passage.text:
+            self.bodyInput.SetText(self.widget.passage.text)
         
     def closeEditor(self, event = None):
         """
@@ -1066,6 +1067,7 @@ class ImageFrame(PassageFrame):
 
         self.SetSize((min(max(size[0], 320),1024),min(max(size[1], 240),768)+64))
         self.imageScroller.SetScrollRate(2,2)
+        self.widget.clearPaintCache()
         self.Refresh()
 
         # Update copy menu

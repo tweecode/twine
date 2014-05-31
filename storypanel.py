@@ -183,7 +183,7 @@ class StoryPanel(wx.ScrolledWindow):
                 self.Refresh()
 
 
-    def removeWidget(self, widget, saveUndo = False):
+    def removeWidget(self, widget, saveUndo = True):
         """
         Deletes a passed widget. You can ask this to save an undo state manually,
         but by default, it doesn't.
@@ -195,7 +195,7 @@ class StoryPanel(wx.ScrolledWindow):
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
         self.Refresh()
 
-    def removeWidgets(self, event = None, saveUndo = False):
+    def removeWidgets(self, event = None, saveUndo = True):
         """
         Deletes all selected widgets. You can ask this to save an undo state manually,
         but by default, it doesn't.
@@ -578,7 +578,8 @@ class StoryPanel(wx.ScrolledWindow):
                     for widget in self.draggingWidgets:
                         self.snapWidget(widget)
                         widget.setDimmed(False)
-                    self.parent.setDirty(True, action = 'Move')
+                    if widget.pos != widget.predragPos:
+                        self.parent.setDirty(True, action = 'Move')
                     self.resize()
                 else:
                     for widget in self.draggingWidgets:
