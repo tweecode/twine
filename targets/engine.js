@@ -1323,7 +1323,7 @@ Tale.prototype.canUndo = function() {
 };
 Tale.prototype.identity = function () {
     var meta = document.querySelector("meta[name='identity']"),
-        identity = meta ? meta.getAttribute("content") : "game";
+        identity = meta ? meta.getAttribute("content") : "story";
     
     return (Tale.prototype.identity = function() {
         return identity;
@@ -1732,8 +1732,8 @@ Wikifier.formatters = [
 },
 {
     name: "list",
-    match: "^(?:(?:[>\\*=]+)|(?:#+))",
-    lookahead: "^(?:([>\\*=]+)|(#+))",
+    match: "^(?:(?:\\*+)|(?:#+))",
+    lookahead: "^(?:(\\*+)|(#+))",
     terminator: "\\n",
     handler: function (w) {
         var newType, newLevel, t, len, bulletType, lookaheadMatch, matched,
@@ -1749,17 +1749,8 @@ Wikifier.formatters = [
             matched = lookaheadMatch && lookaheadMatch.index == w.nextMatch;
             if (matched) {
                 newLevel = lookaheadMatch[0].length;
-                // Non-conventional bullet points
                 if (lookaheadMatch[1]) {
-                    if (lookaheadMatch[1].slice(-2) == "->") {
-                        bulletType = '\u2192';
-                        newLevel--;
-                    }
-                    else if (lookaheadMatch[1].slice(-2) == "=>") {
-                        bulletType = '\u21d2';
-                        newLevel--;
-                    }
-                    else bulletType = lookaheadMatch[1].slice(-1);
+                    bulletType = lookaheadMatch[1].slice(-1);
                     newType = "ul";
                 }
                 else if (lookaheadMatch[2]) {
@@ -1780,6 +1771,7 @@ Wikifier.formatters = [
                 currLevel = newLevel;
                 currType = newType;
                 t = insertElement(placeStack[placeStack.length - 1], "li");
+                // Currently unused
                 if (bulletType && bulletType != "*") {
                     t.setAttribute("data-bullet", bulletType);
                 }
@@ -2032,14 +2024,14 @@ Wikifier.formatters = [
     }
 },
 {
-	name: "htmlCharacterReference",
-	match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
-	handler: function(w)
-	{
-		var el = document.createElement("div");
-		el.innerHTML = w.matchText;
-		insertText(w.output, el.textContent);
-	}
+    name: "htmlCharacterReference",
+    match: "(?:(?:&#?[a-zA-Z0-9]{2,8};|.)(?:&#?(?:x0*(?:3[0-6][0-9a-fA-F]|1D[c-fC-F][0-9a-fA-F]|20[d-fD-F][0-9a-fA-F]|FE2[0-9a-fA-F])|0*(?:76[89]|7[7-9][0-9]|8[0-7][0-9]|761[6-9]|76[2-7][0-9]|84[0-3][0-9]|844[0-7]|6505[6-9]|6506[0-9]|6507[0-1]));)+|&#?[a-zA-Z0-9]{2,8};)",
+    handler: function(w)
+    {
+        var el = document.createElement("div");
+        el.innerHTML = w.matchText;
+        insertText(w.output, el.textContent);
+    }
 },
 {
     name: "htmltag",
