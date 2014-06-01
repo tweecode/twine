@@ -57,7 +57,7 @@ class TiddlyWiki:
 
         if not header:
             app.displayError("building: no story format was specified.\n"
-                            + "Please select another format from the Story Format submenu.\n\n",
+                            + "Please select another format from the Story Format submenu",
                             stacktrace = False)
             return
 
@@ -68,7 +68,7 @@ class TiddlyWiki:
 
         except IOError:
             app.displayError("building: the story format '" + header.label + "' isn't available.\n"
-                + "Please select another format from the Story Format submenu.\n\n",
+                + "Please select another format from the Story Format submenu",
                 stacktrace = False)
             return
 
@@ -80,9 +80,9 @@ class TiddlyWiki:
                     return output.replace(label,enginecode + extra)
 
                 except IOError:
-                    app.displayError("building: the file '" + filename + "' used by the story format '" + header.label + "' wasn't found.\n\n",
+                    app.displayError("building: the file '" + filename + "' used by the story format '" + header.label + "' wasn't found",
                                      stacktrace = False)
-                    return None
+                    return ''
             else:
                 return output
 
@@ -108,7 +108,7 @@ class TiddlyWiki:
         embedded = header.filesToEmbed()
         for key in embedded.keys():
             output = insertEngine(app, output, embedded[key], key)
-            if not output: return
+            if not output: return ''
 
         # Insert the Backup Story Title
         

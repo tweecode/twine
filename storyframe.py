@@ -641,7 +641,7 @@ class StoryFrame(wx.Frame):
             # Now that the file's read, check the info
             maintype = urlfile.info().getmaintype();
             if maintype != "image":
-                self.app.displayError("importing from the web: The server served "+maintype+" instead of an image.",
+                self.app.displayError("importing from the web: The server served "+maintype+" instead of an image",
                                       stacktrace = False)
                 return None
             # Convert the file
@@ -904,11 +904,14 @@ You can also include URLs of .tws and .twee files, too.
                     os.remove(self.lastTestBuild.name)
                 path = (os.path.exists(self.buildDestination) and self.buildDestination) \
                     or (os.path.exists(self.saveDestination) and self.saveDestination) or None
-                self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'wb', suffix = ".html", delete = False,
-                    dir = (path and os.path.dirname(path)) or None)
-                self.lastTestBuild.write(tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title, metadata = metadata).encode('utf-8-sig'))
-                self.lastTestBuild.close()
-                if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
+                html = tw.toHtml(self.app, header, startAt = startAt, defaultName = self.title, metadata = metadata)
+                if html:
+                    self.lastTestBuild = tempfile.NamedTemporaryFile(mode = 'wb', suffix = ".html", delete = False,
+                        dir = (path and os.path.dirname(path)) or None)
+                
+                    self.lastTestBuild.write(html.encode('utf-8-sig'))
+                    self.lastTestBuild.close()
+                    if displayAfter: self.viewBuild(name = self.lastTestBuild.name)
             else:
                 dest = open(self.buildDestination, 'wb')
                 dest.write(tw.toHtml(self.app, header, defaultName = self.title, metadata = metadata).encode('utf-8-sig'))
