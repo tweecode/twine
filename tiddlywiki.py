@@ -126,8 +126,7 @@ class TiddlyWiki:
                 metatags += '<meta name="' + name.replace('"','&quot;') + '" content="' + content.replace('"','&quot;') + '">\n'
         
         if metatags:
-            # Just gonna assume <head> contains no attributes containing > symbols.
-            output = re.sub(r'<head[^>]*>\s*\n?', lambda a: a.group(0) + metatags, output, flags=re.I, count=1)
+            output = re.sub(r'<\/title>\s*\n?', lambda a: a.group(0) + metatags, output, flags=re.I, count=1)
 
         # Check if the scripts are personally requesting jQuery or Modernizr
         jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] != "off"
