@@ -7,7 +7,7 @@
 ; Place the vcredist_x86.exe file into the ./build directory and this install does the rest 
 
 Name "Twine 1.4.2"
-OutFile "dist\twine-1.4.2-windows.exe"
+OutFile "dist\twine-1.4.2-win.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
