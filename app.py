@@ -265,14 +265,16 @@ class App(wx.App):
         """Asks all of our stories to update themselves based on a preference change."""
         map(lambda s: s.applyPrefs(), self.stories)
 
-    def displayError(self, activity):
+    def displayError(self, activity,stacktrace = True):
         """
         Displays an error dialog with diagnostic info. Call with what you were doing
         when the error occurred (e.g. 'saving your story', 'building your story'.)
         """
-        exception = sys.exc_info()
         text = 'An error occurred while ' + activity + '.\n\n'
-        text += ''.join(traceback.format_exc(5))
+        if stacktrace:
+            text += ''.join(traceback.format_exc(5))
+        else:
+            text += '(' + str(sys.exc_info()[1]) + ').'
         error = wx.MessageDialog(None, text, 'Error', wx.OK | wx.ICON_ERROR)
         error.ShowModal()
 

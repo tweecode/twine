@@ -30,15 +30,13 @@ class StoryFrame(wx.Frame):
             self.buildDestination = state.get('buildDestination','')
             self.saveDestination = state.get('saveDestination','')
             self.setTarget(state.get('target','sugarcane').lower())
-            self.identity = state.get('identity','')
-            self.description = state.get('description','')
+            self.metadata = state.get('metadata',{})
             self.storyPanel = StoryPanel(self, app, state = state['storyPanel'])
             self.pristine = False
         else:
             self.buildDestination = ''
             self.saveDestination = ''
-            self.identity = ''
-            self.description = ''
+            self.metadata = {}
             self.setTarget('sugarcane')
             self.storyPanel = StoryPanel(self, app)
             
@@ -643,7 +641,9 @@ class StoryFrame(wx.Frame):
             # Now that the file's read, check the info
             maintype = urlfile.info().getmaintype();
             if maintype != "image":
-                raise Exception("The server served "+maintype+" instead of an image.")
+                self.app.displayError("importing from the web: The server served "+maintype+" instead of an image.",
+                                      stacktrace = False)
+                return None
             # Convert the file
             mimeType = urlfile.info().gettype()
             urlfile.close()
@@ -897,7 +897,7 @@ You can also include URLs of .tws and .twee files, too.
 
             # Write the output file
             header = self.app.headers.get(self.target)
-            metadata = {'description': self.description, 'identity': self.identity}
+            metadata = self.metadata
             if temp:
                 # This implicitly closes the previous test build
                 if self.lastTestBuild and os.path.exists(self.lastTestBuild.name):
@@ -918,12 +918,13 @@ You can also include URLs of .tws and .twee files, too.
             self.app.displayError('building your story')
     
     def getLocalDir(self):
+        print self.saveDestination
         dir = (self.saveDestination != '' and os.path.dirname(self.saveDestination)) or None
-        if not os.path.isdir(dir):
+        if not (dir and os.path.isdir(dir)):
             dir = os.getcwd()
         return dir
     
-    def readIncludes(self, lines, callback):
+    def readIncludes(self, lines, callback, silent = False):
         """
         Examines all of the source files included via StoryIncludes, and performs a callback on each passage found.
         
@@ -977,7 +978,8 @@ You can also include URLs of .tws and .twee files, too.
                     else:
                         raise Exception('File format not recognized')
             except:
-                self.app.displayError('reading the file named "' + line + '" which is referred to by the StoryIncludes passage\n')
+                if not silent:
+                    self.app.displayError('reading the file named "' + line + '" which is referred to by the StoryIncludes passage', stacktrace = False)
 
     def viewBuild(self, event = None, name = ''):
         """
@@ -1246,14 +1248,15 @@ You can also include URLs of .tws and .twee files, too.
         return { 'target': self.target, 'buildDestination': self.buildDestination, \
                  'saveDestination': self.saveDestination, \
                  'storyPanel': self.storyPanel.serialize(),
-                 'identity': self.identity,
-                 'description': self.description }
-
+                 'metadata': self.metadata,
+               }
     def serialize_noprivate(self, dest):
         """Returns a dictionary of state suitable for pickling."""
         return { 'target': self.target, 'buildDestination': '', \
                  'saveDestination': dest, \
-                 'storyPanel': self.storyPanel.serialize_noprivate() }
+                 'storyPanel': self.storyPanel.serialize_noprivate(),
+                 'metadata': self.metadata,
+               }
 
     def __repr__(self):
         return "<StoryFrame '" + self.saveDestination + "'>"

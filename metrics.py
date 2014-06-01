@@ -20,6 +20,8 @@ def size(type):
     widgetTitle - starting font size for widget titles, as a recommendation
     editorBody - starting font size for body editor, as a recommendation
     fsEditorBody - starting font size for fullscreen editor, as a recommendation
+    storySettingsWidth - starting width of StorySettings editor
+    storySettingsHeight - starting height of StorySettings editor
     """
     if type == 'windowBorder':
         if sys.platform == 'win32': return 11
@@ -65,6 +67,14 @@ def size(type):
         if sys.platform == 'win32': return 16
         if sys.platform == 'darwin': return 20
         return 11
+    
+    if type == 'storySettingsWidth':
+        if sys.platform == 'darwin': return 550
+        return 450
+    
+    if type == 'storySettingsHeight':
+        if sys.platform == 'darwin': return 650
+        return 550
 
 def face(type):
     """

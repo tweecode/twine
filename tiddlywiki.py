@@ -57,7 +57,8 @@ class TiddlyWiki:
 
         if not header:
             app.displayError("building: no story format was specified.\n"
-                            + "Please select another format from the Story Format submenu.\n\n")
+                            + "Please select another format from the Story Format submenu.\n\n",
+                            stacktrace = False)
             return
 
         try:
@@ -67,7 +68,8 @@ class TiddlyWiki:
 
         except IOError:
             app.displayError("building: the story format '" + header.label + "' isn't available.\n"
-                + "Please select another format from the Story Format submenu.\n\n")
+                + "Please select another format from the Story Format submenu.\n\n",
+                stacktrace = False)
             return
 
 
@@ -78,7 +80,8 @@ class TiddlyWiki:
                     return output.replace(label,enginecode + extra)
 
                 except IOError:
-                    app.displayError("building: the file '" + filename + "' used by the story format '" + header.label + "' wasn't found.\n\n")
+                    app.displayError("building: the file '" + filename + "' used by the story format '" + header.label + "' wasn't found.\n\n",
+                                     stacktrace = False)
                     return None
             else:
                 return output

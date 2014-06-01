@@ -728,7 +728,7 @@ class StoryPanel(wx.ScrolledWindow):
     def refreshIncludedPassageList(self):
         for widget in self.widgets:
             if widget.passage.title == 'StoryIncludes':
-                self.parent.readIncludes(widget.passage.text.splitlines(), lambda a: self.addIncludedPassage(a.title))
+                self.parent.readIncludes(widget.passage.text.splitlines(), lambda a: self.addIncludedPassage(a.title), silent = True)
 
     def toPixels(self, logicals, scaleOnly = False):
         """

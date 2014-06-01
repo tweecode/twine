@@ -34,7 +34,7 @@ class StoryMetadataFrame(wx.Frame):
                 textctrl = wx.TextCtrl(panel, size=(200,60), style=wx.TE_MULTILINE)
             else:
                 textctrl = wx.TextCtrl(panel, size=(200,-1))
-            textctrl.SetValue(getattr(parent, name, ''))
+            textctrl.SetValue(parent.metadata.get(name, ''))
             textctrl.Bind(wx.EVT_TEXT, lambda e, name=name, textctrl=textctrl:
                               self.saveSetting(name,textctrl.GetValue()))
             
@@ -53,5 +53,5 @@ class StoryMetadataFrame(wx.Frame):
         self.borderSizer = borderSizer
 
     def saveSetting(self, name, value):
-        setattr(self.parent, name, value)
+        self.parent.metadata[name]=value
         self.parent.setDirty(True)
