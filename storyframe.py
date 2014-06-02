@@ -940,12 +940,18 @@ You can also include URLs of .tws and .twee files, too.
         for line in lines:
             try:
                 if line.strip():
+                    
                     extension = os.path.splitext(line)[1]
+                    
+                    if extension not in ['.tws', '.tw', '.txt', '.twee']:
+                        raise Exception('File format not recognized')
+                    
+                    if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                        openedFile = urllib.urlopen(line)
+                    else:
+                        openedFile = open(os.path.join(twinedocdir, line), 'r')
+                    
                     if extension == '.tws':
-                        if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                            openedFile = urllib.urlopen(line)
-                        else:
-                            openedFile = open(os.path.join(twinedocdir, line), 'r')
                         s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
                         openedFile.close()
 
@@ -954,32 +960,18 @@ You can also include URLs of .tws and .twee files, too.
                                 callback(widget.passage)
                         s.Destroy()
 
-                    elif extension == '.tw' or extension == '.txt' or extension == '.twee':
-
-                        if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                            openedFile = urllib.urlopen(line)
-                            s = openedFile.read()
-                            openedFile.close()
-                            t = tempfile.NamedTemporaryFile(delete=False)
-                            cleanuptempfile = True
-                            t.write(s)
-                            t.close()
-                            filename = t.name
-                        else:
-                            filename = line
-                            cleanuptempfile = False
-
+                    else:
+                        s = openedFile.read()
+                        openedFile.close()
+                        
                         tw1 = TiddlyWiki()
-                        tw1.addTweeFromFilename(filename)
-                        if cleanuptempfile: os.remove(filename)
+                        tw1.addTwee(s)
                         tiddlerkeys = tw1.tiddlers.keys()
                         for tiddlerkey in tiddlerkeys:
                             passage = tw1.tiddlers[tiddlerkey]
                             if excludetags.isdisjoint(passage.tags):
                                 callback(passage)
-
-                    else:
-                        raise Exception('File format not recognized')
+                        
             except:
                 if not silent:
                     self.app.displayError('reading the file named "' + line + '" which is referred to by the StoryIncludes passage', stacktrace = False)
