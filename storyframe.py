@@ -13,7 +13,7 @@ class StoryFrame(wx.Frame):
     instance of a StoryPanel, but it also has a menu bar and toolbar.
     """
 
-    def __init__(self, parent, app, state = None):
+    def __init__(self, parent, app, state = None, refreshIncludes = True):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title = StoryFrame.DEFAULT_TITLE, \
                           size = StoryFrame.DEFAULT_SIZE)
         self.app = app
@@ -40,7 +40,8 @@ class StoryFrame(wx.Frame):
             self.setTarget('sugarcane')
             self.storyPanel = StoryPanel(self, app)
             
-        self.storyPanel.refreshIncludedPassageList()
+        if refreshIncludes:
+            self.storyPanel.refreshIncludedPassageList()
         
         # window events
 
@@ -122,8 +123,6 @@ class StoryFrame(wx.Frame):
 
         fileMenu.Append(wx.ID_EXIT, 'E&xit Twine\tCtrl-Q')
         self.Bind(wx.EVT_MENU, lambda e: self.app.exit(), id = wx.ID_EXIT)
-
-
 
         # Edit menu
 
@@ -292,6 +291,11 @@ class StoryFrame(wx.Frame):
         
         self.storyMenu.AppendMenu(wx.ID_ANY, 'Special Passages', self.storySettingsMenu)
 
+        self.storyMenu.AppendSeparator()
+
+        self.storyMenu.Append(StoryFrame.REFRESH_INCLUDES_LINKS, 'Refresh Includes Links')
+        self.Bind(wx.EVT_MENU, self.refreshIncludesLinks, id = StoryFrame.REFRESH_INCLUDES_LINKS)
+        
         self.storyMenu.AppendSeparator()
 
         # Story Format submenu
@@ -802,6 +806,9 @@ You can also include URLs of .tws and .twee files, too.
 
         editingWidget.openEditor()
 
+    def refreshIncludesLinks(self, event):
+        self.storyPanel.refreshIncludedPassageList()
+
     def save(self, event = None):
         if (self.saveDestination == ''):
             self.saveAs()
@@ -856,8 +863,10 @@ You can also include URLs of .tws and .twee files, too.
                 if widget.passage.title == 'StoryIncludes':
                     
                     def callback(passage, tw=tw):
+                        if passage.title == 'StoryIncludes':
+                            return
                         # Check for uniqueness
-                        if self.storyPanel.findWidget(passage.title):
+                        elif self.storyPanel.findWidget(passage.title):
                             # Not bothering with a Yes/No dialog here.
                             raise Exception('A passage titled "'+ passage.title + '" is already present in this story')
                         elif tw.hasTiddler(passage.title):
@@ -952,7 +961,7 @@ You can also include URLs of .tws and .twee files, too.
                         openedFile = open(os.path.join(twinedocdir, line), 'r')
                     
                     if extension == '.tws':
-                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile))
+                        s = StoryFrame(None, app = self.app, state = pickle.load(openedFile), refreshIncludes = False)
                         openedFile.close()
 
                         for widget in s.storyPanel.widgets:
@@ -1276,7 +1285,7 @@ You can also include URLs of .tws and .twee files, too.
 
     [STORY_NEW_PASSAGE, STORY_NEW_SCRIPT, STORY_NEW_STYLESHEET, STORY_NEW_ANNOTATION, STORY_EDIT_FULLSCREEN, STORY_STATS, STORY_METADATA, \
      STORY_IMPORT_IMAGE, STORY_IMPORT_IMAGE_URL, STORY_IMPORT_FONT, STORY_FORMAT_HELP, STORYSETTINGS_START, STORYSETTINGS_TITLE, STORYSETTINGS_SUBTITLE, STORYSETTINGS_AUTHOR, \
-     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT, STORYSETTINGS_HELP] = range(401,421)
+     STORYSETTINGS_MENU, STORYSETTINGS_SETTINGS, STORYSETTINGS_INCLUDES, STORYSETTINGS_INIT, STORYSETTINGS_HELP, REFRESH_INCLUDES_LINKS] = range(401,422)
 
     STORY_FORMAT_BASE = 501
 
