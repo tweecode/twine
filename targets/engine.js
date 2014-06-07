@@ -600,7 +600,7 @@ var restart = History.prototype.restart = function () {
 
 var version = {
     major: 4,
-    minor: 2,
+    minor: 3,
     revision: 0,
     date: new Date("2014"),
     extensions: {}
@@ -828,11 +828,7 @@ macros.remember = {
     },
     init: function () {
         var i, variable, value;
-        if (tale.has("StoryTitle")) {
-            this.prefix = "Twine." + tale.title + ".";
-        } else {
-            this.prefix = "Twine.Untitled Story.";
-        }
+        this.prefix = "Twine." + tale.defaultTitle + ".";
         for (i in window.localStorage) {
             if (i.indexOf(this.prefix) == 0) {
                 variable = i.substr(this.prefix.length);
@@ -1231,8 +1227,9 @@ function Tale() {
                 return (this[a]+"") != "off";
             }
         },
+        HTMLtitle = document.querySelector('title');
         tiddlerTitle = '';
-    window.tale = this;
+    this.defaultTitle = (HTMLtitle && (HTMLtitle.textContent || HTMLtitle.innerText)) || "Untitled Story";
     this.passages = {};
     //Look for and load the StorySettings
     if (document.normalize) document.normalize();
@@ -1348,11 +1345,11 @@ Tale.prototype.forEachStylesheet = function(tags, callback) {
     }
 };
 Tale.prototype.setPageElements = function() {
-    var storyTitle, defaultTitle = "Untitled Story";
+    var storyTitle;
     
-    setPageElement("storyTitle", "StoryTitle", defaultTitle);
+    setPageElement("storyTitle", "StoryTitle", this.defaultTitle);
     storyTitle = document.getElementById("storyTitle");
-    document.title = this.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || defaultTitle;
+    document.title = this.title = (storyTitle && (storyTitle.textContent || storyTitle.innerText)) || this.defaultTitle;
     
     setPageElement("storySubtitle", "StorySubtitle", "");
     if (tale.has("StoryAuthor")) {
@@ -2139,7 +2136,12 @@ Wikifier.linkFunction = function(title, el, callback) {
                 state.rewindTo(passage, true);
             }
         }
-        state.display(title, el, null, callback);
+        if (title) {
+            state.display(title, el, null, callback);
+        }
+        else if (typeof callback == "function") {
+            callback();
+        }
     };
 };
 
@@ -2362,13 +2364,6 @@ function main() {
                     }
                 }
             }
-        }
-        // Warn if display() was replaced improperly
-        if (!sanityCheck.display) {
-            if (History.prototype.display.length < 4 && !~History.prototype.display.toString().indexOf("arguments")) {
-                alert(s + " contains a function that patches History.prototype.display, but takes the wrong number of arguments."+softErrorMessage);
-            }
-            sanityCheck.display = true;
         }
     }
     

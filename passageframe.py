@@ -363,7 +363,7 @@ class PassageFrame(wx.Frame):
                     for title in brokens:
                         self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
                 elif check == wx.ID_CANCEL:
-                    return
+                    return False
         
         # Offer to import external images
         if self.app.config.ReadBool('importImagePrompt'):
@@ -380,7 +380,7 @@ class PassageFrame(wx.Frame):
                     if check == wx.ID_NO:
                         break  
                     elif check == wx.ID_CANCEL:
-                        return
+                        return False
                 # Download the image if it's at an absolute URL
                 imgurl = img.group(4) or img.group(7)
                 if not imgurl:
@@ -404,20 +404,28 @@ class PassageFrame(wx.Frame):
         if self.bodyInput.GetText() != self.widget.passage.text:
             self.bodyInput.SetText(self.widget.passage.text)
         
+        # If it's StoryIncludes, update the links
+        if self.widget.passage.title == "StoryIncludes":
+            self.widget.parent.refreshIncludedPassageList()
+        
+        return True
+        
     def closeEditor(self, event = None):
         """
         Do extra stuff on closing the editor
         """
-        #Closes this editor's fullscreen counterpart, if any.
-        try: self.fullscreen.Destroy()
-        except: pass
         
         # Show warnings, do replacements
         if self.app.config.ReadBool('passageWarnings'):
             if self.widget.verifyPassage(self) == -1: return
         
-        # Do help    
-        self.offerAssistance()
+        # Do help
+        if not self.offerAssistance():
+            return
+        
+        #Closes this editor's fullscreen counterpart, if any.
+        try: self.fullscreen.Destroy()
+        except: pass
         
         self.widget.passage.update()
         event.Skip()

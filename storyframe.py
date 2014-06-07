@@ -293,8 +293,8 @@ class StoryFrame(wx.Frame):
 
         self.storyMenu.AppendSeparator()
 
-        self.storyMenu.Append(StoryFrame.REFRESH_INCLUDES_LINKS, 'Refresh Includes Links')
-        self.Bind(wx.EVT_MENU, self.refreshIncludesLinks, id = StoryFrame.REFRESH_INCLUDES_LINKS)
+        self.storyMenu.Append(StoryFrame.REFRESH_INCLUDES_LINKS, 'Update StoryIncludes Links')
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.refreshIncludedPassageList(), id = StoryFrame.REFRESH_INCLUDES_LINKS)
         
         self.storyMenu.AppendSeparator()
 
@@ -806,9 +806,6 @@ You can also include URLs of .tws and .twee files, too.
 
         editingWidget.openEditor()
 
-    def refreshIncludesLinks(self, event):
-        self.storyPanel.refreshIncludedPassageList()
-
     def save(self, event = None):
         if (self.saveDestination == ''):
             self.saveAs()
@@ -930,7 +927,6 @@ You can also include URLs of .tws and .twee files, too.
             self.app.displayError('building your story')
     
     def getLocalDir(self):
-        print self.saveDestination
         dir = (self.saveDestination != '' and os.path.dirname(self.saveDestination)) or None
         if not (dir and os.path.isdir(dir)):
             dir = os.getcwd()
@@ -1208,8 +1204,9 @@ You can also include URLs of .tws and .twee files, too.
         viewLastItem = self.menus.FindItemById(StoryFrame.BUILD_VIEW_LAST)
         viewLastItem.Enable(self.buildDestination != '')
 
-        autoBuildItem = self.menus.FindItemById(StoryFrame.BUILD_AUTO_BUILD)
-        autoBuildItem.Enable(self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") != None)
+        hasStoryIncludes = self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") != None
+        self.autobuildmenuitem.Enable(hasStoryIncludes)
+        self.menus.FindItemById(StoryFrame.REFRESH_INCLUDES_LINKS).Enable(hasStoryIncludes)
 
         # Story format submenu
         for key in self.storyFormats:

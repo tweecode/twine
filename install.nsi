@@ -6,8 +6,8 @@
 ; Verify which version of MSVCR90.dll you need using dependancy walker on your Python2x.exe
 ; Place the vcredist_x86.exe file into the ./build directory and this install does the rest 
 
-Name "Twine 1.4.2"
-OutFile "dist\twine-1.4.2-win.exe"
+Name "Twine 1.4.3"
+OutFile "dist\twine-1.4.3-win.exe"
 
 ; Some default compiler settings (uncomment and change at will):
 ; SetCompress auto ; (can be off or force)
@@ -46,7 +46,7 @@ CreateShortCut "$SMPROGRAMS\Twine\Uninstall.lnk" "$INSTDIR\uninstalltwine.exe"
 ; add uninstall entry in Add/Remove Programs
 
 WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Twine" "" "$INSTDIR"
-WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.4.1 (remove only)"
+WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "DisplayName" "Twine 1.4.3 (remove only)"
 WriteRegStr HKEY_LOCAL_MACHINE "Software\Microsoft\Windows\CurrentVersion\Uninstall\Twine" "UninstallString" '"$INSTDIR\uninstalltwine.exe"'
 
 ; file association
@@ -76,7 +76,7 @@ SectionEnd ; end of default section
 
 ; begin uninstall settings/section
 
-UninstallText "This will uninstall Twine 1.4.2 from your system."
+UninstallText "This will uninstall Twine 1.4.3 from your system."
 
 Section Uninstall
 
