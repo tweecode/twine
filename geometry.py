@@ -104,75 +104,25 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
 def lineIntersection(line1, line2):
     """
     Returns a wx.Point corresponding to where two line
-    segments intersect. If they do not intersect, then None
+    segments intersect. If they do not intersect, or they are parallel, then None
     is returned.
     """
-
-    # this is translated from
-    # http://workshop.evolutionzone.com/2007/09/10/code-2d-line-intersection/
-
-    # distances of the two lines
-
-    distX1 = line1[1].x - line1[0].x
-    distX2 = line2[1].x - line2[0].x
-    distY1 = line1[1].y - line1[0].y
-    distY2 = line2[1].y - line2[0].y
-    distX3 = line1[0].x - line2[0].x
-    distY3 = line1[0].y - line2[0].y
-
-    # length of the lines
-
-    line1Length = math.sqrt(distX1 ** 2 + distY1 ** 2)
-    line2Length = math.sqrt(distX2 ** 2 + distY2 ** 2)
-
-    if line1Length == 0 or line2Length == 0: return None
-
-    # angle between lines
-
-    dotProduct = distX1 * distX2 + distY1 * distY2
-    angle = dotProduct / (line1Length * line2Length)
-
-    # check to see if lines are parallel
-
-    if abs(angle) == 1:
+    ax1,ay1,ax2,ay2 = line1[0][0],line1[0][1],line1[1][0],line1[1][1]
+    bx1,by1,bx2,by2 = line2[0][0],line2[0][1],line2[1][0],line2[1][1]
+    s1x = ax2-ax1
+    s1y = ay2-ay1
+    s2x = bx2-bx1
+    s2y = by2-by1
+    denominator = float(-s2x * s1y + s1x * s2y)
+    if denominator == 0:
+        #Collinear or Parallel returns none as in original
         return None
 
-    # find the intersection point
-    # we cast the divisor as a float
-    # to force uA and uB to be floats too
-
-    divisor = float(distY2 * distX1 - distX2 * distY1)
-    uA = (distX2 * distY3 - distY2 * distX3) / divisor
-    uB = (distX1 * distY3 - distY1 * distX3) / divisor
-    intersection = wx.Point(line1[0].x + uA * distX1, \
-                            line1[0].y + uA * distY1)
-
-    # find the combined length of the two segments
-    # between intersection and line1's endpoints
-
-    distX1 = intersection.x - line1[0].x
-    distX2 = intersection.x - line1[1].x
-    distY1 = intersection.y - line1[0].y
-    distY2 = intersection.y - line1[1].y
-    distLine1 = math.sqrt(distX1 ** 2 + distY1 ** 2) + \
-                    math.sqrt(distX2 ** 2 + distY2 ** 2)
-
-    # ... and then for line2
-
-    distX1 = intersection.x - line2[0].x
-    distX2 = intersection.x - line2[1].x
-    distY1 = intersection.y - line2[0].y
-    distY2 = intersection.y - line2[1].y
-    distLine2 = math.sqrt(distX1 ** 2 + distY1 ** 2) + \
-                    math.sqrt(distX2 ** 2 + distY2 ** 2)
-
-    # if these two are the same, then we know
-    # the intersection is actually on the line segments, and not in space
-    #
-    # I had to goose the accuracy down a lot :(
-
-    if (abs(distLine1 - line1Length) < 0.2) and \
-       (abs(distLine2 - line2Length) < 0.2):
-        return intersection
-    else:
-        return None
+    s = (-s1y * (ax1 - bx1) + s1x * (ay1 - by1))
+    if not 0 <= s <= denominator: return None
+    t = ( s2x * (ay1 - by1) - s2y * (ax1 - bx1))
+    if not 0 <= t <= denominator: return None
+    t /= denominator
+    ix = ax1 + (t * s1x)
+    iy = ay1 + (t * s1y)
+    return wx.Point(ix, iy)
