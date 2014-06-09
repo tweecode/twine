@@ -832,6 +832,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.Scroll(origin[0], origin[1])
         self.parent.updateUI()
 
+
+
     def paint(self, event):
         """Paints marquee selection, widget connectors, and widgets onscreen."""
         # do NOT call self.DoPrepareDC() no matter what the docs may say
@@ -849,21 +851,10 @@ class StoryPanel(wx.ScrolledWindow):
         else:
             gc = wx.BufferedPaintDC(self)
 
-        updateRect = self.GetUpdateRegion().GetBox()
+
         
-        # Determine visible passages
-        scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
-        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
-            self.lastScrollPos = scrollPos
-            updateRect = self.GetClientRect()
-            self.visibleWidgets = [widget for widget in self.widgetDict.itervalues()
-                                   # It's visible if it's in the client rect, or is being moved.
-                                   if (widget.dimmed
-                                       or updateRect.Intersects(widget.getPixelRect())
-                                       # It's also visible if an arrow FROM it intersects with the Client Rect
-                                       or [w2 for w2 in widget.getConnectedWidgets()
-                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
-        
+        updateRect = self.updateVisableRectsAndReturnUpdateRegion()
+
         # background
 
         gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign') else StoryPanel.BACKGROUND_COLOR ))
@@ -899,6 +890,26 @@ class StoryPanel(wx.ScrolledWindow):
                 gc.SetBrush(wx.Brush(marqueeColor))
 
             gc.DrawRectangle(self.dragRect.x, self.dragRect.y, self.dragRect.width, self.dragRect.height)
+
+    def updateVisableRectsAndReturnUpdateRegion(self):
+        """
+        Updates the self.visibleWidgets list if necessary based on the current scroll position.
+        :return: The update region that would need to be redrawn
+        """
+        # Determine visible passages
+        updateRect = self.GetUpdateRegion().GetBox()
+        scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
+        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
+            self.lastScrollPos = scrollPos
+            updateRect = self.GetClientRect()
+            self.visibleWidgets = [widget for widget in self.widgetDict.itervalues()
+                                   # It's visible if it's in the client rect, or is being moved.
+                                   if (widget.dimmed
+                                       or updateRect.Intersects(widget.getPixelRect())
+                                       # It's also visible if an arrow FROM it intersects with the Client Rect
+                                       or [w2 for w2 in widget.getConnectedWidgets()
+                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
+        return updateRect
 
     def resize(self, event = None):
         """
@@ -968,9 +979,10 @@ class StoryPanel(wx.ScrolledWindow):
                 self.tooltipobj = wx.TipWindow(self, text, min(240, max(160,length/2)), wx.Rect(m[0],m[1],1,1))
 
     def handleHover(self, event):
+        self.updateVisableRectsAndReturnUpdateRegion()
         if self.trackinghover and not self.draggingWidgets and not self.draggingMarquee:
             position = self.toLogical(event.GetPosition())
-            for widget in self.widgetDict.itervalues():
+            for widget in self.visibleWidgets:
                 if widget.getLogicalRect().Contains(position):
                     if widget != self.tooltipplace:
                         # Stop current timer
