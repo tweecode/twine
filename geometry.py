@@ -33,12 +33,12 @@ def endPointProjectedFrom(line, angle, distance):
 
     # taken from http://mathforum.org/library/drmath/view/54146.html
 
-    lengthRatio = distance / lineLength(line)
+    lengthRatio = distance / length
 
-    x = line[1].x - ((line[1].x - line[0].x) * math.cos(angle) - \
-                     (line[1].y - line[0].y) * math.sin(angle)) * lengthRatio
-    y = line[1].y - ((line[1].y - line[0].y) * math.cos(angle) + \
-                     (line[1].x - line[0].x) * math.sin(angle)) * lengthRatio
+    x = line[1][0] - ((line[1][0] - line[0][0]) * math.cos(angle) - \
+                      (line[1][1] - line[0][1]) * math.sin(angle)) * lengthRatio
+    y = line[1][1] - ((line[1][1] - line[0][1]) * math.cos(angle) + \
+                      (line[1][0] - line[0][0]) * math.sin(angle)) * lengthRatio
 
     return wx.Point(x, y)
 
@@ -73,11 +73,11 @@ def lineLength(line):
     """
     Returns the length of a line.
     """
-    return math.sqrt((line[1].x - line[0].x) ** 2 + (line[1].y - line[0].y) ** 2)
+    return math.sqrt((line[1][0] - line[0][0]) ** 2 + (line[1][1] - line[0][1]) ** 2)
 
 def lineRectIntersection(line, rect, excludeTrivial = False):
     """
-    Returns a wx.Point corresponding to where a line and a
+    Returns a x,y pair corresponding to where a line and a
     wx.Rect intersect. If they do not intersect, then None
     is returned. This returns the first intersection it happens
     to find, not all of them.
@@ -86,20 +86,84 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
     them is inside the rectangle. The excludeTrivial prevents
     this behavior.
     """
-
-    # check for trivial case, where one point is inside the rect
-
     if not excludeTrivial:
         for i in range(2):
-            if rect.Contains(line[i]): return line[i]
+            if rect.Contains(line[i]):
+                return line[i]
+    # See Cohen-Sutherland Line-Clipping Algorithm
+    INSIDE = 0  # 0000
+    LEFT = 1  # 0001
+    RIGHT = 2  # 0010
+    BOTTOM = 4  # 0100
+    TOP = 8  # 1000
 
-    # check for intersection with borders
+    x0, y0 = line[0]
+    x1, y1 = line[1]
+    xmin, ymin = rect.GetTopLeft()
+    xmax, ymax = rect.GetBottomRight()
+    codeStart = computeCode(x0, y0, xmin, ymin, xmax, ymax)
+    codeEnd = computeCode(x1, y1, xmin, ymin, xmax, ymax)
 
-    rectLines = rectToLines(rect)
-    for rectLine in rectLines:
-        intersection = lineIntersection(line, rectLine)
-        if intersection: return intersection
-    return None
+    if (codeStart & codeEnd) != 0:
+        return None
+
+    x, y = 0, 0
+    while True:
+        if (codeStart | codeEnd) == 0:
+            return x, y
+        elif not (codeStart & codeEnd) == 0:
+            return None
+        else:
+            outsideCode = max(codeStart, codeEnd)
+
+            # Checks for trivial cases with horizontal and vertical lines.
+            if x1 == x0:
+                if outsideCode & TOP != 0:
+                    return x1, ymax
+                else:
+                    return x1, ymin
+            if y1 == y0:
+                if outsideCode & LEFT != 0:
+                    return xmin, y1
+                else:
+                    return xmax, y1
+
+            if outsideCode & TOP != 0:
+                x, y = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0), ymax
+            elif outsideCode & BOTTOM != 0:
+                x, y = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0), ymin
+            elif outsideCode & LEFT != 0:
+                x, y = xmin, y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
+            elif outsideCode & RIGHT != 0:
+                x, y = xmax, y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
+
+            if outsideCode == codeStart:
+                x0, y0 = x, y
+                codeStart = computeCode(x0, y0, xmin, ymin, xmax, ymax)
+            else:
+                x1, y1 = x, y
+                codeEnd = computeCode(x1, y1, xmin, ymin, xmax, ymax)
+
+
+def computeCode(x, y, xmin, ymin, xmax, ymax):
+    INSIDE = 0  # 0000
+    LEFT = 1  # 0001
+    RIGHT = 2  # 0010
+    BOTTOM = 4  # 0100
+    TOP = 8  # 1000
+
+    code = 0
+    if x < xmin:
+        code |= LEFT
+    elif x > xmax:
+        code |= RIGHT
+
+    if y < ymin:
+        code |= BOTTOM
+    elif y > ymax:
+        code |= TOP
+
+    return code
 
 def lineIntersection(line1, line2):
     """
