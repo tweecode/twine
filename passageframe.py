@@ -289,7 +289,7 @@ class PassageFrame(wx.Frame):
                     self.titleInput.SetBackgroundColour((255,255,255))
                     self.titleInput.Refresh()
                     self.titleInvalid = True
-                self.widget.passage.title = title
+                self.widget.parent.changeWidgetTitle(self.widget, title)
 
         # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
@@ -715,21 +715,14 @@ class PassageFrame(wx.Frame):
         links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
         for link in links:
             if len(link) > 0:
-                found = False
-
-                for widget in self.widget.parent.widgets:
-                    if widget.passage.title == link:
-                        outgoing.append(link)
-                        found = True
-                        break
-
-                if not found and self.widget.parent.includedPassageExists(link): found = True
-
-                if not found: broken.append(link)
+                if link in self.widget.parent.widgetDict:
+                    outgoing.append(link)
+                elif not self.widget.parent.includedPassageExists(link):
+                    broken.append(link)
 
         # incoming links
 
-        for widget in self.widget.parent.widgets:
+        for widget in self.widget.parent.widgetDict.itervalues():
             if self.widget.passage.title in widget.passage.links \
             and len(widget.passage.title) > 0:
                 incoming.append(widget.passage.title)
@@ -1141,5 +1134,4 @@ class ImageFrame(PassageFrame):
     IMPORT_IMAGE = 1004
     EXPORT_IMAGE = 1005
     SAVE_IMAGE = 1006
-
 
