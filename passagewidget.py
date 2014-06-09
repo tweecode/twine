@@ -325,25 +325,18 @@ class PassageWidget:
         """
         Get the line that would be drawn between this widget and another.
         """
-        start = self.parent.toPixels(self.getCenter())
-        end = self.parent.toPixels(otherWidget.getCenter())
+        start = self.getCenter()
+        end = otherWidget.getCenter()
 
-        # Additional tweak to make overlapping arrows more visible
+        #Tweak to make overlapping lines easier to see by shifting the end point
+        #Devision by a large constant to so the behavior is not overly noticeable while dragging
+        lengthSquared = ((start[0]-end[0])**2+(start[1]-end[1])**2)/1024**2
+        end[0] += (0.5 - math.sin(lengthSquared))*PassageWidget.SIZE/8.0
+        end[1] += (0.5 - math.cos(lengthSquared))*PassageWidget.SIZE/8.0
 
-        length = min(math.sqrt((start[0]-end[0])**2 + (start[1]-end[1])**2)/32, 16)
+        [start, end] = geometry.clipLineByRects([start, end], otherWidget.getLogicalRect())
+        return self.parent.toPixels(start), self.parent.toPixels(end)
 
-        if start[1] != end[1]:
-            start[0] += length * math.copysign(1, start[1] - end[1]);
-            end[0] += length * math.copysign(1, start[1] - end[1]);
-        if start[0] != end[0]:
-            start[1] += length * math.copysign(1, start[0] - end[0]);
-            end[1] += length * math.copysign(1, start[0] - end[0]);
-
-        # Clip the end of the arrow
-
-        start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
-
-        return (start, end)
 
 
     def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
