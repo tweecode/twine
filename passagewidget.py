@@ -142,10 +142,12 @@ class PassageWidget:
         body text. Returns the number of replacements actually made.
         """
         compiledRegexp = re.compile(findRegexp, flags)
-        titleReps = textReps = 0
 
-        self.passage.title, titleReps = re.subn(compiledRegexp, replaceRegexp, self.passage.title)
+        oldTitle = self.passage.title
+        newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, self.passage.title)
         self.passage.text, textReps = re.subn(compiledRegexp, replaceRegexp, self.passage.text)
+        if titleReps > 0:
+            self.parent.changeWidgetTitle(self,newTitle)
 
         return titleReps + textReps
 
@@ -289,7 +291,7 @@ class PassageWidget:
 
         # we do this manually so we don't have to go through all of them
 
-        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgets):
+        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgetDict.itervalues()):
             if (widget != self) and (self.intersects(widget)):
                 return True
 
@@ -340,9 +342,9 @@ class PassageWidget:
         # Clip the end of the arrow
 
         start, end = geometry.clipLineByRects([start, end], otherWidget.getPixelRect())
-        
+
         return (start, end)
-        
+
 
     def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
         """

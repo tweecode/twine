@@ -485,7 +485,7 @@ class StoryFrame(wx.Frame):
 
         # ask all our widgets to close any editor windows
 
-        for w in list(self.storyPanel.widgets):
+        for w in list(self.storyPanel.widgetDict.itervalues()):
             if isinstance(w, PassageWidget):
                 w.closeEditor()
 
@@ -534,7 +534,7 @@ class StoryFrame(wx.Frame):
                 path = dialog.GetPath()
                 tw = TiddlyWiki()
 
-                for widget in self.storyPanel.widgets: tw.addTiddler(widget.passage)
+                for widget in self.storyPanel.widgetDict.itervalues(): tw.addTiddler(widget.passage)
                 dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
                 order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
                 dest.write(tw.toTwee(order))
@@ -823,12 +823,12 @@ You can also include URLs of .tws and .twee files, too.
     def verify(self, event = None):
         """Runs the syntax checks on all passages."""
         noprobs = True
-        for widget in self.storyPanel.widgets:
+        for widget in self.storyPanel.widgetDict.itervalues():
             result = widget.verifyPassage(self)
             if result == -1: break
             elif result > 0: noprobs = False
         if noprobs:
-            wx.MessageDialog(self, "No obvious problems found in "+str(len(self.storyPanel.widgets)) + " passage" + ("s." if len(self.storyPanel.widgets)>1 else ".")\
+            wx.MessageDialog(self, "No obvious problems found in "+str(len(self.storyPanel.widgetDict.itervalues())) + " passage" + ("s." if len(self.storyPanel.widgetDict.itervalues())>1 else ".")\
                              + "\n\n(There may still be problems when the story is played, of course.)",
                              "Verify All Passages", wx.ICON_INFORMATION).ShowModal()
 
@@ -856,7 +856,7 @@ You can also include URLs of .tws and .twee files, too.
             # assemble our tiddlywiki and write it out
             hasstartpassage = False
             tw = TiddlyWiki()
-            for widget in self.storyPanel.widgets:
+            for widget in self.storyPanel.widgetDict.itervalues():
                 if widget.passage.title == 'StoryIncludes':
                     
                     def callback(passage, tw=tw):
@@ -889,17 +889,17 @@ You can also include URLs of .tws and .twee files, too.
                                       + 'Please add a passage with the title "Start"')
 
             
-            for widget in self.storyPanel.widgets:
-                # Decode story settings
-                if widget.passage.title == 'StorySettings':
-                    lines = widget.passage.text.splitlines()
-                    for line in lines:
-                        if ':' in line:
-                            (skey,svalue) = line.split(':')
-                            skey = skey.strip().lower()
-                            svalue = svalue.strip()
-                            tw.storysettings[skey] = svalue
-                    break
+            try:
+                widget = self.storyPanel.widgetDict['StorySettings']
+                lines = widget.passage.text.splitlines()
+                for line in lines:
+                    if ':' in line:
+                        (skey,svalue) = line.split(':')
+                        skey = skey.strip().lower()
+                        svalue = svalue.strip()
+                        tw.storysettings[skey] = svalue
+            except KeyError:
+                pass
 
             # Write the output file
             header = self.app.headers.get(self.target)
@@ -960,7 +960,7 @@ You can also include URLs of .tws and .twee files, too.
                         s = StoryFrame(None, app = self.app, state = pickle.load(openedFile), refreshIncludes = False)
                         openedFile.close()
 
-                        for widget in s.storyPanel.widgets:
+                        for widget in s.storyPanel.widgetDict.itervalues():
                             if excludetags.isdisjoint(widget.passage.tags):
                                 callback(widget.passage)
                         s.Destroy()
@@ -1018,14 +1018,16 @@ You can also include URLs of .tws and .twee files, too.
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
 
-        for widget in self.storyPanel.widgets:
-            if widget.passage.title == 'StoryIncludes':
-                for line in widget.passage.text.splitlines():
-                    if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
-                        pathname = os.path.join(twinedocdir, line)
-                        # Include even non-existant files, in case they eventually appear
-                        mtime = os.stat(pathname).st_mtime
-                        self.autobuildfiles[pathname] = mtime
+        try:
+            widget = self.storyPanel.widgetDict['StoryIncludes']
+            for line in widget.passage.text.splitlines():
+                if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                    pathname = os.path.join(twinedocdir, line)
+                    # Include even non-existant files, in case they eventually appear
+                    mtime = os.stat(pathname).st_mtime
+                    self.autobuildfiles[pathname] = mtime
+        except KeyError:
+            pass
 
     def stats(self, event = None):
         """
