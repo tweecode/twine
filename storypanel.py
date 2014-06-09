@@ -758,8 +758,10 @@ class StoryPanel(wx.ScrolledWindow):
         is, then call with scaleOnly set to True.
         """
         converted = (logicals[0] * self.scale, logicals[1] * self.scale)
-        if not scaleOnly: converted = self.CalcScrolledPosition(converted)
-        return converted
+        if scaleOnly:
+            return converted
+        return self.CalcScrolledPosition(converted)
+
 
     def toLogical(self, pixels, scaleOnly = False):
         """
@@ -967,8 +969,9 @@ class StoryPanel(wx.ScrolledWindow):
 
     def handleHover(self, event):
         if self.trackinghover and not self.draggingWidgets and not self.draggingMarquee:
+            position = self.toLogical(event.GetPosition())
             for widget in self.widgetDict.itervalues():
-                if widget.getPixelRect().Contains(event.GetPosition()):
+                if widget.getLogicalRect().Contains(position):
                     if widget != self.tooltipplace:
                         # Stop current timer
                         if self.tooltiptimer.IsRunning():
