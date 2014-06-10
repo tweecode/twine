@@ -338,64 +338,53 @@ class PassageWidget:
         return self.parent.toPixels(start), self.parent.toPixels(end)
 
 
-
     def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
         """
         Paints a connecting line between this widget and another,
         with optional arrowheads. You may pass either a wx.GraphicsContext
         (anti-aliased drawing) or a wx.PaintDC.
         """
-        start, end = self.getConnectorLine(otherWidget)
+
 
         # does it actually need to be drawn?
-
         if otherWidget == self:
             return
-
+        start, end = self.getConnectorLine(otherWidget)
         if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
             return
 
         # ok, really draw the line
-
+        lines =  [[start[0], start[1]],[end[0], end[1]]]
         lineWidth = max(self.parent.toPixels((width, 0), scaleOnly = True)[0], 1)
         gc.SetPen(wx.Pen(color, lineWidth))
 
-        if isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLine(start[0], start[1], end[0], end[1])
-        else:
-            gc.DrawLine(start[0], start[1], end[0], end[1])
+
 
         # arrowheads at end
 
-        if not arrowheads: return
+        if arrowheads:
+            arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
+            arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
+                                                       distance = arrowheadLength)
+            arrowhead2 = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
+                                                       distance = arrowheadLength)
+            lines.extend(([end[0], end[1]], [arrowhead[0], arrowhead[1]]))
+            lines.extend(([end[0], end[1]], [arrowhead2[0], arrowhead2[1]]))
 
-        flat = self.app.config.ReadBool('flatDesign')
-        
-        arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
-        arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
-                                                   distance = arrowheadLength)
-
-        if flat:
-            pass
-        elif isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLine(end[0], end[1], arrowhead[0], arrowhead[1])
-        else:
-            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
-
-        arrowhead2 = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
-                                                   distance = arrowheadLength)
-
-        
-        if flat:
+        if self.app.config.ReadBool('flatDesign') and arrowheads:
             gc.SetBrush(wx.Brush(color))
             if isinstance(gc, wx.GraphicsContext):
-                gc.DrawLines([wx.Point2D(*arrowhead2), wx.Point2D(*end), wx.Point2D(*arrowhead) ])
+                gc.StrokeLines(lines)
             else:
                 gc.DrawPolygon([wx.Point(*arrowhead2), wx.Point(*end), wx.Point(*arrowhead)])
         elif isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
+            gc.StrokeLines(lines)
         else:
+            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
             gc.DrawLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
+            gc.DrawLine(start[0], start[1], end[0], end[1])
+
+
 
 
     def getConnectedWidgets(self):

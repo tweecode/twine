@@ -851,8 +851,6 @@ class StoryPanel(wx.ScrolledWindow):
         else:
             gc = wx.BufferedPaintDC(self)
 
-
-        
         updateRect = self.updateVisableRectsAndReturnUpdateRegion()
 
         # background
