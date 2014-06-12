@@ -320,7 +320,7 @@ class PassageWidget:
         if self.passage.isImage():
             self.bitmap = images.Base64ToBitmap(self.passage.text)
         
-    def getConnectorLine(self, otherWidget):
+    def getConnectorLine(self, otherWidget, clipped=True):
         """
         Get the line that would be drawn between this widget and another.
         """
@@ -332,8 +332,8 @@ class PassageWidget:
         lengthSquared = ((start[0]-end[0])**2+(start[1]-end[1])**2)/1024**2
         end[0] += (0.5 - math.sin(lengthSquared))*PassageWidget.SIZE/8.0
         end[1] += (0.5 - math.cos(lengthSquared))*PassageWidget.SIZE/8.0
-
-        [start, end] = geometry.clipLineByRects([start, end], otherWidget.getLogicalRect())
+        if clipped:
+            [start, end] = geometry.clipLineByRects([start, end], otherWidget.getLogicalRect())
         return self.parent.toPixels(start), self.parent.toPixels(end)
 
 
@@ -342,8 +342,9 @@ class PassageWidget:
         Returns a list of titles of all widgets that will have lines drawn to them.
         """
         ret = []
+        displayArrows = self.app.config.ReadBool('displayArrows')
         for link in self.linksAndDisplays():
-            if (link in self.passage.links or self.app.config.ReadBool('displayArrows')):
+            if link in self.passage.links or displayArrows:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)

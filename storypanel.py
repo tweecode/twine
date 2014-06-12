@@ -919,7 +919,7 @@ class StoryPanel(wx.ScrolledWindow):
         # Determine visible passages
         updateRect = self.GetUpdateRegion().GetBox()
         scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
-        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
+        if self.visibleWidgets is None or scrollPos != self.lastScrollPos:
             self.lastScrollPos = scrollPos
             updateRect = self.GetClientRect()
             self.visibleWidgets = [widget for widget in self.widgetDict.itervalues()
@@ -928,7 +928,7 @@ class StoryPanel(wx.ScrolledWindow):
                                        or updateRect.Intersects(widget.getPixelRect())
                                        # It's also visible if an arrow FROM it intersects with the Client Rect
                                        or [w2 for w2 in widget.getConnectedWidgets()
-                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
+                                           if geometry.lineRectIntersection(widget.getConnectorLine(w2,clipped=False), updateRect)])]
         return updateRect
 
     def resize(self, event = None):
