@@ -1,3 +1,4 @@
+from collections import defaultdict
 import sys, math, wx, re, os, pickle
 import geometry, time
 from tiddlywiki import TiddlyWiki
@@ -702,13 +703,14 @@ class StoryPanel(wx.ScrolledWindow):
         return False
 
     def hasMultipleSelection(self):
-        """Returns whether multiple passages are selected."""
+        """Returns 0 if no passages are selected, one if one or two if two or more are selected."""
         selected = 0
         for widget in self.widgetDict.itervalues():
             if widget.selected:
                 selected += 1
-                if selected > 1: return True
-        return False
+                if selected > 1:
+                    return selected
+        return selected
 
     def findWidget(self, title):
         """Returns a PassageWidget with the title passed. If none exists, it returns None."""
@@ -846,7 +848,7 @@ class StoryPanel(wx.ScrolledWindow):
         # OS X already double buffers drawing for us; if we try to do it
         # ourselves, performance is horrendous
 
-        if (sys.platform == 'darwin'):
+        if sys.platform == 'darwin':
             gc = wx.PaintDC(self)
         else:
             gc = wx.BufferedPaintDC(self)
@@ -856,7 +858,6 @@ class StoryPanel(wx.ScrolledWindow):
         # background
 
         gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign') else StoryPanel.BACKGROUND_COLOR ))
-
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
 
         # connectors
@@ -866,7 +867,7 @@ class StoryPanel(wx.ScrolledWindow):
         for widget in self.visibleWidgets:
             if not widget.dimmed:
                 widget.paintConnectors(gc, arrowheads, updateRect)
-        
+
         for widget in self.visibleWidgets:
             # Could be "visible" only insofar as its arrow is visible
             if updateRect.Intersects(widget.getPixelRect()):
