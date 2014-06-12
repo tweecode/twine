@@ -161,11 +161,11 @@ class PassageWidget:
     def getBrokenLinks(self):
         """Returns a list of broken links in this widget."""
         return filter(lambda a: not self.parent.passageExists(a), self.passage.links)
-    
+
     def getIncludedLinks(self):
         """Returns a list of included passages in this widget."""
         return filter(lambda a: self.parent.includedPassageExists(a), self.passage.links)
-    
+
     def getVariableLinks(self):
         """Returns a list of links which use variables/functions, in this widget."""
         return filter(lambda a: tweelexer.TweeLexer.linkStyle(a)==tweelexer.TweeLexer.PARAM, self.passage.links)
@@ -219,7 +219,7 @@ class PassageWidget:
         """Opens a PassageFrame to edit this passage."""
         image = self.passage.isImage()
 
-        if (not hasattr(self, 'passageFrame')):
+        if not hasattr(self, 'passageFrame'):
             if image:
                 self.passageFrame = ImageFrame(None, self, self.app)
             elif self.passage.title == "StorySettings":
@@ -251,8 +251,7 @@ class PassageWidget:
         """
         passage = self.passage
         checks = tweelexer.VerifyLexer(self).check()
-        
-        broken = False
+
         problems = 0
         
         oldtext = passage.text
@@ -338,55 +337,6 @@ class PassageWidget:
         return self.parent.toPixels(start), self.parent.toPixels(end)
 
 
-    def paintConnectorTo(self, otherWidget, arrowheads, color, width, gc, updateRect = None):
-        """
-        Paints a connecting line between this widget and another,
-        with optional arrowheads. You may pass either a wx.GraphicsContext
-        (anti-aliased drawing) or a wx.PaintDC.
-        """
-
-
-        # does it actually need to be drawn?
-        if otherWidget == self:
-            return
-        start, end = self.getConnectorLine(otherWidget)
-        if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
-            return
-
-        # ok, really draw the line
-        lines =  [[start[0], start[1]],[end[0], end[1]]]
-        lineWidth = max(self.parent.toPixels((width, 0), scaleOnly = True)[0], 1)
-        gc.SetPen(wx.Pen(color, lineWidth))
-
-
-
-        # arrowheads at end
-
-        if arrowheads:
-            arrowheadLength = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly = True)[0], 1)
-            arrowhead = geometry.endPointProjectedFrom((start, end), angle = PassageWidget.ARROWHEAD_ANGLE, \
-                                                       distance = arrowheadLength)
-            arrowhead2 = geometry.endPointProjectedFrom((start, end), angle = 0 - PassageWidget.ARROWHEAD_ANGLE, \
-                                                       distance = arrowheadLength)
-            lines.extend(([end[0], end[1]], [arrowhead[0], arrowhead[1]]))
-            lines.extend(([end[0], end[1]], [arrowhead2[0], arrowhead2[1]]))
-
-        if self.app.config.ReadBool('flatDesign') and arrowheads:
-            gc.SetBrush(wx.Brush(color))
-            if isinstance(gc, wx.GraphicsContext):
-                gc.StrokeLines(lines)
-            else:
-                gc.DrawPolygon([wx.Point(*arrowhead2), wx.Point(*end), wx.Point(*arrowhead)])
-        elif isinstance(gc, wx.GraphicsContext):
-            gc.StrokeLines(lines)
-        else:
-            gc.DrawLine(end[0], end[1], arrowhead[0], arrowhead[1])
-            gc.DrawLine(end[0], end[1], arrowhead2[0], arrowhead2[1])
-            gc.DrawLine(start[0], start[1], end[0], end[1])
-
-
-
-
     def getConnectedWidgets(self):
         """
         Returns a list of titles of all widgets that will have lines drawn to them.
@@ -411,28 +361,30 @@ class PassageWidget:
                             if not otherWidget.dimmed and not otherWidget.passage.isStylesheet():
                                 ret.append(otherWidget)
         return ret
-            
-    def paintConnectors(self, gc, arrowheads = True, updateRect = None):
-        """
-        Paints all connectors originating from this widget. This accepts
-        a list of widget titles that will not be drawn to. It returns this
-        list, along with any other bad links this widget contains.
 
-        As with other paint calls, you may pass either a wx.GraphicsContext
-        or wx.PaintDC.
+    def addConnectorLinesToDict(self, lineDictonary, arrowDictonary=None, updateRect=None):
         """
-        
+        Appended the connector lines originating from this widget to the list contained in the
+        line directory under the appropriate color,width key.
+        If an arrow dictionary is also passed it adds the arrows in a similar manner.
+        If an update rect is passed it skips any lines, and the associated arrows,
+        which lie outside the update rectangle.
+
+        Note: Assumes the list existed in the passed in dictionaries. Either make sure this is the case or
+        use a defaultDict.
+        """
+
         flat = self.app.config.ReadBool('flatDesign')
         colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
-        
-        if not self.app.config.ReadBool('fastStoryPanel'):
-            gc = wx.GraphicsContext.Create(gc)
-
+        # Widths for selected and non selected lines
+        widths = 2 * (2 * flat + 1), 1 * (2 * flat + 1)
+        widths = max(self.parent.toPixels((widths[0], 0), scaleOnly=True)[0], 2), \
+                 max(self.parent.toPixels((widths[1], 0), scaleOnly=True)[0], 1)
         widgets = self.getConnectedWidgets()
         if widgets:
             for widget in widgets:
                 link = widget.passage.title
-                
+
                 if self.passage.isAnnotation():
                     color = colors['connectorAnnotation']
                 elif (link in self.passage.displays + self.passage.macros) and link not in self.passage.links:
@@ -441,8 +393,30 @@ class PassageWidget:
                     color = colors['connectorResource']
                 else:
                     color = colors['connector']
-                width = (2 if self.selected else 1) * (2 * flat + 1)
-                self.paintConnectorTo(widget, arrowheads, color, width, gc, updateRect)
+                width = widths[not self.selected]
+                line, arrow = self.getConnectorTo(widget, not arrowDictonary is None, updateRect)
+                lineDictonary[(color, width)].extend(line)
+                if arrow:
+                    arrowDictonary[(color, width)].extend(arrow)
+
+
+    def getConnectorTo(self, otherWidget, arrowheads=False, updateRect=None):
+        # does it actually need to be drawn?
+        if otherWidget == self:
+            return [], []
+        start, end = self.getConnectorLine(otherWidget)
+        if updateRect and not geometry.lineRectIntersection([start, end], updateRect):
+            return [], []
+
+        line = [[start[0], start[1]], [end[0], end[1]]]
+
+        if not arrowheads:
+            return line, []
+        else:
+            length = max(self.parent.toPixels((PassageWidget.ARROWHEAD_LENGTH, 0), scaleOnly=True)[0], 1)
+            arrowheadr = geometry.endPointProjectedFrom((start, end), PassageWidget.ARROWHEAD_ANGLE,  length)
+            arrowheadl = geometry.endPointProjectedFrom((start, end), 0 - PassageWidget.ARROWHEAD_ANGLE, length)
+        return line, [(arrowheadl, end, arrowheadr)]
     
     def paint(self, dc):
         """
@@ -519,12 +493,16 @@ class PassageWidget:
         # Which set of colors to use
         flat = self.app.config.ReadBool('flatDesign')
         colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
-        
+
         def dim(c, dim, flat=flat):
             """Lowers a color's alpha if dim is true."""
-            if isinstance(c, wx.Colour): c = list(c.Get(includeAlpha = True))
-            elif type(c) is str: c = list(ord(a) for a in c[1:].decode('hex'))
-            else: c = list(c)
+            if isinstance(c, wx.Colour):
+                c = list(c.Get(includeAlpha=True))
+            elif type(c) is str:
+                c = list(ord(a) for a in c[1:].decode('hex'))
+            else:
+                c = list(c)
+
             if len(c) < 4:
                 c.append(255)
             if dim:
@@ -536,27 +514,21 @@ class PassageWidget:
                     c[1] *= a
                     c[2] *= a
             return wx.Colour(*c)
-        
-        # set up our buffer
 
+        # set up our buffer
         bitmap = wx.EmptyBitmap(size.width, size.height)
         self.paintBuffer.SelectObject(bitmap)
 
         # switch to a GraphicsContext as necessary
-
-        if self.app.config.ReadBool('fastStoryPanel'):
-            gc = self.paintBuffer
-        else:
-            gc = wx.GraphicsContext.Create(self.paintBuffer)
+        gc = self.paintBuffer if self.app.config.ReadBool('fastStoryPanel') else wx.GraphicsContext.Create(self.paintBuffer)
 
         # text font sizes
         # wxWindows works with points, so we need to doublecheck on actual pixels
 
         titleFontSize = self.parent.toPixels((metrics.size('widgetTitle'), -1), scaleOnly = True)[0]
-        titleFontSize = min(titleFontSize, metrics.size('fontMax'))
-        titleFontSize = max(titleFontSize, metrics.size('fontMin'))
-        excerptFontSize = min(titleFontSize * 0.9, metrics.size('fontMax'))
-        excerptFontSize = max(excerptFontSize, metrics.size('fontMin'))
+        titleFontSize = sorted((metrics.size('fontMin'), titleFontSize, metrics.size('fontMax')))[1]
+        excerptFontSize = sorted((metrics.size('fontMin'), titleFontSize * 0.9, metrics.size('fontMax')))[1]
+
         if self.app.config.ReadBool('flatDesign'):
             titleFont = wx.Font(titleFontSize, wx.SWISS, wx.NORMAL, wx.LIGHT, False, 'Arial')
             excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.LIGHT, False, 'Arial')
@@ -565,12 +537,12 @@ class PassageWidget:
             excerptFont = wx.Font(excerptFontSize, wx.SWISS, wx.NORMAL, wx.NORMAL, False, 'Arial')
         titleFontHeight = math.fabs(titleFont.GetPixelSize()[1])
         excerptFontHeight = math.fabs(excerptFont.GetPixelSize()[1])
-        tagBarColor = dim( tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08,
-                                                                    0.58 if flat else 0.28, 0.88)), self.dimmed)
-        tags = set(self.passage.tags) - (tiddlywiki.TiddlyWiki.INFO_TAGS | self.getHeader().invisiblePassageTags() )
+        tagBarColor = dim(tuple(i*256 for i in colorsys.hsv_to_rgb(0.14 + math.sin(hash("".join(self.passage.tags)))*0.08,
+                                                                   0.58 if flat else 0.28,
+                                                                   0.88)), self.dimmed)
+        tags = set(self.passage.tags) - (tiddlywiki.TiddlyWiki.INFO_TAGS | self.getHeader().invisiblePassageTags())
 
         # inset for text (we need to know this for layout purposes)
-
         inset = titleFontHeight / 3
 
         # frame
@@ -580,12 +552,10 @@ class PassageWidget:
             frameInterior = (c,c)
         else:
             frameColor = dim(colors['frame'], self.dimmed)
-            frameInterior = (dim(colors['bodyStart'], self.dimmed), \
-                         dim(colors['bodyEnd'], self.dimmed))
-        
+            frameInterior = (dim(colors['bodyStart'], self.dimmed), dim(colors['bodyEnd'], self.dimmed))
+
         if not flat:
             gc.SetPen(wx.Pen(frameColor, 1))
-    
             if isinstance(gc, wx.GraphicsContext):
                 gc.SetBrush(gc.CreateLinearGradientBrush(0, 0, 0, size.height, \
                                                          frameInterior[0], frameInterior[1]))
@@ -593,7 +563,7 @@ class PassageWidget:
                 gc.GradientFillLinear(wx.Rect(0, 0, size.width - 1, size.height - 1), \
                                 frameInterior[0], frameInterior[1], wx.SOUTH)
                 gc.SetBrush(wx.TRANSPARENT_BRUSH)
-    
+
             gc.DrawRectangle(0, 0, size.width - 1, size.height - 1)
         else:
             gc.SetPen(wx.Pen(frameInterior[0]))
@@ -601,9 +571,8 @@ class PassageWidget:
             gc.DrawRectangle(0, 0, size.width, size.height)
 
         greek = size.width <= PassageWidget.MIN_GREEKING_SIZE * (2 if self.passage.isAnnotation() else 1)
-        
-        # title bar
 
+        # title bar
         titleBarHeight = PassageWidget.GREEK_HEIGHT*3 if greek else titleFontHeight + (2 * inset)
         if self.passage.isAnnotation():
             titleBarColor = frameInterior[0]
@@ -619,7 +588,6 @@ class PassageWidget:
         if not greek:
             # draw title
             # we let clipping prevent writing over the frame
-
             if isinstance(gc, wx.GraphicsContext):
                 gc.ResetClip()
                 gc.Clip(inset, inset, size.width - (inset * 2), titleBarHeight - 2)
@@ -671,9 +639,9 @@ class PassageWidget:
                     excerptTop += excerptFontHeight * PassageWidget.LINE_SPACING \
                         * min(1.75,max(1,1.75*size.width/260 if (self.passage.isAnnotation() and line) else 1))
                     if excerptTop + excerptFontHeight > size.height - inset: break
-            
+
             if (self.passage.isStoryText() or self.passage.isStylesheet()) and tags:
-                
+
                 tagBarHeight = excerptFontHeight + (2 * inset)
                 gc.SetPen(wx.Pen(tagBarColor, 1))
                 gc.SetBrush(wx.Brush(tagBarColor))
@@ -794,7 +762,7 @@ class PassageWidget:
                 gc.DrawBitmap(emblem, emblemPos[0], emblemPos[1], emblemSize[0], emblemSize[1])
             else:
                 gc.DrawBitmap(emblem, emblemPos[0], emblemPos[1])
-            
+
         if len(self.getBrokenLinks()):
             showEmblem(self.brokenEmblem)
         elif len(self.getIncludedLinks()) or len(self.passage.variableLinks):
@@ -815,7 +783,7 @@ class PassageWidget:
                 gc.SetBrush(wx.Brush(color))
             else:
                 gc.SetBrush(wx.TRANSPARENT_BRUSH)
-                
+
             gc.DrawRectangle(0, 0, size.width, size.height)
 
         self.paintBufferBounds = size
