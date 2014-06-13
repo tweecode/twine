@@ -336,19 +336,19 @@ class PassageWidget:
             [start, end] = geometry.clipLineByRects([start, end], otherWidget.getLogicalRect())
         return self.parent.toPixels(start), self.parent.toPixels(end)
 
-    def getConnectedWidgets(self):
+    def getConnectedWidgets(self, displayArrows, imageArrows):
         """
         Returns a list of titles of all widgets that will have lines drawn to them.
         """
         ret = []
-        displayArrows = self.app.config.ReadBool('displayArrows')
+
         for link in self.linksAndDisplays():
             if link in self.passage.links or displayArrows:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)
         
-        if self.app.config.ReadBool('imageArrows'):
+        if imageArrows:
             for link in self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
@@ -362,7 +362,7 @@ class PassageWidget:
                                 ret.append(otherWidget)
         return ret
 
-    def addConnectorLinesToDict(self, lineDictonary, arrowDictonary=None, updateRect=None):
+    def addConnectorLinesToDict(self, displayArrows, imageArrows, flatDesign, lineDictonary, arrowDictonary=None, updateRect=None):
         """
         Appended the connector lines originating from this widget to the list contained in the
         line directory under the appropriate color,width key.
@@ -374,13 +374,12 @@ class PassageWidget:
         use a defaultDict.
         """
 
-        flat = self.app.config.ReadBool('flatDesign')
-        colors = PassageWidget.FLAT_COLORS if flat else PassageWidget.COLORS
+        colors = PassageWidget.FLAT_COLORS if flatDesign else PassageWidget.COLORS
         # Widths for selected and non selected lines
-        widths = 2 * (2 * flat + 1), 1 * (2 * flat + 1)
+        widths = 2 * (2 * flatDesign + 1), 1 * (2 * flatDesign + 1)
         widths = max(self.parent.toPixels((widths[0], 0), scaleOnly=True)[0], 2), \
                  max(self.parent.toPixels((widths[1], 0), scaleOnly=True)[0], 1)
-        widgets = self.getConnectedWidgets()
+        widgets = self.getConnectedWidgets(displayArrows, imageArrows)
         if widgets:
             for widget in widgets:
                 link = widget.passage.title

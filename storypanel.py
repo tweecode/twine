@@ -869,9 +869,12 @@ class StoryPanel(wx.ScrolledWindow):
         arrowheads = (self.scale > StoryPanel.ARROWHEAD_THRESHOLD)
         lineDictonary = defaultdict(list)
         arrowDictonary = defaultdict(list) if arrowheads else None
+        displayArrows = self.app.config.ReadBool('displayArrows')
+        imageArrows = self.app.config.ReadBool('imageArrows')
+        flatDesign = self.app.config.ReadBool('flatDesign')
         for widget in self.visibleWidgets:
             if not widget.dimmed:
-                widget.addConnectorLinesToDict(lineDictonary, arrowDictonary, updateRect)
+                widget.addConnectorLinesToDict(displayArrows, imageArrows, flatDesign, lineDictonary, arrowDictonary, updateRect)
 
         for (color, width) in lineDictonary.iterkeys():
             gc.SetPen(wx.Pen(color, width))
@@ -922,12 +925,14 @@ class StoryPanel(wx.ScrolledWindow):
         if self.visibleWidgets is None or scrollPos != self.lastScrollPos:
             self.lastScrollPos = scrollPos
             updateRect = self.GetClientRect()
+            displayArrows = self.app.config.ReadBool('displayArrows')
+            imageArrows = self.app.config.ReadBool('imageArrows')
             self.visibleWidgets = [widget for widget in self.widgetDict.itervalues()
                                    # It's visible if it's in the client rect, or is being moved.
                                    if (widget.dimmed
                                        or updateRect.Intersects(widget.getPixelRect())
                                        # It's also visible if an arrow FROM it intersects with the Client Rect
-                                       or [w2 for w2 in widget.getConnectedWidgets()
+                                       or [w2 for w2 in widget.getConnectedWidgets(displayArrows, imageArrows)
                                            if geometry.lineRectIntersection(widget.getConnectorLine(w2,clipped=False), updateRect)])]
         return updateRect
 
