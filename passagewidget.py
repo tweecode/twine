@@ -156,7 +156,7 @@ class PassageWidget:
 
     def getShorthandDisplays(self):
         """Returns a list of macro tags which match passage names."""
-        return filter(lambda a: self.parent.passageExists(a), self.passage.macros)
+        return filter(self.parent.passageExists, self.passage.macros)
 
     def getBrokenLinks(self):
         """Returns a list of broken links in this widget."""
@@ -164,11 +164,11 @@ class PassageWidget:
 
     def getIncludedLinks(self):
         """Returns a list of included passages in this widget."""
-        return filter(lambda a: self.parent.includedPassageExists(a), self.passage.links)
+        return filter(self.parent.includedPassageExists, self.passage.links)
 
     def getVariableLinks(self):
         """Returns a list of links which use variables/functions, in this widget."""
-        return filter(lambda a: tweelexer.TweeLexer.linkStyle(a)==tweelexer.TweeLexer.PARAM, self.passage.links)
+        return filter(lambda a: tweelexer.TweeLexer.linkStyle(a) == tweelexer.TweeLexer.PARAM, self.passage.links)
 
     def setSelected(self, value, exclusive = True):
         """
@@ -335,7 +335,6 @@ class PassageWidget:
         if clipped:
             [start, end] = geometry.clipLineByRects([start, end], otherWidget.getLogicalRect())
         return self.parent.toPixels(start), self.parent.toPixels(end)
-
 
     def getConnectedWidgets(self):
         """
