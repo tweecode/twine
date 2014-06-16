@@ -1,3 +1,5 @@
+from collections import defaultdict
+from itertools import izip, chain
 import sys, math, wx, re, os, pickle
 import geometry, time
 from tiddlywiki import TiddlyWiki
@@ -702,13 +704,14 @@ class StoryPanel(wx.ScrolledWindow):
         return False
 
     def hasMultipleSelection(self):
-        """Returns whether multiple passages are selected."""
+        """Returns 0 if no passages are selected, one if one or two if two or more are selected."""
         selected = 0
         for widget in self.widgetDict.itervalues():
             if widget.selected:
                 selected += 1
-                if selected > 1: return True
-        return False
+                if selected > 1:
+                    return selected
+        return selected
 
     def findWidget(self, title):
         """Returns a PassageWidget with the title passed. If none exists, it returns None."""
@@ -834,41 +837,60 @@ class StoryPanel(wx.ScrolledWindow):
 
 
 
+
+    def arrowPolygonsToLines(self, list):
+        for polygon in list:
+            yield polygon[0][0], polygon[0][1], polygon[1][0], polygon[1][1]
+            yield polygon[1][0], polygon[1][1], polygon[2][0], polygon[2][1]
+
     def paint(self, event):
         """Paints marquee selection, widget connectors, and widgets onscreen."""
         # do NOT call self.DoPrepareDC() no matter what the docs may say
         # we already take into account our scroll origin in our
         # toPixels() method
 
-        # in fast drawing, we ask for a standard paint context
-        # in slow drawing, we ask for a anti-aliased one
-        #
         # OS X already double buffers drawing for us; if we try to do it
         # ourselves, performance is horrendous
 
-        if (sys.platform == 'darwin'):
+        if sys.platform == 'darwin':
             gc = wx.PaintDC(self)
         else:
             gc = wx.BufferedPaintDC(self)
 
-
-        
         updateRect = self.updateVisableRectsAndReturnUpdateRegion()
 
         # background
 
-        gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign') else StoryPanel.BACKGROUND_COLOR ))
-
+        gc.SetBrush(wx.Brush(StoryPanel.FLAT_BG_COLOR if self.app.config.ReadBool('flatDesign')
+                             else StoryPanel.BACKGROUND_COLOR))
         gc.DrawRectangle(updateRect.x - 1, updateRect.y - 1, updateRect.width + 2, updateRect.height + 2)
 
         # connectors
-
         arrowheads = (self.scale > StoryPanel.ARROWHEAD_THRESHOLD)
-
+        lineDictonary = defaultdict(list)
+        arrowDictonary = defaultdict(list) if arrowheads else None
+        displayArrows = self.app.config.ReadBool('displayArrows')
+        imageArrows = self.app.config.ReadBool('imageArrows')
+        flatDesign = self.app.config.ReadBool('flatDesign')
         for widget in self.visibleWidgets:
             if not widget.dimmed:
-                widget.paintConnectors(gc, arrowheads, updateRect)
-        
+                widget.addConnectorLinesToDict(displayArrows, imageArrows, flatDesign, lineDictonary, arrowDictonary, updateRect)
+
+        for (color, width) in lineDictonary.iterkeys():
+            gc.SetPen(wx.Pen(color, width))
+            lines = list(izip(*[iter(chain(*lineDictonary[(color, width)]))] * 4))
+            gc.DrawLineList(lines)
+        if arrowheads:
+            for (color, width) in arrowDictonary.iterkeys():
+                gc.SetPen(wx.Pen(color, width))
+                arrows = arrowDictonary[(color, width)]
+                if self.app.config.ReadBool('flatDesign'):
+                    gc.SetBrush(wx.Brush(color))
+                    gc.DrawPolygonList(arrows)
+                else:
+                    lines = list(self.arrowPolygonsToLines(arrows))
+                    gc.DrawLineList(lines)
+
         for widget in self.visibleWidgets:
             # Could be "visible" only insofar as its arrow is visible
             if updateRect.Intersects(widget.getPixelRect()):
@@ -891,6 +913,7 @@ class StoryPanel(wx.ScrolledWindow):
 
             gc.DrawRectangle(self.dragRect.x, self.dragRect.y, self.dragRect.width, self.dragRect.height)
 
+
     def updateVisableRectsAndReturnUpdateRegion(self):
         """
         Updates the self.visibleWidgets list if necessary based on the current scroll position.
@@ -899,16 +922,18 @@ class StoryPanel(wx.ScrolledWindow):
         # Determine visible passages
         updateRect = self.GetUpdateRegion().GetBox()
         scrollPos = (self.GetScrollPos(wx.HORIZONTAL), self.GetScrollPos(wx.VERTICAL))
-        if self.visibleWidgets == None or scrollPos != self.lastScrollPos:
+        if self.visibleWidgets is None or scrollPos != self.lastScrollPos:
             self.lastScrollPos = scrollPos
             updateRect = self.GetClientRect()
+            displayArrows = self.app.config.ReadBool('displayArrows')
+            imageArrows = self.app.config.ReadBool('imageArrows')
             self.visibleWidgets = [widget for widget in self.widgetDict.itervalues()
                                    # It's visible if it's in the client rect, or is being moved.
                                    if (widget.dimmed
                                        or updateRect.Intersects(widget.getPixelRect())
                                        # It's also visible if an arrow FROM it intersects with the Client Rect
-                                       or [w2 for w2 in widget.getConnectedWidgets()
-                                           if geometry.lineRectIntersection(w2.getConnectorLine(widget), updateRect)])]
+                                       or [w2 for w2 in widget.getConnectedWidgets(displayArrows, imageArrows)
+                                           if geometry.lineRectIntersection(widget.getConnectorLine(w2,clipped=False), updateRect)])]
         return updateRect
 
     def resize(self, event = None):
