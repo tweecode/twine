@@ -228,6 +228,9 @@ class TiddlyWiki:
         # content
 
         for i in order:
+            # Handle the situation where items are in the order set but not in the tiddlers set.
+            if i not in self.tiddlers:
+                continue
             text = rtf_encode(self.tiddlers[i].text)
             text = re.sub(r'\n', '\\\n', text) # newlines
             text = re.sub(tweeregex.LINK_REGEX, r'\\b\cf2 \ul \1\ulnone \cf0 \\b0 ', text) # links
