@@ -1129,7 +1129,9 @@ You can also include URLs of .tws and .twee files, too.
 
             tw = TiddlyWiki()
             for widget in self.storyPanel.sortedWidgets():
-                tw.addTiddler(widget.passage)
+                # Exclude images from RTF, they appear as large unreadable blobs of base64 text. 
+                if 'Twine.image' not in widget.passage.tags:
+                    tw.addTiddler(widget.passage)
 
             order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
             dest.write(tw.toRtf(order))
