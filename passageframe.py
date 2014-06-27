@@ -100,8 +100,9 @@ class PassageFrame(wx.Frame):
         editMenu.Append(wx.ID_PASTE, '&Paste\tCtrl-V')
         self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Paste(), id = wx.ID_PASTE)
 
+
         editMenu.Append(wx.ID_SELECTALL, 'Select &All\tCtrl-A')
-        self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.SelectAll(), id = wx.ID_SELECTALL)
+        self.Bind(wx.EVT_MENU, lambda e: wx.Window.FindFocus().SelectAll(), id = wx.ID_SELECTALL)
 
         editMenu.AppendSeparator()
 
