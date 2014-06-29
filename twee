@@ -90,7 +90,9 @@ def main(argv):
     # generate output
 
     output = tw.toHtml(app, header, order, startAt = start)
-    if sys.stdout.isatty():
+    if output is None:
+        print >> sys.stderr, 'twee: no output'
+    elif sys.stdout.isatty():
         print output
     else:
         print output.encode('utf_8_sig')
