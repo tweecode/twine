@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import sys, os.path, getopt, glob
+import sys, os.path, getopt, glob, traceback
 from header import Header
 from tiddlywiki import TiddlyWiki
 from version import versionString
@@ -20,13 +20,16 @@ class TweeApp(object):
         """Initializes the application."""
         self.builtinTargetsPath = path + os.sep + 'targets' + os.sep
 
-    def displayError(self, activity):
+    def displayError(self, activity, stacktrace = True):
         activity = activity.strip()
         print >> sys.stderr, 'Error while ' + activity
-        exceptionValue = sys.exc_info()[1]
-        if exceptionValue is not None:
-            print >> sys.stderr, exceptionValue
-        print >> sys.stderr, ''
+        if stacktrace:
+            print >> sys.stderr, traceback.format_exc(5)
+        else:
+            exceptionValue = sys.exc_info()[1]
+            if exceptionValue is not None:
+                print >> sys.stderr, exceptionValue
+            print >> sys.stderr, ''
 
 
 def main(argv):
