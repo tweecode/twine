@@ -903,8 +903,8 @@ You can also include URLs of .tws and .twee files, too.
                                       + 'Your story will build but the web browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
 
-            try:
-                widget = self.storyPanel.widgetDict['StorySettings']
+            widget = self.storyPanel.widgetDict.get('StorySettings')
+            if widget is not None:
                 lines = widget.passage.text.splitlines()
                 for line in lines:
                     if ':' in line:
@@ -912,8 +912,6 @@ You can also include URLs of .tws and .twee files, too.
                         skey = skey.strip().lower()
                         svalue = svalue.strip()
                         tw.storysettings[skey] = svalue
-            except KeyError:
-                pass
 
             # Write the output file
             header = self.app.headers.get(self.target)
@@ -1034,16 +1032,14 @@ You can also include URLs of .tws and .twee files, too.
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
 
-        try:
-            widget = self.storyPanel.widgetDict['StoryIncludes']
+        widget = self.storyPanel.widgetDict.get('StoryIncludes')
+        if widget is not None:
             for line in widget.passage.text.splitlines():
                 if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
                     pathname = os.path.join(twinedocdir, line)
                     # Include even non-existant files, in case they eventually appear
                     mtime = os.stat(pathname).st_mtime
                     self.autobuildfiles[pathname] = mtime
-        except KeyError:
-            pass
 
     def stats(self, event=None):
         """

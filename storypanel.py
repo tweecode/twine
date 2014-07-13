@@ -105,11 +105,8 @@ class StoryPanel(wx.ScrolledWindow):
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
 
-    def changeWidgetTitle(self,widget,title):
-        try:
-            del self.widgetDict[widget.passage.title]
-        except KeyError:
-            pass
+    def changeWidgetTitle(self, widget, title):
+        self.widgetDict.pop(widget.passage.title, None)
         widget.passage.title = title
         self.widgetDict[title] = widget
 
@@ -201,10 +198,7 @@ class StoryPanel(wx.ScrolledWindow):
         """
         if widget is None:
             return
-        try:
-            del self.widgetDict[widget.passage.title]
-        except KeyError:
-            pass
+        self.widgetDict.pop(widget.passage.title, None)
 
         if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
         if self.tooltipplace is widget:
@@ -715,10 +709,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def findWidget(self, title):
         """Returns a PassageWidget with the title passed. If none exists, it returns None."""
-        try:
-            return self.widgetDict[title]
-        except KeyError:
-            return None
+        return self.widgetDict.get(title)
 
     def passageExists(self, title, includeIncluded = True):
         """
@@ -748,11 +739,9 @@ class StoryPanel(wx.ScrolledWindow):
 
         self.clearIncludedPassages()
 
-        try:
-            widget = self.widgetDict['StoryIncludes']
+        widget = self.widgetDict.get('StoryIncludes')
+        if widget is not None:
             self.parent.readIncludes(widget.passage.text.splitlines(), callback, silent = True)
-        except KeyError:
-            pass
 
     def toPixels(self, logicals, scaleOnly = False):
         """
