@@ -504,7 +504,7 @@ class StoryFrame(wx.Frame):
         self.lastTestBuild = None
 
         self.app.removeStory(self, byMenu)
-        if event != None:
+        if event is not None:
             event.Skip()
         self.Destroy()
 
@@ -1173,7 +1173,7 @@ You can also include URLs of .tws and .twee files, too.
         for item in wx.ID_CUT, wx.ID_COPY, wx.ID_DELETE:
             self.menus.FindItemById(item).Enable(selections > 0)
 
-        self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT).Enable(self.storyPanel.lastSearchRegexp != None)
+        self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT).Enable(self.storyPanel.lastSearchRegexp is not None)
 
         # View menu
         self.menus.FindItemById(StoryFrame.VIEW_TOOLBAR).Check(self.showToolbar)

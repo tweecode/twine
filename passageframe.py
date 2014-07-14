@@ -675,7 +675,7 @@ class PassageFrame(wx.Frame):
         # find/replace
 
         findNextItem = self.menus.FindItemById(PassageFrame.EDIT_FIND_NEXT)
-        findNextItem.Enable(self.lastFindRegexp != None)
+        findNextItem.Enable(self.lastFindRegexp is not None)
 
         # link selected text menu item
 

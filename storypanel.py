@@ -250,7 +250,7 @@ class StoryPanel(wx.ScrolledWindow):
         If nothing is found, then an error alert is shown.
         """
 
-        if regexp == None:
+        if regexp is None:
             regexp = self.lastSearchRegexp
             flags = self.lastSearchFlags
 
@@ -714,7 +714,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         If includeIncluded then will also check external passages referenced via StoryIncludes
         """
-        return self.findWidget(title) != None or (includeIncluded and self.includedPassageExists(title))
+        return self.findWidget(title) is not None or (includeIncluded and self.includedPassageExists(title))
 
     def clearIncludedPassages(self):
         """Clear the includedPassages set"""

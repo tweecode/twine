@@ -131,8 +131,8 @@ class PassageWidget(object):
         """
         Returns whether this widget's passage contains a regexp.
         """
-        return (re.search(regexp, self.passage.title, flags) != None
-                or re.search(regexp, self.passage.text, flags) != None)
+        return (re.search(regexp, self.passage.title, flags) is not None
+                or re.search(regexp, self.passage.text, flags) is not None)
 
     def replaceRegexp(self, findRegexp, replaceRegexp, flags):
         """
