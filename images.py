@@ -19,7 +19,7 @@ def addURIPrefix(text, mimeType):
 
     # Correct certain MIME types
     if mimeType == "jpg":
-        mimeType == "jpeg"
+        mimeType = "jpeg"
     elif mimeType == "svg":
         mimeType += "+xml"
     return "data:" + mimeGroup + mimeType + ";base64," + text
