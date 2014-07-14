@@ -1086,7 +1086,7 @@ class ImageFrame(PassageFrame):
         """Saves the base64 image as a file."""
         t = self.widget.passage.text
         # Get the extension
-        extension = images.GetImageType(t)
+        extension = images.getImageType(t)
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 
@@ -1096,7 +1096,7 @@ class ImageFrame(PassageFrame):
 
                 dest = open(path, 'wb')
 
-                data = base64.b64decode(images.RemoveURIPrefix(t))
+                data = base64.b64decode(images.removeURIPrefix(t))
                 dest.write(data)
 
                 dest.close()
@@ -1128,7 +1128,7 @@ class ImageFrame(PassageFrame):
 
         # Convert bitmap to PNG
         bmp = bdo.GetBitmap()
-        self.widget.passage.text = images.BitmapToBase64PNG(bmp)
+        self.widget.passage.text = images.bitmapToBase64PNG(bmp)
         self.widget.updateBitmap()
         self.updateImage()
 

@@ -719,7 +719,7 @@ class StoryFrame(wx.Frame):
         """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
         file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
-        return (images.AddURIPrefix(file64, mimeType[1:]), title)
+        return (images.addURIPrefix(file64, mimeType[1:]), title)
 
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""

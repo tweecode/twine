@@ -318,7 +318,7 @@ class PassageWidget:
     def updateBitmap(self):
         """If an image passage, updates the bitmap to match the contained base64 data."""
         if self.passage.isImage():
-            self.bitmap = images.Base64ToBitmap(self.passage.text)
+            self.bitmap = images.base64ToBitmap(self.passage.text)
 
     def getConnectorLine(self, otherWidget, clipped=True):
         """
