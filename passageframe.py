@@ -351,7 +351,7 @@ class PassageFrame(wx.Frame):
 
         # Offer to create passage for broken links
         if self.app.config.ReadBool('createPassagePrompt'):
-            brokens = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            brokens = [link for link in self.widget.getBrokenLinks() if TweeLexer.linkStyle(link) == TweeLexer.BAD_LINK]
             if brokens :
                 if len(brokens) > 1:
                     brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
@@ -712,9 +712,8 @@ class PassageFrame(wx.Frame):
 
         # Remove externals
 
-        links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
-        for link in links:
-            if len(link) > 0:
+        for link in self.widget.passage.links:
+            if len(link) > 0 and TweeLexer.linkStyle(link) == TweeLexer.BAD_LINK:
                 if link in self.widget.parent.widgetDict:
                     outgoing.append(link)
                 elif not self.widget.parent.includedPassageExists(link):
