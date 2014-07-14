@@ -790,22 +790,23 @@ class PassageWidget:
         """Returns a dictionary with state information suitable for pickling."""
         return { 'selected': self.selected, 'pos': self.pos, 'passage': copy.copy(self.passage) }
 
-    def sort(first, second):
+    @staticmethod
+    def posCompare(first, second):
         """
         Sorts PassageWidgets so that the results appear left to right,
         top to bottom. A certain amount of slack is assumed here in
         terms of positioning.
         """
-        xDistance = int(first.pos[0] - second.pos[0])
-        yDistance = int(first.pos[1] - second.pos[1])
 
+        yDistance = int(first.pos[1] - second.pos[1])
         if abs(yDistance) > 5:
             return yDistance
-        else:
-            if xDistance != 0:
-                return xDistance
-            else:
-                return 1 # punt on ties
+
+        xDistance = int(first.pos[0] - second.pos[0])
+        if xDistance != 0:
+            return xDistance
+
+        return id(first) - id(second) # punt on ties
 
     def __repr__(self):
         return "<PassageWidget '" + self.passage.title + "'>"

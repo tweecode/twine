@@ -681,7 +681,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def sortedWidgets(self):
         """Returns a sorted list of widgets, left to right, top to bottom."""
-        return sorted(self.widgetDict.itervalues(), PassageWidget.sort)
+        return sorted(self.widgetDict.itervalues(), PassageWidget.posCompare)
 
     def taggedWidgets(self, tag):
         """Returns widgets that have the given tag"""
