@@ -239,7 +239,7 @@ class PassageWidget(object):
 
     def closeEditor(self, event = None):
         """Closes the PassageFrame associated with this, if it exists."""
-        try: self.passageFrame.closeFullscreen()
+        try: self.passageFrame.closeEditor()
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
