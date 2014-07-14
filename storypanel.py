@@ -363,7 +363,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.widgetDict = dict()
         self.visibleWidgets = None
         state = self.undoStack[self.undoPointer]
-        for widget in state['widgets']:
+        for widgetState in state['widgets']:
+            widget = PassageWidget(self, self.app, state = widgetState)
             self.widgetDict[widget.passage.title] = widget
         self.undoPointer -= 1
         self.Refresh()
