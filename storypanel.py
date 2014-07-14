@@ -83,7 +83,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
 
-    def newWidget(self, title = None, text = '', tags = [], pos = None, quietly = False, logicals = False):
+    def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
 
         # defaults
@@ -1112,7 +1112,7 @@ class StoryPanelContext(wx.Menu):
         pos.y = pos.y - offset[0]
         return pos
 
-    def newWidget(self, event, text = '', tags = []):
+    def newWidget(self, event, text = '', tags = ()):
         self.parent.newWidget(pos = self.getPos(), text = text, tags = tags)
 
 # drag and drop listener

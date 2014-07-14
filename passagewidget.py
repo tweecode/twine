@@ -16,7 +16,7 @@ class PassageWidget(object):
     logical coordinates. Use StoryPanel.toPixels() to convert.
     """
 
-    def __init__(self, parent, app, pos = (0, 0), title = '', text = '', tags = [], state = None):
+    def __init__(self, parent, app, pos = (0, 0), title = '', text = '', tags = (), state = None):
         # inner state
 
         self.parent = parent
