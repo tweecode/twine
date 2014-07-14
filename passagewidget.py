@@ -111,7 +111,7 @@ class PassageWidget:
 
         while self.intersectsAny() and turns < 99*griddivision:
             """Move in an Ulam spiral pattern: n spaces left, n spaces up, n+1 spaces right, n+1 spaces down"""
-            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1));
+            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1))
             movecount -= 1
             if movecount <= 0:
                 turns += 0.5
@@ -729,11 +729,11 @@ class PassageWidget:
                 height = size.height - titleBarHeight
 
                 # choose smaller of vertical and horizontal scale factor, to preserve aspect ratio
-                scale = min(width/float(self.bitmap.GetWidth()), height/float(self.bitmap.GetHeight()));
+                scale = min(width/float(self.bitmap.GetWidth()), height/float(self.bitmap.GetHeight()))
 
-                img = self.bitmap.ConvertToImage();
+                img = self.bitmap.ConvertToImage()
                 if scale != 1:
-                    img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
+                    img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight())
 
                 # offset image horizontally or vertically, to centre after scaling
                 offsetWidth = (width - img.GetWidth())/2

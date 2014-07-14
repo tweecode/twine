@@ -456,7 +456,7 @@ class StoryFrame(wx.Frame):
         if (dialog.ShowModal() == wx.ID_YES):
             self.Destroy()
             self.app.open(self.saveDestination)
-            self.dirty = False;
+            self.dirty = False
             self.checkClose(None)
 
     def checkClose(self, event):
@@ -478,7 +478,7 @@ class StoryFrame(wx.Frame):
             message = 'Do you want to save the changes to ' + title + ' before closing?'
             dialog = wx.MessageDialog(self, message, 'Unsaved Changes', \
                                       wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
-            result = dialog.ShowModal();
+            result = dialog.ShowModal()
             if (result == wx.ID_CANCEL):
                 event.Veto()
                 return
@@ -601,8 +601,8 @@ class StoryFrame(wx.Frame):
                         dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
                                                   + '" in this story. Replace it with the imported passage?',
                                                   'Passage Title Conflict', \
-                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
-                        check = dialog.ShowModal();
+                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+                        check = dialog.ShowModal()
                         if check == wx.ID_YES:
                             removedWidgets.append(t)
                         elif check == wx.ID_CANCEL:
@@ -654,7 +654,7 @@ class StoryFrame(wx.Frame):
             file = urlfile.read().encode('base64').replace('\n', '')
 
             # Now that the file's read, check the info
-            maintype = urlfile.info().getmaintype();
+            maintype = urlfile.info().getmaintype()
             if maintype != "image":
                 self.app.displayError("importing from the web: The server served " + maintype + " instead of an image",
                                       stacktrace=False)
@@ -1016,7 +1016,7 @@ You can also include URLs of .tws and .twee files, too.
         """
         if self.autobuildmenuitem.IsChecked():
             self.autobuildtimer.Start(5000)
-            self.autoBuildStart();
+            self.autoBuildStart()
         else:
             self.autobuildtimer.Stop()
 

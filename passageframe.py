@@ -303,7 +303,7 @@ class PassageFrame(wx.Frame):
             if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS:
                 self.widget.passage.tags.append(tag)
             if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
-                self.widget.parent.parent.autoBuildStart();
+                self.widget.parent.parent.autoBuildStart()
 
         self.SetTitle(self.title())
 
@@ -376,7 +376,7 @@ class PassageFrame(wx.Frame):
             for img in externalimages:
                 if not check:
                     dialog = wx.MessageDialog(self, 'Do you want to import the image files linked\nin this passage into the story file?', 'Import Images', \
-                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
                     check = dialog.ShowModal()
                     if check == wx.ID_NO:
                         break
@@ -605,21 +605,21 @@ class PassageFrame(wx.Frame):
         monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         body = self.bodyInput
-        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
+        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont)
         body.StyleClearAll()
         if css:
             for i in range(1,17):
                 body.StyleSetFont(i, monoFont)
-            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeStyler.MACRO_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeStyler.COMMENT_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeStyler.GOOD_LINK_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeStyler.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeStyler.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeStyler.PARAM_BOOL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeStyler.PARAM_VAR_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeStyler.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeStyler.MACRO_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeStyler.COMMENT_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeStyler.GOOD_LINK_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeStyler.MARKUP_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeStyler.MARKUP_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeStyler.PARAM_BOOL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeStyler.PARAM_VAR_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeStyler.GOOD_LINK_COLOR)
 
             for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG,
                       wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
@@ -1084,7 +1084,7 @@ class ImageFrame(PassageFrame):
 
     def saveImage(self, event = None):
         """Saves the base64 image as a file."""
-        t = self.widget.passage.text;
+        t = self.widget.passage.text
         # Get the extension
         extension = images.GetImageType(t)
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \

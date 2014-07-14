@@ -166,7 +166,7 @@ class TiddlyWiki:
         bodyEncoders = []
 
         rot13 = 'obfuscate' in self.storysettings and \
-            self.storysettings['obfuscate'] != 'off';
+            self.storysettings['obfuscate'] != 'off'
         # In case it was set to "swap" (legacy 1.4.1 file),
         # alter and remove old properties.
         if rot13:
@@ -274,7 +274,7 @@ class TiddlyWiki:
         divs = re.search(r'<div\s+id=(["\']?)store(?:A|-a)rea\1(?:\s+data-size=(["\']?)\d+\2)?(?:\s+hidden)?\s*>(.*)</div>', source,
                         re.DOTALL)
         if divs:
-            divs = divs.group(3);
+            divs = divs.group(3)
             # HTML may be obfuscated.
             obfuscatekey = ''
             storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
@@ -433,7 +433,7 @@ class Tiddler:
         if title:
             self.title = title.group(1)
             if obfuscatekey:
-                self.title = decode_obfuscate_swap(self.title);
+                self.title = decode_obfuscate_swap(self.title)
 
         # tags
 
@@ -442,7 +442,7 @@ class Tiddler:
         tags = tags_re.search(source)
         if tags and tags.group(1) != '':
             if obfuscatekey:
-                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ');
+                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ')
             else: self.tags = tags.group(1).split(' ')
 
         # creation date

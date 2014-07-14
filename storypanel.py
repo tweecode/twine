@@ -49,7 +49,7 @@ class StoryPanel(wx.ScrolledWindow):
         if (state):
             self.scale = state['scale']
             for widget in state['widgets']:
-                pw = PassageWidget(self, self.app, state = widget);
+                pw = PassageWidget(self, self.app, state = widget)
                 self.widgetDict[pw.passage.title] = pw
             if ('snapping' in state):
                 self.snapping = state['snapping']
@@ -986,7 +986,7 @@ class StoryPanel(wx.ScrolledWindow):
         if self.tooltipplace != None and self.trackinghover and not self.draggingWidgets:
             m = wx.GetMousePosition()
             p = self.tooltipplace.passage
-            length = len(p.text);
+            length = len(p.text)
             if p.isImage():
                 mimeType = "unknown"
                 mimeTypeRE = re.search(r"data:image/([^;]*);",p.text)
@@ -1156,7 +1156,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
             elif type == wx.DF_FILENAME:
 
                 imageRegex = r'\.(?:jpe?g|png|gif|webp|svg)$'
-                files = self.filedrop.GetFilenames();
+                files = self.filedrop.GetFilenames()
 
                 # Check if dropped files contains multiple images,
                 # so the correct dialogs are displayed
