@@ -585,30 +585,25 @@ class StoryFrame(wx.Frame):
             else:
                 tw.addTweeFromFilename(path)
 
-            allWidgetTitles = []
-
-            self.storyPanel.eachWidget(lambda e: allWidgetTitles.append(e.passage.title))
-
             # add passages for each of the tiddlers the TiddlyWiki saw
             if len(tw.tiddlers):
                 removedWidgets = []
-                skippedTitles = []
+                skippedTitles = set()
 
-                # Check for passage title conflicts
-                for title in tw.tiddlers.iterkeys():
+                # Ask user how to resolve any passage title conflicts
+                for title in tw.tiddlers.viewkeys() & self.storyPanel.widgetDict.viewkeys():
 
-                    if title in allWidgetTitles:
-                        dialog = wx.MessageDialog(self, 'There is already a passage titled "' + title \
-                                                  + '" in this story. Replace it with the imported passage?',
-                                                  'Passage Title Conflict', \
-                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
-                        check = dialog.ShowModal()
-                        if check == wx.ID_YES:
-                            removedWidgets.append(title)
-                        elif check == wx.ID_CANCEL:
-                            return
-                        elif check == wx.ID_NO:
-                            skippedTitles.append(title)
+                    dialog = wx.MessageDialog(self, 'There is already a passage titled "' + title \
+                                                + '" in this story. Replace it with the imported passage?',
+                                                'Passage Title Conflict', \
+                                                wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+                    check = dialog.ShowModal()
+                    if check == wx.ID_YES:
+                        removedWidgets.append(title)
+                    elif check == wx.ID_CANCEL:
+                        return
+                    elif check == wx.ID_NO:
+                        skippedTitles.add(title)
 
                 # Remove widgets elected to be replaced
                 for title in removedWidgets:
