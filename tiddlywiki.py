@@ -414,7 +414,7 @@ class Tiddler: # pylint: disable=old-style-class
             for c in text:
                 upper = c.isupper()
                 p = obfuscatekey.find(c.lower())
-                if p <> -1:
+                if p != -1:
                     if p % 2 == 0:
                         p1 = p + 1
                         if p1 >= len(obfuscatekey):
