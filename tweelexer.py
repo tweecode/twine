@@ -1,7 +1,7 @@
 import re
 import tweeregex
 
-class TweeLexer:
+class TweeLexer(object):
     """Abstract base class that does lexical scanning on TiddlyWiki formatted text.
     """
 

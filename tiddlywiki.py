@@ -14,7 +14,7 @@ import re, time, locale, os, codecs
 import tweeregex
 from tweelexer import TweeLexer
 
-class TiddlyWiki:
+class TiddlyWiki(object):
     """An entire TiddlyWiki."""
 
     def __init__(self, author = 'twee'):
@@ -329,8 +329,11 @@ class TiddlyWiki:
     INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
 
 
-class Tiddler:
-    """A single tiddler in a TiddlyWiki."""
+class Tiddler: # pylint: disable=old-style-class
+    """A single tiddler in a TiddlyWiki.
+
+    Note: Converting this to a new-style class breaks pickling of new TWS files on old Twine releases.
+    """
 
     def __init__(self, source, type = 'twee', obfuscatekey = ""):
         # cache of passage names linked from this one

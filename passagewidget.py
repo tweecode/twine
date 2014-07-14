@@ -2,7 +2,7 @@ import copy, math, colorsys, re, wx, tiddlywiki, tweelexer
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
-class PassageWidget:
+class PassageWidget(object):
     """
     A PassageWidget is a box standing in for a proxy for a single
     passage in a story. Users can drag them around, double-click
