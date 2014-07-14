@@ -67,7 +67,7 @@ class App(wx.App):
                     self.newStory()
 
         except ValueError:
-            None
+            pass
 
     def openDialog(self, event = None):
         """Opens a story file of the user's choice."""
