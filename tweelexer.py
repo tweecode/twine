@@ -227,7 +227,7 @@ class TweeLexer:
 
             # Inline styles
             elif not inSilence and nextToken == self.INLINE_STYLE:
-                if (style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE):
+                if style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE:
                     self.applyStyle(styleStart, pos-styleStart+2, style)
                     style = styleStack.pop() if styleStack else self.DEFAULT
                     styleStart = pos+2
@@ -301,10 +301,10 @@ class VerifyLexer(TweeLexer):
         return self.widget.parent.parent.header
 
     def passageExists(self, title):
-        return (self.widget.parent.passageExists(title, False))
+        return self.widget.parent.passageExists(title, False)
 
     def includedPassageExists(self, title):
-        return (self.widget.parent.includedPassageExists(title))
+        return self.widget.parent.includedPassageExists(title)
 
     def check(self):
         """Collect error messages for this passage, using the overridden applyStyles() method."""

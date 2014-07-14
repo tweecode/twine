@@ -98,7 +98,7 @@ class TiddlyWiki:
         output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, "+tz_offset).decode(strftime_encoding))
 
         # Insert the test play "start at passage" value
-        if (startAt):
+        if startAt:
             output = output.replace('"START_AT"', '"' + startAt.replace('\\', r'\\').replace('"', '\"') + '"')
         else:
             output = output.replace('"START_AT"', '""')
@@ -195,7 +195,7 @@ class TiddlyWiki:
             output = output.replace('"STORY"', storycode)
         else:
             output += storycode
-            if (header):
+            if header:
                 footername = header.path + 'footer.html'
                 if os.path.exists(footername):
                     output += self.read(footername)
@@ -458,7 +458,7 @@ class Tiddler:
         self.modified = time.localtime()
         modified_re = re.compile(r'(?:data\-)?modified="([^"]*?)"')
         modified = modified_re.search(source)
-        if (modified):
+        if modified:
             self.modified = decode_date(modified.group(1))
 
         # modifier
@@ -483,7 +483,7 @@ class Tiddler:
         self.text = ''
         text_re = re.compile(r'<div(?:[^"]|(?:".*?"))*?>((?:[^<]|<(?!\/div>))*)<\/div>')
         text = text_re.search(source)
-        if (text):
+        if text:
             self.text = decode_text(text.group(1))
             if obfuscatekey:
                 self.text = decode_obfuscate_swap(self.text)

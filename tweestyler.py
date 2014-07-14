@@ -33,11 +33,11 @@ class TweeStyler(TweeLexer):
 
         # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
         for i in range(0,8):
-            if (i & 1):
+            if i & 1:
                 self.ctrl.StyleSetBold(i, True)
-            if (i & 2):
+            if i & 2:
                 self.ctrl.StyleSetItalic(i, True)
-            if (i & 4):
+            if i & 4:
                 self.ctrl.StyleSetUnderline(i, True)
 
         self.ctrl.StyleSetBold(self.GOOD_LINK, True)
@@ -98,10 +98,10 @@ class TweeStyler(TweeLexer):
         return self.ctrl.GetTextUTF8()
 
     def passageExists(self, title):
-        return (self.frame.widget.parent.passageExists(title, False))
+        return self.frame.widget.parent.passageExists(title, False)
 
     def includedPassageExists(self, title):
-        return (self.frame.widget.parent.includedPassageExists(title))
+        return self.frame.widget.parent.includedPassageExists(title)
 
     def applyStyle(self, start, end, style):
         self.ctrl.StartStyling(start, self.TEXT_STYLES)

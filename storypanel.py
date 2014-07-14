@@ -46,12 +46,12 @@ class StoryPanel(wx.ScrolledWindow):
         self.tooltipobj = None
         self.textDragSource = None
 
-        if (state):
+        if state:
             self.scale = state['scale']
             for widget in state['widgets']:
                 pw = PassageWidget(self, self.app, state = widget)
                 self.widgetDict[pw.passage.title] = pw
-            if ('snapping' in state):
+            if 'snapping' in state:
                 self.snapping = state['snapping']
         else:
             self.scale = 1
@@ -123,7 +123,7 @@ class StoryPanel(wx.ScrolledWindow):
 
             for coord in range(2):
                 distance = pos[coord] % StoryPanel.GRID_SPACING
-                if (distance > StoryPanel.GRID_SPACING / 2):
+                if distance > StoryPanel.GRID_SPACING / 2:
                     pos[coord] += StoryPanel.GRID_SPACING - distance
                 else:
                     pos[coord] -= distance
@@ -738,7 +738,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def includedPassageExists(self, title):
         """Add a title to the set of external passages"""
-        return (title in self.includedPassages)
+        return title in self.includedPassages
 
     def refreshIncludedPassageList(self):
         def callback(passage):
@@ -804,21 +804,20 @@ class StoryPanel(wx.ScrolledWindow):
         """
         oldScale = self.scale
 
-        if (isinstance(scale, float)):
+        if isinstance(scale, float):
             self.scale = scale
-        else:
-            if (scale == 'in'):
-                self.scale += 0.2
-            if (scale == 'out'):
-                self.scale -= 0.2
-            if (scale == 'fit'):
-                self.zoom(1.0)
-                neededSize = self.toPixels(self.getSize(), scaleOnly = True)
-                actualSize = self.GetSize()
-                widthRatio = actualSize.width / neededSize[0]
-                heightRatio = actualSize.height / neededSize[1]
-                self.scale = min(widthRatio, heightRatio)
-                self.Scroll(0, 0)
+        elif scale == 'in':
+            self.scale += 0.2
+        elif scale == 'out':
+            self.scale -= 0.2
+        elif scale == 'fit':
+            self.zoom(1.0)
+            neededSize = self.toPixels(self.getSize(), scaleOnly = True)
+            actualSize = self.GetSize()
+            widthRatio = actualSize.width / neededSize[0]
+            heightRatio = actualSize.height / neededSize[1]
+            self.scale = min(widthRatio, heightRatio)
+            self.Scroll(0, 0)
 
         self.scale = max(self.scale, 0.2)
         scaleDelta = self.scale - oldScale

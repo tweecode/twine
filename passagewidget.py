@@ -133,7 +133,7 @@ class PassageWidget:
         """
         Returns whether this widget's passage contains a regexp.
         """
-        return (re.search(regexp, self.passage.title, flags) != None \
+        return (re.search(regexp, self.passage.title, flags) != None
                 or re.search(regexp, self.passage.text, flags) != None)
 
     def replaceRegexp(self, findRegexp, replaceRegexp, flags):
@@ -176,7 +176,7 @@ class PassageWidget:
         exclusive to prevent other widgets from being deselected.
         """
 
-        if (exclusive):
+        if exclusive:
             self.parent.eachWidget(lambda i: i.setSelected(False, False))
 
         old = self.selected
@@ -285,13 +285,13 @@ class PassageWidget:
 
         #Enforce positive coordinates
         if not 'Twine.hide' in self.passage.tags:
-            if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+            if self.pos[0] < 0 or self.pos[1] < 0:
                 return True
 
         # we do this manually so we don't have to go through all of them
 
-        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgetDict.itervalues()):
-            if (widget != self) and (self.intersects(widget)):
+        for widget in self.parent.notDraggingWidgets if dragging else self.parent.widgetDict.itervalues():
+            if widget != self and self.intersects(widget):
                 return True
 
         return False

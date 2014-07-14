@@ -124,10 +124,10 @@ class PassageFrame(wx.Frame):
 
         helpMenu = wx.Menu()
 
-        if (self.widget.passage.isStylesheet()):
+        if self.widget.passage.isStylesheet():
             helpMenu.Append(PassageFrame.HELP1, 'About Stylesheets')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/stylesheet'), id = PassageFrame.HELP1)
-        elif (self.widget.passage.isScript()):
+        elif self.widget.passage.isScript():
             helpMenu.Append(PassageFrame.HELP1, 'About Scripts')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/script'), id = PassageFrame.HELP1)
         else:
@@ -322,7 +322,7 @@ class PassageFrame(wx.Frame):
             except:
                 pass
 
-        if (self.syncTimer):
+        if self.syncTimer:
             self.syncTimer.cancel()
 
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
@@ -462,7 +462,7 @@ class PassageFrame(wx.Frame):
         The type parameter should be one of the constants defined in
         PassageSearchFrame, e.g. FIND_TAB or REPLACE_TAB.
         """
-        if (not hasattr(self, 'searchFrame')):
+        if not hasattr(self, 'searchFrame'):
             self.searchFrame = PassageSearchFrame(self, self, self.app, type)
         else:
             try:
@@ -1020,7 +1020,7 @@ class ImageFrame(PassageFrame):
         def reallySync(self):
             self.widget.parent.Refresh()
 
-        if (self.syncTimer):
+        if self.syncTimer:
             self.syncTimer.cancel()
 
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})

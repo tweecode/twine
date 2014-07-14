@@ -56,10 +56,10 @@ def GetImageType(text):
     """Returns the part of the Data URI's MIME type that refers to the type of the image."""
     # By using (\w+), "svg+xml" becomes "svg"
     search = re.search(r"data:image/(\w+)", text)
-    if (search):
+    if search:
         return "." + search.group(1)
     #Fallback
     search = re.search(r"application:x-(\w+)", text)
-    if (search):
+    if search:
         return "." + search.group(1)
     return ""

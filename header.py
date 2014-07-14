@@ -86,7 +86,7 @@ class Header(object):
 
     def isEndTag(self, name, tag):
         """Return true if the name is equal to an endtag."""
-        return (name == ('end' + tag))
+        return name == ('end' + tag)
 
     def nestedMacros(self):
         """Returns a list of macro names that support nesting."""

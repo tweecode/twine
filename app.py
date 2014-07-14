@@ -142,7 +142,7 @@ class App(wx.App):
 
     def showPrefs(self, event = None):
         """Shows the preferences dialog."""
-        if (not hasattr(self, 'prefFrame')):
+        if not hasattr(self, 'prefFrame'):
             self.prefFrame = PreferenceFrame(self)
         else:
             try:

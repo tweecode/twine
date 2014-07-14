@@ -27,7 +27,7 @@ class StoryFrame(wx.Frame):
 
         # inner state
 
-        if (state):
+        if state:
             self.buildDestination = state.get('buildDestination', '')
             self.saveDestination = state.get('saveDestination', '')
             self.setTarget(state.get('target', 'sugarcane').lower())
@@ -453,7 +453,7 @@ class StoryFrame(wx.Frame):
         message = 'Revert to the last saved version of ' + title + '?'
         dialog = wx.MessageDialog(self, message, 'Revert to Saved', wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
 
-        if (dialog.ShowModal() == wx.ID_YES):
+        if dialog.ShowModal() == wx.ID_YES:
             self.Destroy()
             self.app.open(self.saveDestination)
             self.dirty = False
@@ -470,7 +470,7 @@ class StoryFrame(wx.Frame):
         If this instance's dirty flag is set, asks the user if they want to save the changes.
         """
 
-        if (self.dirty):
+        if self.dirty:
             bits = os.path.splitext(self.saveDestination)
             title = '"' + os.path.basename(bits[0]) + '"'
             if title == '""': title = 'your story'
@@ -479,10 +479,10 @@ class StoryFrame(wx.Frame):
             dialog = wx.MessageDialog(self, message, 'Unsaved Changes', \
                                       wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
             result = dialog.ShowModal()
-            if (result == wx.ID_CANCEL):
+            if result == wx.ID_CANCEL:
                 event.Veto()
                 return
-            elif (result == wx.ID_NO):
+            elif result == wx.ID_NO:
                 self.dirty = False
             else:
                 self.save(None)
@@ -822,7 +822,7 @@ You can also include URLs of .tws and .twee files, too.
         editingWidget.openEditor()
 
     def save(self, event=None):
-        if (self.saveDestination == ''):
+        if self.saveDestination == '':
             self.saveAs()
             return
 
@@ -1063,7 +1063,7 @@ You can also include URLs of .tws and .twee files, too.
         Shows a StoryMetadataFrame for this frame.
         """
 
-        if (not hasattr(self, 'metadataFrame')):
+        if not hasattr(self, 'metadataFrame'):
             self.metadataFrame = StoryMetadataFrame(parent=self, app=self.app)
         else:
             try:
@@ -1078,7 +1078,7 @@ You can also include URLs of .tws and .twee files, too.
         Shows a StoryFindFrame for this frame.
         """
 
-        if (not hasattr(self, 'findFrame')):
+        if not hasattr(self, 'findFrame'):
             self.findFrame = StoryFindFrame(self.storyPanel, self.app)
         else:
             try:
@@ -1092,7 +1092,7 @@ You can also include URLs of .tws and .twee files, too.
         """
         Shows a StoryReplaceFrame for this frame.
         """
-        if (not hasattr(self, 'replaceFrame')):
+        if not hasattr(self, 'replaceFrame'):
             self.replaceFrame = StoryReplaceFrame(self.storyPanel, self.app)
         else:
             try:
