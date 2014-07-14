@@ -91,7 +91,7 @@ class Header(object):
     def nestedMacros(self):
         """Returns a list of macro names that support nesting."""
         return ['if', 'silently', 'nobr']
-    
+
     def passageTitleColor(self, passage):
         """
         Returns a tuple pair of colours for a given passage's title.
@@ -107,17 +107,17 @@ class Header(object):
             return ((28, 89, 74), (41, 214, 113))
         elif passage.title == "Start":
             return ("#4ca333", "#4bdb24")
-        
+
     def invisiblePassageTags(self):
         """Returns a list of passage tags which, for whatever reason, shouldn't be displayed on the Story Map."""
         return frozenset()
-    
+
     def passageChecks(self):
         """
         Returns tuple of list of functions to perform on the passage whenever it's closed.
         The main tuple's three lists are: Twine checks, then Stylesheet checks, then Script checks.
         """
-        
+
         """
         Twine code checks
         Each function should return an iterable (or be a generator) of tuples containing:
@@ -131,14 +131,14 @@ class Header(object):
             if style == tweelexer.TweeLexer.BAD_MACRO:
                 matchKind = "start" if "end" in tag else "end"
                 yield ("The macro tag " + tag + "\ndoes not have a matching " + matchKind + " tag.", None)
-        
+
         def checkInequalityExpression(tag, start, end, style, passage=None):
             if style == tweelexer.TweeLexer.MACRO:
                 r = re.search(r"\s+((and|or|\|\||&&)\s+([gl]te?|is|n?eq|(?:[=!<]|>(?!>))=?))\s+" + tweeregex.UNQUOTED_REGEX, tag)
                 if r:
                     yield (tag + ' contains "' + r.group(1) + '", which isn\'t valid code.\n'
                             + 'There should probably be an expression, or a variable, between "' + r.group(2) + '" and "' + r.group(3) + '".', None)
-        
+
         def checkIfMacro(tag, start, end, style, passage=None):
             if style == tweelexer.TweeLexer.MACRO:
                 ifMacro = re.search(tweeregex.MACRO_REGEX.replace(r"([^>\s]+)", r"(if\b|else ?if\b)"), tag)
@@ -163,7 +163,7 @@ class Header(object):
                 if regex:
                     yield (r"You appear to have misspelled 'http" + regex.group(1) + "://'.",
                             (start+regex.start(0), "http" + regex.group(1) + "://", start+regex.end(0)))
-            
+
         """
         Script checks
         """
@@ -175,7 +175,7 @@ class Header(object):
                 warning = "This script contains " + scriptTag.group(0) + ".\nScript passages should only contain Javascript code, not raw HTML."
                 ret.append((warning, (scriptTag.start(0), "", scriptTag.end(0))))
             return ret
-        
+
         return ([checkUnmatchedMacro, checkInequalityExpression, checkIfMacro, checkHTTPSpelling],[],[checkScriptTagsInScriptPassage])
 
     @staticmethod

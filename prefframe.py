@@ -53,7 +53,7 @@ class PreferenceFrame(wx.Frame):
 
         fsLineHeightSizer.Add(self.fsLineHeight, flag = wx.ALIGN_CENTER_VERTICAL)
         fsLineHeightSizer.Add(wx.StaticText(fsLineHeightPanel, label = '%'), flag = wx.ALIGN_CENTER_VERTICAL)
-        
+
         def checkbox(self, name, label, panel=panel):
             setattr(self, name, wx.CheckBox(panel, label=label))
             attr = getattr(self, name)
@@ -65,7 +65,7 @@ class PreferenceFrame(wx.Frame):
         checkbox(self, "imageArrows", 'Connector arrows for images and stylesheets')
         checkbox(self, "displayArrows", 'Connector arrows for <<display>>ed passages')
         checkbox(self, "createPassagePrompt", 'Offer to create new passages for broken links')
-        checkbox(self, "importImagePrompt", 'Offer to import externally linked images')  
+        checkbox(self, "importImagePrompt", 'Offer to import externally linked images')
         checkbox(self, "passageWarnings", 'Warn about possible passage code errors')
 
         panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
@@ -96,7 +96,7 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(self.importImagePrompt)
         panelSizer.Add((1,2))
         panelSizer.Add(self.passageWarnings)
-        
+
         panelSizer.Fit(self)
         borderSizer.Fit(self)
         self.SetIcon(self.app.icon)

@@ -54,15 +54,15 @@ class PassageFrame(wx.Frame):
 
         passageMenu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.save, id = wx.ID_SAVE)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_VERIFY, '&Verify Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: (self.widget.verifyPassage(self), self.offerAssistance()),\
                   id = PassageFrame.PASSAGE_VERIFY)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_TEST_HERE, '&Test Play From Here\tCtrl-T')
         self.Bind(wx.EVT_MENU, lambda e: self.widget.parent.parent.testBuild(e, startAt = self.widget.passage.title),\
                   id = PassageFrame.PASSAGE_TEST_HERE)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
 
@@ -133,16 +133,16 @@ class PassageFrame(wx.Frame):
         else:
             helpMenu.Append(PassageFrame.HELP1, 'About Passages')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/passage'), id = PassageFrame.HELP1)
-    
+
             helpMenu.Append(PassageFrame.HELP2, 'About Text Syntax')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/syntax'), id = PassageFrame.HELP2)
-    
+
             helpMenu.Append(PassageFrame.HELP3, 'About Links')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/link'), id = PassageFrame.HELP3)
-            
+
             helpMenu.Append(PassageFrame.HELP4, 'About Macros')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/macro'), id = PassageFrame.HELP4)
-    
+
             helpMenu.Append(PassageFrame.HELP5, 'About Tags')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/tag'), id = PassageFrame.HELP5)
 
@@ -235,7 +235,7 @@ class PassageFrame(wx.Frame):
             self.bodyInput.SetSelection(-1, -1)
 
         # Hack to force titles (>18 char) to display correctly.
-        # NOTE: stops working if moved above bodyInput code. 
+        # NOTE: stops working if moved above bodyInput code.
         self.titleInput.SetInsertionPoint(0)
 
         self.SetIcon(self.app.icon)
@@ -245,7 +245,7 @@ class PassageFrame(wx.Frame):
         if not title:
             title = self.widget.passage.title
         return title + ' - ' + self.widget.parent.parent.title + ' - ' + self.app.NAME + ' ' + versionString
-    
+
     def syncInputs(self):
         """Updates the inputs based on the passage's state."""
         self.titleInput.SetValue(self.widget.passage.title)
@@ -342,13 +342,13 @@ class PassageFrame(wx.Frame):
                                               title = self.title(), \
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
-        
+
     def offerAssistance(self):
         """
         Offer to fulfill certain incomplete tasks evident from the state of the passage text.
         (Technically, none of this needs to be on passageFrame instead of passageWidget.)
         """
-        
+
         # Offer to create passage for broken links
         if self.app.config.ReadBool('createPassagePrompt'):
             brokens = links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
@@ -365,7 +365,7 @@ class PassageFrame(wx.Frame):
                         self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
                 elif check == wx.ID_CANCEL:
                     return False
-        
+
         # Offer to import external images
         if self.app.config.ReadBool('importImagePrompt'):
             regex = tweeregex.EXTERNAL_IMAGE_REGEX
@@ -379,7 +379,7 @@ class PassageFrame(wx.Frame):
                                                   wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
                     check = dialog.ShowModal()
                     if check == wx.ID_NO:
-                        break  
+                        break
                     elif check == wx.ID_CANCEL:
                         return False
                 # Download the image if it's at an absolute URL
@@ -396,38 +396,38 @@ class PassageFrame(wx.Frame):
                     if not imgpassagename:
                         continue
                     downloadedurls[imgurl] = imgpassagename
-            
+
             # Replace all found images
             for old, new in downloadedurls.iteritems():
                 self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
                                                   lambda m: m.group(0).replace(old, new), self.widget.passage.text)
-        
+
         if self.bodyInput.GetText() != self.widget.passage.text:
             self.bodyInput.SetText(self.widget.passage.text)
-        
+
         # If it's StoryIncludes, update the links
         if self.widget.passage.title == "StoryIncludes":
             self.widget.parent.refreshIncludedPassageList()
-        
+
         return True
-        
+
     def closeEditor(self, event = None):
         """
         Do extra stuff on closing the editor
         """
-        
+
         # Show warnings, do replacements
         if self.app.config.ReadBool('passageWarnings'):
             if self.widget.verifyPassage(self) == -1: return
-        
+
         # Do help
         if not self.offerAssistance():
             return
-        
+
         #Closes this editor's fullscreen counterpart, if any.
         try: self.fullscreen.Destroy()
         except: pass
-        
+
         self.widget.passage.update()
         event.Skip()
 
@@ -814,14 +814,14 @@ class StorySettingsFrame(PassageFrame):
 
         # Read the storysettings definitions for this header
         self.storySettingsData = self.widget.parent.parent.header.storySettings()
-        
+
         if not self.storySettingsData or type(self.storySettingsData) is str:
             label = self.storySettingsData or "The currently selected story format does not use StorySettings."
             allSizer.Add(wx.StaticText(self.panel, label = label),flag=wx.ALL|wx.EXPAND, border=metrics.size('windowBorder'))
             self.storySettingsData = {}
-        
+
         self.ctrls = {}
-        
+
         for data in self.storySettingsData:
             ctrlset = []
             name = ''
@@ -839,7 +839,7 @@ class StorySettingsFrame(PassageFrame):
                               self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
                 allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
                 ctrlset.append(checkbox)
-            
+
             elif data["type"] == "text":
                 textlabel = wx.StaticText(self.panel, label = data["label"])
                 textctrl = wx.TextCtrl(self.panel)
@@ -861,20 +861,20 @@ class StorySettingsFrame(PassageFrame):
                 ctrlset += [textlabel, textctrl]
             else:
                 continue
-            
+
             if "desc" in data:
                 desc = wx.StaticText(self.panel, label = data["desc"])
                 allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
                 ctrlset.append(desc)
-            
+
             self.ctrls[name] = ctrlset
-            
+
         self.SetIcon(self.app.icon)
         self.SetTitle(self.title())
         self.Layout()
         self.enableCtrls()
         self.Show(True)
-    
+
     def enableCtrls(self):
         # Check if each ctrl has a requirement or an incompatibility,
         # look it up, and enable/disable if so
@@ -885,7 +885,7 @@ class StorySettingsFrame(PassageFrame):
                     set = self.getSetting(data['requires'])
                     for i in self.ctrls[name]:
                         i.Enable(set not in ["off", "false", '0'])
-    
+
     def getSetting(self, valueName):
         search = re.search(r"(?:^|\n)"+valueName + r"\s*:\s*(\w*)\s*(?:\n|$)", self.widget.passage.text, flags=re.I)
         if search:

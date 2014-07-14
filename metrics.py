@@ -67,11 +67,11 @@ def size(type):
         if sys.platform == 'win32': return 16
         if sys.platform == 'darwin': return 20
         return 11
-    
+
     if type == 'storySettingsWidth':
         if sys.platform == 'darwin': return 550
         return 450
-    
+
     if type == 'storySettingsHeight':
         if sys.platform == 'darwin': return 650
         return 550

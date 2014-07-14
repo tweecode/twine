@@ -104,27 +104,27 @@ class TiddlyWiki:
             output = output.replace('"START_AT"', '""')
 
         # Embed any engine related files required by the header.
-        
+
         embedded = header.filesToEmbed()
         for key in embedded.keys():
             output = insertEngine(app, output, embedded[key], key)
             if not output: return ''
 
         # Insert the Backup Story Title
-        
+
         if defaultName:
             name = defaultName.replace('"',r'\"')
             # Just gonna assume the <title> has no attributes
             output = re.sub(r'<title>.*?<\/title>', '<title>'+name+'</title>', output, count=1, flags=re.I|re.M) \
                 .replace('"Untitled Story"', '"'+name+'"')
-                
+
         # Insert the metadata
-        
+
         metatags = ''
         for name, content in metadata.iteritems():
             if content:
                 metatags += '<meta name="' + name.replace('"','&quot;') + '" content="' + content.replace('"','&quot;') + '">\n'
-        
+
         if metatags:
             output = re.sub(r'<\/title>\s*\n?', lambda a: a.group(0) + metatags, output, flags=re.I, count=1)
 
@@ -132,7 +132,7 @@ class TiddlyWiki:
         jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] != "off"
         modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] != "off"
         blankCSS = 'blankcss' in self.storysettings and self.storysettings['blankcss'] != "off"
-        
+
         for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
             if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
                 jquery = True
@@ -142,7 +142,7 @@ class TiddlyWiki:
                 blankCSS = True
             if jquery and modernizr and noDefaultCSS:
                 break
-        
+
         # Insert jQuery
         if jquery:
             output = insertEngine(app, output, app.builtinTargetsPath + 'jquery.js', '"JQUERY"')
@@ -156,7 +156,7 @@ class TiddlyWiki:
             if not output: return
         else:
             output = output.replace('"MODERNIZR"','')
-            
+
         # Remove default CSS
         if blankCSS:
             # Just gonna assume the html id is quoted correctly if at all.
@@ -190,7 +190,7 @@ class TiddlyWiki:
 
         if output.count('"STORY_SIZE"') > 0:
             output = output.replace('"STORY_SIZE"', '"' + str(len(storyfragments)) + '"')
-        
+
         if output.count('"STORY"') > 0:
             output = output.replace('"STORY"', storycode)
         else:
@@ -424,7 +424,7 @@ class Tiddler:
                     c = obfuscatekey[p1].upper() if upper else obfuscatekey[p1]
                 r = r + c
             return r
-        
+
         # title
 
         self.title = 'Untitled Passage'
@@ -536,10 +536,10 @@ class Tiddler:
 
     def isScript(self):
         return 'script' in self.tags
-    
+
     def isInfoPassage(self):
         return self.title in TiddlyWiki.INFO_PASSAGES
-    
+
     def isStoryText(self):
         """ Excludes passages which do not contain renderable Twine code. """
         return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
@@ -570,14 +570,14 @@ class Tiddler:
         macros = set()
         links = set()
         variableLinks = set()
-        
+
         def addLink(link):
             style = TweeLexer.linkStyle(link)
             if style == TweeLexer.PARAM:
                 variableLinks.add(link)
             elif style != TweeLexer.EXTERNAL:
                 links.add(link)
-        
+
         # <<display>>
         self.displays = list(set(re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)))
 
@@ -597,7 +597,7 @@ class Tiddler:
         for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             if m.group(5):
                 addLink(m.group(5))
-                
+
         # HTML data-passage links
         for m in re.finditer(tweeregex.HTML_REGEX, self.text):
             attrs = m.group(2)
@@ -609,7 +609,7 @@ class Tiddler:
                         images.add(link)
                     else:
                         addLink(link)
-                
+
         # <<choice passage_name [link_text]>>
         for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
             item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)

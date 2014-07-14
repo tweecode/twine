@@ -25,7 +25,7 @@ class PassageWidget:
         self.brokenEmblem = wx.Bitmap(self.app.iconsPath + 'brokenemblem.png')
         self.externalEmblem = wx.Bitmap(self.app.iconsPath + 'externalemblem.png')
         self.paintBuffer = wx.MemoryDC()
-        self.paintBufferBounds = None        
+        self.paintBufferBounds = None
         if state:
             self.passage = state['passage']
             self.pos = list(pos) if pos != (0,0) else state['pos']
@@ -243,7 +243,7 @@ class PassageWidget:
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
-            
+
     def verifyPassage(self, window):
         """
         Check that the passage syntax is well-formed.
@@ -253,7 +253,7 @@ class PassageWidget:
         checks = tweelexer.VerifyLexer(self).check()
 
         problems = 0
-        
+
         oldtext = passage.text
         newtext = ""
         index = 0
@@ -275,9 +275,9 @@ class PassageWidget:
                     .ShowModal()
                 if answer == wx.ID_NO:
                     return problems
-                    
+
             passage.text = newtext + oldtext[index:]
-        
+
         return problems
 
     def intersectsAny(self, dragging = False):
@@ -319,7 +319,7 @@ class PassageWidget:
         """If an image passage, updates the bitmap to match the contained base64 data."""
         if self.passage.isImage():
             self.bitmap = images.Base64ToBitmap(self.passage.text)
-        
+
     def getConnectorLine(self, otherWidget, clipped=True):
         """
         Get the line that would be drawn between this widget and another.
@@ -347,13 +347,13 @@ class PassageWidget:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)
-        
+
         if imageArrows:
             for link in self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)
-            
+
             if self.passage.isStylesheet():
                 for t in self.passage.tags:
                     if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
@@ -416,7 +416,7 @@ class PassageWidget:
             arrowheadr = geometry.endPointProjectedFrom((start, end), PassageWidget.ARROWHEAD_ANGLE,  length)
             arrowheadl = geometry.endPointProjectedFrom((start, end), 0 - PassageWidget.ARROWHEAD_ANGLE, length)
         return line, [(arrowheadl, end, arrowheadr)]
-    
+
     def paint(self, dc):
         """
         Handles paint events, either blitting our paint buffer or

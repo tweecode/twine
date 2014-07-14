@@ -17,9 +17,9 @@ class StoryMetadataFrame(wx.Frame):
         panel.SetSizer(borderSizer)
         panelSizer = wx.FlexGridSizer(8, 1, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
-        
+
         ctrlset = {}
-        
+
         for name, desc in \
             [
               ("identity", ("What your work identifies as:",
@@ -37,14 +37,14 @@ class StoryMetadataFrame(wx.Frame):
             textctrl.SetValue(parent.metadata.get(name, ''))
             textctrl.Bind(wx.EVT_TEXT, lambda e, name=name, textctrl=textctrl:
                               self.saveSetting(name,textctrl.GetValue()))
-            
+
             hSizer = wx.BoxSizer(wx.HORIZONTAL)
             hSizer.Add(textlabel,1,wx.ALIGN_LEFT|wx.ALIGN_TOP)
             hSizer.Add(textctrl,1,wx.EXPAND)
             panelSizer.Add(hSizer,flag=wx.ALL|wx.EXPAND)
             panelSizer.Add(wx.StaticText(panel, label = desc[1]))
             panelSizer.Add((1,2))
-        
+
         panelSizer.Fit(self)
         borderSizer.Fit(self)
         self.SetIcon(self.app.icon)

@@ -30,8 +30,8 @@ class TweeStyler(TweeLexer):
 
         for i in self.STYLE_CONSTANTS:
             self.ctrl.StyleSetFont(i, bodyFont)
-        
-        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof        
+
+        # Styles 1-8 are BOLD, ITALIC, UNDERLINE, and bitwise combinations thereof
         for i in range(0,8):
             if (i & 1):
                 self.ctrl.StyleSetBold(i, True)

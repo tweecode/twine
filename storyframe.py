@@ -954,7 +954,7 @@ You can also include URLs of .tws and .twee files, too.
     def readIncludes(self, lines, callback, silent=False):
         """
         Examines all of the source files included via StoryIncludes, and performs a callback on each passage found.
-        
+
         callback is a function that takes 1 Tiddler object.
         """
         twinedocdir = self.getLocalDir()
@@ -1129,7 +1129,7 @@ You can also include URLs of .tws and .twee files, too.
 
             tw = TiddlyWiki()
             for widget in self.storyPanel.sortedWidgets():
-                # Exclude images from RTF, they appear as large unreadable blobs of base64 text. 
+                # Exclude images from RTF, they appear as large unreadable blobs of base64 text.
                 if 'Twine.image' not in widget.passage.tags:
                     tw.addTiddler(widget.passage)
 

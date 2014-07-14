@@ -354,7 +354,7 @@ class StoryPanel(wx.ScrolledWindow):
         for widget in self.widgetDict.itervalues(): state['widgets'].append(widget.serialize())
         self.undoStack.append(state)
         self.undoPointer += 1
-        
+
     def undo(self):
         """
         Restores the undo state at self.undoPointer to the current view, then
@@ -723,7 +723,7 @@ class StoryPanel(wx.ScrolledWindow):
     def passageExists(self, title, includeIncluded = True):
         """
         Returns whether a given passage exists in the story.
-        
+
         If includeIncluded then will also check external passages referenced via StoryIncludes
         """
         return self.findWidget(title) != None or (includeIncluded and self.includedPassageExists(title))
@@ -739,7 +739,7 @@ class StoryPanel(wx.ScrolledWindow):
     def includedPassageExists(self, title):
         """Add a title to the set of external passages"""
         return (title in self.includedPassages)
-    
+
     def refreshIncludedPassageList(self):
         def callback(passage):
             if passage.title == 'StoryIncludes' or self.findWidget(passage.title):
@@ -1086,7 +1086,7 @@ class StoryPanelContext(wx.Menu):
             pastePassage = wx.MenuItem(self, wx.NewId(), 'Paste Passage Here')
             self.AppendItem(pastePassage)
             self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(self.getPos()), id = pastePassage.GetId())
-            
+
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
@@ -1111,7 +1111,7 @@ class StoryPanelContext(wx.Menu):
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
         return pos
-    
+
     def newWidget(self, event, text = '', tags = []):
         self.parent.newWidget(pos = self.getPos(), text = text, tags = tags)
 
