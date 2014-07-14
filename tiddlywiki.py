@@ -350,7 +350,7 @@ class Tiddler:
     def __getstate__(self):
         """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
         return {
-            'created': self.created,
+            'created': time.localtime(),
             'modified': self.modified,
             'title': self.title,
             'tags': self.tags,
@@ -369,7 +369,7 @@ class Tiddler:
 
         # we were just born
 
-        self.created = self.modified = time.localtime()
+        self.modified = time.localtime()
         # used only during builds
         self.pos = [0,0]
 
@@ -443,14 +443,6 @@ class Tiddler:
                 self.tags = decode_obfuscate_swap(tags.group(1)).split(' ');
             else: self.tags = tags.group(1).split(' ')
 
-        # creation date
-
-        self.created = time.localtime()
-        created_re = re.compile(r'(?:data\-)?created="([^"]*?)"')
-        created = created_re.search(source)
-        if created:
-            self.created = decode_date(created.group(1))
-
         # modification date
 
         self.modified = time.localtime()
@@ -492,7 +484,6 @@ class Tiddler:
         args = (
             ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
             ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
-            ('created', encode_date(self.created)),
             )
 
         return u'<div%s%s>%s</div>' % (
