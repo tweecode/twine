@@ -18,11 +18,11 @@ class PassageSearchFrame(wx.Frame):
 
         self.notebook = wx.Notebook(panel)
         self.findPanel = FindPanel(self.notebook, onFind = self.passageFrame.findRegexp, \
-                                   onClose = lambda: self.Close())
+                                   onClose = self.Close)
         self.replacePanel = ReplacePanel(self.notebook, onFind = self.passageFrame.findRegexp, \
                                          onReplace = self.passageFrame.replaceOneRegexp, \
                                          onReplaceAll = self.passageFrame.replaceAllRegexps, \
-                                         onClose = lambda: self.Close())
+                                         onClose = self.Close)
         self.notebook.AddPage(self.findPanel, 'Find')
         self.notebook.AddPage(self.replacePanel, 'Replace')
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onChangeTab)
