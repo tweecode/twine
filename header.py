@@ -2,6 +2,8 @@ import os, imp, re, tweeregex, tweelexer
 from collections import OrderedDict
 
 class Header(object):
+    # The name "id" is too short and is the name of a builtin, but it's part of the interface now.
+    # pylint: disable=invalid-name,redefined-builtin
 
     def __init__(self, id, path, builtinPath):
         self.id = id.lower()
@@ -135,6 +137,8 @@ class Header(object):
                 * string to substitute
                 * end index
         """
+        # Arguments are part of the interface even if the default implementation doesn't use them.
+        # pylint: disable=unused-argument
         def checkUnmatchedMacro(tag, start, end, style, passage=None):
             if style == tweelexer.TweeLexer.BAD_MACRO:
                 matchKind = "start" if "end" in tag else "end"

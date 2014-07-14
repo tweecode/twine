@@ -3,7 +3,8 @@
 # Call this with this command line: buildexe.py
 # py2exe is inserted as a command line parameter automatically.
 
-import sys, os, py2exe
+import sys, os
+import py2exe # pylint: disable=unused-import,import-error
 from distutils.core import setup
 from version import versionString
 

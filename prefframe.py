@@ -81,21 +81,21 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(self.fsBgColor)
         panelSizer.Add(wx.StaticText(panel, label = 'Fullscreen Editor Line Spacing'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(fsLineHeightPanel, flag = wx.ALIGN_CENTER_VERTICAL)
-        panelSizer.Add(self.fastStoryPanel)
+        panelSizer.Add(self.fastStoryPanel) # pylint: disable=no-member
         panelSizer.Add((1,2))
-        panelSizer.Add(self.flatDesign)
+        panelSizer.Add(self.flatDesign) # pylint: disable=no-member
         panelSizer.Add((1,2))
-        panelSizer.Add(self.imageArrows)
+        panelSizer.Add(self.imageArrows) # pylint: disable=no-member
         panelSizer.Add((1,2))
-        panelSizer.Add(self.displayArrows)
+        panelSizer.Add(self.displayArrows) # pylint: disable=no-member
         panelSizer.Add((1,2))
         panelSizer.Add(wx.StaticText(panel, label = 'When closing a passage:'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add((1,2))
-        panelSizer.Add(self.createPassagePrompt)
+        panelSizer.Add(self.createPassagePrompt) # pylint: disable=no-member
         panelSizer.Add((1,2))
-        panelSizer.Add(self.importImagePrompt)
+        panelSizer.Add(self.importImagePrompt) # pylint: disable=no-member
         panelSizer.Add((1,2))
-        panelSizer.Add(self.passageWarnings)
+        panelSizer.Add(self.passageWarnings) # pylint: disable=no-member
 
         panelSizer.Fit(self)
         borderSizer.Fit(self)

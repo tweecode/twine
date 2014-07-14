@@ -92,6 +92,7 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
 
     # See Cohen-Sutherland Line-Clipping Algorithm
 
+    # pylint: disable=invalid-name
     LEFT   = 0b0001
     RIGHT  = 0b0010
     BOTTOM = 0b0100
