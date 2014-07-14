@@ -544,7 +544,7 @@ class StoryFrame(wx.Frame):
 
                 for widget in self.storyPanel.widgetDict.itervalues(): tw.addTiddler(widget.passage)
                 dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
-                order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
+                order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
                 dest.write(tw.toTwee(order))
                 dest.close()
             except:
@@ -1133,7 +1133,7 @@ You can also include URLs of .tws and .twee files, too.
                 if 'Twine.image' not in widget.passage.tags:
                     tw.addTiddler(widget.passage)
 
-            order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
+            order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
             dest.write(tw.toRtf(order))
             dest.close()
         except:
