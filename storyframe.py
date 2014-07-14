@@ -877,7 +877,7 @@ You can also include URLs of .tws and .twee files, too.
                         if passage.title == 'StoryIncludes':
                             return
                         # Check for uniqueness
-                        elif self.storyPanel.findWidget(passage.title):
+                        elif passage.title in self.storyPanel.widgetDict:
                             # Not bothering with a Yes/No dialog here.
                             raise Exception('A passage titled "' + passage.title + '" is already present in this story')
                         elif tw.hasTiddler(passage.title):
@@ -1201,7 +1201,7 @@ You can also include URLs of .tws and .twee files, too.
         self.menus.FindItemById(StoryFrame.BUILD_REBUILD).Enable(self.buildDestination != '')
         self.menus.FindItemById(StoryFrame.BUILD_VIEW_LAST).Enable(self.buildDestination != '')
 
-        hasStoryIncludes = self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") is not None
+        hasStoryIncludes = self.buildDestination != '' and 'StoryIncludes' in self.storyPanel.widgetDict
         self.autobuildmenuitem.Enable(hasStoryIncludes)
         self.menus.FindItemById(StoryFrame.REFRESH_INCLUDES_LINKS).Enable(hasStoryIncludes)
 

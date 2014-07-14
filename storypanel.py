@@ -650,13 +650,12 @@ class StoryPanel(wx.ScrolledWindow):
 
         return pixScroll
 
-    def untitledName(self, base = "Untitled Passage"):
+    def untitledName(self, base = 'Untitled Passage'):
         """Returns a string for an untitled PassageWidget."""
         number = 1
 
-        if not "Untitled " in base:
-            if not self.findWidget(base):
-                return base
+        if not base.startswith('Untitled ') and base not in self.widgetDict:
+            return base
 
         for widget in self.widgetDict.itervalues():
             match = re.match(re.escape(base) + ' (\d+)', widget.passage.title)
@@ -714,7 +713,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         If includeIncluded then will also check external passages referenced via StoryIncludes
         """
-        return self.findWidget(title) is not None or (includeIncluded and self.includedPassageExists(title))
+        return title in self.widgetDict or (includeIncluded and self.includedPassageExists(title))
 
     def clearIncludedPassages(self):
         """Clear the includedPassages set"""
@@ -730,7 +729,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def refreshIncludedPassageList(self):
         def callback(passage):
-            if passage.title == 'StoryIncludes' or self.findWidget(passage.title):
+            if passage.title == 'StoryIncludes' or passage.title in self.widgetDict:
                 return
             self.addIncludedPassage(passage.title)
 

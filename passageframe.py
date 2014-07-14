@@ -272,7 +272,7 @@ class PassageFrame(wx.Frame):
         if title:
         # Check for title conflict
             otherTitled = self.widget.parent.findWidget(title)
-            if otherTitled and otherTitled != self.widget:
+            if otherTitled is not self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
                 error()
             elif self.widget.parent.includedPassageExists(title):
@@ -448,7 +448,7 @@ class PassageFrame(wx.Frame):
 
         # check if the passage already exists
 
-        editingWidget = self.widget.parent.findWidget(title = title)
+        editingWidget = self.widget.parent.findWidget(title)
 
         if not editingWidget:
             editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
