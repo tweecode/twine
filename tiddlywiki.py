@@ -17,8 +17,7 @@ from tweelexer import TweeLexer
 class TiddlyWiki(object):
     """An entire TiddlyWiki."""
 
-    def __init__(self, author = 'twee'):
-        self.author = author
+    def __init__(self):
         self.tiddlers = {}
         self.storysettings = {}
 
@@ -180,9 +179,9 @@ class TiddlyWiki(object):
                 tiddler.text = ''.join([(str(k)+":"+str(v)+"\n") for k,v in self.storysettings.iteritems()])
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
                 if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(self.author, False))
+                    storyfragments.append(tiddler.toHtml(False))
                 else:
-                    storyfragments.append(tiddler.toHtml(self.author, rot13))
+                    storyfragments.append(tiddler.toHtml(rot13))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY_SIZE"') > 0:
@@ -488,7 +487,7 @@ class Tiddler: # pylint: disable=old-style-class
             if obfuscatekey:
                 self.text = decode_obfuscate_swap(self.text)
 
-    def toHtml(self, author, rot13):
+    def toHtml(self, rot13):
         """Returns an HTML representation of this tiddler.
         The encoder arguments are sequences of functions that take a single text argument
         and return a modified version of the given text.
@@ -501,7 +500,7 @@ class Tiddler: # pylint: disable=old-style-class
             ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
             ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
             ('created', encode_date(self.created)),
-            ('modifier', author.replace('"', '&quot;'))
+            ('modifier', 'twee')
             )
 
         return u'<div%s%s>%s</div>' % (
