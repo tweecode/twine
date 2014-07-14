@@ -199,13 +199,16 @@ class App(wx.App):
         info.SetIcon(self.icon)
         info.SetWebSite('http://twinery.org/')
         info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas')
-        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','Maarten ter Huurne','and others.'])
+        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton',
+                            'Thomas M. Edwards','Maarten ter Huurne','and others.'])
 
-        info.SetLicense('The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
-                          + ' it under the terms of the GNU General Public License as published by the Free Software'
-                          + ' Foundation, either version 3 of the License, or (at your option) any later version.'
-                          + ' See the GNU General Public License for more details.\n\nThe Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
-                          + ' and is used under the terms of the MIT license.')
+        info.SetLicense('The Twine development application and its Python source code is free software:'
+                        ' you can redistribute it and/or modify it under the terms of the GNU General Public License'
+                        ' as published by the Free Software Foundation, either version 3 of the License,'
+                        ' or (at your option) any later version. See the GNU General Public License for more details.'
+                        '\n\n'
+                        'The Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s'
+                        ' TiddlyWiki project, and is used under the terms of the MIT license.')
         wx.AboutBox(info)
 
     def storyFormatHelp(self, event = None):

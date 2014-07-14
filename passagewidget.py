@@ -261,8 +261,10 @@ class PassageWidget(object):
             problems += 1
             if replace:
                 start, sub, end = replace
-                answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
-                    .ShowModal()
+                answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?",
+                                          'Problem in ' + self.passage.title,
+                                          wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT
+                                          ).ShowModal()
                 if answer == wx.ID_YES:
                     newtext += oldtext[index:start] + sub
                     index = end
@@ -739,9 +741,12 @@ class PassageWidget(object):
                 offsetWidth = (width - img.GetWidth())/2
                 offsetHeight = (height - img.GetHeight())/2
                 if isinstance(gc, wx.GraphicsContext):
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight, img.GetWidth(), img.GetHeight())
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()),
+                                  1 + offsetWidth, titleBarHeight + 1 + offsetHeight,
+                                  img.GetWidth(), img.GetHeight())
                 else:
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight)
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()),
+                                  1 + offsetWidth, titleBarHeight + 1 + offsetHeight)
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
