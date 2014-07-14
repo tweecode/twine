@@ -265,9 +265,9 @@ class PassageFrame(wx.Frame):
         title = title.replace('\n','')
 
         def error():
-           self.titleInput.SetBackgroundColour((240,130,130))
-           self.titleInput.Refresh()
-           self.titleInvalid = True
+            self.titleInput.SetBackgroundColour((240,130,130))
+            self.titleInput.Refresh()
+            self.titleInvalid = True
 
         if title:
         # Check for title conflict

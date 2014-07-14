@@ -106,12 +106,12 @@ class StoryPanel(wx.ScrolledWindow):
         return new
 
     def changeWidgetTitle(self,widget,title):
-            try:
-                del self.widgetDict[widget.passage.title]
-            except KeyError:
-                pass
-            widget.passage.title = title
-            self.widgetDict[title] = widget
+        try:
+            del self.widgetDict[widget.passage.title]
+        except KeyError:
+            pass
+        widget.passage.title = title
+        self.widgetDict[title] = widget
 
     def snapWidget(self, widget, quickly = False):
         """
