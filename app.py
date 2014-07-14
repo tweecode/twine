@@ -259,7 +259,8 @@ class App(wx.App):
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""
-        map(lambda s: s.applyPrefs(), self.stories)
+        for story in self.stories:
+            story.applyPrefs()
 
     def displayError(self, activity,stacktrace = True):
         """

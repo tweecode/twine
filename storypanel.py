@@ -437,7 +437,8 @@ class StoryPanel(wx.ScrolledWindow):
 
             # deselect everything
 
-            map(lambda w: w.setSelected(False, False), self.widgetDict.itervalues())
+            for widget in self.widgetDict.itervalues():
+                widget.setSelected(False, False)
 
             # grab mouse focus
 
