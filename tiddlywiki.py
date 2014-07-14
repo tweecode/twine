@@ -309,14 +309,7 @@ class TiddlyWiki(object):
 
     def addTiddler(self, tiddler):
         """Adds a Tiddler object to this TiddlyWiki."""
-
-        if tiddler.title in self.tiddlers:
-            if (tiddler == self.tiddlers[tiddler.title]) and \
-                 (tiddler.modified > self.tiddlers[tiddler.title].modified):
-                self.tiddlers[tiddler.title] = tiddler
-        else:
-            self.tiddlers[tiddler.title] = tiddler
-
+        self.tiddlers[tiddler.title] = tiddler
         return tiddler
 
     FORMATTED_INFO_PASSAGES = frozenset([
@@ -349,9 +342,10 @@ class Tiddler: # pylint: disable=old-style-class
 
     def __getstate__(self):
         """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
+        now = time.localtime()
         return {
-            'created': time.localtime(),
-            'modified': self.modified,
+            'created': now,
+            'modified': now,
             'title': self.title,
             'tags': self.tags,
             'text': self.text,
@@ -360,16 +354,9 @@ class Tiddler: # pylint: disable=old-style-class
     def __repr__(self):
         return "<Tiddler '" + self.title + "'>"
 
-    def __cmp__(self, other):
-        """Compares a Tiddler to another."""
-        return hasattr(other, 'text') and self.text == other.text
-
     def initTwee(self, source):
         """Initializes a Tiddler from Twee source code."""
 
-        # we were just born
-
-        self.modified = time.localtime()
         # used only during builds
         self.pos = [0,0]
 
@@ -442,14 +429,6 @@ class Tiddler: # pylint: disable=old-style-class
             if obfuscatekey:
                 self.tags = decode_obfuscate_swap(tags.group(1)).split(' ')
             else: self.tags = tags.group(1).split(' ')
-
-        # modification date
-
-        self.modified = time.localtime()
-        modified_re = re.compile(r'(?:data\-)?modified="([^"]*?)"')
-        modified = modified_re.search(source)
-        if modified:
-            self.modified = decode_date(modified.group(1))
 
         # position
         self.pos = [0,0]

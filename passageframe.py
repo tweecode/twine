@@ -1,4 +1,4 @@
-import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
+import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, tweeregex
 import metrics, images
 from version import versionString
 from tweelexer import TweeLexer
@@ -295,7 +295,6 @@ class PassageFrame(wx.Frame):
 
         # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
-        self.widget.passage.modified = time.localtime()
         # Preserve the special (uneditable) tags
         self.widget.passage.tags = []
         self.widget.clearPaintCache()
@@ -898,7 +897,6 @@ class StorySettingsFrame(PassageFrame):
             self.widget.passage.text = sub[0]
         else:
             self.widget.passage.text += newEntry
-        self.widget.passage.modified = time.localtime()
         self.widget.parent.parent.setDirty(True)
         self.widget.clearPaintCache()
         self.widget.passage.update()
