@@ -138,7 +138,7 @@ class StoryFrame(wx.Frame):
             shortcut = 'Ctrl-Y'
 
         editMenu.Append(wx.ID_REDO, '&Redo\t' + shortcut)
-        self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Redo(), id=wx.ID_REDO)
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.redo(), id=wx.ID_REDO)
 
         editMenu.AppendSeparator()
 
