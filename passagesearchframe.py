@@ -1,4 +1,4 @@
-import re, wx
+import wx
 from searchpanels import FindPanel, ReplacePanel
 
 class PassageSearchFrame(wx.Frame):

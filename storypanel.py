@@ -1,7 +1,7 @@
 from collections import defaultdict
 from itertools import izip, chain
-import sys, math, wx, re, os, pickle
-import geometry, time
+import sys, wx, re, pickle
+import geometry
 from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 

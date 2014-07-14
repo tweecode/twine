@@ -1,6 +1,5 @@
 import os, imp, re, tweeregex, tweelexer
 from collections import OrderedDict
-from random import shuffle
 
 class Header(object):
 

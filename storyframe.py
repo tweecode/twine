@@ -1,4 +1,4 @@
-import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images, version
+import sys, re, os, urllib, urlparse, pickle, wx, codecs, tempfile, images, version
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel

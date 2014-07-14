@@ -1,4 +1,4 @@
-import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki, tweelexer
+import copy, math, colorsys, re, wx, tiddlywiki, tweelexer
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
