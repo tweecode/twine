@@ -461,7 +461,7 @@ class PassageWidget:
         Caches the widget so self.paintBuffer is up-to-date.
         """
 
-        def wordWrap(text, lineWidth, gc, lineBreaks = False):
+        def wordWrap(text, lineWidth, gc):
             """
             Returns a list of lines from a string
             This is somewhat based on the wordwrap function built into wx.lib.
@@ -631,7 +631,7 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(excerptTextColor)
 
-                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc, self.passage.isAnnotation())
+                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
 
                 for line in excerptLines:
                     gc.DrawText(line, inset, excerptTop)
@@ -656,8 +656,7 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(tagTextColor)
 
-                text = wordWrap(" ".join(tags),
-                                size.width - (inset * 2), gc)[0]
+                text = wordWrap(' '.join(tags), size.width - (inset * 2), gc)[0]
 
                 gc.DrawText(text, inset*2, (size.height-tagBarHeight))
         else:
