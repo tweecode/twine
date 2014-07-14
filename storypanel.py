@@ -42,7 +42,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.lastScrollPos = -1
         self.trackinghover = None
         self.tooltiptimer = wx.PyTimer(self.tooltipShow)
-        self.tooltipplace = ''
+        self.tooltipplace = None
         self.tooltipobj = None
         self.textDragSource = None
 
@@ -207,7 +207,7 @@ class StoryPanel(wx.ScrolledWindow):
             pass
 
         if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
-        if self.tooltipplace == widget:
+        if self.tooltipplace is widget:
             self.tooltipplace = None
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
         self.Refresh()
@@ -983,7 +983,7 @@ class StoryPanel(wx.ScrolledWindow):
     def tooltipShow(self):
         """ Show the tooltip, showing a text sample for text passages,
         and some image size info for image passages."""
-        if self.tooltipplace != None and self.trackinghover and not self.draggingWidgets:
+        if self.tooltipplace is not None and self.trackinghover and not self.draggingWidgets:
             m = wx.GetMousePosition()
             p = self.tooltipplace.passage
             length = len(p.text)
@@ -1009,7 +1009,7 @@ class StoryPanel(wx.ScrolledWindow):
             position = self.toLogical(event.GetPosition())
             for widget in self.visibleWidgets:
                 if widget.getLogicalRect().Contains(position):
-                    if widget != self.tooltipplace:
+                    if widget is not self.tooltipplace:
                         # Stop current timer
                         if self.tooltiptimer.IsRunning():
                             self.tooltiptimer.Stop()
