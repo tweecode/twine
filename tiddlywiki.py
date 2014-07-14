@@ -340,7 +340,6 @@ class Tiddler: # pylint: disable=old-style-class
         self.displays = []
         self.images = []
         self.macros = []
-        self.modifier = None
 
         """Pass source code, and optionally 'twee' or 'html'"""
         if type == 'twee':
@@ -460,12 +459,6 @@ class Tiddler: # pylint: disable=old-style-class
         if modified:
             self.modified = decode_date(modified.group(1))
 
-        # modifier
-        modifier_re = re.compile(r'(?:data\-)?modifier="([^"]*?)"')
-        modifier = modifier_re.search(source)
-        if modifier:
-            self.modifier = modifier.group(1)
-
         # position
         self.pos = [0,0]
         pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
@@ -500,7 +493,6 @@ class Tiddler: # pylint: disable=old-style-class
             ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
             ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
             ('created', encode_date(self.created)),
-            ('modifier', 'twee')
             )
 
         return u'<div%s%s>%s</div>' % (
