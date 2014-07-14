@@ -105,10 +105,10 @@ class StoryPanel(wx.ScrolledWindow):
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
 
-    def changeWidgetTitle(self, widget, title):
-        self.widgetDict.pop(widget.passage.title, None)
-        widget.passage.title = title
-        self.widgetDict[title] = widget
+    def changeWidgetTitle(self, oldTitle, newTitle):
+        widget = self.widgetDict.pop(oldTitle)
+        widget.passage.title = newTitle
+        self.widgetDict[newTitle] = widget
 
     def snapWidget(self, widget, quickly = False):
         """

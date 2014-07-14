@@ -290,7 +290,7 @@ class PassageFrame(wx.Frame):
                     self.titleInput.SetBackgroundColour((255,255,255))
                     self.titleInput.Refresh()
                     self.titleInvalid = True
-                self.widget.parent.changeWidgetTitle(self.widget, title)
+                self.widget.parent.changeWidgetTitle(self.widget.passage.title, title)
 
         # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
