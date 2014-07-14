@@ -7,7 +7,7 @@ from version import versionString
 
 
 def usage():
-    print >> sys.stderr, 'usage: twee [-a author] [-t target] [-s startpassage] source1 [source2..]'
+    print >> sys.stderr, 'usage: twee [-t target] [-s startpassage] source1 [source2..]'
     print >> sys.stderr, '       (source directories are recursively scanned for .tw/.twee files)'
 
 
@@ -40,22 +40,19 @@ def main(argv):
 
     # defaults
 
-    author = 'twee'
     target = 'sugarcane'
     start = ''
 
     # read command line switches
 
     try:
-        opts, args = getopt.getopt(argv, 'a:s:t:', ['author=', 'start=', 'target='])
+        opts, args = getopt.getopt(argv, 's:t:', ['start=', 'target='])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
 
     for opt, arg in opts:
-        if (opt in ('-a', '--author')):
-            author = arg
-        elif (opt in ('-s', '--start')):
+        if (opt in ('-s', '--start')):
             start = arg
         elif (opt in ('-t', '--target')):
             target = arg
@@ -82,7 +79,7 @@ def main(argv):
 
     # populate a TiddlyWiki
 
-    tw = TiddlyWiki(author)
+    tw = TiddlyWiki()
     order = []
     for filename in sources:
         order += tw.addTweeFromFilename(filename)
