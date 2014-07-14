@@ -14,7 +14,6 @@ def clipLineByRects(line, *rects):
     result = line
 
     for rect in rects:
-        rectLines = None
         for i in range(2):
             if rect.Contains(result[i]):
                 intersection = lineRectIntersection(result, rect, excludeTrivial = True)
@@ -93,7 +92,6 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
 
     # See Cohen-Sutherland Line-Clipping Algorithm
 
-    INSIDE = 0b0000
     LEFT   = 0b0001
     RIGHT  = 0b0010
     BOTTOM = 0b0100

@@ -351,7 +351,7 @@ class PassageFrame(wx.Frame):
 
         # Offer to create passage for broken links
         if self.app.config.ReadBool('createPassagePrompt'):
-            brokens = links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            brokens = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
             if brokens :
                 if len(brokens) > 1:
                     brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
@@ -445,7 +445,6 @@ class PassageFrame(wx.Frame):
         # so we gotta work our way back to a menu name
 
         if not title: title = self.menus.FindItemById(event.GetId()).GetLabel()
-        found = False
 
         # check if the passage already exists
 

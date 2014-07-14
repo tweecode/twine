@@ -144,7 +144,7 @@ class PassageWidget:
         compiledRegexp = re.compile(findRegexp, flags)
 
         oldTitle = self.passage.title
-        newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, self.passage.title)
+        newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, oldTitle)
         self.passage.text, textReps = re.subn(compiledRegexp, replaceRegexp, self.passage.text)
         if titleReps > 0:
             self.parent.changeWidgetTitle(self,newTitle)

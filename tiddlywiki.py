@@ -162,9 +162,6 @@ class TiddlyWiki:
             # Just gonna assume the html id is quoted correctly if at all.
             output = re.sub(r'<style\s+id=["\']?defaultCSS["\']?\s*>(?:[^<]|<(?!\/style>))*<\/style>', '', output, flags=re.I|re.M, count=1)
 
-        argEncoders = []
-        bodyEncoders = []
-
         rot13 = 'obfuscate' in self.storysettings and \
             self.storysettings['obfuscate'] != 'off'
         # In case it was set to "swap" (legacy 1.4.1 file),

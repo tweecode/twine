@@ -107,7 +107,6 @@ class TweeLexer:
                 applyParamStyle(pos2, contents)
 
         pos = 0
-        prev = 0
         text = self.getText()
         style = self.DEFAULT
         styleStack = []
@@ -121,7 +120,6 @@ class TweeLexer:
         iterator = re.finditer(re.compile(tweeregex.COMBINED_REGEX, re.U|re.I), text[pos:])
 
         for p in iterator:
-            prev = pos+1
             pos = p.start()
 
             nextToken, m = self.lexMatchToken(p.group(0))

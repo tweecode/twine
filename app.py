@@ -71,12 +71,10 @@ class App(wx.App):
 
     def openDialog(self, event = None):
         """Opens a story file of the user's choice."""
-        opened = False
         dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
                                wx.FD_OPEN | wx.FD_CHANGE_DIR)
 
         if dialog.ShowModal() == wx.ID_OK:
-            opened = True
             self.config.Write('savePath', os.getcwd())
             self.addRecentFile(dialog.GetPath())
             self.open(dialog.GetPath())
@@ -229,8 +227,6 @@ class App(wx.App):
     def loadPrefs(self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
         sc = self.config = wx.Config('Twine')
-
-        monoFont = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
 
         for k,v in {
             'savePath' : os.path.expanduser('~'),

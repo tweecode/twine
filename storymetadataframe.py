@@ -18,10 +18,7 @@ class StoryMetadataFrame(wx.Frame):
         panelSizer = wx.FlexGridSizer(8, 1, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
-        ctrlset = {}
-
-        for name, desc in \
-            [
+        for name, desc in [
               ("identity", ("What your work identifies as:",
                             "Is it a game, a story, a poem, or something else?\n(This is used for dialogs and error messages only.)",
                             False)),
