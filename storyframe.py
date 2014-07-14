@@ -1331,7 +1331,7 @@ class ClipboardMonitor(wx.Timer):
         self.dataFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         self.state = None
 
-    def Notify(self):
+    def Notify(self, *args, **kwargs):
         if wx.TheClipboard.Open():
             newState = wx.TheClipboard.IsSupported(self.dataFormat)
             wx.TheClipboard.Close()
