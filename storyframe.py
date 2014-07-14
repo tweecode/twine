@@ -595,40 +595,40 @@ class StoryFrame(wx.Frame):
                 skippedTitles = []
 
                 # Check for passage title conflicts
-                for t in tw.tiddlers:
+                for title in tw.tiddlers.iterkeys():
 
-                    if t in allWidgetTitles:
-                        dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
+                    if title in allWidgetTitles:
+                        dialog = wx.MessageDialog(self, 'There is already a passage titled "' + title \
                                                   + '" in this story. Replace it with the imported passage?',
                                                   'Passage Title Conflict', \
                                                   wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
                         check = dialog.ShowModal()
                         if check == wx.ID_YES:
-                            removedWidgets.append(t)
+                            removedWidgets.append(title)
                         elif check == wx.ID_CANCEL:
                             return
                         elif check == wx.ID_NO:
-                            skippedTitles.append(t)
+                            skippedTitles.append(title)
 
                 # Remove widgets elected to be replaced
-                for t in removedWidgets:
-                    self.storyPanel.removeWidget(self.storyPanel.findWidget(t))
+                for title in removedWidgets:
+                    self.storyPanel.removeWidget(self.storyPanel.findWidget(title))
 
                 # Insert widgets now
                 lastpos = [0, 0]
                 addedWidgets = []
-                for t in tw.tiddlers:
-                    t = tw.tiddlers[t]
-                    if t.title in skippedTitles:
+                for tiddler in tw.tiddlers.itervalues():
+                    if tiddler.title in skippedTitles:
                         continue
-                    new = self.storyPanel.newWidget(title=t.title, tags=t.tags, text=t.text, quietly=True,
-                                                    pos=t.pos if t.pos else lastpos)
+                    new = self.storyPanel.newWidget(title=tiddler.title, tags=tiddler.tags,
+                                                    text=tiddler.text, quietly=True,
+                                                    pos=tiddler.pos if tiddler.pos else lastpos)
                     lastpos = new.pos
                     addedWidgets.append(new)
 
                 self.setDirty(True, 'Import')
-                for t in addedWidgets:
-                    t.clearPaintCache()
+                for widget in addedWidgets:
+                    widget.clearPaintCache()
             else:
                 if html:
                     what = "compiled HTML"
