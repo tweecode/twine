@@ -846,8 +846,8 @@ You can also include URLs of .tws and .twee files, too.
                 noprobs = False
         if noprobs:
             wx.MessageDialog(self, "No obvious problems found in " + str(
-                len(self.storyPanel.widgetDict.itervalues())) + " passage" + (
-                                 "s." if len(self.storyPanel.widgetDict.itervalues()) > 1 else ".") \
+                len(self.storyPanel.widgetDict)) + " passage" + (
+                                 "s." if len(self.storyPanel.widgetDict) > 1 else ".") \
                              + "\n\n(There may still be problems when the story is played, of course.)",
                              "Verify All Passages", wx.ICON_INFORMATION).ShowModal()
 
