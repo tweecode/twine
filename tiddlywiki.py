@@ -17,8 +17,7 @@ from tweelexer import TweeLexer
 class TiddlyWiki:
     """An entire TiddlyWiki."""
 
-    def __init__(self, author = 'twee'):
-        self.author = author
+    def __init__(self):
         self.tiddlers = {}
         self.storysettings = {}
 
@@ -183,9 +182,9 @@ class TiddlyWiki:
                 tiddler.text = ''.join([(str(k)+":"+str(v)+"\n") for k,v in self.storysettings.iteritems()])
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
                 if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(self.author, False))
+                    storyfragments.append(tiddler.toHtml(False))
                 else:
-                    storyfragments.append(tiddler.toHtml(self.author, rot13))
+                    storyfragments.append(tiddler.toHtml(rot13))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY_SIZE"') > 0:
@@ -313,14 +312,7 @@ class TiddlyWiki:
 
     def addTiddler(self, tiddler):
         """Adds a Tiddler object to this TiddlyWiki."""
-
-        if tiddler.title in self.tiddlers:
-            if (tiddler == self.tiddlers[tiddler.title]) and \
-                 (tiddler.modified > self.tiddlers[tiddler.title].modified):
-                self.tiddlers[tiddler.title] = tiddler
-        else:
-            self.tiddlers[tiddler.title] = tiddler
-
+        self.tiddlers[tiddler.title] = tiddler
         return tiddler
 
     FORMATTED_INFO_PASSAGES = frozenset([
@@ -341,7 +333,6 @@ class Tiddler:
         self.displays = []
         self.images = []
         self.macros = []
-        self.modifier = None
 
         """Pass source code, and optionally 'twee' or 'html'"""
         if type == 'twee':
@@ -351,9 +342,10 @@ class Tiddler:
 
     def __getstate__(self):
         """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
+        now = time.localtime()
         return {
-            'created': self.created,
-            'modified': self.modified,
+            'created': now,
+            'modified': now,
             'title': self.title,
             'tags': self.tags,
             'text': self.text,
@@ -362,16 +354,9 @@ class Tiddler:
     def __repr__(self):
         return "<Tiddler '" + self.title + "'>"
 
-    def __cmp__(self, other):
-        """Compares a Tiddler to another."""
-        return hasattr(other, 'text') and self.text == other.text
-
     def initTwee(self, source):
         """Initializes a Tiddler from Twee source code."""
 
-        # we were just born
-
-        self.created = self.modified = time.localtime()
         # used only during builds
         self.pos = [0,0]
 
@@ -445,28 +430,6 @@ class Tiddler:
                 self.tags = decode_obfuscate_swap(tags.group(1)).split(' ');
             else: self.tags = tags.group(1).split(' ')
 
-        # creation date
-
-        self.created = time.localtime()
-        created_re = re.compile(r'(?:data\-)?created="([^"]*?)"')
-        created = created_re.search(source)
-        if created:
-            self.created = decode_date(created.group(1))
-
-        # modification date
-
-        self.modified = time.localtime()
-        modified_re = re.compile(r'(?:data\-)?modified="([^"]*?)"')
-        modified = modified_re.search(source)
-        if (modified):
-            self.modified = decode_date(modified.group(1))
-
-        # modifier
-        modifier_re = re.compile(r'(?:data\-)?modifier="([^"]*?)"')
-        modifier = modifier_re.search(source)
-        if modifier:
-            self.modifier = modifier.group(1)
-
         # position
         self.pos = [0,0]
         pos_re = re.compile(r'(?:data\-)?(?:twine\-)?position="([^"]*?)"')
@@ -488,7 +451,7 @@ class Tiddler:
             if obfuscatekey:
                 self.text = decode_obfuscate_swap(self.text)
 
-    def toHtml(self, author, rot13):
+    def toHtml(self, rot13):
         """Returns an HTML representation of this tiddler.
         The encoder arguments are sequences of functions that take a single text argument
         and return a modified version of the given text.
@@ -500,8 +463,6 @@ class Tiddler:
         args = (
             ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
             ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
-            ('created', encode_date(self.created)),
-            ('modifier', author.replace('"', '&quot;'))
             )
 
         return u'<div%s%s>%s</div>' % (
