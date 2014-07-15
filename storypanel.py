@@ -567,15 +567,13 @@ class StoryPanel(wx.ScrolledWindow):
             # figure out our dirty rect
 
             dirtyRect = self.oldDirtyRect
-
             for widget in self.draggingWidgets:
-                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                dirtyRect.Union(widget.getDirtyPixelRect())
                 for link in widget.linksAndDisplays():
                     widget2 = self.findWidget(link)
                     if widget2:
-                        dirtyRect = dirtyRect.Union(widget2.getDirtyPixelRect())
+                        dirtyRect.Union(widget2.getDirtyPixelRect())
 
-            self.oldDirtyRect = dirtyRect
             self.Refresh(True, dirtyRect)
         else:
 

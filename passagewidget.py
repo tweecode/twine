@@ -78,16 +78,14 @@ class PassageWidget(object):
 
         for link in self.passage.links:
             widget = self.parent.findWidget(link)
-            if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
+            if widget:
+                dirtyRect.Union(widget.getPixelRect())
 
         # then, those that link to us
-        # Python closures are odd, require lists to affect things outside
-
-        bridge = [ dirtyRect ]
 
         def addLinkingToRect(widget):
             if self.passage.title in widget.passage.links:
-                dirtyRect = bridge[0].Union(widget.getPixelRect())
+                dirtyRect.Union(widget.getPixelRect())
 
         self.parent.eachWidget(addLinkingToRect)
 
@@ -189,13 +187,13 @@ class PassageWidget(object):
             for link in self.linksAndDisplays() + self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
-                    dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                    dirtyRect.Union(widget.getDirtyPixelRect())
             if self.passage.isStylesheet():
                 for t in self.passage.tags:
                     if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
                         for widget in self.parent.taggedWidgets(t):
                             if widget:
-                                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                                dirtyRect.Union(widget.getDirtyPixelRect())
             self.parent.Refresh(True, dirtyRect)
 
     def setDimmed(self, value):
