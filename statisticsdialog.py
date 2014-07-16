@@ -90,12 +90,12 @@ class StatisticsDialog(wx.Dialog):
                 counts['links'] += len(widget.passage.links)
                 counts['brokenLinks'] += len(widget.getBrokenLinks())
                 # Find variables
-                iterator = re.finditer(tweeregex.MACRO_REGEX + "|" + tweeregex.LINK_REGEX, widget.passage.text, re.U|re.I);
+                iterator = re.finditer(tweeregex.MACRO_REGEX + "|" + tweeregex.LINK_REGEX, widget.passage.text, re.U|re.I)
                 for p in iterator:
                     iterator2 = re.finditer(tweeregex.MACRO_PARAMS_REGEX, p.group(0), re.U|re.I)
                     for p2 in iterator2:
                         if p2.group(4):
-                            variables.add(p2.group(4));
+                            variables.add(p2.group(4))
                 # Find tags
                 for a in widget.passage.tags:
                     if a not in TiddlyWiki.INFO_TAGS:
@@ -113,13 +113,13 @@ class StatisticsDialog(wx.Dialog):
         self.variablesCount.SetLabel(str(len(variables)))
 
         if len(variables):
-            text = ', '.join(sorted(variables));
+            text = ', '.join(sorted(variables))
             variablesCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
             variablesCtrl.AppendText(text)
             self.panelSizer.Add(variablesCtrl, flag = wx.ALIGN_CENTER)
 
         if len(tags):
-            text = ', '.join(sorted(tags));
+            text = ', '.join(sorted(tags))
             tagsCtrl = wx.TextCtrl(panel, -1, size=(StatisticsDialog.MIN_WIDTH*.9, 60), style=wx.TE_MULTILINE|wx.TE_READONLY)
             tagsCtrl.AppendText(text)
             self.panelSizer.Add(wx.StaticText(panel, label = str(len(tags)) + " Tags"), flag = wx.ALIGN_CENTER)

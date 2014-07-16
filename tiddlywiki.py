@@ -10,11 +10,11 @@ you'd normally see in a TiddlyWiki; the goal here is to provide classes
 that translate between Twee and TiddlyWiki output seamlessly.
 """
 
-import re, datetime, time, locale, os, sys, tempfile, codecs
+import re, time, locale, os, codecs
 import tweeregex
 from tweelexer import TweeLexer
 
-class TiddlyWiki:
+class TiddlyWiki(object):
     """An entire TiddlyWiki."""
 
     def __init__(self, author = 'twee'):
@@ -98,33 +98,33 @@ class TiddlyWiki:
         output = output.replace('"TIME"', "Built on "+time.strftime("%d %b %Y at %H:%M:%S, "+tz_offset).decode(strftime_encoding))
 
         # Insert the test play "start at passage" value
-        if (startAt):
+        if startAt:
             output = output.replace('"START_AT"', '"' + startAt.replace('\\', r'\\').replace('"', '\"') + '"')
         else:
             output = output.replace('"START_AT"', '""')
 
         # Embed any engine related files required by the header.
-        
+
         embedded = header.filesToEmbed()
         for key in embedded.keys():
             output = insertEngine(app, output, embedded[key], key)
             if not output: return ''
 
         # Insert the Backup Story Title
-        
+
         if defaultName:
             name = defaultName.replace('"',r'\"')
             # Just gonna assume the <title> has no attributes
             output = re.sub(r'<title>.*?<\/title>', '<title>'+name+'</title>', output, count=1, flags=re.I|re.M) \
                 .replace('"Untitled Story"', '"'+name+'"')
-                
+
         # Insert the metadata
-        
+
         metatags = ''
         for name, content in metadata.iteritems():
             if content:
                 metatags += '<meta name="' + name.replace('"','&quot;') + '" content="' + content.replace('"','&quot;') + '">\n'
-        
+
         if metatags:
             output = re.sub(r'<\/title>\s*\n?', lambda a: a.group(0) + metatags, output, flags=re.I, count=1)
 
@@ -132,7 +132,7 @@ class TiddlyWiki:
         jquery = 'jquery' in self.storysettings and self.storysettings['jquery'] != "off"
         modernizr = 'modernizr' in self.storysettings and self.storysettings['modernizr'] != "off"
         blankCSS = 'blankcss' in self.storysettings and self.storysettings['blankcss'] != "off"
-        
+
         for i in filter(lambda a: (a.isScript() or a.isStylesheet()), self.tiddlers.itervalues()):
             if not jquery and i.isScript() and re.search(r'requires? jquery', i.text, re.I):
                 jquery = True
@@ -142,7 +142,7 @@ class TiddlyWiki:
                 blankCSS = True
             if jquery and modernizr and noDefaultCSS:
                 break
-        
+
         # Insert jQuery
         if jquery:
             output = insertEngine(app, output, app.builtinTargetsPath + 'jquery.js', '"JQUERY"')
@@ -156,17 +156,14 @@ class TiddlyWiki:
             if not output: return
         else:
             output = output.replace('"MODERNIZR"','')
-            
+
         # Remove default CSS
         if blankCSS:
             # Just gonna assume the html id is quoted correctly if at all.
             output = re.sub(r'<style\s+id=["\']?defaultCSS["\']?\s*>(?:[^<]|<(?!\/style>))*<\/style>', '', output, flags=re.I|re.M, count=1)
 
-        argEncoders = []
-        bodyEncoders = []
-
         rot13 = 'obfuscate' in self.storysettings and \
-            self.storysettings['obfuscate'] != 'off';
+            self.storysettings['obfuscate'] != 'off'
         # In case it was set to "swap" (legacy 1.4.1 file),
         # alter and remove old properties.
         if rot13:
@@ -190,12 +187,12 @@ class TiddlyWiki:
 
         if output.count('"STORY_SIZE"') > 0:
             output = output.replace('"STORY_SIZE"', '"' + str(len(storyfragments)) + '"')
-        
+
         if output.count('"STORY"') > 0:
             output = output.replace('"STORY"', storycode)
         else:
             output += storycode
-            if (header):
+            if header:
                 footername = header.path + 'footer.html'
                 if os.path.exists(footername):
                     output += self.read(footername)
@@ -274,7 +271,7 @@ class TiddlyWiki:
         divs = re.search(r'<div\s+id=(["\']?)store(?:A|-a)rea\1(?:\s+data-size=(["\']?)\d+\2)?(?:\s+hidden)?\s*>(.*)</div>', source,
                         re.DOTALL)
         if divs:
-            divs = divs.group(3);
+            divs = divs.group(3)
             # HTML may be obfuscated.
             obfuscatekey = ''
             storysettings_re = r'[^>]*\stiddler=["\']?StorySettings["\']?[^>]*>.*?</div>'
@@ -332,8 +329,11 @@ class TiddlyWiki:
     INFO_TAGS = frozenset(['script', 'stylesheet', 'annotation']) | SPECIAL_TAGS | NOINCLUDE_TAGS
 
 
-class Tiddler:
-    """A single tiddler in a TiddlyWiki."""
+class Tiddler: # pylint: disable=old-style-class
+    """A single tiddler in a TiddlyWiki.
+
+    Note: Converting this to a new-style class breaks pickling of new TWS files on old Twine releases.
+    """
 
     def __init__(self, source, type = 'twee', obfuscatekey = ""):
         # cache of passage names linked from this one
@@ -414,7 +414,7 @@ class Tiddler:
             for c in text:
                 upper = c.isupper()
                 p = obfuscatekey.find(c.lower())
-                if p <> -1:
+                if p != -1:
                     if p % 2 == 0:
                         p1 = p + 1
                         if p1 >= len(obfuscatekey):
@@ -424,7 +424,7 @@ class Tiddler:
                     c = obfuscatekey[p1].upper() if upper else obfuscatekey[p1]
                 r = r + c
             return r
-        
+
         # title
 
         self.title = 'Untitled Passage'
@@ -433,7 +433,7 @@ class Tiddler:
         if title:
             self.title = title.group(1)
             if obfuscatekey:
-                self.title = decode_obfuscate_swap(self.title);
+                self.title = decode_obfuscate_swap(self.title)
 
         # tags
 
@@ -442,7 +442,7 @@ class Tiddler:
         tags = tags_re.search(source)
         if tags and tags.group(1) != '':
             if obfuscatekey:
-                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ');
+                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ')
             else: self.tags = tags.group(1).split(' ')
 
         # creation date
@@ -458,7 +458,7 @@ class Tiddler:
         self.modified = time.localtime()
         modified_re = re.compile(r'(?:data\-)?modified="([^"]*?)"')
         modified = modified_re.search(source)
-        if (modified):
+        if modified:
             self.modified = decode_date(modified.group(1))
 
         # modifier
@@ -483,7 +483,7 @@ class Tiddler:
         self.text = ''
         text_re = re.compile(r'<div(?:[^"]|(?:".*?"))*?>((?:[^<]|<(?!\/div>))*)<\/div>')
         text = text_re.search(source)
-        if (text):
+        if text:
             self.text = decode_text(text.group(1))
             if obfuscatekey:
                 self.text = decode_obfuscate_swap(self.text)
@@ -536,10 +536,10 @@ class Tiddler:
 
     def isScript(self):
         return 'script' in self.tags
-    
+
     def isInfoPassage(self):
         return self.title in TiddlyWiki.INFO_PASSAGES
-    
+
     def isStoryText(self):
         """ Excludes passages which do not contain renderable Twine code. """
         return self.title not in TiddlyWiki.UNFORMATTED_INFO_PASSAGES \
@@ -570,14 +570,14 @@ class Tiddler:
         macros = set()
         links = set()
         variableLinks = set()
-        
+
         def addLink(link):
             style = TweeLexer.linkStyle(link)
             if style == TweeLexer.PARAM:
                 variableLinks.add(link)
             elif style != TweeLexer.EXTERNAL:
                 links.add(link)
-        
+
         # <<display>>
         self.displays = list(set(re.findall(r'\<\<display\s+[\'"]?(.+?)[\'"]?\s?\>\>', self.text, re.IGNORECASE)))
 
@@ -597,7 +597,7 @@ class Tiddler:
         for m in re.finditer(tweeregex.IMAGE_REGEX, self.text):
             if m.group(5):
                 addLink(m.group(5))
-                
+
         # HTML data-passage links
         for m in re.finditer(tweeregex.HTML_REGEX, self.text):
             attrs = m.group(2)
@@ -609,7 +609,7 @@ class Tiddler:
                         images.add(link)
                     else:
                         addLink(link)
-                
+
         # <<choice passage_name [link_text]>>
         for block in re.findall(r'\<\<choice\s+(.*?)\s?\>\>', self.text):
             item = re.match(r'(?:"([^"]*)")|(?:\'([^\']*)\')|([^"\'\[\s]\S*)', block)

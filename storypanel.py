@@ -1,7 +1,7 @@
 from collections import defaultdict
 from itertools import izip, chain
-import sys, math, wx, re, os, pickle
-import geometry, time
+import sys, wx, re, pickle
+import geometry
 from tiddlywiki import TiddlyWiki
 from passagewidget import PassageWidget
 
@@ -42,16 +42,16 @@ class StoryPanel(wx.ScrolledWindow):
         self.lastScrollPos = -1
         self.trackinghover = None
         self.tooltiptimer = wx.PyTimer(self.tooltipShow)
-        self.tooltipplace = ''
+        self.tooltipplace = None
         self.tooltipobj = None
         self.textDragSource = None
 
-        if (state):
+        if state:
             self.scale = state['scale']
             for widget in state['widgets']:
-                pw = PassageWidget(self, self.app, state = widget);
+                pw = PassageWidget(self, self.app, state = widget)
                 self.widgetDict[pw.passage.title] = pw
-            if ('snapping' in state):
+            if 'snapping' in state:
                 self.snapping = state['snapping']
         else:
             self.scale = 1
@@ -83,7 +83,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
 
-    def newWidget(self, title = None, text = '', tags = [], pos = None, quietly = False, logicals = False):
+    def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
 
         # defaults
@@ -106,12 +106,12 @@ class StoryPanel(wx.ScrolledWindow):
         return new
 
     def changeWidgetTitle(self,widget,title):
-            try:
-                del self.widgetDict[widget.passage.title]
-            except KeyError:
-                pass
-            widget.passage.title = title
-            self.widgetDict[title] = widget
+        try:
+            del self.widgetDict[widget.passage.title]
+        except KeyError:
+            pass
+        widget.passage.title = title
+        self.widgetDict[title] = widget
 
     def snapWidget(self, widget, quickly = False):
         """
@@ -123,7 +123,7 @@ class StoryPanel(wx.ScrolledWindow):
 
             for coord in range(2):
                 distance = pos[coord] % StoryPanel.GRID_SPACING
-                if (distance > StoryPanel.GRID_SPACING / 2):
+                if distance > StoryPanel.GRID_SPACING / 2:
                     pos[coord] += StoryPanel.GRID_SPACING - distance
                 else:
                     pos[coord] -= distance
@@ -207,7 +207,7 @@ class StoryPanel(wx.ScrolledWindow):
             pass
 
         if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
-        if self.tooltipplace == widget:
+        if self.tooltipplace is widget:
             self.tooltipplace = None
         if saveUndo: self.parent.setDirty(True, action = 'Delete')
         self.Refresh()
@@ -354,7 +354,7 @@ class StoryPanel(wx.ScrolledWindow):
         for widget in self.widgetDict.itervalues(): state['widgets'].append(widget.serialize())
         self.undoStack.append(state)
         self.undoPointer += 1
-        
+
     def undo(self):
         """
         Restores the undo state at self.undoPointer to the current view, then
@@ -363,7 +363,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.widgetDict = dict()
         self.visibleWidgets = None
         state = self.undoStack[self.undoPointer]
-        for widget in state['widgets']:
+        for widgetState in state['widgets']:
+            widget = PassageWidget(self, self.app, state = widgetState)
             self.widgetDict[widget.passage.title] = widget
         self.undoPointer -= 1
         self.Refresh()
@@ -437,7 +438,8 @@ class StoryPanel(wx.ScrolledWindow):
 
             # deselect everything
 
-            map(lambda w: w.setSelected(False, False), self.widgetDict.itervalues())
+            for widget in self.widgetDict.itervalues():
+                widget.setSelected(False, False)
 
             # grab mouse focus
 
@@ -565,15 +567,13 @@ class StoryPanel(wx.ScrolledWindow):
             # figure out our dirty rect
 
             dirtyRect = self.oldDirtyRect
-
             for widget in self.draggingWidgets:
-                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                dirtyRect.Union(widget.getDirtyPixelRect())
                 for link in widget.linksAndDisplays():
                     widget2 = self.findWidget(link)
                     if widget2:
-                        dirtyRect = dirtyRect.Union(widget2.getDirtyPixelRect())
+                        dirtyRect.Union(widget2.getDirtyPixelRect())
 
-            self.oldDirtyRect = dirtyRect
             self.Refresh(True, dirtyRect)
         else:
 
@@ -680,7 +680,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def sortedWidgets(self):
         """Returns a sorted list of widgets, left to right, top to bottom."""
-        return sorted(self.widgetDict.itervalues(), PassageWidget.sort)
+        return sorted(self.widgetDict.itervalues(), PassageWidget.posCompare)
 
     def taggedWidgets(self, tag):
         """Returns widgets that have the given tag"""
@@ -723,7 +723,7 @@ class StoryPanel(wx.ScrolledWindow):
     def passageExists(self, title, includeIncluded = True):
         """
         Returns whether a given passage exists in the story.
-        
+
         If includeIncluded then will also check external passages referenced via StoryIncludes
         """
         return self.findWidget(title) != None or (includeIncluded and self.includedPassageExists(title))
@@ -738,8 +738,8 @@ class StoryPanel(wx.ScrolledWindow):
 
     def includedPassageExists(self, title):
         """Add a title to the set of external passages"""
-        return (title in self.includedPassages)
-    
+        return title in self.includedPassages
+
     def refreshIncludedPassageList(self):
         def callback(passage):
             if passage.title == 'StoryIncludes' or self.findWidget(passage.title):
@@ -804,21 +804,20 @@ class StoryPanel(wx.ScrolledWindow):
         """
         oldScale = self.scale
 
-        if (isinstance(scale, float)):
+        if isinstance(scale, float):
             self.scale = scale
-        else:
-            if (scale == 'in'):
-                self.scale += 0.2
-            if (scale == 'out'):
-                self.scale -= 0.2
-            if (scale == 'fit'):
-                self.zoom(1.0)
-                neededSize = self.toPixels(self.getSize(), scaleOnly = True)
-                actualSize = self.GetSize()
-                widthRatio = actualSize.width / neededSize[0]
-                heightRatio = actualSize.height / neededSize[1]
-                self.scale = min(widthRatio, heightRatio)
-                self.Scroll(0, 0)
+        elif scale == 'in':
+            self.scale += 0.2
+        elif scale == 'out':
+            self.scale -= 0.2
+        elif scale == 'fit':
+            self.zoom(1.0)
+            neededSize = self.toPixels(self.getSize(), scaleOnly = True)
+            actualSize = self.GetSize()
+            widthRatio = actualSize.width / neededSize[0]
+            heightRatio = actualSize.height / neededSize[1]
+            self.scale = min(widthRatio, heightRatio)
+            self.Scroll(0, 0)
 
         self.scale = max(self.scale, 0.2)
         scaleDelta = self.scale - oldScale
@@ -983,10 +982,10 @@ class StoryPanel(wx.ScrolledWindow):
     def tooltipShow(self):
         """ Show the tooltip, showing a text sample for text passages,
         and some image size info for image passages."""
-        if self.tooltipplace != None and self.trackinghover and not self.draggingWidgets:
+        if self.tooltipplace is not None and self.trackinghover and not self.draggingWidgets:
             m = wx.GetMousePosition()
             p = self.tooltipplace.passage
-            length = len(p.text);
+            length = len(p.text)
             if p.isImage():
                 mimeType = "unknown"
                 mimeTypeRE = re.search(r"data:image/([^;]*);",p.text)
@@ -1009,7 +1008,7 @@ class StoryPanel(wx.ScrolledWindow):
             position = self.toLogical(event.GetPosition())
             for widget in self.visibleWidgets:
                 if widget.getLogicalRect().Contains(position):
-                    if widget != self.tooltipplace:
+                    if widget is not self.tooltipplace:
                         # Stop current timer
                         if self.tooltiptimer.IsRunning():
                             self.tooltiptimer.Stop()
@@ -1086,7 +1085,7 @@ class StoryPanelContext(wx.Menu):
             pastePassage = wx.MenuItem(self, wx.NewId(), 'Paste Passage Here')
             self.AppendItem(pastePassage)
             self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(self.getPos()), id = pastePassage.GetId())
-            
+
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
         self.Bind(wx.EVT_MENU, self.newWidget, id = newPassage.GetId())
@@ -1111,8 +1110,8 @@ class StoryPanelContext(wx.Menu):
         pos.x = pos.x - offset[0]
         pos.y = pos.y - offset[0]
         return pos
-    
-    def newWidget(self, event, text = '', tags = []):
+
+    def newWidget(self, event, text = '', tags = ()):
         self.parent.newWidget(pos = self.getPos(), text = text, tags = tags)
 
 # drag and drop listener
@@ -1156,7 +1155,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
             elif type == wx.DF_FILENAME:
 
                 imageRegex = r'\.(?:jpe?g|png|gif|webp|svg)$'
-                files = self.filedrop.GetFilenames();
+                files = self.filedrop.GetFilenames()
 
                 # Check if dropped files contains multiple images,
                 # so the correct dialogs are displayed

@@ -14,7 +14,6 @@ def clipLineByRects(line, *rects):
     result = line
 
     for rect in rects:
-        rectLines = None
         for i in range(2):
             if rect.Contains(result[i]):
                 intersection = lineRectIntersection(result, rect, excludeTrivial = True)
@@ -90,19 +89,39 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
         for i in range(2):
             if rect.Contains(line[i]):
                 return line[i]
+
     # See Cohen-Sutherland Line-Clipping Algorithm
-    INSIDE = 0  # 0000
-    LEFT = 1  # 0001
-    RIGHT = 2  # 0010
-    BOTTOM = 4  # 0100
-    TOP = 8  # 1000
+
+    # pylint: disable=invalid-name
+    LEFT   = 0b0001
+    RIGHT  = 0b0010
+    BOTTOM = 0b0100
+    TOP    = 0b1000
+
+    xmin, ymin = rect.GetTopLeft()
+    xmax, ymax = rect.GetBottomRight()
+
+    def computeCode(x, y):
+        code = 0
+
+        if x < xmin:
+            code |= LEFT
+        elif x > xmax:
+            code |= RIGHT
+
+        if y < ymin:
+            code |= BOTTOM
+        elif y > ymax:
+            code |= TOP
+
+        return code
+
 
     x0, y0 = line[0]
     x1, y1 = line[1]
-    xmin, ymin = rect.GetTopLeft()
-    xmax, ymax = rect.GetBottomRight()
-    codeStart = computeCode(x0, y0, xmin, ymin, xmax, ymax)
-    codeEnd = computeCode(x1, y1, xmin, ymin, xmax, ymax)
+
+    codeStart = computeCode(x0, y0)
+    codeEnd = computeCode(x1, y1)
 
     if (codeStart & codeEnd) != 0:
         return None
@@ -139,31 +158,10 @@ def lineRectIntersection(line, rect, excludeTrivial = False):
 
             if outsideCode == codeStart:
                 x0, y0 = x, y
-                codeStart = computeCode(x0, y0, xmin, ymin, xmax, ymax)
+                codeStart = computeCode(x0, y0)
             else:
                 x1, y1 = x, y
-                codeEnd = computeCode(x1, y1, xmin, ymin, xmax, ymax)
-
-
-def computeCode(x, y, xmin, ymin, xmax, ymax):
-    INSIDE = 0  # 0000
-    LEFT = 1  # 0001
-    RIGHT = 2  # 0010
-    BOTTOM = 4  # 0100
-    TOP = 8  # 1000
-
-    code = 0
-    if x < xmin:
-        code |= LEFT
-    elif x > xmax:
-        code |= RIGHT
-
-    if y < ymin:
-        code |= BOTTOM
-    elif y > ymax:
-        code |= TOP
-
-    return code
+                codeEnd = computeCode(x1, y1)
 
 def lineIntersection(line1, line2):
     """

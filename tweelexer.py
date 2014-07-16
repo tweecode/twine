@@ -1,7 +1,7 @@
 import re
 import tweeregex
 
-class TweeLexer:
+class TweeLexer(object):
     """Abstract base class that does lexical scanning on TiddlyWiki formatted text.
     """
 
@@ -107,21 +107,19 @@ class TweeLexer:
                 applyParamStyle(pos2, contents)
 
         pos = 0
-        prev = 0
         text = self.getText()
         style = self.DEFAULT
         styleStack = []
         styleStart = pos
         inSilence = False
-        macroNestStack = []; # macro nesting
+        macroNestStack = [] # macro nesting
         header = self.getHeader()
 
-        self.applyStyle(0, len(text), self.DEFAULT);
+        self.applyStyle(0, len(text), self.DEFAULT)
 
-        iterator = re.finditer(re.compile(tweeregex.COMBINED_REGEX, re.U|re.I), text[pos:]);
+        iterator = re.finditer(re.compile(tweeregex.COMBINED_REGEX, re.U|re.I), text[pos:])
 
         for p in iterator:
-            prev = pos+1
             pos = p.start()
 
             nextToken, m = self.lexMatchToken(p.group(0))
@@ -148,7 +146,7 @@ class TweeLexer:
 
             #link
             elif nextToken == self.GOOD_LINK:
-                length = m.end(0);
+                length = m.end(0)
                 self.applyStyle(styleStart, pos-styleStart, style)
 
                 # check for prettylinks
@@ -187,19 +185,19 @@ class TweeLexer:
                         styled = True
                         macroNestStack.append((i,pos, m))
                         if i=="silently":
-                            inSilence = True;
+                            inSilence = True
                             styleStack.append(style)
                             style = self.SILENT
                     elif header.isEndTag(name, i):
                         if macroNestStack and macroNestStack[-1][0] == i:
                             # Re-style open macro
-                            macroStart,macroMatch = macroNestStack.pop()[1:];
+                            macroStart,macroMatch = macroNestStack.pop()[1:]
                             applyMacroStyle(macroStart,macroMatch)
                         else:
                             styled = True
                             self.applyStyle(pos, length, self.BAD_MACRO)
                         if i=="silently":
-                            inSilence = False;
+                            inSilence = False
                             style = styleStack.pop() if styleStack else self.DEFAULT
 
                 if not styled:
@@ -209,7 +207,7 @@ class TweeLexer:
 
             # image (cannot have interior markup)
             elif nextToken == self.IMAGE:
-                length = m.end(0);
+                length = m.end(0)
                 self.applyStyle(styleStart, pos-styleStart, style)
                 # Check for linked images
                 if m.group(5):
@@ -227,7 +225,7 @@ class TweeLexer:
 
             # Inline styles
             elif not inSilence and nextToken == self.INLINE_STYLE:
-                if (style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE):
+                if style == self.INLINE_STYLE or style == self.BAD_INLINE_STYLE:
                     self.applyStyle(styleStart, pos-styleStart+2, style)
                     style = styleStack.pop() if styleStack else self.DEFAULT
                     styleStart = pos+2
@@ -246,7 +244,7 @@ class TweeLexer:
 
             # others
             elif nextToken in [self.HTML, self.HTML_BLOCK, self.COMMENT, self.MONO]:
-                length = m.end(0);
+                length = m.end(0)
                 self.applyStyle(styleStart, pos-styleStart, style)
                 self.applyStyle(pos, length, nextToken)
                 pos += length-1
@@ -257,7 +255,7 @@ class TweeLexer:
 
         # Fix up unmatched macros
         while macroNestStack:
-            macroStart,macroMatch = macroNestStack.pop()[1:];
+            macroStart,macroMatch = macroNestStack.pop()[1:]
             self.applyStyle(macroStart, macroMatch.end(0), self.BAD_MACRO)
 
     @staticmethod
@@ -301,10 +299,10 @@ class VerifyLexer(TweeLexer):
         return self.widget.parent.parent.header
 
     def passageExists(self, title):
-        return (self.widget.parent.passageExists(title, False))
+        return self.widget.parent.passageExists(title, False)
 
     def includedPassageExists(self, title):
-        return (self.widget.parent.includedPassageExists(title))
+        return self.widget.parent.includedPassageExists(title)
 
     def check(self):
         """Collect error messages for this passage, using the overridden applyStyles() method."""

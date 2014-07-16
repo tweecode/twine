@@ -1,4 +1,4 @@
-import sys, re, os, urllib, urlparse, pickle, wx, codecs, time, tempfile, images, version
+import sys, re, os, urllib, urlparse, pickle, wx, codecs, tempfile, images, version
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
 from storypanel import StoryPanel
@@ -27,7 +27,7 @@ class StoryFrame(wx.Frame):
 
         # inner state
 
-        if (state):
+        if state:
             self.buildDestination = state.get('buildDestination', '')
             self.saveDestination = state.get('saveDestination', '')
             self.setTarget(state.get('target', 'sugarcane').lower())
@@ -138,7 +138,7 @@ class StoryFrame(wx.Frame):
             shortcut = 'Ctrl-Y'
 
         editMenu.Append(wx.ID_REDO, '&Redo\t' + shortcut)
-        self.Bind(wx.EVT_MENU, lambda e: self.bodyInput.Redo(), id=wx.ID_REDO)
+        self.Bind(wx.EVT_MENU, lambda e: self.storyPanel.redo(), id=wx.ID_REDO)
 
         editMenu.AppendSeparator()
 
@@ -453,10 +453,10 @@ class StoryFrame(wx.Frame):
         message = 'Revert to the last saved version of ' + title + '?'
         dialog = wx.MessageDialog(self, message, 'Revert to Saved', wx.ICON_WARNING | wx.YES_NO | wx.NO_DEFAULT)
 
-        if (dialog.ShowModal() == wx.ID_YES):
+        if dialog.ShowModal() == wx.ID_YES:
             self.Destroy()
             self.app.open(self.saveDestination)
-            self.dirty = False;
+            self.dirty = False
             self.checkClose(None)
 
     def checkClose(self, event):
@@ -470,7 +470,7 @@ class StoryFrame(wx.Frame):
         If this instance's dirty flag is set, asks the user if they want to save the changes.
         """
 
-        if (self.dirty):
+        if self.dirty:
             bits = os.path.splitext(self.saveDestination)
             title = '"' + os.path.basename(bits[0]) + '"'
             if title == '""': title = 'your story'
@@ -478,11 +478,11 @@ class StoryFrame(wx.Frame):
             message = 'Do you want to save the changes to ' + title + ' before closing?'
             dialog = wx.MessageDialog(self, message, 'Unsaved Changes', \
                                       wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
-            result = dialog.ShowModal();
-            if (result == wx.ID_CANCEL):
+            result = dialog.ShowModal()
+            if result == wx.ID_CANCEL:
                 event.Veto()
                 return
-            elif (result == wx.ID_NO):
+            elif result == wx.ID_NO:
                 self.dirty = False
             else:
                 self.save(None)
@@ -544,7 +544,7 @@ class StoryFrame(wx.Frame):
 
                 for widget in self.storyPanel.widgetDict.itervalues(): tw.addTiddler(widget.passage)
                 dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
-                order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
+                order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
                 dest.write(tw.toTwee(order))
                 dest.close()
             except:
@@ -601,8 +601,8 @@ class StoryFrame(wx.Frame):
                         dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
                                                   + '" in this story. Replace it with the imported passage?',
                                                   'Passage Title Conflict', \
-                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
-                        check = dialog.ShowModal();
+                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+                        check = dialog.ShowModal()
                         if check == wx.ID_YES:
                             removedWidgets.append(t)
                         elif check == wx.ID_CANCEL:
@@ -654,7 +654,7 @@ class StoryFrame(wx.Frame):
             file = urlfile.read().encode('base64').replace('\n', '')
 
             # Now that the file's read, check the info
-            maintype = urlfile.info().getmaintype();
+            maintype = urlfile.info().getmaintype()
             if maintype != "image":
                 self.app.displayError("importing from the web: The server served " + maintype + " instead of an image",
                                       stacktrace=False)
@@ -719,7 +719,7 @@ class StoryFrame(wx.Frame):
         """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
         file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
         title, mimeType = os.path.splitext(os.path.basename(file))
-        return (images.AddURIPrefix(file64, mimeType[1:]), title)
+        return (images.addURIPrefix(file64, mimeType[1:]), title)
 
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""
@@ -822,7 +822,7 @@ You can also include URLs of .tws and .twee files, too.
         editingWidget.openEditor()
 
     def save(self, event=None):
-        if (self.saveDestination == ''):
+        if self.saveDestination == '':
             self.saveAs()
             return
 
@@ -954,7 +954,7 @@ You can also include URLs of .tws and .twee files, too.
     def readIncludes(self, lines, callback, silent=False):
         """
         Examines all of the source files included via StoryIncludes, and performs a callback on each passage found.
-        
+
         callback is a function that takes 1 Tiddler object.
         """
         twinedocdir = self.getLocalDir()
@@ -1016,7 +1016,7 @@ You can also include URLs of .tws and .twee files, too.
         """
         if self.autobuildmenuitem.IsChecked():
             self.autobuildtimer.Start(5000)
-            self.autoBuildStart();
+            self.autoBuildStart()
         else:
             self.autobuildtimer.Stop()
 
@@ -1063,7 +1063,7 @@ You can also include URLs of .tws and .twee files, too.
         Shows a StoryMetadataFrame for this frame.
         """
 
-        if (not hasattr(self, 'metadataFrame')):
+        if not hasattr(self, 'metadataFrame'):
             self.metadataFrame = StoryMetadataFrame(parent=self, app=self.app)
         else:
             try:
@@ -1078,7 +1078,7 @@ You can also include URLs of .tws and .twee files, too.
         Shows a StoryFindFrame for this frame.
         """
 
-        if (not hasattr(self, 'findFrame')):
+        if not hasattr(self, 'findFrame'):
             self.findFrame = StoryFindFrame(self.storyPanel, self.app)
         else:
             try:
@@ -1092,7 +1092,7 @@ You can also include URLs of .tws and .twee files, too.
         """
         Shows a StoryReplaceFrame for this frame.
         """
-        if (not hasattr(self, 'replaceFrame')):
+        if not hasattr(self, 'replaceFrame'):
             self.replaceFrame = StoryReplaceFrame(self.storyPanel, self.app)
         else:
             try:
@@ -1129,11 +1129,11 @@ You can also include URLs of .tws and .twee files, too.
 
             tw = TiddlyWiki()
             for widget in self.storyPanel.sortedWidgets():
-                # Exclude images from RTF, they appear as large unreadable blobs of base64 text. 
+                # Exclude images from RTF, they appear as large unreadable blobs of base64 text.
                 if 'Twine.image' not in widget.passage.tags:
                     tw.addTiddler(widget.passage)
 
-            order = map(lambda w: w.passage.title, self.storyPanel.sortedWidgets())
+            order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
             dest.write(tw.toRtf(order))
             dest.close()
         except:
@@ -1331,7 +1331,7 @@ class ClipboardMonitor(wx.Timer):
         self.dataFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         self.state = None
 
-    def Notify(self):
+    def Notify(self, *args, **kwargs):
         if wx.TheClipboard.Open():
             newState = wx.TheClipboard.IsSupported(self.dataFormat)
             wx.TheClipboard.Close()

@@ -5,7 +5,7 @@
 
 from distutils.core import setup
 from version import versionString
-import py2app
+import py2app # pylint: disable=unused-import,import-error
 
 setup(app = ['app.py'], options = dict(py2app = dict( argv_emulation = True,
                                        iconfile = 'appicons/app.icns', \

@@ -67,16 +67,14 @@ class App(wx.App):
                     self.newStory()
 
         except ValueError:
-            None
+            pass
 
     def openDialog(self, event = None):
         """Opens a story file of the user's choice."""
-        opened = False
         dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
                                wx.FD_OPEN | wx.FD_CHANGE_DIR)
 
         if dialog.ShowModal() == wx.ID_OK:
-            opened = True
             self.config.Write('savePath', os.getcwd())
             self.addRecentFile(dialog.GetPath())
             self.open(dialog.GetPath())
@@ -142,7 +140,7 @@ class App(wx.App):
 
     def showPrefs(self, event = None):
         """Shows the preferences dialog."""
-        if (not hasattr(self, 'prefFrame')):
+        if not hasattr(self, 'prefFrame'):
             self.prefFrame = PreferenceFrame(self)
         else:
             try:
@@ -201,13 +199,16 @@ class App(wx.App):
         info.SetIcon(self.icon)
         info.SetWebSite('http://twinery.org/')
         info.SetDescription('An open-source tool for telling interactive stories\nwritten by Chris Klimas')
-        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton','Thomas M. Edwards','Maarten ter Huurne','and others.'])
+        info.SetDevelopers(['Leon Arnott','Emmanuel Turner','Henry Soule','Misty De Meo','Phillip Sutton',
+                            'Thomas M. Edwards','Maarten ter Huurne','and others.'])
 
-        info.SetLicense('The Twine development application and its Python source code is free software: you can redistribute it and/or modify'
-                          + ' it under the terms of the GNU General Public License as published by the Free Software'
-                          + ' Foundation, either version 3 of the License, or (at your option) any later version.'
-                          + ' See the GNU General Public License for more details.\n\nThe Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s TiddlyWiki project,'
-                          + ' and is used under the terms of the MIT license.')
+        info.SetLicense('The Twine development application and its Python source code is free software:'
+                        ' you can redistribute it and/or modify it under the terms of the GNU General Public License'
+                        ' as published by the Free Software Foundation, either version 3 of the License,'
+                        ' or (at your option) any later version. See the GNU General Public License for more details.'
+                        '\n\n'
+                        'The Javascript game engine in compiled game files is a derivative work of Jeremy Ruston\'s'
+                        ' TiddlyWiki project, and is used under the terms of the MIT license.')
         wx.AboutBox(info)
 
     def storyFormatHelp(self, event = None):
@@ -229,8 +230,6 @@ class App(wx.App):
     def loadPrefs(self):
         """Loads user preferences into self.config, setting up defaults if none are set."""
         sc = self.config = wx.Config('Twine')
-
-        monoFont = wx.SystemSettings.GetFont(wx.SYS_ANSI_FIXED_FONT)
 
         for k,v in {
             'savePath' : os.path.expanduser('~'),
@@ -263,7 +262,8 @@ class App(wx.App):
 
     def applyPrefs(self):
         """Asks all of our stories to update themselves based on a preference change."""
-        map(lambda s: s.applyPrefs(), self.stories)
+        for story in self.stories:
+            story.applyPrefs()
 
     def displayError(self, activity,stacktrace = True):
         """

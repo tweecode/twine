@@ -1,4 +1,4 @@
-import sys, os, re, types, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
+import sys, os, re, threading, wx, wx.lib.scrolledpanel, wx.animate, base64, time, tweeregex
 import metrics, images
 from version import versionString
 from tweelexer import TweeLexer
@@ -54,15 +54,15 @@ class PassageFrame(wx.Frame):
 
         passageMenu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.save, id = wx.ID_SAVE)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_VERIFY, '&Verify Passage\tCtrl-E')
         self.Bind(wx.EVT_MENU, lambda e: (self.widget.verifyPassage(self), self.offerAssistance()),\
                   id = PassageFrame.PASSAGE_VERIFY)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_TEST_HERE, '&Test Play From Here\tCtrl-T')
         self.Bind(wx.EVT_MENU, lambda e: self.widget.parent.parent.testBuild(e, startAt = self.widget.passage.title),\
                   id = PassageFrame.PASSAGE_TEST_HERE)
-        
+
         passageMenu.Append(PassageFrame.PASSAGE_REBUILD_STORY, '&Rebuild Story\tCtrl-R')
         self.Bind(wx.EVT_MENU, self.widget.parent.parent.rebuild, id = PassageFrame.PASSAGE_REBUILD_STORY)
 
@@ -124,25 +124,25 @@ class PassageFrame(wx.Frame):
 
         helpMenu = wx.Menu()
 
-        if (self.widget.passage.isStylesheet()):
+        if self.widget.passage.isStylesheet():
             helpMenu.Append(PassageFrame.HELP1, 'About Stylesheets')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/stylesheet'), id = PassageFrame.HELP1)
-        elif (self.widget.passage.isScript()):
+        elif self.widget.passage.isScript():
             helpMenu.Append(PassageFrame.HELP1, 'About Scripts')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/script'), id = PassageFrame.HELP1)
         else:
             helpMenu.Append(PassageFrame.HELP1, 'About Passages')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/passage'), id = PassageFrame.HELP1)
-    
+
             helpMenu.Append(PassageFrame.HELP2, 'About Text Syntax')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/syntax'), id = PassageFrame.HELP2)
-    
+
             helpMenu.Append(PassageFrame.HELP3, 'About Links')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/link'), id = PassageFrame.HELP3)
-            
+
             helpMenu.Append(PassageFrame.HELP4, 'About Macros')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/macro'), id = PassageFrame.HELP4)
-    
+
             helpMenu.Append(PassageFrame.HELP5, 'About Tags')
             self.Bind(wx.EVT_MENU, lambda e: wx.LaunchDefaultBrowser('http://twinery.org/wiki/tag'), id = PassageFrame.HELP5)
 
@@ -235,7 +235,7 @@ class PassageFrame(wx.Frame):
             self.bodyInput.SetSelection(-1, -1)
 
         # Hack to force titles (>18 char) to display correctly.
-        # NOTE: stops working if moved above bodyInput code. 
+        # NOTE: stops working if moved above bodyInput code.
         self.titleInput.SetInsertionPoint(0)
 
         self.SetIcon(self.app.icon)
@@ -245,7 +245,7 @@ class PassageFrame(wx.Frame):
         if not title:
             title = self.widget.passage.title
         return title + ' - ' + self.widget.parent.parent.title + ' - ' + self.app.NAME + ' ' + versionString
-    
+
     def syncInputs(self):
         """Updates the inputs based on the passage's state."""
         self.titleInput.SetValue(self.widget.passage.title)
@@ -265,9 +265,9 @@ class PassageFrame(wx.Frame):
         title = title.replace('\n','')
 
         def error():
-           self.titleInput.SetBackgroundColour((240,130,130))
-           self.titleInput.Refresh()
-           self.titleInvalid = True
+            self.titleInput.SetBackgroundColour((240,130,130))
+            self.titleInput.Refresh()
+            self.titleInvalid = True
 
         if title:
         # Check for title conflict
@@ -303,7 +303,7 @@ class PassageFrame(wx.Frame):
             if tag != '' and tag not in TiddlyWiki.SPECIAL_TAGS:
                 self.widget.passage.tags.append(tag)
             if tag == "StoryIncludes" and self.widget.parent.parent.autobuildmenuitem.IsChecked():
-                self.widget.parent.parent.autoBuildStart();
+                self.widget.parent.parent.autoBuildStart()
 
         self.SetTitle(self.title())
 
@@ -322,7 +322,7 @@ class PassageFrame(wx.Frame):
             except:
                 pass
 
-        if (self.syncTimer):
+        if self.syncTimer:
             self.syncTimer.cancel()
 
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
@@ -342,16 +342,16 @@ class PassageFrame(wx.Frame):
                                               title = self.title(), \
                                               initialText = self.widget.passage.text, \
                                               callback = self.setBodyText, frame = self)
-        
+
     def offerAssistance(self):
         """
         Offer to fulfill certain incomplete tasks evident from the state of the passage text.
         (Technically, none of this needs to be on passageFrame instead of passageWidget.)
         """
-        
+
         # Offer to create passage for broken links
         if self.app.config.ReadBool('createPassagePrompt'):
-            brokens = links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.getBrokenLinks())
+            brokens = [link for link in self.widget.getBrokenLinks() if TweeLexer.linkStyle(link) == TweeLexer.BAD_LINK]
             if brokens :
                 if len(brokens) > 1:
                     brokenmsg = 'create ' + str(len(brokens)) + ' new passages to match these broken links?'
@@ -365,7 +365,7 @@ class PassageFrame(wx.Frame):
                         self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
                 elif check == wx.ID_CANCEL:
                     return False
-        
+
         # Offer to import external images
         if self.app.config.ReadBool('importImagePrompt'):
             regex = tweeregex.EXTERNAL_IMAGE_REGEX
@@ -376,10 +376,10 @@ class PassageFrame(wx.Frame):
             for img in externalimages:
                 if not check:
                     dialog = wx.MessageDialog(self, 'Do you want to import the image files linked\nin this passage into the story file?', 'Import Images', \
-                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT);
+                                                  wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
                     check = dialog.ShowModal()
                     if check == wx.ID_NO:
-                        break  
+                        break
                     elif check == wx.ID_CANCEL:
                         return False
                 # Download the image if it's at an absolute URL
@@ -396,38 +396,38 @@ class PassageFrame(wx.Frame):
                     if not imgpassagename:
                         continue
                     downloadedurls[imgurl] = imgpassagename
-            
+
             # Replace all found images
             for old, new in downloadedurls.iteritems():
                 self.widget.passage.text = re.sub(regex.replace(tweeregex.IMAGE_FILENAME_REGEX, re.escape(old)),
                                                   lambda m: m.group(0).replace(old, new), self.widget.passage.text)
-        
+
         if self.bodyInput.GetText() != self.widget.passage.text:
             self.bodyInput.SetText(self.widget.passage.text)
-        
+
         # If it's StoryIncludes, update the links
         if self.widget.passage.title == "StoryIncludes":
             self.widget.parent.refreshIncludedPassageList()
-        
+
         return True
-        
+
     def closeEditor(self, event = None):
         """
         Do extra stuff on closing the editor
         """
-        
+
         # Show warnings, do replacements
         if self.app.config.ReadBool('passageWarnings'):
             if self.widget.verifyPassage(self) == -1: return
-        
+
         # Do help
         if not self.offerAssistance():
             return
-        
+
         #Closes this editor's fullscreen counterpart, if any.
         try: self.fullscreen.Destroy()
         except: pass
-        
+
         self.widget.passage.update()
         event.Skip()
 
@@ -445,7 +445,6 @@ class PassageFrame(wx.Frame):
         # so we gotta work our way back to a menu name
 
         if not title: title = self.menus.FindItemById(event.GetId()).GetLabel()
-        found = False
 
         # check if the passage already exists
 
@@ -462,7 +461,7 @@ class PassageFrame(wx.Frame):
         The type parameter should be one of the constants defined in
         PassageSearchFrame, e.g. FIND_TAB or REPLACE_TAB.
         """
-        if (not hasattr(self, 'searchFrame')):
+        if not hasattr(self, 'searchFrame'):
             self.searchFrame = PassageSearchFrame(self, self, self.app, type)
         else:
             try:
@@ -605,21 +604,21 @@ class PassageFrame(wx.Frame):
         monoFont = wx.Font(self.app.config.ReadInt('monospaceFontSize'), wx.MODERN, wx.NORMAL, \
                            wx.NORMAL, False, self.app.config.Read('monospaceFontFace'))
         body = self.bodyInput
-        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont);
+        body.StyleSetFont(wx.stc.STC_STYLE_DEFAULT, monoFont)
         body.StyleClearAll()
         if css:
             for i in range(1,17):
                 body.StyleSetFont(i, monoFont)
-            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeStyler.MACRO_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeStyler.COMMENT_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeStyler.GOOD_LINK_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeStyler.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeStyler.MARKUP_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeStyler.PARAM_BOOL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeStyler.PARAM_VAR_COLOR);
-            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeStyler.GOOD_LINK_COLOR);
+            body.StyleSetForeground(wx.stc.STC_CSS_IMPORTANT, TweeStyler.MACRO_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_COMMENT, TweeStyler.COMMENT_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_ATTRIBUTE, TweeStyler.GOOD_LINK_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_CLASS, TweeStyler.MARKUP_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_ID, TweeStyler.MARKUP_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_TAG, TweeStyler.PARAM_BOOL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_PSEUDOCLASS, TweeStyler.EXTERNAL_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_DIRECTIVE, TweeStyler.PARAM_VAR_COLOR)
+            body.StyleSetForeground(wx.stc.STC_CSS_UNKNOWN_IDENTIFIER, TweeStyler.GOOD_LINK_COLOR)
 
             for i in [wx.stc.STC_CSS_CLASS, wx.stc.STC_CSS_ID, wx.stc.STC_CSS_TAG,
                       wx.stc.STC_CSS_PSEUDOCLASS, wx.stc.STC_CSS_OPERATOR, wx.stc.STC_CSS_IMPORTANT,
@@ -713,9 +712,8 @@ class PassageFrame(wx.Frame):
 
         # Remove externals
 
-        links = filter(lambda text: TweeLexer.linkStyle(text) == TweeLexer.BAD_LINK, self.widget.passage.links)
-        for link in links:
-            if len(link) > 0:
+        for link in self.widget.passage.links:
+            if len(link) > 0 and TweeLexer.linkStyle(link) == TweeLexer.BAD_LINK:
                 if link in self.widget.parent.widgetDict:
                     outgoing.append(link)
                 elif not self.widget.parent.includedPassageExists(link):
@@ -814,14 +812,14 @@ class StorySettingsFrame(PassageFrame):
 
         # Read the storysettings definitions for this header
         self.storySettingsData = self.widget.parent.parent.header.storySettings()
-        
+
         if not self.storySettingsData or type(self.storySettingsData) is str:
             label = self.storySettingsData or "The currently selected story format does not use StorySettings."
             allSizer.Add(wx.StaticText(self.panel, label = label),flag=wx.ALL|wx.EXPAND, border=metrics.size('windowBorder'))
             self.storySettingsData = {}
-        
+
         self.ctrls = {}
-        
+
         for data in self.storySettingsData:
             ctrlset = []
             name = ''
@@ -834,12 +832,12 @@ class StorySettingsFrame(PassageFrame):
                     currentValue = data.get('default', 'off')
                     self.saveSetting(name, currentValue)
                 checkbox.SetValue(currentValue not in ["off", "false", '0'])
-                values = data.get("values", ("on","off"))
+                values = data.get("values", ("on","off")) # pylint: disable=unused-variable
                 checkbox.Bind(wx.EVT_CHECKBOX, lambda e, checkbox=checkbox, name=name, values=values:
                               self.saveSetting(name, values[0] if checkbox.GetValue() else values[1] ))
                 allSizer.Add(checkbox,flag=wx.ALL, border=metrics.size('windowBorder'))
                 ctrlset.append(checkbox)
-            
+
             elif data["type"] == "text":
                 textlabel = wx.StaticText(self.panel, label = data["label"])
                 textctrl = wx.TextCtrl(self.panel)
@@ -861,20 +859,20 @@ class StorySettingsFrame(PassageFrame):
                 ctrlset += [textlabel, textctrl]
             else:
                 continue
-            
+
             if "desc" in data:
                 desc = wx.StaticText(self.panel, label = data["desc"])
                 allSizer.Add(desc, 0, flag=wx.LEFT|wx.BOTTOM, border = metrics.size('windowBorder'))
                 ctrlset.append(desc)
-            
+
             self.ctrls[name] = ctrlset
-            
+
         self.SetIcon(self.app.icon)
         self.SetTitle(self.title())
         self.Layout()
         self.enableCtrls()
         self.Show(True)
-    
+
     def enableCtrls(self):
         # Check if each ctrl has a requirement or an incompatibility,
         # look it up, and enable/disable if so
@@ -885,7 +883,7 @@ class StorySettingsFrame(PassageFrame):
                     set = self.getSetting(data['requires'])
                     for i in self.ctrls[name]:
                         i.Enable(set not in ["off", "false", '0'])
-    
+
     def getSetting(self, valueName):
         search = re.search(r"(?:^|\n)"+valueName + r"\s*:\s*(\w*)\s*(?:\n|$)", self.widget.passage.text, flags=re.I)
         if search:
@@ -1020,7 +1018,7 @@ class ImageFrame(PassageFrame):
         def reallySync(self):
             self.widget.parent.Refresh()
 
-        if (self.syncTimer):
+        if self.syncTimer:
             self.syncTimer.cancel()
 
         self.syncTimer = threading.Timer(PassageFrame.PARENT_SYNC_DELAY, reallySync, [self], {})
@@ -1084,9 +1082,9 @@ class ImageFrame(PassageFrame):
 
     def saveImage(self, event = None):
         """Saves the base64 image as a file."""
-        t = self.widget.passage.text;
+        t = self.widget.passage.text
         # Get the extension
-        extension = images.GetImageType(t)
+        extension = images.getImageType(t)
         dialog = wx.FileDialog(self, 'Save Image', os.getcwd(), self.widget.passage.title + extension, \
                                'Image File|*' + extension + '|All Files (*.*)|*.*', wx.SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 
@@ -1096,7 +1094,7 @@ class ImageFrame(PassageFrame):
 
                 dest = open(path, 'wb')
 
-                data = base64.b64decode(images.RemoveURIPrefix(t))
+                data = base64.b64decode(images.removeURIPrefix(t))
                 dest.write(data)
 
                 dest.close()
@@ -1128,7 +1126,7 @@ class ImageFrame(PassageFrame):
 
         # Convert bitmap to PNG
         bmp = bdo.GetBitmap()
-        self.widget.passage.text = images.BitmapToBase64PNG(bmp)
+        self.widget.passage.text = images.bitmapToBase64PNG(bmp)
         self.widget.updateBitmap()
         self.updateImage()
 

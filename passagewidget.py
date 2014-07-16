@@ -1,8 +1,8 @@
-import sys, os, copy, math, colorsys, re, wx, storypanel, tiddlywiki, tweelexer
+import copy, math, colorsys, re, wx, tiddlywiki, tweelexer
 import geometry, metrics, images
 from passageframe import PassageFrame, ImageFrame, StorySettingsFrame
 
-class PassageWidget:
+class PassageWidget(object):
     """
     A PassageWidget is a box standing in for a proxy for a single
     passage in a story. Users can drag them around, double-click
@@ -16,7 +16,7 @@ class PassageWidget:
     logical coordinates. Use StoryPanel.toPixels() to convert.
     """
 
-    def __init__(self, parent, app, id = wx.ID_ANY, pos = (0, 0), title = '', text = '', tags = [], state = None):
+    def __init__(self, parent, app, pos = (0, 0), title = '', text = '', tags = (), state = None):
         # inner state
 
         self.parent = parent
@@ -25,7 +25,7 @@ class PassageWidget:
         self.brokenEmblem = wx.Bitmap(self.app.iconsPath + 'brokenemblem.png')
         self.externalEmblem = wx.Bitmap(self.app.iconsPath + 'externalemblem.png')
         self.paintBuffer = wx.MemoryDC()
-        self.paintBufferBounds = None        
+        self.paintBufferBounds = None
         if state:
             self.passage = state['passage']
             self.pos = list(pos) if pos != (0,0) else state['pos']
@@ -78,16 +78,14 @@ class PassageWidget:
 
         for link in self.passage.links:
             widget = self.parent.findWidget(link)
-            if widget: dirtyRect = dirtyRect.Union(widget.getPixelRect())
+            if widget:
+                dirtyRect.Union(widget.getPixelRect())
 
         # then, those that link to us
-        # Python closures are odd, require lists to affect things outside
-
-        bridge = [ dirtyRect ]
 
         def addLinkingToRect(widget):
             if self.passage.title in widget.passage.links:
-                dirtyRect = bridge[0].Union(widget.getPixelRect())
+                dirtyRect.Union(widget.getPixelRect())
 
         self.parent.eachWidget(addLinkingToRect)
 
@@ -111,7 +109,7 @@ class PassageWidget:
 
         while self.intersectsAny() and turns < 99*griddivision:
             """Move in an Ulam spiral pattern: n spaces left, n spaces up, n+1 spaces right, n+1 spaces down"""
-            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1));
+            self.pos[int(math.floor((turns*2) % 2))] += self.parent.GRID_SPACING * griddivision * int(math.copysign(1, turns % 2 - 1))
             movecount -= 1
             if movecount <= 0:
                 turns += 0.5
@@ -133,7 +131,7 @@ class PassageWidget:
         """
         Returns whether this widget's passage contains a regexp.
         """
-        return (re.search(regexp, self.passage.title, flags) != None \
+        return (re.search(regexp, self.passage.title, flags) != None
                 or re.search(regexp, self.passage.text, flags) != None)
 
     def replaceRegexp(self, findRegexp, replaceRegexp, flags):
@@ -144,7 +142,7 @@ class PassageWidget:
         compiledRegexp = re.compile(findRegexp, flags)
 
         oldTitle = self.passage.title
-        newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, self.passage.title)
+        newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, oldTitle)
         self.passage.text, textReps = re.subn(compiledRegexp, replaceRegexp, self.passage.text)
         if titleReps > 0:
             self.parent.changeWidgetTitle(self,newTitle)
@@ -176,7 +174,7 @@ class PassageWidget:
         exclusive to prevent other widgets from being deselected.
         """
 
-        if (exclusive):
+        if exclusive:
             self.parent.eachWidget(lambda i: i.setSelected(False, False))
 
         old = self.selected
@@ -189,13 +187,13 @@ class PassageWidget:
             for link in self.linksAndDisplays() + self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
-                    dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                    dirtyRect.Union(widget.getDirtyPixelRect())
             if self.passage.isStylesheet():
                 for t in self.passage.tags:
                     if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
                         for widget in self.parent.taggedWidgets(t):
                             if widget:
-                                dirtyRect = dirtyRect.Union(widget.getDirtyPixelRect())
+                                dirtyRect.Union(widget.getDirtyPixelRect())
             self.parent.Refresh(True, dirtyRect)
 
     def setDimmed(self, value):
@@ -239,11 +237,11 @@ class PassageWidget:
 
     def closeEditor(self, event = None):
         """Closes the PassageFrame associated with this, if it exists."""
-        try: self.passageFrame.closeFullscreen()
+        try: self.passageFrame.closeEditor()
         except: pass
         try: self.passageFrame.Destroy()
         except: pass
-            
+
     def verifyPassage(self, window):
         """
         Check that the passage syntax is well-formed.
@@ -253,7 +251,7 @@ class PassageWidget:
         checks = tweelexer.VerifyLexer(self).check()
 
         problems = 0
-        
+
         oldtext = passage.text
         newtext = ""
         index = 0
@@ -261,8 +259,10 @@ class PassageWidget:
             problems += 1
             if replace:
                 start, sub, end = replace
-                answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?", 'Problem in '+self.passage.title, wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT) \
-                    .ShowModal()
+                answer = wx.MessageDialog(window, warning + "\n\nMay I try to fix this for you?",
+                                          'Problem in ' + self.passage.title,
+                                          wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT
+                                          ).ShowModal()
                 if answer == wx.ID_YES:
                     newtext += oldtext[index:start] + sub
                     index = end
@@ -275,9 +275,9 @@ class PassageWidget:
                     .ShowModal()
                 if answer == wx.ID_NO:
                     return problems
-                    
+
             passage.text = newtext + oldtext[index:]
-        
+
         return problems
 
     def intersectsAny(self, dragging = False):
@@ -285,13 +285,13 @@ class PassageWidget:
 
         #Enforce positive coordinates
         if not 'Twine.hide' in self.passage.tags:
-            if ((self.pos[0] < 0) or (self.pos[1] < 0)):
+            if self.pos[0] < 0 or self.pos[1] < 0:
                 return True
 
         # we do this manually so we don't have to go through all of them
 
-        for widget in (self.parent.notDraggingWidgets if dragging else self.parent.widgetDict.itervalues()):
-            if (widget != self) and (self.intersects(widget)):
+        for widget in self.parent.notDraggingWidgets if dragging else self.parent.widgetDict.itervalues():
+            if widget != self and self.intersects(widget):
                 return True
 
         return False
@@ -318,8 +318,8 @@ class PassageWidget:
     def updateBitmap(self):
         """If an image passage, updates the bitmap to match the contained base64 data."""
         if self.passage.isImage():
-            self.bitmap = images.Base64ToBitmap(self.passage.text)
-        
+            self.bitmap = images.base64ToBitmap(self.passage.text)
+
     def getConnectorLine(self, otherWidget, clipped=True):
         """
         Get the line that would be drawn between this widget and another.
@@ -347,13 +347,13 @@ class PassageWidget:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)
-        
+
         if imageArrows:
             for link in self.passage.images:
                 widget = self.parent.findWidget(link)
                 if widget:
                     ret.append(widget)
-            
+
             if self.passage.isStylesheet():
                 for t in self.passage.tags:
                     if t not in tiddlywiki.TiddlyWiki.INFO_TAGS:
@@ -416,7 +416,7 @@ class PassageWidget:
             arrowheadr = geometry.endPointProjectedFrom((start, end), PassageWidget.ARROWHEAD_ANGLE,  length)
             arrowheadl = geometry.endPointProjectedFrom((start, end), 0 - PassageWidget.ARROWHEAD_ANGLE, length)
         return line, [(arrowheadl, end, arrowheadr)]
-    
+
     def paint(self, dc):
         """
         Handles paint events, either blitting our paint buffer or
@@ -461,7 +461,7 @@ class PassageWidget:
         Caches the widget so self.paintBuffer is up-to-date.
         """
 
-        def wordWrap(text, lineWidth, gc, lineBreaks = False):
+        def wordWrap(text, lineWidth, gc):
             """
             Returns a list of lines from a string
             This is somewhat based on the wordwrap function built into wx.lib.
@@ -631,7 +631,7 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(excerptTextColor)
 
-                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc, self.passage.isAnnotation())
+                excerptLines = wordWrap(self.passage.text, size.width - (inset * 2), gc)
 
                 for line in excerptLines:
                     gc.DrawText(line, inset, excerptTop)
@@ -656,8 +656,7 @@ class PassageWidget:
                     gc.SetFont(excerptFont)
                     gc.SetTextForeground(tagTextColor)
 
-                text = wordWrap(" ".join(tags),
-                                size.width - (inset * 2), gc)[0]
+                text = wordWrap(' '.join(tags), size.width - (inset * 2), gc)[0]
 
                 gc.DrawText(text, inset*2, (size.height-tagBarHeight))
         else:
@@ -730,19 +729,22 @@ class PassageWidget:
                 height = size.height - titleBarHeight
 
                 # choose smaller of vertical and horizontal scale factor, to preserve aspect ratio
-                scale = min(width/float(self.bitmap.GetWidth()), height/float(self.bitmap.GetHeight()));
+                scale = min(width/float(self.bitmap.GetWidth()), height/float(self.bitmap.GetHeight()))
 
-                img = self.bitmap.ConvertToImage();
+                img = self.bitmap.ConvertToImage()
                 if scale != 1:
-                    img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight());
+                    img = img.Scale(scale*self.bitmap.GetWidth(),scale*self.bitmap.GetHeight())
 
                 # offset image horizontally or vertically, to centre after scaling
                 offsetWidth = (width - img.GetWidth())/2
                 offsetHeight = (height - img.GetHeight())/2
                 if isinstance(gc, wx.GraphicsContext):
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight, img.GetWidth(), img.GetHeight())
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()),
+                                  1 + offsetWidth, titleBarHeight + 1 + offsetHeight,
+                                  img.GetWidth(), img.GetHeight())
                 else:
-                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()), 1 + offsetWidth, titleBarHeight + 1 + offsetHeight)
+                    gc.DrawBitmap(img.ConvertToBitmap(self.bitmap.GetDepth()),
+                                  1 + offsetWidth, titleBarHeight + 1 + offsetHeight)
 
         if isinstance(gc, wx.GraphicsContext):
             gc.ResetClip()
@@ -791,22 +793,23 @@ class PassageWidget:
         """Returns a dictionary with state information suitable for pickling."""
         return { 'selected': self.selected, 'pos': self.pos, 'passage': copy.copy(self.passage) }
 
-    def sort(first, second):
+    @staticmethod
+    def posCompare(first, second):
         """
         Sorts PassageWidgets so that the results appear left to right,
         top to bottom. A certain amount of slack is assumed here in
         terms of positioning.
         """
-        xDistance = int(first.pos[0] - second.pos[0])
-        yDistance = int(first.pos[1] - second.pos[1])
 
+        yDistance = int(first.pos[1] - second.pos[1])
         if abs(yDistance) > 5:
             return yDistance
-        else:
-            if xDistance != 0:
-                return xDistance
-            else:
-                return 1 # punt on ties
+
+        xDistance = int(first.pos[0] - second.pos[0])
+        if xDistance != 0:
+            return xDistance
+
+        return id(first) - id(second) # punt on ties
 
     def __repr__(self):
         return "<PassageWidget '" + self.passage.title + "'>"
