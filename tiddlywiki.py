@@ -140,7 +140,7 @@ class TiddlyWiki(object):
                 modernizr = True
             if not blankCSS and i.isStylesheet() and re.search(r'blank stylesheet', i.text, re.I):
                 blankCSS = True
-            if jquery and modernizr and noDefaultCSS:
+            if jquery and modernizr and not blankCSS:
                 break
 
         # Insert jQuery
