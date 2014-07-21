@@ -191,14 +191,14 @@ class StoryPanel(wx.ScrolledWindow):
                 self.Refresh()
 
 
-    def removeWidget(self, widget, saveUndo = True):
+    def removeWidget(self, title, saveUndo = True):
         """
         Deletes a passed widget. You can ask this to save an undo state manually,
         but by default, it doesn't.
         """
+        widget = self.widgetDict.pop(title, None)
         if widget is None:
             return
-        self.widgetDict.pop(widget.passage.title, None)
 
         if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
         if self.tooltipplace is widget:
@@ -242,8 +242,7 @@ class StoryPanel(wx.ScrolledWindow):
                 return
 
         for widget in selected:
-            self.removeWidget(widget,saveUndo)
-
+            self.removeWidget(widget.passage.title, saveUndo)
 
     def findWidgetRegexp(self, regexp = None, flags = None):
         """

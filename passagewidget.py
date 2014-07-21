@@ -888,6 +888,6 @@ class PassageWidgetContext(wx.Menu):
 
         delete = wx.MenuItem(self, wx.NewId(), 'Delete ' + title)
         self.AppendItem(delete)
-        self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent), id = delete.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent.passage.title), id = delete.GetId())
 
 
