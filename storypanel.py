@@ -212,27 +212,25 @@ class StoryPanel(wx.ScrolledWindow):
         but by default, it doesn't.
         """
 
-        selected = []
-        connected = []
+        selected = set(
+            title
+            for title, widget in self.widgetDict.iteritems()
+            if widget.selected
+            )
 
-        for widget in self.widgetDict.itervalues():
-            if widget.selected: selected.append(widget)
+        connected = set(
+            title
+            for title, widget in self.widgetDict.iteritems()
+            if not widget.selected and selected.intersection(widget.linksAndDisplays())
+            )
 
-        for widget in self.widgetDict.itervalues():
-            if not widget.selected:
-                for link in widget.linksAndDisplays():
-                    if len(link) > 0:
-                        for widget2 in selected:
-                            if widget2.passage.title == link:
-                                connected.append(widget)
-
-        if len(connected):
+        if connected:
             message = 'Are you sure you want to delete ' + \
-                      (('"' + selected[0].passage.title + '"? Links to it') if len(selected) == 1 else
-                      (str(len(selected)+1) + ' passages? Links to them')) + \
+                      (('"' + next(iter(selected)) + '"? Links to it') if len(selected) == 1 else
+                      (str(len(selected)) + ' passages? Links to them')) + \
                        ' from ' + \
-                      (('"' + connected[0].passage.title + '"') if len(connected) == 1 else
-                      (str(len(connected)+1) + ' other passages')) + \
+                      (('"' + next(iter(connected)) + '"') if len(connected) == 1 else
+                      (str(len(connected)) + ' other passages')) + \
                       ' will become broken.'
             dialog = wx.MessageDialog(self.parent, message,
                                       'Delete Passage' + ('s' if len(selected) > 1 else ''), \
@@ -241,8 +239,8 @@ class StoryPanel(wx.ScrolledWindow):
             if dialog.ShowModal() != wx.ID_OK:
                 return
 
-        for widget in selected:
-            self.removeWidget(widget.passage.title, saveUndo)
+        for title in selected:
+            self.removeWidget(title, saveUndo)
 
     def findWidgetRegexp(self, regexp = None, flags = None):
         """
