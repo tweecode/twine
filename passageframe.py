@@ -6,6 +6,7 @@ from tweestyler import TweeStyler
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
+from utils import isURL
 import cStringIO
 
 class PassageFrame(wx.Frame):
@@ -389,7 +390,7 @@ class PassageFrame(wx.Frame):
                 # If we've downloaded it before, don't do it again
                 if imgurl not in downloadedurls:
                     # Internet image, or local image?
-                    if any(imgurl.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                    if isURL(imgurl):
                         imgpassagename = storyframe.importImageURL(imgurl, showdialog=False)
                     else:
                         imgpassagename = storyframe.importImageFile(storyframe.getLocalDir()+os.sep+imgurl, showdialog=False)

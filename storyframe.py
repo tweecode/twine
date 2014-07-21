@@ -6,6 +6,7 @@ from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 from storymetadataframe import StoryMetadataFrame
+from utils import isURL
 
 
 class StoryFrame(wx.Frame):
@@ -963,7 +964,7 @@ You can also include URLs of .tws and .twee files, too.
                     if extension not in ['.tws', '.tw', '.txt', '.twee']:
                         raise Exception('File format not recognized')
 
-                    if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                    if isURL(line):
                         openedFile = urllib.urlopen(line)
                     else:
                         openedFile = open(os.path.join(twinedocdir, line), 'r')
@@ -1035,7 +1036,7 @@ You can also include URLs of .tws and .twee files, too.
         widget = self.storyPanel.widgetDict.get('StoryIncludes')
         if widget is not None:
             for line in widget.passage.text.splitlines():
-                if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                if not isURL(line):
                     pathname = os.path.join(twinedocdir, line)
                     # Include even non-existant files, in case they eventually appear
                     mtime = os.stat(pathname).st_mtime
