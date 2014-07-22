@@ -105,13 +105,10 @@ class StoryPanel(wx.ScrolledWindow):
         if not quietly: self.parent.setDirty(True, action = 'New Passage')
         return new
 
-    def changeWidgetTitle(self,widget,title):
-        try:
-            del self.widgetDict[widget.passage.title]
-        except KeyError:
-            pass
-        widget.passage.title = title
-        self.widgetDict[title] = widget
+    def changeWidgetTitle(self, oldTitle, newTitle):
+        widget = self.widgetDict.pop(oldTitle)
+        widget.passage.title = newTitle
+        self.widgetDict[newTitle] = widget
 
     def snapWidget(self, widget, quickly = False):
         """
@@ -194,17 +191,14 @@ class StoryPanel(wx.ScrolledWindow):
                 self.Refresh()
 
 
-    def removeWidget(self, widget, saveUndo = True):
+    def removeWidget(self, title, saveUndo = True):
         """
         Deletes a passed widget. You can ask this to save an undo state manually,
         but by default, it doesn't.
         """
+        widget = self.widgetDict.pop(title, None)
         if widget is None:
             return
-        try:
-            del self.widgetDict[widget.passage.title]
-        except KeyError:
-            pass
 
         if widget in self.visibleWidgets: self.visibleWidgets.remove(widget)
         if self.tooltipplace is widget:
@@ -218,27 +212,25 @@ class StoryPanel(wx.ScrolledWindow):
         but by default, it doesn't.
         """
 
-        selected = []
-        connected = []
+        selected = set(
+            title
+            for title, widget in self.widgetDict.iteritems()
+            if widget.selected
+            )
 
-        for widget in self.widgetDict.itervalues():
-            if widget.selected: selected.append(widget)
+        connected = set(
+            title
+            for title, widget in self.widgetDict.iteritems()
+            if not widget.selected and selected.intersection(widget.linksAndDisplays())
+            )
 
-        for widget in self.widgetDict.itervalues():
-            if not widget.selected:
-                for link in widget.linksAndDisplays():
-                    if len(link) > 0:
-                        for widget2 in selected:
-                            if widget2.passage.title == link:
-                                connected.append(widget)
-
-        if len(connected):
+        if connected:
             message = 'Are you sure you want to delete ' + \
-                      (('"' + selected[0].passage.title + '"? Links to it') if len(selected) == 1 else
-                      (str(len(selected)+1) + ' passages? Links to them')) + \
+                      (('"' + next(iter(selected)) + '"? Links to it') if len(selected) == 1 else
+                      (str(len(selected)) + ' passages? Links to them')) + \
                        ' from ' + \
-                      (('"' + connected[0].passage.title + '"') if len(connected) == 1 else
-                      (str(len(connected)+1) + ' other passages')) + \
+                      (('"' + next(iter(connected)) + '"') if len(connected) == 1 else
+                      (str(len(connected)) + ' other passages')) + \
                       ' will become broken.'
             dialog = wx.MessageDialog(self.parent, message,
                                       'Delete Passage' + ('s' if len(selected) > 1 else ''), \
@@ -247,9 +239,8 @@ class StoryPanel(wx.ScrolledWindow):
             if dialog.ShowModal() != wx.ID_OK:
                 return
 
-        for widget in selected:
-            self.removeWidget(widget,saveUndo)
-
+        for title in selected:
+            self.removeWidget(title, saveUndo)
 
     def findWidgetRegexp(self, regexp = None, flags = None):
         """
@@ -259,7 +250,7 @@ class StoryPanel(wx.ScrolledWindow):
         If nothing is found, then an error alert is shown.
         """
 
-        if regexp == None:
+        if regexp is None:
             regexp = self.lastSearchRegexp
             flags = self.lastSearchFlags
 
@@ -659,13 +650,12 @@ class StoryPanel(wx.ScrolledWindow):
 
         return pixScroll
 
-    def untitledName(self, base = "Untitled Passage"):
+    def untitledName(self, base = 'Untitled Passage'):
         """Returns a string for an untitled PassageWidget."""
         number = 1
 
-        if not "Untitled " in base:
-            if not self.findWidget(base):
-                return base
+        if not base.startswith('Untitled ') and base not in self.widgetDict:
+            return base
 
         for widget in self.widgetDict.itervalues():
             match = re.match(re.escape(base) + ' (\d+)', widget.passage.title)
@@ -715,10 +705,7 @@ class StoryPanel(wx.ScrolledWindow):
 
     def findWidget(self, title):
         """Returns a PassageWidget with the title passed. If none exists, it returns None."""
-        try:
-            return self.widgetDict[title]
-        except KeyError:
-            return None
+        return self.widgetDict.get(title)
 
     def passageExists(self, title, includeIncluded = True):
         """
@@ -726,7 +713,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         If includeIncluded then will also check external passages referenced via StoryIncludes
         """
-        return self.findWidget(title) != None or (includeIncluded and self.includedPassageExists(title))
+        return title in self.widgetDict or (includeIncluded and self.includedPassageExists(title))
 
     def clearIncludedPassages(self):
         """Clear the includedPassages set"""
@@ -742,17 +729,15 @@ class StoryPanel(wx.ScrolledWindow):
 
     def refreshIncludedPassageList(self):
         def callback(passage):
-            if passage.title == 'StoryIncludes' or self.findWidget(passage.title):
+            if passage.title == 'StoryIncludes' or passage.title in self.widgetDict:
                 return
             self.addIncludedPassage(passage.title)
 
         self.clearIncludedPassages()
 
-        try:
-            widget = self.widgetDict['StoryIncludes']
+        widget = self.widgetDict.get('StoryIncludes')
+        if widget is not None:
             self.parent.readIncludes(widget.passage.text.splitlines(), callback, silent = True)
-        except KeyError:
-            pass
 
     def toPixels(self, logicals, scaleOnly = False):
         """

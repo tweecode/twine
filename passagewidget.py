@@ -131,8 +131,8 @@ class PassageWidget(object):
         """
         Returns whether this widget's passage contains a regexp.
         """
-        return (re.search(regexp, self.passage.title, flags) != None
-                or re.search(regexp, self.passage.text, flags) != None)
+        return (re.search(regexp, self.passage.title, flags) is not None
+                or re.search(regexp, self.passage.text, flags) is not None)
 
     def replaceRegexp(self, findRegexp, replaceRegexp, flags):
         """
@@ -145,7 +145,7 @@ class PassageWidget(object):
         newTitle, titleReps = re.subn(compiledRegexp, replaceRegexp, oldTitle)
         self.passage.text, textReps = re.subn(compiledRegexp, replaceRegexp, self.passage.text)
         if titleReps > 0:
-            self.parent.changeWidgetTitle(self,newTitle)
+            self.parent.changeWidgetTitle(oldTitle, newTitle)
 
         return titleReps + textReps
 
@@ -888,6 +888,6 @@ class PassageWidgetContext(wx.Menu):
 
         delete = wx.MenuItem(self, wx.NewId(), 'Delete ' + title)
         self.AppendItem(delete)
-        self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent), id = delete.GetId())
+        self.Bind(wx.EVT_MENU, lambda e: self.parent.parent.removeWidget(self.parent.passage.title), id = delete.GetId())
 
 

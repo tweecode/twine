@@ -6,6 +6,7 @@ from tweestyler import TweeStyler
 from tiddlywiki import TiddlyWiki
 from passagesearchframe import PassageSearchFrame
 from fseditframe import FullscreenEditFrame
+from utils import isURL
 import cStringIO
 
 class PassageFrame(wx.Frame):
@@ -272,7 +273,7 @@ class PassageFrame(wx.Frame):
         if title:
         # Check for title conflict
             otherTitled = self.widget.parent.findWidget(title)
-            if otherTitled and otherTitled != self.widget:
+            if otherTitled is not self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
                 error()
             elif self.widget.parent.includedPassageExists(title):
@@ -290,7 +291,7 @@ class PassageFrame(wx.Frame):
                     self.titleInput.SetBackgroundColour((255,255,255))
                     self.titleInput.Refresh()
                     self.titleInvalid = True
-                self.widget.parent.changeWidgetTitle(self.widget, title)
+                self.widget.parent.changeWidgetTitle(self.widget.passage.title, title)
 
         # Set body text
         self.widget.passage.text = self.bodyInput.GetText()
@@ -389,7 +390,7 @@ class PassageFrame(wx.Frame):
                 # If we've downloaded it before, don't do it again
                 if imgurl not in downloadedurls:
                     # Internet image, or local image?
-                    if any(imgurl.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                    if isURL(imgurl):
                         imgpassagename = storyframe.importImageURL(imgurl, showdialog=False)
                     else:
                         imgpassagename = storyframe.importImageFile(storyframe.getLocalDir()+os.sep+imgurl, showdialog=False)
@@ -448,7 +449,7 @@ class PassageFrame(wx.Frame):
 
         # check if the passage already exists
 
-        editingWidget = self.widget.parent.findWidget(title = title)
+        editingWidget = self.widget.parent.findWidget(title)
 
         if not editingWidget:
             editingWidget = self.widget.parent.newWidget(title = title, pos = self.widget.parent.toPixels (self.widget.pos))
@@ -675,7 +676,7 @@ class PassageFrame(wx.Frame):
         # find/replace
 
         findNextItem = self.menus.FindItemById(PassageFrame.EDIT_FIND_NEXT)
-        findNextItem.Enable(self.lastFindRegexp != None)
+        findNextItem.Enable(self.lastFindRegexp is not None)
 
         # link selected text menu item
 

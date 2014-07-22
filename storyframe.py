@@ -6,6 +6,7 @@ from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 from storymetadataframe import StoryMetadataFrame
+from utils import isURL
 
 
 class StoryFrame(wx.Frame):
@@ -504,7 +505,7 @@ class StoryFrame(wx.Frame):
         self.lastTestBuild = None
 
         self.app.removeStory(self, byMenu)
-        if event != None:
+        if event is not None:
             event.Skip()
         self.Destroy()
 
@@ -585,50 +586,45 @@ class StoryFrame(wx.Frame):
             else:
                 tw.addTweeFromFilename(path)
 
-            allWidgetTitles = []
-
-            self.storyPanel.eachWidget(lambda e: allWidgetTitles.append(e.passage.title))
-
             # add passages for each of the tiddlers the TiddlyWiki saw
             if len(tw.tiddlers):
                 removedWidgets = []
-                skippedTitles = []
+                skippedTitles = set()
 
-                # Check for passage title conflicts
-                for t in tw.tiddlers:
+                # Ask user how to resolve any passage title conflicts
+                for title in tw.tiddlers.viewkeys() & self.storyPanel.widgetDict.viewkeys():
 
-                    if t in allWidgetTitles:
-                        dialog = wx.MessageDialog(self, 'There is already a passage titled "' + t \
-                                                  + '" in this story. Replace it with the imported passage?',
-                                                  'Passage Title Conflict', \
-                                                  wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
-                        check = dialog.ShowModal()
-                        if check == wx.ID_YES:
-                            removedWidgets.append(t)
-                        elif check == wx.ID_CANCEL:
-                            return
-                        elif check == wx.ID_NO:
-                            skippedTitles.append(t)
+                    dialog = wx.MessageDialog(self, 'There is already a passage titled "' + title \
+                                                + '" in this story. Replace it with the imported passage?',
+                                                'Passage Title Conflict', \
+                                                wx.ICON_WARNING | wx.YES_NO | wx.CANCEL | wx.YES_DEFAULT)
+                    check = dialog.ShowModal()
+                    if check == wx.ID_YES:
+                        removedWidgets.append(title)
+                    elif check == wx.ID_CANCEL:
+                        return
+                    elif check == wx.ID_NO:
+                        skippedTitles.add(title)
 
                 # Remove widgets elected to be replaced
-                for t in removedWidgets:
-                    self.storyPanel.removeWidget(self.storyPanel.findWidget(t))
+                for title in removedWidgets:
+                    self.storyPanel.removeWidget(title)
 
                 # Insert widgets now
                 lastpos = [0, 0]
                 addedWidgets = []
-                for t in tw.tiddlers:
-                    t = tw.tiddlers[t]
-                    if t.title in skippedTitles:
+                for tiddler in tw.tiddlers.itervalues():
+                    if tiddler.title in skippedTitles:
                         continue
-                    new = self.storyPanel.newWidget(title=t.title, tags=t.tags, text=t.text, quietly=True,
-                                                    pos=t.pos if t.pos else lastpos)
+                    new = self.storyPanel.newWidget(title=tiddler.title, tags=tiddler.tags,
+                                                    text=tiddler.text, quietly=True,
+                                                    pos=tiddler.pos if tiddler.pos else lastpos)
                     lastpos = new.pos
                     addedWidgets.append(new)
 
                 self.setDirty(True, 'Import')
-                for t in addedWidgets:
-                    t.clearPaintCache()
+                for widget in addedWidgets:
+                    widget.clearPaintCache()
             else:
                 if html:
                     what = "compiled HTML"
@@ -882,7 +878,7 @@ You can also include URLs of .tws and .twee files, too.
                         if passage.title == 'StoryIncludes':
                             return
                         # Check for uniqueness
-                        elif self.storyPanel.findWidget(passage.title):
+                        elif passage.title in self.storyPanel.widgetDict:
                             # Not bothering with a Yes/No dialog here.
                             raise Exception('A passage titled "' + passage.title + '" is already present in this story')
                         elif tw.hasTiddler(passage.title):
@@ -908,8 +904,8 @@ You can also include URLs of .tws and .twee files, too.
                                       + 'Your story will build but the web browser will not be able to run the story. ' + "\n"
                                       + 'Please add a passage with the title "Start"')
 
-            try:
-                widget = self.storyPanel.widgetDict['StorySettings']
+            widget = self.storyPanel.widgetDict.get('StorySettings')
+            if widget is not None:
                 lines = widget.passage.text.splitlines()
                 for line in lines:
                     if ':' in line:
@@ -917,8 +913,6 @@ You can also include URLs of .tws and .twee files, too.
                         skey = skey.strip().lower()
                         svalue = svalue.strip()
                         tw.storysettings[skey] = svalue
-            except KeyError:
-                pass
 
             # Write the output file
             header = self.app.headers.get(self.target)
@@ -970,7 +964,7 @@ You can also include URLs of .tws and .twee files, too.
                     if extension not in ['.tws', '.tw', '.txt', '.twee']:
                         raise Exception('File format not recognized')
 
-                    if any(line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                    if isURL(line):
                         openedFile = urllib.urlopen(line)
                     else:
                         openedFile = open(os.path.join(twinedocdir, line), 'r')
@@ -1039,16 +1033,14 @@ You can also include URLs of .tws and .twee files, too.
         else:
             twinedocdir = os.path.dirname(self.saveDestination)
 
-        try:
-            widget = self.storyPanel.widgetDict['StoryIncludes']
+        widget = self.storyPanel.widgetDict.get('StoryIncludes')
+        if widget is not None:
             for line in widget.passage.text.splitlines():
-                if (not line.startswith(t) for t in ['http://', 'https://', 'ftp://']):
+                if not isURL(line):
                     pathname = os.path.join(twinedocdir, line)
                     # Include even non-existant files, in case they eventually appear
                     mtime = os.stat(pathname).st_mtime
                     self.autobuildfiles[pathname] = mtime
-        except KeyError:
-            pass
 
     def stats(self, event=None):
         """
@@ -1182,7 +1174,7 @@ You can also include URLs of .tws and .twee files, too.
         for item in wx.ID_CUT, wx.ID_COPY, wx.ID_DELETE:
             self.menus.FindItemById(item).Enable(selections > 0)
 
-        self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT).Enable(self.storyPanel.lastSearchRegexp != None)
+        self.menus.FindItemById(StoryFrame.EDIT_FIND_NEXT).Enable(self.storyPanel.lastSearchRegexp is not None)
 
         # View menu
         self.menus.FindItemById(StoryFrame.VIEW_TOOLBAR).Check(self.showToolbar)
@@ -1210,7 +1202,7 @@ You can also include URLs of .tws and .twee files, too.
         self.menus.FindItemById(StoryFrame.BUILD_REBUILD).Enable(self.buildDestination != '')
         self.menus.FindItemById(StoryFrame.BUILD_VIEW_LAST).Enable(self.buildDestination != '')
 
-        hasStoryIncludes = self.buildDestination != '' and self.storyPanel.findWidget("StoryIncludes") is not None
+        hasStoryIncludes = self.buildDestination != '' and 'StoryIncludes' in self.storyPanel.widgetDict
         self.autobuildmenuitem.Enable(hasStoryIncludes)
         self.menus.FindItemById(StoryFrame.REFRESH_INCLUDES_LINKS).Enable(hasStoryIncludes)
 
