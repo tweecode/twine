@@ -390,7 +390,30 @@ class Tiddler: # pylint: disable=old-style-class
             tag_bits = meta_bits[1].split(' ')
 
             for tag in tag_bits:
-                self.tags.append(tag.strip('[]'))
+                stripped_tag = tag.strip('[] ')
+                if not stripped_tag:
+                    continue
+                self.tags.append(stripped_tag)
+
+        if len(meta_bits) > 2:
+            pos_bits = meta_bits[2].split(',')
+
+            for pos_key in pos_bits:
+                stripped_pos = pos_key.strip('[]')
+                keyval_bits = stripped_pos.split(':')
+                if len(keyval_bits) == 2:
+                    key = keyval_bits[0].strip()
+                    val = keyval_bits[1].strip()
+                    if key == 'twine-pos-x':
+                        try:
+                            self.pos[0] = int(val)
+                        except ValueError:
+                            continue
+                    elif key == 'twine-pos-y':
+                        try:
+                            self.pos[1] = int(val)
+                        except ValueError:
+                            continue
 
         # and then the body text
 
@@ -521,6 +544,9 @@ class Tiddler: # pylint: disable=old-style-class
                 output += tag + ' '
             output = output.strip()
             output += u']'
+        else:
+            output += u' []'
+        output += u'[twine-pos-x:%s, twine-pos-y:%s]' % (self.pos[0], self.pos[1])
 
         output += u"\n" + self.text + u"\n\n\n"
         return output

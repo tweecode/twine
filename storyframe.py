@@ -542,7 +542,9 @@ class StoryFrame(wx.Frame):
                 path = dialog.GetPath()
                 tw = TiddlyWiki()
 
-                for widget in self.storyPanel.widgetDict.itervalues(): tw.addTiddler(widget.passage)
+                for widget in self.storyPanel.widgetDict.itervalues(): 
+                    widget.passage.pos = widget.pos
+                    tw.addTiddler(widget.passage)
                 dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
                 order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
                 dest.write(tw.toTwee(order))
