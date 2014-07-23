@@ -250,7 +250,8 @@ class App(wx.App):
             'displayArrows' : True,
             'createPassagePrompt' : True,
             'importImagePrompt' : True,
-            'passageWarnings' : True
+            'passageWarnings' : True,
+            'saveTwinePosition' : False
         }.iteritems():
             if not sc.HasEntry(k):
                 if type(v) == str:

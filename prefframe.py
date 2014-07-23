@@ -15,7 +15,7 @@ class PreferenceFrame(wx.Frame):
         panel = wx.Panel(parent = self, id = wx.ID_ANY)
         borderSizer = wx.BoxSizer(wx.VERTICAL)
         panel.SetSizer(borderSizer)
-        panelSizer = wx.FlexGridSizer(14, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
+        panelSizer = wx.FlexGridSizer(15, 2, metrics.size('relatedControls'), metrics.size('relatedControls'))
         borderSizer.Add(panelSizer, flag = wx.ALL, border = metrics.size('windowBorder'))
 
         self.editorFont = wx.FontPickerCtrl(panel, style = wx.FNTP_FONTDESC_AS_LABEL)
@@ -67,6 +67,7 @@ class PreferenceFrame(wx.Frame):
         checkbox(self, "createPassagePrompt", 'Offer to create new passages for broken links')
         checkbox(self, "importImagePrompt", 'Offer to import externally linked images')
         checkbox(self, "passageWarnings", 'Warn about possible passage code errors')
+        checkbox(self, "saveTwinePosition", 'Save twine position data in twee source')
 
         panelSizer.Add(wx.StaticText(panel, label = 'Normal Font'), flag = wx.ALIGN_CENTER_VERTICAL)
         panelSizer.Add(self.editorFont)
@@ -96,6 +97,8 @@ class PreferenceFrame(wx.Frame):
         panelSizer.Add(self.importImagePrompt) # pylint: disable=no-member
         panelSizer.Add((1,2))
         panelSizer.Add(self.passageWarnings) # pylint: disable=no-member
+        panelSizer.Add((1,2))
+        panelSizer.Add(self.saveTwinePosition) # pylint: disable=no-member
 
         panelSizer.Fit(self)
         borderSizer.Fit(self)

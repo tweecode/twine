@@ -547,7 +547,7 @@ class StoryFrame(wx.Frame):
                     tw.addTiddler(widget.passage)
                 dest = codecs.open(path, 'w', 'utf-8-sig', 'replace')
                 order = [widget.passage.title for widget in self.storyPanel.sortedWidgets()]
-                dest.write(tw.toTwee(order))
+                dest.write(tw.toTwee(order, self.app.config.ReadBool('saveTwinePosition')))
                 dest.close()
             except:
                 self.app.displayError('exporting your source code')

@@ -25,16 +25,18 @@ class TiddlyWiki(object):
     def hasTiddler(self, name):
         return name in self.tiddlers
 
-    def toTwee(self, order = None):
+    def toTwee(self, order = None, saveTwinePosition=False):
         """Returns Twee source code for this TiddlyWiki.
         The 'order' argument is a sequence of passage titles specifying the order
         in which passages should appear in the output string; by default passages
         are returned in arbitrary order.
+        If saveTwinePosition is True the twee source code will include metadata 
+        with the location of the passage in the twine storypanel.
         """
         tiddlers = self.tiddlers
         if order is None:
             order = tiddlers.keys()
-        return u''.join(tiddlers[i].toTwee() for i in order)
+        return u''.join(tiddlers[i].toTwee(saveTwinePosition) for i in order)
 
     def read(self, filename):
         try:
@@ -406,12 +408,12 @@ class Tiddler: # pylint: disable=old-style-class
                     val = keyval_bits[1].strip()
                     if key == 'twine-pos-x':
                         try:
-                            self.pos[0] = int(val)
+                            self.pos[0] = float(val)
                         except ValueError:
                             continue
                     elif key == 'twine-pos-y':
                         try:
-                            self.pos[1] = int(val)
+                            self.pos[1] = float(val)
                         except ValueError:
                             continue
 
@@ -534,8 +536,10 @@ class Tiddler: # pylint: disable=old-style-class
             )
 
 
-    def toTwee(self):
-        """Returns a Twee representation of this tiddler."""
+    def toTwee(self, saveTwinePosition=False):
+        """Returns a Twee representation of this tiddler.  If saveTwinePosition is 
+        True the location of the passagewidget will be stored in the twee source.
+        """
         output = u':: ' + self.title
 
         if len(self.tags) > 0:
@@ -544,9 +548,10 @@ class Tiddler: # pylint: disable=old-style-class
                 output += tag + ' '
             output = output.strip()
             output += u']'
-        else:
+        elif saveTwinePosition:
             output += u' []'
-        output += u'[twine-pos-x:%s, twine-pos-y:%s]' % (self.pos[0], self.pos[1])
+        if saveTwinePosition:
+            output += u'[twine-pos-x:%s, twine-pos-y:%s]' % (self.pos[0], self.pos[1])
 
         output += u"\n" + self.text + u"\n\n\n"
         return output
