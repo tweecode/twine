@@ -460,13 +460,13 @@ class Tiddler: # pylint: disable=old-style-class
         def applyRot13(text):
             return text.decode('rot13') if rot13 else text
 
-        args = (
-            ('tiddler', applyRot13(self.title.replace('"', '&quot;'))),
-            ('tags', ' '.join(applyRot13(tag) for tag in self.tags)),
-            )
+        def iterArgs():
+            yield 'tiddler', applyRot13(self.title.replace('"', '&quot;'))
+            if self.tags:
+                yield 'tags', ' '.join(applyRot13(tag) for tag in self.tags)
 
         return u'<div%s%s>%s</div>' % (
-            ''.join(' %s="%s"' % arg for arg in args),
+            ''.join(' %s="%s"' % arg for arg in iterArgs()),
             ' twine-position="%d,%d"' % tuple(self.pos) if hasattr(self, "pos") else "",
             encode_text(applyRot13(self.text))
             )
