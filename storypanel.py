@@ -166,7 +166,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.removeWidgets()
         self.Refresh()
 
-    def pasteWidgets(self, pos = (0,0)):
+    def pasteWidgets(self, pos = (0,0), logicals = False):
         """Pastes widgets from the clipboard."""
         clipFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         clipData = wx.CustomDataObject(clipFormat)
@@ -180,11 +180,15 @@ class StoryPanel(wx.ScrolledWindow):
 
                 self.eachWidget(lambda w: w.setSelected(False, False))
 
+                if not pos: pos = StoryPanel.INSET
+                if not logicals: pos = self.toLogical(pos)
+
                 for widget in data:
                     newPassage = PassageWidget(self, self.app, state = widget, pos = pos, title = self.untitledName(widget['passage'].title))
                     newPassage.findSpace()
                     newPassage.setSelected(True, False)
                     self.widgetDict[newPassage.passage.title] = newPassage
+                    self.snapWidget(newPassage, False)
 
                 self.parent.setDirty(True, action = 'Paste')
                 self.resize()
