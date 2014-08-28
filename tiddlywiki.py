@@ -178,10 +178,7 @@ class TiddlyWiki(object):
             if tiddler.title == 'StorySettings':
                 tiddler.text = ''.join([(str(k)+":"+str(v)+"\n") for k,v in self.storysettings.iteritems()])
             if self.NOINCLUDE_TAGS.isdisjoint(tiddler.tags):
-                if not rot13 or tiddler.title == 'StorySettings' or tiddler.isImage() :
-                    storyfragments.append(tiddler.toHtml(False))
-                else:
-                    storyfragments.append(tiddler.toHtml(rot13))
+                storyfragments.append(tiddler.toHtml(rot13 and tiddler.isObfuscateable()))
         storycode = u''.join(storyfragments)
 
         if output.count('"STORY_SIZE"') > 0:
@@ -417,8 +414,6 @@ class Tiddler: # pylint: disable=old-style-class
         title = title_re.search(source)
         if title:
             self.title = title.group(1)
-            if obfuscatekey:
-                self.title = decode_obfuscate_swap(self.title)
 
         # tags
 
@@ -426,9 +421,7 @@ class Tiddler: # pylint: disable=old-style-class
         tags_re = re.compile(r'(?:data\-)?tags="([^"]*?)"')
         tags = tags_re.search(source)
         if tags and tags.group(1) != '':
-            if obfuscatekey:
-                self.tags = decode_obfuscate_swap(tags.group(1)).split(' ')
-            else: self.tags = tags.group(1).split(' ')
+            self.tags = tags.group(1).split(' ')
 
         # position
         self.pos = [0,0]
@@ -448,8 +441,14 @@ class Tiddler: # pylint: disable=old-style-class
         text = text_re.search(source)
         if text:
             self.text = decode_text(text.group(1))
-            if obfuscatekey:
-                self.text = decode_obfuscate_swap(self.text)
+
+        # deobfuscate
+        # Note that we call isObfuscateable() using the raw title and tags, since if
+        # the tiddler is not obfuscatable, those will be stored non-obfuscated.
+        if obfuscatekey and self.isObfuscateable():
+            self.title = decode_obfuscate_swap(self.title)
+            self.tags = [decode_obfuscate_swap(tag) for tag in self.tags]
+            self.text = decode_obfuscate_swap(self.text)
 
     def toHtml(self, rot13):
         """Returns an HTML representation of this tiddler.
@@ -510,6 +509,10 @@ class Tiddler: # pylint: disable=old-style-class
         """ A more restrictive variant of isStoryText that excludes the StoryTitle, StoryMenu etc."""
         return self.title not in TiddlyWiki.INFO_PASSAGES \
             and TiddlyWiki.INFO_TAGS.isdisjoint(self.tags)
+
+    def isObfuscateable(self):
+        """Returns true iff this tiddler can be obfuscated when placed in the data store."""
+        return self.title != 'StorySettings' and not self.isImage()
 
     def linksAndDisplays(self):
         return list(set(self.links+self.displays))
