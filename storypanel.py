@@ -8,6 +8,18 @@ import simplejson
 import time
 from passagewidget import PassageWidget
 
+# r + s1 + r + s2 + r + ... + sn + r
+def unfoldPattern(s,r):
+    pat = ''
+    e = '[]{}.?*^+-'
+    for c in s:
+        pat += r
+        if c in e:
+            pat += '\\'
+        pat += c
+    pat += r
+    return pat
+
 class StoryPanel(wx.ScrolledWindow):
     """
     A StoryPanel is a container for PassageWidgets. It translates
@@ -48,6 +60,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.tooltipplace = None
         self.tooltipobj = None
         self.textDragSource = None
+        self.timeFields = re.compile(',?[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{,[{},{[{[,,,,,,,,]},{}]}]}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\})')
 
         if state:
             self.scale = state['scale']
@@ -85,6 +98,9 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_ENTER_WINDOW, self.handleHoverStart)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
+
+    def stripTimeFields( self, s ):
+        return self.timeFields.sub('',s)
 
     def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
@@ -159,7 +175,7 @@ class StoryPanel(wx.ScrolledWindow):
         clipData = wx.CustomDataObject(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
 
         if usejson:
-            clipData.SetData(jsonpickle.encode(data))
+            clipData.SetData( self.stripTimeFields( jsonpickle.encode(data) ) )
         else:
             clipData.SetData(pickle.dumps(data, 1))
 

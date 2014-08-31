@@ -544,6 +544,7 @@ class StoryFrame(wx.Frame):
                 try:
                     if usejson:
                         fileData = jsonpickle.encode(self.serialize_noprivate(npsavedestination))
+                        fileData = self.storyPanel.stripTimeFields( fileData )
                     else:
                         fileData = pickle.dumps(self.serialize_noprivate(npsavedestination))
 
@@ -852,6 +853,7 @@ You can also include URLs of .tws and .twee files, too.
 
             if usejson:
                 fileData = jsonpickle.encode(self.serialize())
+                fileData = self.storyPanel.stripTimeFields( fileData )
             else:
                 fileData = pickle.dumps(self.serialize())
 

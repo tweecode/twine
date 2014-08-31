@@ -110,7 +110,7 @@ class App(wx.App):
             if usejson:
                 state = jsonpickle.decode(fileData)
             else:
-                state = pickle.loads(fileData)                
+                state = pickle.loads(fileData)  
 
             newStory = StoryFrame(None, app = self, state = state)
 
