@@ -1,8 +1,11 @@
 from collections import defaultdict
 from itertools import izip, chain
-import sys, wx, re, pickle
+import sys, wx, re, jsonpickle, pickle
 import geometry
 from tiddlywiki import TiddlyWiki
+from tiddlywiki import Tiddler
+import simplejson
+import time
 from passagewidget import PassageWidget
 
 class StoryPanel(wx.ScrolledWindow):
@@ -83,6 +86,11 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
 
+    # set whether encode time as a string, or leave it a time.struct_time object for pickling
+    def setTimeEncoding(self, encodeTime):
+        for k in self.widgetDict.keys():
+            self.widgetDict[k].passage.setTimeEncoding(encodeTime)
+
     def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
 
@@ -147,14 +155,18 @@ class StoryPanel(wx.ScrolledWindow):
         self.snapping = self.snapping is not True
         self.app.config.WriteBool('storyPanelSnap', self.snapping)
 
-    def copyWidgets(self):
+    def copyWidgets(self, usejson=False):
         """Copies selected widgets into the clipboard."""
         data = []
         for widget in self.widgetDict.itervalues():
             if widget.selected: data.append(widget.serialize())
 
         clipData = wx.CustomDataObject(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
-        clipData.SetData(pickle.dumps(data, 1))
+
+        if usejson:
+            clipData.SetData(jsonpickle.encode(data))
+        else:
+            clipData.SetData(pickle.dumps(data, 1))
 
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(clipData)
@@ -166,7 +178,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.removeWidgets()
         self.Refresh()
 
-    def pasteWidgets(self, pos = (0,0), logicals = False):
+    def pasteWidgets(self, usejson=False, pos = (0,0), logicals = False):
         """Pastes widgets from the clipboard."""
         clipFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         clipData = wx.CustomDataObject(clipFormat)
@@ -176,7 +188,11 @@ class StoryPanel(wx.ScrolledWindow):
             wx.TheClipboard.Close()
 
             if gotData:
-                data = pickle.loads(clipData.GetData())
+
+                if usejson:
+                    data = jsonpickle.decode(clipData.GetData())
+                else:
+                    data = pickle.loads(clipData.GetData())               
 
                 self.eachWidget(lambda w: w.setSelected(False, False))
 
@@ -1073,7 +1089,7 @@ class StoryPanelContext(wx.Menu):
         if self.parent.parent.menus.IsEnabled(wx.ID_PASTE):
             pastePassage = wx.MenuItem(self, wx.NewId(), 'Paste Passage Here')
             self.AppendItem(pastePassage)
-            self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(self.getPos()), id = pastePassage.GetId())
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(True, self.getPos()), id = pastePassage.GetId())
 
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)

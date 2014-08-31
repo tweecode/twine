@@ -324,7 +324,7 @@ class Tiddler: # pylint: disable=old-style-class
     Note: Converting this to a new-style class breaks pickling of new TWS files on old Twine releases.
     """
 
-    def __init__(self, source, type = 'twee', obfuscatekey = ""):
+    def __init__(self, source = "", type = 'twee', obfuscatekey = ""):
         # cache of passage names linked from this one
         self.links = []
         self.displays = []
@@ -338,15 +338,52 @@ class Tiddler: # pylint: disable=old-style-class
             self.initHtml(source, obfuscatekey)
 
     def __getstate__(self):
-        """Need to retain pickle format backwards-compatibility with Twine 1.3.5 """
-        now = time.localtime()
+
+        # encodes time.struct_time objects if flagged to do so
+        # adds timeEncoded field to pickle output
+        # result will not load in an older version of Twine
+
+        ctime = self.created
+        mtime = self.modified
+
+        timeEncoded = False
+
+        if 'timeEncoded' in self.__dict__:
+            timeEncoded = self.timeEncoded
+
+        if timeEncoded:
+            ctime = time.strftime("%m/%d/%Y %H:%M:%S", self.created)
+            mtime = time.strftime("%m/%d/%Y %H:%M:%S", self.modified)
+
         return {
-            'created': now,
-            'modified': now,
+            'created': ctime,
+            'modified': mtime,
             'title': self.title,
             'tags': self.tags,
             'text': self.text,
+            'timeEncoded' : timeEncoded,
         }
+
+    def __setstate__(self,d):
+        self.__dict__ = d
+
+        timeEncoded = False
+
+        if 'timeEncoded' not in self.__dict__:
+            self.__dict__['timeEncoded'] = False
+        else:
+            timeEncoded = self.__dict__['timeEncoded']
+
+        if timeEncoded:
+            self.__dict__['created'] = time.strptime(self.__dict__['created'], "%m/%d/%Y %H:%M:%S")
+            self.__dict__['modified'] = time.strptime(self.__dict__['modified'], "%m/%d/%Y %H:%M:%S")
+
+    def setTimeEncoding(self, encodeTime):
+        # sets creates the timeEncoded field if it doesn't exist
+        if 'timeEncoded' not in self.__dict__:
+            self.__dict__['timeEncoded'] = encodeTime 
+        else:
+            self.timeEncoded = encodeTime
 
     def __repr__(self):
         return "<Tiddler '" + self.title + "'>"
