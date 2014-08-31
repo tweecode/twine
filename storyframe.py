@@ -543,9 +543,7 @@ class StoryFrame(wx.Frame):
                 npsavedestination = dialog.GetPath()
                 try:
                     if usejson:
-                        self.storyPanel.setTimeEncoding(True)
                         fileData = jsonpickle.encode(self.serialize_noprivate(npsavedestination))
-                        self.storyPanel.setTimeEncoding(False)
                     else:
                         fileData = pickle.dumps(self.serialize_noprivate(npsavedestination))
 
@@ -853,9 +851,7 @@ You can also include URLs of .tws and .twee files, too.
                 usejson = False
 
             if usejson:
-                self.storyPanel.setTimeEncoding(True)
                 fileData = jsonpickle.encode(self.serialize())
-                self.storyPanel.setTimeEncoding(False)
             else:
                 fileData = pickle.dumps(self.serialize())
 

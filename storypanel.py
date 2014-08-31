@@ -86,11 +86,6 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
 
-    # set whether encode time as a string, or leave it a time.struct_time object for pickling
-    def setTimeEncoding(self, encodeTime):
-        for k in self.widgetDict.keys():
-            self.widgetDict[k].passage.setTimeEncoding(encodeTime)
-
     def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
 
