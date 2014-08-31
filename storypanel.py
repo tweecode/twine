@@ -1,10 +1,8 @@
 from collections import defaultdict
 from itertools import izip, chain
-import sys, wx, re, jsonpickle, pickle
+import sys, wx, re, pickle
 import geometry
 from tiddlywiki import TiddlyWiki
-from tiddlywiki import Tiddler
-import simplejson
 import time
 from passagewidget import PassageWidget
 
@@ -166,7 +164,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.snapping = self.snapping is not True
         self.app.config.WriteBool('storyPanelSnap', self.snapping)
 
-    def copyWidgets(self, usejson=False):
+    def copyWidgets(self):
         """Copies selected widgets into the clipboard."""
         data = []
         for widget in self.widgetDict.itervalues():
@@ -174,10 +172,7 @@ class StoryPanel(wx.ScrolledWindow):
 
         clipData = wx.CustomDataObject(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
 
-        if usejson:
-            clipData.SetData( self.stripTimeFields( jsonpickle.encode(data) ) )
-        else:
-            clipData.SetData(pickle.dumps(data, 1))
+        clipData.SetData(pickle.dumps(data, 1))
 
         if wx.TheClipboard.Open():
             wx.TheClipboard.SetData(clipData)
@@ -189,7 +184,7 @@ class StoryPanel(wx.ScrolledWindow):
         self.removeWidgets()
         self.Refresh()
 
-    def pasteWidgets(self, usejson=False, pos = (0,0), logicals = False):
+    def pasteWidgets(self, pos = (0,0), logicals = False):
         """Pastes widgets from the clipboard."""
         clipFormat = wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT)
         clipData = wx.CustomDataObject(clipFormat)
@@ -200,10 +195,7 @@ class StoryPanel(wx.ScrolledWindow):
 
             if gotData:
 
-                if usejson:
-                    data = jsonpickle.decode(clipData.GetData())
-                else:
-                    data = pickle.loads(clipData.GetData())               
+                data = pickle.loads(clipData.GetData())               
 
                 self.eachWidget(lambda w: w.setSelected(False, False))
 
@@ -1100,7 +1092,7 @@ class StoryPanelContext(wx.Menu):
         if self.parent.parent.menus.IsEnabled(wx.ID_PASTE):
             pastePassage = wx.MenuItem(self, wx.NewId(), 'Paste Passage Here')
             self.AppendItem(pastePassage)
-            self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(True, self.getPos()), id = pastePassage.GetId())
+            self.Bind(wx.EVT_MENU, lambda e: self.parent.pasteWidgets(self.getPos()), id = pastePassage.GetId())
 
         newPassage = wx.MenuItem(self, wx.NewId(), 'New Passage Here')
         self.AppendItem(newPassage)
