@@ -331,8 +331,6 @@ class Tiddler: # pylint: disable=old-style-class
         self.images = []
         self.macros = []
 
-        self.addDate = True
-
         """Pass source code, and optionally 'twee' or 'html'"""
         if type == 'twee':
             self.initTwee(source)
@@ -348,7 +346,7 @@ class Tiddler: # pylint: disable=old-style-class
             'title': self.title,
             'tags': self.tags,
             'text': self.text
-        }      
+        }
 
     def __setstate__(self,d):
         self.__dict__ = d
