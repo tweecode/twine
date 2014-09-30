@@ -30,6 +30,8 @@ class App(wx.App):
 
         self.icon = wx.EmptyIcon()
 
+        jsonpickle.set_encoder_options('simplejson', sort_keys=True, indent=4)
+
         try:
             self.icon = wx.Icon(self.iconsPath + 'app.ico', wx.BITMAP_TYPE_ICO)
         except:

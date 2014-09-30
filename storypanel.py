@@ -58,8 +58,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.tooltipplace = None
         self.tooltipobj = None
         self.textDragSource = None
-        self.timeFields = re.compile(',?[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{,[{},{[{[,,,,,,,,]},{}]}]}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\})')
-
+        #self.timeFields = re.compile(',?[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{,[{},{[{[,,,,,,,,]},{}]}]}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\})')
+        self.timeFields = re.compile('[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{[{},{[{[,,,,,,,,]},{}]}],}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\}),?')
         if state:
             self.scale = state['scale']
             for widget in state['widgets']:
