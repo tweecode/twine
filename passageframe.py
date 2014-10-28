@@ -271,9 +271,10 @@ class PassageFrame(wx.Frame):
             self.titleInvalid = True
 
         if title:
-        # Check for title conflict
+            # Check for title conflict
             otherTitled = self.widget.parent.findWidget(title)
-            if otherTitled is not self.widget:
+            # WARNING: findWidget returns None if title not found so need to check otherTitled has value.
+            if otherTitled and otherTitled is not self.widget:
                 self.titleLabel.SetLabel("Title is already in use!")
                 error()
             elif self.widget.parent.includedPassageExists(title):
