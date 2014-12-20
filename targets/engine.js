@@ -1845,9 +1845,10 @@ Wikifier.formatters = [
         for (j = 0; j < imgPassages.length; j++) {
             if (imgPassages[j].title == imgname) {
                 img.src = imgPassages[j].text;
-                break;
+                return;
             }
         }
+        img.src = img.src || imgname;
     },
     handler: function (w) {
         var e, img, j, lookaheadMatch,
