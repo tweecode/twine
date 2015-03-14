@@ -23,7 +23,7 @@ The easiest way to install Twine is to download the installable versions
 for Windows or Mac OS X:
 
  * [Twine 1.4.2 for Windows](http://twinery.org/downloads/twine_1.4.2_win.exe)
- * [Twine 1.4.2 for Mac OS X](http://twinery.org/downloads/twine_1.4.2_osx.zip)
+ * [Twine 1.4.2 for OS X](http://twinery.org/downloads/twine_1.4.2_osx.zip)
 
 Set up a development environment
 --------------------------------
@@ -48,7 +48,10 @@ Install required modules (note, wxPython will need to be installed separately fr
 	cd twine/
 	pip install -r requirements.txt
 
-You should now have a working Twine setup. To start Twine:
+You also need to install [py2exe](http://www.py2exe.org/) (on Windows) or
+[py2app](https://pythonhosted.org/py2app/) (on OS X) to compile standalone binaries.
+
+Other than that, you should now have a working Twine setup. To start Twine:
 
 	python app.py
 
