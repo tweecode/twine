@@ -512,6 +512,8 @@ class PassageFrame(wx.Frame):
         rawSelection = self.bodyInput.GetSelectedText()
         title = self.stripCrud(rawSelection)
         if not re.match(r'^\[\[.*\]\]$', rawSelection): self.linkSelection()
+        # Eliminate the link text for the two-part link syntax
+        title = re.sub(r'^[^\|]*\|', '', title)
         self.openOtherEditor(title = title)
         self.updateSubmenus()
 

@@ -23,7 +23,10 @@ class FullscreenEditFrame(wx.Frame):
         menuBar = wx.MenuBar()
         menu = wx.Menu()
         menu.Append(wx.ID_SAVE, '&Save Story\tCtrl-S')
-        self.Bind(wx.EVT_MENU, lambda e: self.frame.widget.parent.parent.save, id = wx.ID_SAVE)
+        self.Bind(wx.EVT_MENU, lambda e: self.frame.widget.parent.parent.save(), id = wx.ID_SAVE)
+        # An alternative binding for exiting fullscreen, F12, is handled by keyListener.
+        menu.Append(wx.ID_CLOSE, '&Exit Fullscreen\tCtrl-Alt-F')
+        self.Bind(wx.EVT_MENU, lambda e: self.close(), id = wx.ID_CLOSE)
         menuBar.Append(menu, 'Commands')
         self.SetMenuBar(menuBar)
 
@@ -123,7 +126,7 @@ class FullscreenEditFrame(wx.Frame):
         if key == wx.WXK_F12:
             self.close()
 
-        if key == wx.WXK_ESCAPE:
+        elif key == wx.WXK_ESCAPE:
             self.close()
             self.frame.Destroy()
 
@@ -142,5 +145,6 @@ class FullscreenEditFrame(wx.Frame):
             self.editCtrl.SetCursor(wx.StockCursor(wx.CURSOR_IBEAM))
             self.cursorVisible = True
 
-    DIRECTIONS = 'Press Escape to close this passage, F12 to leave fullscreen.'
+    DIRECTIONS = 'Press Escape to close this passage, F12 or ' + \
+        ('Command-Option' if sys.platform == 'darwin' else 'Control-Alt') + '-F to leave fullscreen.'
     LABEL_FONT_SIZE = 10
