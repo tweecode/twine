@@ -2314,7 +2314,7 @@ window.onbeforeunload = function() {
 };
 /* Error reporting */
 var oldOnError = window.onerror || null, 
-softErrorMessage = "You may be able to continue playing, but some parts may not work properly.";
+softErrorMessage = " You may be able to continue playing, but some parts may not work properly.";
 
 window.onerror = function (msg, a, b, c, error) {
     var s = (error && (".\n\n" + error.stack.replace(/\([^\)]+\)/g,'') + "\n\n")) || (" (" + msg + ").\n");

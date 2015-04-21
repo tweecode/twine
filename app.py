@@ -25,6 +25,11 @@ class App(wx.App):
         self.determinePaths()
         self.loadTargetHeaders()
 
+        if not len(self.headers):
+            self.displayError('starting up: there are no story formats available!\n\n'
+                + 'The "targets" directory could have been removed or emptied.\n\nYou may have to reinstall Twine', False)
+            self.Exit()
+
         # try to load our app icon
         # if it doesn't work, we continue anyway
 
@@ -323,6 +328,8 @@ class App(wx.App):
         """Load the target headers and populate the self.headers dictionary"""
         self.headers = {}
         # Get paths to built-in targets
+        if not os.path.isdir(self.builtinTargetsPath):
+            return
         paths = [(t, self.builtinTargetsPath + t + os.sep) for t in os.listdir(self.builtinTargetsPath)]
         if self.externalTargetsPath:
             # Get paths to external targets

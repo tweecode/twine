@@ -46,8 +46,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.visibleWidgets = None
         self.includedPassages = set()
         self.draggingMarquee = False
-        self.draggingWidgets = None
-        self.notDraggingWidgets = None
+        self.draggingWidgets = []
+        self.notDraggingWidgets = []
         self.undoStack = []
         self.undoPointer = -1
         self.lastSearchRegexp = None
@@ -508,7 +508,7 @@ class StoryPanel(wx.ScrolledWindow):
         Starts a widget drag. The initial event is caught by PassageWidget, but
         it passes control to us so that we can move all selected widgets at once.
         """
-        if not self.draggingWidgets or not len(self.draggingWidgets):
+        if not self.draggingWidgets:
             # cache the sets of dragged vs not-dragged widgets
             self.draggingWidgets = []
             self.notDraggingWidgets = []
@@ -526,6 +526,12 @@ class StoryPanel(wx.ScrolledWindow):
                     widget.predragPos = widget.pos
                 else:
                     self.notDraggingWidgets.append(widget)
+
+            # in the unexpected event that no widgets are actually
+            # selected, do not bind followDrag and quit here
+
+            if not self.draggingWidgets:
+                return
 
             # grab mouse focus
 
@@ -620,8 +626,8 @@ class StoryPanel(wx.ScrolledWindow):
                 self.clickedWidget.setSelected(True, not event.ShiftDown())
 
             # general cleanup
-            self.draggingWidgets = None
-            self.notDraggingWidgets = None
+            self.draggingWidgets = []
+            self.notDraggingWidgets = []
             self.Bind(wx.EVT_MOUSE_EVENTS, None)
             self.ReleaseMouse()
             self.SetCursor(self.defaultCursor)

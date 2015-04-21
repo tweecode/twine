@@ -1172,6 +1172,10 @@ You can also include URLs of .tws and .twee files, too.
             self.app.displayError('building a proofing copy of your story')
 
     def setTarget(self, target):
+        if target not in self.app.headers:
+            self.app.displayError("opening the last edited story: the story format '" + target + "' isn't available.\n"
+                + "Please select another format from the Story Format submenu", False)
+            return self.setTarget(self.app.headers.iterkeys().next())
         self.target = target
         self.header = self.app.headers[target]
 
