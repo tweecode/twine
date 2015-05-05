@@ -9,20 +9,20 @@ def addURIPrefix(text, mimeType):
     # SVG MIME-type is the same for both images and fonts
     mimeType = mimeType.lower()
     if mimeType in 'gif|jpg|jpeg|png|webp|svg':
-        mimeGroup = "image/"
-    elif mimeType == 'woff':
-        mimeGroup = "application/font-"
+        # Correct certain MIME types
+        if mimeType == 'jpg':
+            mimeType = "jpeg"
+        elif mimeType == 'svg':
+            mimeType += "+xml"
+        mimeType = "image/" + mimeType
+    elif mimeType in 'woff|woff2':
+        mimeType = "application/font-" + mimeType
     elif mimeType in 'ttf|otf':
-        mimeGroup = "application/x-font-"
+        mimeType = "application/font-sfnt"
     else:
-        mimeGroup = "application/octet-stream"
+        mimeType = "application/octet-stream"
 
-    # Correct certain MIME types
-    if mimeType == "jpg":
-        mimeType = "jpeg"
-    elif mimeType == "svg":
-        mimeType += "+xml"
-    return "data:" + mimeGroup + mimeType + ";base64," + text
+    return "data:" + mimeType + ";base64," + text
 
 def removeURIPrefix(text):
     """Removes the Data URI part of the base64 data"""

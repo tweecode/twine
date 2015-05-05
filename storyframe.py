@@ -677,7 +677,7 @@ class StoryFrame(wx.Frame):
         """
         try:
             if not replace:
-                text, title = self.openFileAsBase64(file)
+                text, title = self.openFileAsBase64(file)[:2]
                 return self.finishImportImage(text, title, showdialog=showdialog)
             else:
                 replace.passage.text = self.openFileAsBase64(file)[0]
@@ -706,7 +706,7 @@ class StoryFrame(wx.Frame):
     def importFontDialog(self, event=None):
         """Asks the user to choose a font file to import, then imports into the current story."""
         dialog = wx.FileDialog(self, 'Import Font File', os.getcwd(), '', \
-                               'Web Font File (.ttf, .otf, .woff, .svg)|*.ttf;*.otf;*.woff;*.svg|All Files (*.*)|*.*',
+                               'Web Font File (.ttf, .otf, .woff, .woff2, .svg)|*.ttf;*.otf;*.woff;*.woff2;*.svg|All Files (*.*)|*.*',
                                wx.FD_OPEN | wx.FD_CHANGE_DIR)
         if dialog.ShowModal() == wx.ID_OK:
             self.importFont(dialog.GetPath())
@@ -714,8 +714,8 @@ class StoryFrame(wx.Frame):
     def openFileAsBase64(self, file):
         """Opens a file and returns its base64 representation, expressed as a Data URI with MIME type"""
         file64 = open(file, 'rb').read().encode('base64').replace('\n', '')
-        title, mimeType = os.path.splitext(os.path.basename(file))
-        return (images.addURIPrefix(file64, mimeType[1:]), title)
+        title, ext = os.path.splitext(os.path.basename(file))
+        return (images.addURIPrefix(file64, ext[1:]), title, ext[1:])
 
     def newTitle(self, title):
         """ Check if a title is being used, and increment its number if it is."""
@@ -747,20 +747,29 @@ class StoryFrame(wx.Frame):
     def importFont(self, file, showdialog=True):
         """Imports a font into the story as a font passage."""
         try:
-            text, title = self.openFileAsBase64(file)
+            text, title, ext = self.openFileAsBase64(file)
+
+            # Determine the font format (correction required for TTF/OTF)
+            if ext == '':
+                fontformat = ""
+            else:
+                if ext == 'ttf':
+                    ext = "truetype"
+                elif ext == 'otf':
+                    ext = "opentype"
+                fontformat = ' format("' + ext + '")'
 
             title2 = self.newTitle(title)
 
             # Wrap in CSS @font-face declaration
             text = \
-                """font[face=\"""" + title + """\"] {
-    font-family: \"""" + title + """\";
+                '''@font-face {
+\tfont-family: "''' + title + '''";
+\tsrc: url("''' + text + '''")''' + fontformat + ''';
 }
-@font-face {
-    font-family: \"""" + title + """\";
-
-    src: url(""" + text + """);
-}"""
+font[face="''' + title + '''"] {
+\tfont-family: "''' + title + '''";
+}'''
 
             self.storyPanel.newWidget(text=text, title=title2, tags=['stylesheet'])
             if showdialog:

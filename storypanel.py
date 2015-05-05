@@ -1173,7 +1173,7 @@ class StoryPanelDropTarget(wx.PyDropTarget):
                     elif fname.endswith(".html") or fname.endswith(".htm"):
                         self.panel.parent.importHtml(file)
                     elif re.search(imageRegex, fname):
-                        text, title = self.panel.parent.openFileAsBase64(fname)
+                        text, title = self.panel.parent.openFileAsBase64(fname)[:2]
                         imagesImported += 1 if self.panel.parent.finishImportImage(text, title, showdialog = not multipleImages) else 0
 
                 if imagesImported > 1:
