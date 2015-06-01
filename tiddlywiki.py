@@ -264,7 +264,7 @@ class TiddlyWiki(object):
         Returns the tiddler titles in the order they occurred in the HTML.
         """
         order = []
-        divs = re.search(r'<div\s+id=(["\']?)store(?:A|-a)rea\1(?:\s+data-size=(["\']?)\d+\2)?(?:\s+hidden)?\s*>(.*)</div>', source,
+        divs = re.search(r'<div\s+id=(["\']?)store(?:A|-a)rea\1(?:\s+data-size=(["\']?)\d+\2)?(?:\s+hidden(?:=["\']{2})?)?\s*>(.*)</div>', source,
                         re.DOTALL)
         if divs:
             divs = divs.group(3)

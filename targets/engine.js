@@ -2151,6 +2151,7 @@ Wikifier.createInternalLink = function (place, title, callback, type) {
         suffix = (type == "button" ? "Button" : "Link"),
         el = insertElement(place, tag);
 
+    el.tabIndex = 0;
     if (tale.has(title)) {
         el.className = 'internal'+suffix;
         if (visited(title)) el.className += ' visited'+suffix;
@@ -2168,6 +2169,7 @@ Wikifier.createExternalLink = function (place, url, callback, type) {
     var tag = (type == "button" ? 'button' : 'a'),
         el = insertElement(place, tag);
     el.href = url;
+    el.tabIndex = 0;
     el.className = "external"+(type == "button" ? "Button" : "Link");
     el.target = "_blank";
     if (typeof callback == "function") {
