@@ -192,7 +192,7 @@ class Header(object):
 
     @staticmethod
     def factory(type, path, builtinPath):
-        header_def = path + type + '.py'
+        header_def = path + 'header.py'
         if os.access(header_def, os.R_OK):
             py_mod = imp.load_source(type, header_def)
             obj = py_mod.Header(type, path, builtinPath)
