@@ -534,7 +534,7 @@ History.prototype.restore = function () {
 
     try {
         if (!window.location.hash || (window.location.hash == "#")) {
-            if (testplay) {
+            if (testplay && testplay !== "Start") {
                 if (tale.has("StoryInit")) {
                     new Wikifier(insertElement(null, "span"), tale.get("StoryInit").text);
                 }
