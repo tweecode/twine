@@ -869,7 +869,7 @@ You can also include URLs of .tws and .twee files, too.
 
         dialog.Destroy()
 
-    def testBuild(self, event=None, startAt=''):
+    def testBuild(self, event=None, startAt='Start'):
         self.rebuild(temp=True, startAt=startAt, displayAfter=True)
 
     def rebuild(self, event=None, temp=False, displayAfter=False, startAt=''):
