@@ -2389,6 +2389,9 @@ function main() {
             }
         }
     }
+    // Need to make an initial call to setPageElements() to define tale.title,
+    // since it's used by remember.init()
+	tale.setPageElements();
     // Run all script passages
     scripts = tale.lookup("tags", "script");
     for (i = 0; i < scripts.length; i++) {
