@@ -43,7 +43,8 @@ Get the code:
 
 	git clone git@github.com:tweecode/twine.git
 
-Install required modules (note, wxPython will need to be installed separately from the pip requirements):
+Install required modules 
+Note- wxPython will need to be installed separately from the pip requirements:
 
 	cd twine/
 	pip install -r requirements.txt
