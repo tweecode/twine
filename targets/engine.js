@@ -1488,14 +1488,18 @@ Wikifier.prototype.fullArgs = function (includeName) {
 
 Wikifier.parse = function (input) {
     var m, re, b = input, found = [],
-        g = Wikifier.textPrimitives.unquoted;
+        qstrings = [], qreg = /'[^'\\]*(?:\\.[^'\\]*)*'|"[^"\\]*(?:\\.[^"\\]*)*"/g,
+        preg = /\x00QSTR.(\d+)\x00/g;;
+        
+    // Extract all the quoted strings and save them for later
+    b = b.replace(qreg, function(qstr) {qstrings.push(qstr); return "\x00QSTR."+(qstrings.length-1)+"\x00"});
     
     function alter(from,to) {
-        b = b.replace(new RegExp(from+g,"gim"),to);
+        b = b.replace(new RegExp(from,"gim"),to);
         return alter;
     }
     // Extract all the variables, and set them to 0 if undefined.
-    re = new RegExp(Wikifier.textPrimitives.variable+g,"gi");
+    re = new RegExp(Wikifier.textPrimitives.variable,"gi");
     while (m = re.exec(input)) {
         if (!~found.indexOf(m[0])) {
             // This deliberately contains a 'null or undefined' check
@@ -1517,6 +1521,9 @@ Wikifier.parse = function (input) {
     // New operators
     ("\\bis\\b", " == ")
     ("\\bto\\b", " = ");
+    
+    // Restore all the quoted strings to their place
+    b = b.replace(preg, function(pstr, qidx) {return qstrings[qidx];});    
     return b
 };
 Wikifier.formatHelpers = {
