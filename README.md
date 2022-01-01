@@ -66,3 +66,5 @@ way to contribute them back is as follows:
 
 To report bugs, issues or feature requests, use the 
 [github issues](https://github.com/tweecode/twine/issues) system.
+
+But be warned (!) - there has been no active response to issues since about 2014.  If you want to do anything to fix bugs you might have to find somebody with skills in Python 2.7 (with wxPython) programming, and html, CSS, and Javaascript - and then do the fixes yourselves.
