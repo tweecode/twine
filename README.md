@@ -29,11 +29,11 @@ Source code to working Twine 1 - running on Python in Windows
 
 The most basic way to use Twine 1 is run it through Python.  To set up, carry out these three steps in order:
 
-* Download and install the appropriate (ie. old) Python environment (v2.7.18) [https://www.python.org/downloads/release/python-2718/](https://www.python.org/downloads/release/python-2718/)
+* Download and install the appropriate (ie. old) Python environment (v2.7.18).  Use the 32 bit versions of Python and the other programs.  [https://www.python.org/downloads/release/python-2718/](https://www.python.org/downloads/release/python-2718/)
 
-* Next, download and install wxPython (v2.9.5.0) that is compatible with your Python installation [https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/](https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/)
+* Next, download and install wxPython (v2.9.5.0) that is compatible with your Python installation (32 bit) [https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/](https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/)
 
-* Create a folder (any where other than in the Windows program folders or other special folders reserved by Windows).  Download Twine’s source code into your new folder.  Get the source code from here:: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master”, find the file “app.py”.  Click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.
+* Create a folder (any where other than in the Windows program folders or other special folders reserved by Windows).  Download Twine’s source code into your new folder.  Get the source code from here:: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master”, find the file “app.py”.  Click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.  When yuo want to use Twine again, click on app.py again.
 
 Set up a development environment
 --------------------------------
