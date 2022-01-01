@@ -54,8 +54,8 @@ Other than that, you should now have a working Twine setup. To start Twine:
 
 	python app.py
 
-Contributing to Twine development
----------------------------------
+Contributing to Twine 1 maintenance
+-----------------------------------
 
 If you have bug fixes for Twine, the easiest
 way to contribute them back is as follows:
