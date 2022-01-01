@@ -10,10 +10,9 @@ primarily in Python and Javascript, with UI widgets provided by wxPython.
 Twine was written by Chris Klimas. More information is available at
 http://twinery.org/
 
-Twine 1 development is presently resigned to bugfixes and maintenance - although
-contributions for new features may still be considered for acceptance.
+Twine 1 development has ceased.
 
-A web-application "sequel" to Twine 1, called Twine 2, is in active development.
+A web-application "sequel" to Twine 1, called Twine 2, has been development see: http://twinery.org/.  
 Its repositories are [here](https://bitbucket.com/klembot/twinejs) and [here](https://bitbucket.com/_L_/harlowe).
 
 Installation
