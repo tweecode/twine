@@ -24,7 +24,7 @@ for Windows or Mac OS X:
  * [Twine 1.4.3 for Windows](https://github.com/tweecode/twine/releases/tag/v1.4.3)
  * [Twine 1.4.2 for OS X](https://twinery.org)
 
-From source code to working Twine 1 - running on Python in Windows
+From source code to working a Twine 1 - running on Python in Windows
 -------------------------------------------------------------
 
 The most basic way to use Twine 1 is run it through Python.  To set up, carry out these three steps in order:
