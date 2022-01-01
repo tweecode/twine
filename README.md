@@ -24,11 +24,22 @@ for Windows or Mac OS X:
  * [Twine 1.4.3 for Windows](https://github.com/tweecode/twine/releases/tag/v1.4.3)
  * [Twine 1.4.2 for OS X](https://twinery.org)
 
+Source code to working Twine 1 - running on Python in Windows
+-------------------------------------------------------------
+
+The most basic way to use Twine 1 is run it through Python.  To set up, carry out these three steps in order:
+
+* Download and install the appropriate (ie. old) Python environment (v2.7.18) [https://www.python.org/downloads/release/python-2718/](https://www.python.org/downloads/release/python-2718/)
+
+* Next, download and install wxPython (v2.9.5.0) that is compatible with your Python installation [https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/](https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/)
+
+* Create a folder (any where other than in the Windows program folders or other special folders reserved by Windows).  Download Twine’s source code into your new folder.  Get the source code from here:: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master” folder, find the file “app.py”.  Click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.
+
 Set up a development environment
 --------------------------------
 
 You can set up a development environment if you want to contribute to 
-the project or if you want to run Twine on another platform (such as 
+the Twine 1 dev project or if you want to run Twine on another platform (such as 
 Linux).
 
 You may want to run your development environment in a
