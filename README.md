@@ -44,7 +44,7 @@ The aim this time is to compile the source code into a set of stand-alone files 
 
 * In addition to your previous installations of Python and wPython, you now need to download and install Py2Exe v0.6.9 for Windows from https://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
 
-* Now go to the folder where the source code files are located and double click on “buildexe.py”. This will trigger Python cause a new set of files to be created in a subfolder within the “twine-master” folder.  The new folder is called “dist”.  (Relevant for later, these is also another new folder created called “build”.)
+* Now go to the folder where the source code files are located and double click on “buildexe.py”. This will trigger Python to cause a new set of files to be created in a subfolder within the “twine-master” folder.  The new folder is called “dist”.  (Relevant for later, these is also another new folder created called “build”.)
 
 You will find the new compiled Twine files inside the “dist” folder and inside that they are in the “win32” folder.  ie. \dist\win32\
 
