@@ -22,7 +22,7 @@ The easiest way to install Twine is to download the installable versions
 for Windows or Mac OS X:
 
  * [Twine 1.4.3 for Windows](https://github.com/tweecode/twine/releases/tag/v1.4.3)
- * [Twine 1.4.2 for OS X](twinery.org)
+ * [Twine 1.4.2 for OS X](https://twinery.org)
 
 Set up a development environment
 --------------------------------
