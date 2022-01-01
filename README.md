@@ -38,13 +38,13 @@ The most basic way to use Twine 1 is run it through Python.  To set up, carry ou
 Twine 1 on Windows – independent of Python
 ---------------------------------------------------------
 
-The next steps in the section build on the three steps in the section above.
+The next steps in this section build on the three steps in the section above.
 
-The aim this time is to compile the source code into a set of stand alone files that can allow Twine 1 to run independently from Python.
+The aim this time is to compile the source code into a set of stand-alone files that can allow Twine 1 to run independently from Python.
 
 * In addition to your previous installations of Python and wPython, you now need to download and install Py2Exe v0.6.9 for Windows from https://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
 
-* Now go to the folder where source code files are located and double click on “buildexe.py”. This will cause a new set of files to be created in a subfolder within the “twine-master” folder.  The new folder is called “dist”.  (Relevant for later, these is also another new folder created called “build”.)
+* Now go to the folder where the source code files are located and double click on “buildexe.py”. This will trigger Python cause a new set of files to be created in a subfolder within the “twine-master” folder.  The new folder is called “dist”.  (Relevant for later, these is also another new folder created called “build”.)
 
 You will find the new compiled Twine files inside the “dist” folder and inside that they are in the “win32” folder.  ie. \dist\win32\
 
