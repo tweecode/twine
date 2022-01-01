@@ -13,7 +13,7 @@ http://twinery.org/
 Twine 1 development has ceased.
 
 A web-application "sequel" to Twine 1, called Twine 2, has been development see: http://twinery.org/.  
-Its repositories are [here](https://bitbucket.com/klembot/twinejs) and [here](https://bitbucket.com/_L_/harlowe).
+Its repositories are [here](https://github.com/klembot/twinejs) and [here](https://foss.heptapod.net/games/harlowe/).
 
 Installation
 ------------
