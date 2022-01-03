@@ -25,7 +25,7 @@ for Windows or Mac OS X:
  * [Twine 1.4.2 for OS X](https://twinery.org)
 
 From source code to a working Twine 1 - running on Python in Windows
--------------------------------------------------------------
+--------------------------------------------------------------------
 
 The most basic way to use Twine 1 v1.4.3 is run it through Python.  To set up, carry out these three steps in order:
 
@@ -36,7 +36,7 @@ The most basic way to use Twine 1 v1.4.3 is run it through Python.  To set up, c
 * Create a folder (anywhere other than in the Windows program folders or other special folders reserved by Windows).  Download Twine 1’s source code into your new folder.  Get the source code from here: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master”, find the file “app.py”.  Double click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.  When you want to use Twine again, double click on app.py again.
 
 Twine 1 on Windows – independent of Python
----------------------------------------------------------
+------------------------------------------
 
 The next steps in this section build on the three steps in the section above.
 
@@ -50,8 +50,8 @@ You will find the new compiled Twine files inside the “dist” folder and insi
 
 The key file inside the win32 folder is “twine.exe”.  If you double click on the twine.exe file then Twine 1 will start up without needing to use Python.  You can activate Twine 1 by placing a Windows shortcut wherever it suits you.
 
-Creating a Windows for Twine 1 installer
----------------------------------------------------------
+Creating a  Twine 1 installer for Windows
+------------------------------------------
 
 This is the most liberating of the set-up processes – allowing non-expert users to easily install Twine 1.4.3 on Windows computers.
 
