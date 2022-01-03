@@ -108,7 +108,7 @@ way to contribute them back is as follows:
 * fork this repository (see link at top of the project page on github)
 * make your fixes and push them to your own fork on github
 * make a pull request (see link at top of the github project page)
-* find somebody with permission to do the commmits and with the programming skills to assess your fixes.  This will be the hardsest part of the job!!!  Good luck.
+* find somebody with permission to do the commmits and with the programming skills to assess your fixes.  This will be the hardsest part of the job!!!  Good luck.  Try: @tmedwards or @webbedspace or @greyelf
 
 To report bugs, issues or feature requests, use the 
 [github issues](https://github.com/tweecode/twine/issues) system.
