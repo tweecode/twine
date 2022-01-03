@@ -5,7 +5,7 @@ Introduction
 ------------
 
 A visual tool for creating interactive stories for the Web, based on the
-[Twee](https://github.com/tweecode/twee) story engine. Twine is written 
+[Twee](https://github.com/tweecode/twee) story engine. Twine 1 is written 
 primarily in Python and Javascript, with UI widgets provided by wxPython.
 Twine was written by Chris Klimas. More information is available at
 http://twinery.org/
@@ -18,50 +18,50 @@ Its repositories are [here](https://github.com/klembot/twinejs) and [here](https
 Installation
 ------------
 
-The easiest way to install Twine is to download the installable versions
+The easiest way to install Twine 1 is to download the installable versions
 for Windows or Mac OS X:
 
  * [Twine 1.4.3 for Windows](https://github.com/tweecode/twine/releases/tag/v1.4.3)
  * [Twine 1.4.2 for OS X](https://twinery.org)
 
-From source code to working a Twine 1 - running on Python in Windows
+From source code to a working Twine 1 - running on Python in Windows
 -------------------------------------------------------------
 
-The most basic way to use Twine 1 is run it through Python.  To set up, carry out these three steps in order:
+The most basic way to use Twine 1 v1.4.3 is run it through Python.  To set up, carry out these three steps in order:
 
 * Download and install the appropriate (ie. old) Python environment (v2.7.18).  Use the 32 bit versions of Python and the other programs.  [https://www.python.org/downloads/release/python-2718/](https://www.python.org/downloads/release/python-2718/)
 
 * Next, download and install wxPython (v2.9.5.0) that is compatible with your Python installation (32 bit) [https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/](https://sourceforge.net/projects/wxpython/files/wxPython/2.9.5.0/)
 
-* Create a folder (any where other than in the Windows program folders or other special folders reserved by Windows).  Download Twine’s source code into your new folder.  Get the source code from here: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master”, find the file “app.py”.  Click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.  When you want to use Twine again, click on app.py again.
+* Create a folder (anywhere other than in the Windows program folders or other special folders reserved by Windows).  Download Twine 1’s source code into your new folder.  Get the source code from here: https://github.com/tweecode/twine/archive/master.zip   Unzip or copy out the contents of the zip file into your new folder.  Inside the copied/unzipped folder “twine-master”, find the file “app.py”.  Double click on the app.py file.  This will activate Python and will cause a working copy of Twine 1.4.3. to be created and to open.  When you want to use Twine again, double click on app.py again.
 
 Twine 1 on Windows – independent of Python
 ---------------------------------------------------------
 
 The next steps in this section build on the three steps in the section above.
 
-The aim this time is to compile the source code into a set of stand-alone files that can allow Twine 1 to run independently from Python.
+The aim this time is to compile the unzipped source code into a set of stand-alone files that can allow Twine 1 to run independently of Python.
 
-* In addition to your previous installations of Python and wPython, you now need to download and install Py2Exe v0.6.9 for Windows from https://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
+* In addition to your previous installations of Python and wxPython, you now need to download and install Py2Exe v0.6.9 for Windows from https://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
 
 * Now go to the folder where the source code files are located and double click on “buildexe.py”. This will trigger Python to cause a new set of files to be created in a subfolder within the “twine-master” folder.  The new folder is called “dist”.  (Relevant for later, these is also another new folder created called “build”.)
 
 You will find the new compiled Twine files inside the “dist” folder and inside that they are in the “win32” folder.  ie. \dist\win32\
 
-The key file inside the win32 folder is “twine.exe”.  If you click on the twine.exe file then Twine 1 will start up without needing to use Python.  You can activate Twine 1 by placing a Windows shortcut wherever it suits you.
+The key file inside the win32 folder is “twine.exe”.  If you double click on the twine.exe file then Twine 1 will start up without needing to use Python.  You can activate Twine 1 by placing a Windows shortcut wherever it suits you.
 
 Creating a Windows for Twine 1 installer
 ---------------------------------------------------------
 
-This is the most liberating of the set-up processes – allowing non-expert users to easily install the latest version of Twine 1 on Windows computers.
+This is the most liberating of the set-up processes – allowing non-expert users to easily install Twine 1.4.3 on Windows computers.
 
 Care needs to be taken with this process because it’s easy for errors to block the creation of the installer.
 
-* First, download the latest version of the NSIS installer packager from:  https://nsis.sourceforge.io and install it.  The Twine 1 windows installer on the Twine github site was made with v3.08 of NSIS on 1 January 2022.
+* First, download the latest version of the NSIS installer packager from:  https://nsis.sourceforge.io and install it.  (The Twine 1 windows installer on the Twine github site was made with v3.08 of NSIS on 1 January 2022.)
 
 * Now go to the folder that holds the source code and the compiled files.  Go specifically to the “twine-master” folder and look for the file “install.nsi”.  Open this file with a text editor so you can read the contents.  At the top of the script file you will discover that you have to find an additional file “vcredist_x86.exe” from the Microsoft website:  https://docs.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2013-vc-120   Download the x86 version for 2013.  Then within the twine-master folder find the “build” sub-folder (created by Py2Exe) and place a copy of the vcredist_x86.exe file in there.
 
-* Next, in the twine-master folder, find the file “gpl.txt”.  Copy this file and go to the “dist” sub-folder then go further down to the “win32” sub folder.  Here you will find all the files created by Py2Exe including the Twine.exe file.  In this sub-folder paste the copy of the gpl.txt file.
+* Next, in the twine-master folder, find the file “gpl.txt”.  Copy this file and go to the “dist” sub-folder then go further down to the “win32” sub folder.  Here you will find all the files created by Py2Exe including the Twine.exe file.  In this win32 sub-folder paste the copy of the gpl.txt file.
 
 * Now run the NSIS installer making program and click on the link on the top left of the program window called “Compile NSI scripts”.  A new NSIS program window will open.  Go to the twine-master folder and find the file “install.nsi”.  Drag this file over and drop it on the most recently opened NSIS window.  This will set NSIS to begin the task of packaging up all the needed files and folders to make the Twine installer file:  “twine-1.4.3-win.exe”.
 
