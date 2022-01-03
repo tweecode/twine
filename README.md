@@ -100,14 +100,16 @@ Other than that, you should now have a working Twine setup. To start Twine:
 Contributing to Twine 1 maintenance
 -----------------------------------
 
-If you have bug fixes for Twine, the easiest
+Warning - there has been no active response to issues with Twine 1.4.2 / 1.4.3 since about 2014.  If you want to do anything to fix bugs in Twine 1.4.3 you might have to find somebody with skills in Python 2.7 (with wxPython) programming, and html, CSS, and Javaascript - and then do the fixes yourselves.
+
+If you have bug fixes for Twine 1.4.3, the easiest
 way to contribute them back is as follows:
 
 * fork this repository (see link at top of the project page on github)
 * make your fixes and push them to your own fork on github
 * make a pull request (see link at top of the github project page)
+* find somebody with permission to do the commmits and with the programming skills to assess your fixes.  This willtwillhe hardsest part of the job!!!  Good luck.
 
 To report bugs, issues or feature requests, use the 
 [github issues](https://github.com/tweecode/twine/issues) system.
 
-But be warned (!) - there has been no active response to issues since about 2014.  If you want to do anything to fix bugs you might have to find somebody with skills in Python 2.7 (with wxPython) programming, and html, CSS, and Javaascript - and then do the fixes yourselves.
