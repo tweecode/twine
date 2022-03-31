@@ -1,0 +1,10 @@
+name: Bug Report
+description: Submit a bug report for Twine 1.4.
+body:
+  - type: textarea
+    id: bug
+    attributes:
+      label: Note:
+      description: "Do *not* report issues for Twine 2 in this repository! Twine 2's repositories are at https://github.com/klembot/twinejs (for the main editor) and https://foss.heptapod.net/games/harlowe/ (for the default story format). If you're using the wxPython-based Twine 1.4, then you may report issues here."
+    validations:
+      required: true
