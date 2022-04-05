@@ -15,10 +15,18 @@ def addURIPrefix(text, mimeType):
         elif mimeType == 'svg':
             mimeType += "+xml"
         mimeType = "image/" + mimeType
-    elif mimeType in 'woff|woff2':
-        mimeType = "application/font-" + mimeType
-    elif mimeType in 'ttf|otf':
-        mimeType = "application/font-sfnt"
+    elif mimeType in 'otf|ttf|woff|woff2':
+        # (ca. 2017) The IANA deprecated the various font subtypes of the
+        # "application" type in favor of the new "font" type.  While the
+        # standards were new at that point, many browsers had long accepted
+        # such media types due to existing use in the wild—erroneous at
+        # that point or not—so they're safe to use even considering older
+        # browsers.
+        #     otf   : application/font-sfnt  -> font/otf
+        #     ttf   : application/font-sfnt  -> font/ttf
+        #     woff  : application/font-woff  -> font/woff
+        #     woff2 : application/font-woff2 -> font/woff2
+        mimeType = "font/" + mimeType
     else:
         mimeType = "application/octet-stream"
 
