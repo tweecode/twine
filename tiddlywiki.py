@@ -324,7 +324,7 @@ class Tiddler: # pylint: disable=old-style-class
     Note: Converting this to a new-style class breaks pickling of new TWS files on old Twine releases.
     """
 
-    def __init__(self, source, type = 'twee', obfuscatekey = ""):
+    def __init__(self, source = "", type = 'twee', obfuscatekey = ""):
         # cache of passage names linked from this one
         self.links = []
         self.displays = []
@@ -345,8 +345,11 @@ class Tiddler: # pylint: disable=old-style-class
             'modified': now,
             'title': self.title,
             'tags': self.tags,
-            'text': self.text,
+            'text': self.text
         }
+
+    def __setstate__(self,d):
+        self.__dict__ = d
 
     def __repr__(self):
         return "<Tiddler '" + self.title + "'>"

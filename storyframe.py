@@ -1,13 +1,14 @@
-import sys, re, os, urllib, urlparse, pickle, wx, codecs, tempfile, images, version
+import sys, re, os, urllib, urlparse, simplejson, pickle, jsonpickle, wx, codecs, tempfile, images, version
 from wx.lib import imagebrowser
 from tiddlywiki import TiddlyWiki
+from tiddlywiki import Tiddler
+import time
 from storypanel import StoryPanel
 from passagewidget import PassageWidget
 from statisticsdialog import StatisticsDialog
 from storysearchframes import StoryFindFrame, StoryReplaceFrame
 from storymetadataframe import StoryMetadataFrame
 from utils import isURL
-
 
 class StoryFrame(wx.Frame):
     """
@@ -89,6 +90,9 @@ class StoryFrame(wx.Frame):
 
         fileMenu.Append(wx.ID_SAVEAS, 'S&ave Story As...\tCtrl-Shift-S')
         self.Bind(wx.EVT_MENU, self.saveAs, id=wx.ID_SAVEAS)
+
+        fileMenu.Append(StoryFrame.SAVEAS_JSON, 'S&ave Story As (JSON)...')
+        self.Bind(wx.EVT_MENU, self.saveAsJSON, id=StoryFrame.SAVEAS_JSON)
 
         fileMenu.Append(wx.ID_REVERT_TO_SAVED, '&Revert to Saved')
         self.Bind(wx.EVT_MENU, self.revert, id=wx.ID_REVERT_TO_SAVED)
@@ -486,7 +490,7 @@ class StoryFrame(wx.Frame):
             elif result == wx.ID_NO:
                 self.dirty = False
             else:
-                self.save(None)
+                self.save()
                 if self.dirty:
                     event.Veto()
                     return
@@ -509,10 +513,24 @@ class StoryFrame(wx.Frame):
             event.Skip()
         self.Destroy()
 
-    def saveAs(self, event=None):
+    def exportJSON(self, event=None):
+        self.saveAsMain(True,event)
+
+    def saveAs(self, event=None): 
+        self.saveAsMain(False,event)
+
+    def saveAsJSON(self, event=None): 
+        self.saveAsMain(True,event)
+
+    def saveAsMain(self, usejson=False, event=None):
         """Asks the user to choose a file to save state to, then passes off control to save()."""
+
+        extensionStr = "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws"
+        if usejson:
+            extensionStr = "JSON Twine Story (*.twjs)|*.twjs|JSON Twine Story without private content [copy] (*.twjs)|*.twjs"
+
         dialog = wx.FileDialog(self, 'Save Story As', os.getcwd(), "", \
-                               "Twine Story (*.tws)|*.tws|Twine Story without private content [copy] (*.tws)|*.tws", \
+                               extensionStr, \
                                wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT | wx.FD_CHANGE_DIR)
 
         if dialog.ShowModal() == wx.ID_OK:
@@ -520,13 +538,20 @@ class StoryFrame(wx.Frame):
                 self.saveDestination = dialog.GetPath()
                 self.app.config.Write('savePath', os.getcwd())
                 self.app.addRecentFile(self.saveDestination)
-                self.save(None)
+                self.save(event)
             elif dialog.GetFilterIndex() == 1:
                 npsavedestination = dialog.GetPath()
                 try:
+                    if usejson:
+                        fileData = jsonpickle.encode(self.serialize_noprivate(npsavedestination))
+                        fileData = self.storyPanel.stripTimeFields( fileData )
+                    else:
+                        fileData = pickle.dumps(self.serialize_noprivate(npsavedestination))
+
                     dest = open(npsavedestination, 'wb')
-                    pickle.dump(self.serialize_noprivate(npsavedestination), dest)
+                    dest.write(fileData)
                     dest.close()
+                    
                     self.app.addRecentFile(npsavedestination)
                 except:
                     self.app.displayError('saving your story')
@@ -828,13 +853,23 @@ You can also include URLs of .tws and .twee files, too.
 
     def save(self, event=None):
         if self.saveDestination == '':
-            self.saveAs()
+            self.saveAsMain(False,event)
             return
-
         try:
-            dest = open(self.saveDestination, 'wb')
-            pickle.dump(self.serialize(), dest)
+            usejson = True
+            if self.saveDestination[len(self.saveDestination)-3:] == "tws":
+                usejson = False
+
+            if usejson:
+                fileData = jsonpickle.encode(self.serialize())
+                fileData = self.storyPanel.stripTimeFields( fileData )
+            else:
+                fileData = pickle.dumps(self.serialize())
+
+            dest = open(self.saveDestination, 'wb')      
+            dest.write(fileData)
             dest.close()
+
             self.setDirty(False)
             self.app.config.Write('LastFile', self.saveDestination)
         except:
@@ -954,7 +989,7 @@ You can also include URLs of .tws and .twee files, too.
             dir = os.getcwd()
         return dir
 
-    def readIncludes(self, lines, callback, silent=False):
+    def readIncludes(self, lines, callback, usejson=True, silent=False):
         """
         Examines all of the source files included via StoryIncludes, and performs a callback on each passage found.
 
@@ -979,9 +1014,14 @@ You can also include URLs of .tws and .twee files, too.
                         openedFile = open(os.path.join(twinedocdir, line), 'r')
 
                     if extension == '.tws':
-                        s = StoryFrame(None, app=self.app, state=pickle.load(openedFile), refreshIncludes=False)
+                        fileData = openedFile.read()
                         openedFile.close()
 
+                        if usejson:
+                            s = StoryFrame(None, app=self.app, state=jsonpickle.decode(fileData), refreshIncludes=False)
+                        else:
+                            s = StoryFrame(None, app=self.app, state=pickle.loads(fileData), refreshIncludes=False)
+           
                         for widget in s.storyPanel.widgetDict.itervalues():
                             if excludetags.isdisjoint(widget.passage.tags):
                                 callback(widget.passage)
@@ -1285,6 +1325,8 @@ You can also include URLs of .tws and .twee files, too.
     FILE_EXPORT_PROOF = 102
     FILE_EXPORT_SOURCE = 103
     FILE_IMPORT_HTML = 104
+
+    SAVEAS_JSON = 1105
 
     EDIT_FIND_NEXT = 201
 

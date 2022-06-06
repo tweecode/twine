@@ -1,7 +1,9 @@
 #!/usr/bin/env python2
 
-import sys, os, locale, re, pickle, wx, platform, traceback
+import sys, os, locale, re, simplejson, pickle, jsonpickle, wx, platform, traceback, time
 import metrics
+from tiddlywiki import TiddlyWiki
+from tiddlywiki import Tiddler
 from header import Header
 from storyframe import StoryFrame
 from prefframe import PreferenceFrame
@@ -33,11 +35,12 @@ class App(wx.App):
 
         self.icon = wx.EmptyIcon()
 
+        jsonpickle.set_encoder_options('simplejson', sort_keys=True, indent=4)
+
         try:
             self.icon = wx.Icon(self.iconsPath + 'app.ico', wx.BITMAP_TYPE_ICO)
         except:
             pass
-
 
         # restore save location
 
@@ -74,9 +77,10 @@ class App(wx.App):
         except ValueError:
             pass
 
-    def openDialog(self, event = None):
+    def openDialog(self, event=None):
         """Opens a story file of the user's choice."""
-        dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", "Twine Story (*.tws)|*.tws", \
+        fileExtension = "Twine Story (*.tws)|*.tws|JSON Twine Story (*.twjs)|*.twjs"
+        dialog = wx.FileDialog(None, 'Open Story', os.getcwd(), "", fileExtension, \
                                wx.FD_OPEN | wx.FD_CHANGE_DIR)
 
         if dialog.ShowModal() == wx.ID_OK:
@@ -102,14 +106,27 @@ class App(wx.App):
     def open(self, path):
         """Opens a specific story file."""
         try:
+            usejson = True
+            if path[len(path)-3:] == "tws":
+                usejson = False
+
             openedFile = open(path, 'r')
-            newStory = StoryFrame(None, app = self, state = pickle.load(openedFile))
+            fileData = openedFile.read()
+            openedFile.close()
+
+            if usejson:
+                state = jsonpickle.decode(fileData)
+            else:
+                state = pickle.loads(fileData)  
+
+            newStory = StoryFrame(None, app = self, state = state)
+
             newStory.saveDestination = path
+
             self.stories.append(newStory)
             newStory.Show(True)
             self.addRecentFile(path)
             self.config.Write('LastFile', path)
-            openedFile.close()
 
             # weird special case:
             # if we only had one story opened before

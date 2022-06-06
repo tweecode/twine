@@ -3,7 +3,20 @@ from itertools import izip, chain
 import sys, wx, re, pickle
 import geometry
 from tiddlywiki import TiddlyWiki
+import time
 from passagewidget import PassageWidget
+
+# r + s1 + r + s2 + r + ... + sn + r
+def unfoldPattern(s,r):
+    pat = ''
+    e = '[]{}.?*^+-'
+    for c in s:
+        pat += r
+        if c in e:
+            pat += '\\'
+        pat += c
+    pat += r
+    return pat
 
 class StoryPanel(wx.ScrolledWindow):
     """
@@ -45,7 +58,8 @@ class StoryPanel(wx.ScrolledWindow):
         self.tooltipplace = None
         self.tooltipobj = None
         self.textDragSource = None
-
+        #self.timeFields = re.compile(',?[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{,[{},{[{[,,,,,,,,]},{}]}]}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\})')
+        self.timeFields = re.compile('[^\{\}\[\],]*"(created|modified)": (' + unfoldPattern('{[{},{[{[,,,,,,,,]},{}]}],}', '[^\{\}\[\],]*') + '|\{[^\{\}]+\}),?')
         if state:
             self.scale = state['scale']
             for widget in state['widgets']:
@@ -82,6 +96,9 @@ class StoryPanel(wx.ScrolledWindow):
         self.Bind(wx.EVT_ENTER_WINDOW, self.handleHoverStart)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.handleHoverStop)
         self.Bind(wx.EVT_MOTION, self.handleHover)
+
+    def stripTimeFields( self, s ):
+        return self.timeFields.sub('',s)
 
     def newWidget(self, title = None, text = '', tags = (), pos = None, quietly = False, logicals = False):
         """Adds a new widget to the container."""
@@ -154,6 +171,7 @@ class StoryPanel(wx.ScrolledWindow):
             if widget.selected: data.append(widget.serialize())
 
         clipData = wx.CustomDataObject(wx.CustomDataFormat(StoryPanel.CLIPBOARD_FORMAT))
+
         clipData.SetData(pickle.dumps(data, 1))
 
         if wx.TheClipboard.Open():
@@ -176,7 +194,8 @@ class StoryPanel(wx.ScrolledWindow):
             wx.TheClipboard.Close()
 
             if gotData:
-                data = pickle.loads(clipData.GetData())
+
+                data = pickle.loads(clipData.GetData())               
 
                 self.eachWidget(lambda w: w.setSelected(False, False))
 
